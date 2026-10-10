@@ -38,8 +38,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   PHS) is available. Walking up to the train should no longer board it.
 - Cloud starts at **level 1** (Str 14, Vit 11, Mag 13, Spr 11, Dex 6, Luck 15,
   HP 219, MP 18, EXP 0) and should reach level 2 after a few battles.
-- **Battle speed** (Config) should start at the fastest setting. Note if it
-  is at the slowest instead or unchanged.
+- If a new game goes to a **black screen**, try again with the original
+  `KERNEL.BIN` (keep the new `flevel.lgp`) and say whether that fixes it.
 - **PHS** should be usable at save points from the start (Sector 7 save
   points used to lock it until Kalm).
 - Entering the Sector 7 slums should no longer play the AVALANCHE / Barret /

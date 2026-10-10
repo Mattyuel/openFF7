@@ -14,9 +14,7 @@ MENU_ALL = 0xFFFF
 MENU_LOCK = (2, 30)
 PHS_LOCK_BIT = 0x0100
 
-# New-game settings: battle speed (0 = fastest, set with SPECIAL GMSPD) and
 # Cloud's starting level (stats recomputed from the game's growth curves).
-BATTLE_SPEED = 0
 CLOUD_START_LEVEL = 1
 
 # Character ids used by party/PHS opcodes.
