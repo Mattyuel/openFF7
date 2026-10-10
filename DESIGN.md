@@ -26,14 +26,25 @@ are still undecided.
 ## 2. Core technical approach
 
 The original game gates almost everything on one story-progress variable (the
-"Game Moment"). openFF7 replaces that with **per-location state**:
+"Game Moment", `var[2][0]`, values 0–1999). 391 of the 702 fields compare
+against it. openFF7 replaces that with **per-location state**:
 
-1. The new game sets the story-progress value to a fixed baseline.
-2. Field and world map scripts that branch on story progress are rewritten to
-   use the chosen state for each location (see §4) plus new per-feature flags
-   (recruitment, transport unlocks, boss defeats).
-3. All changes are made as text diffs against decompiled scripts, then reassembled
-   by the build.
+1. **Pin each field to a story moment.** `tools/ff7/patch.py: pin_progress`
+   rewrites every `if (var[2][0] <op> N)` in a field into `if (M <op> N)` where
+   `M` is the moment chosen for that location (§4). Instruction sizes don't
+   change, so nothing else in the file moves. The field then always looks and
+   behaves as it did at moment `M`, whatever the global value is.
+2. **Remove story events.** Cutscenes that fire at the pinned moment, and writes
+   that advance `var[2][0]`, are removed or disabled per field.
+3. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
+   Corneo's move) use unused save variables.
+4. **Build.** Patches live in `patches/*.py` and are applied by
+   `tools/ff7tool.py build`, which writes a separate game folder
+   (`build/openFF7/`) and leaves the original data untouched.
+
+Still to investigate: world map scripts (`world_us.lgp`), new-game data in
+`KERNEL.BIN`, and code in the `.exe` that reads story progress directly (e.g.
+PHS and save restrictions).
 
 ## 3. Decisions so far
 
@@ -129,14 +140,15 @@ The original game gates almost everything on one story-progress variable (the
 
 ---
 
-## 4. Location state table (to be filled in)
+## 4. Location state table
 
-One canonical state per location. Generated from the field inventory once the
-game data is in the repo.
+One canonical state per location. The full generated list, with the story-moment
+range each field checks and sets, is in `docs/inventory/locations.md`. Moments
+below are the `var[2][0]` values observed in the scripts.
 
 | Location | Original versions | Chosen state | Notes |
 |---|---|---|---|
-| Midgar (all sectors) | Pre-plate-fall / post-fall / Sister Ray assault | Pre-plate-fall (disc 1) | Exit via Sector 5 past the church |
+| Midgar (all sectors) | Pre-plate-fall / post-fall / Sister Ray assault | Pre-plate-fall (disc 1) | Exit via Sector 5 past the church. Sector 7 fields check moments 63–221; the start station `mds7st3` sets 63 |
 | Shinra HQ | Infiltration / later visits | TBD | Floor access, keycards, guards |
 | Temple of the Ancients | Intact / shrunk into the Black Materia | Intact (proposed) | |
 | Mideel | Intact / destroyed | Intact (proposed) | |
@@ -146,15 +158,53 @@ game data is in the repo.
 | Northern Crater | Barrier / open | TBD | |
 | World map | Meteor, Weapons, Junon cannon | TBD | |
 
-## 5. Boss placement (draft — to be checked against the data)
+## 5. Boss placement (from the data)
 
-Bosses with special battle rules need individual handling. Examples: fights
-that end on a timer or turn count (the Turks), solo or forced-party fights
-(Rufus, Hojo), multi-party fights (Bizarro Sephiroth), and the Jenova/Sephiroth
-fights tied to story scripts.
+Every fixed battle started from a field script is listed in
+`docs/inventory/scripted_battles.csv`. The main story bosses and where they are
+fought in the original (field file) are below. Each becomes a visible, touchable
+boss in that room and then a rare encounter in the same area.
 
-| Boss | World location (proposed) | Rare-encounter zone | Special handling |
-|---|---|---|---|
+| Boss (formation) | Original field | Area |
+|---|---|---|
+| Guard Scorpion (324) | `nmkin_5`, `smkin_5` | Sector 1 Reactor |
+| Air Buster (364) | `southmk2` | Sector 5 Reactor |
+| Aps (386) | `colne_b1` | Sector 6 sewers |
+| Reno + Pyramid (412) | `pillar_3` | Sector 7 pillar |
+| Hundred Gunner (460) | `eleout` | Shinra HQ elevator |
+| Sample:H0512 (456) | `blin68_2` | Shinra HQ 68f |
+| Rufus + Dark Nation (464) | `blin70_3` | Shinra HQ roof |
+| Motor Ball (468) | `blackbg9`, `blackbgb` | Midgar highway |
+| Bottomswell (480) | `ujunon2` | Junon |
+| Jenova·BIRTH (488) | `shpin_3` | Cargo ship |
+| Dyne (527) | `dyne` | Corel Prison |
+| Reno + Rude (539) | `gonjun2` | Gongaga |
+| Gi Nattak (555) | `gidun_3` | Cave of the Gi |
+| Lost Number (576) | `sinin2_1` | Shinra Mansion |
+| Materia Keeper (595) | `nvdun1` | Mt. Nibel |
+| Palmer (600) | `rckt32` | Rocket Town |
+| Rapps (619) | `datiao_6` | Wutai, Da-chao |
+| Godo (628) | `tower5` | Wutai, Pagoda |
+| Red Dragon (652) | `kuro_82` | Temple of the Ancients |
+| Demons Gate (644) | `kuro_12` | Temple of the Ancients |
+| Jenova·LIFE (671) | `ancnt3` | Forgotten City |
+| Schizo (740) | `gaiin_6` | Gaea's Cliff |
+| Jenova·DEATH (743) | `trnad_4` | Whirlwind Maze |
+| Carry Armor (780) | `semkin_5` | Underwater Reactor |
+| Reno + Rude (807) | `qb` | (to check) |
+| Turks trio (840) | `tunnel_6` | Midgar tunnels |
+| Proud Clod (844) | `md8brdg2` | Midgar Sector 8 |
+| Hojo (856) | `canon_2` | Sister Ray |
+| Diamond Weapon (980) | `fr_e` | Midgar outskirts |
+| Ultimate Weapon (280) | `itown2` | Mideel |
+| Jenova·SYNTHESIS (908) | `las4_4` | Northern Crater bottom |
+| Bizarro·Sephiroth (912–936) | `lastmap` | Northern Crater bottom |
+| Safer·Sephiroth (924) | `lastmap`, `blackbge` | Northern Crater bottom |
+
+Bosses with special rules still need checking one by one: multi-party
+Bizarro·Sephiroth, Cloud-only fights, and battles whose AI ends the fight early.
+
+---|---|---|---|
 | Guard Scorpion | Sector 1 Reactor | Sector 1 Reactor | — |
 | Air Buster | Sector 5 Reactor | Sector 5 Reactor | — |
 | Aps | Sector 6 sewers | Sewers | — |

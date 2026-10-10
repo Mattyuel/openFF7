@@ -1,0 +1,709 @@
+id,field,location,entities,texts,progress_checks,progress_min,progress_max,progress_sets,exits,scripted_battles,random_battles
+65,startmap,,5,11,0,,,,md1stin,999:êúô2(ñ),
+66,fship_1,Highwind,13,11,6,1025,1566,1025,,,
+67,fship_12,deck,16,10,2,1572,1598,1599,blin70_4 md8_5,,
+68,fship_2,,19,58,2,1199,1614,1197 1620,fship_4 blackbgd,,
+69,fship_22,,14,10,0,,,,trnad_2,,
+70,fship_23,Highwind,20,117,9,1029,1116,1029 1031 1104 1108,wm40 wm44 fship_4 blin66_6,,
+71,fship_24,Bridge,16,44,4,1580,1598,1583 1591 1596,wm44 fship_42 blin66_6,,
+72,fship_25,Highwind,19,211,17,1250,1620,1388 1389 1568 1580 1610 1612,wm44 hill,,
+73,fship_3,Highwind,17,40,5,1033,1568,1033 1110 1199 1250,fship_25,,
+74,fship_4,Highwind,23,75,17,1027,1620,1027 1614,fship_2 fship_23 fship_25 fship_5 las0_1,,
+75,fship_42,Inside airship,14,1,0,,,,fship_12,,
+76,fship_5,Highwind,11,5,0,,,,,,
+77,hill,,9,28,0,,,,hill2,,
+78,zz1,Old man's house,7,10,1,1299,1299,,,,
+79,zz2,Weapon seller,10,29,2,566,609,,wm9,,
+80,zz3,Mystery House / Chocobo Sage's House,11,56,0,,,,,,
+81,zz4,???,16,22,1,1197,1197,,wm20 nivl_4,,
+82,zz5,Materia Cave,10,4,0,,,,,,
+83,zz6,Materia Cave,9,4,0,,,,,,
+84,zz7,Materia Cave,10,4,0,,,,,,
+85,zz8,Materia Cave,10,4,0,,,,,,
+86,sea,,11,228,0,,,566,wm39,,
+87,sky,,14,228,0,,,,sea,,
+88,qa,Hallway,12,26,0,,,,wm30,,
+89,qb,Hallway,7,26,0,,,,,807:Turks:Reno + Turks:Rude,796:Poodler 797:Bad Rap + Poodler 798:Bad Rap
+90,qc,Research Room,12,26,0,,,,,,800:Unknown 801:Unknown 3 802:Unknown 2
+91,qd,Cargo Room,14,26,0,,,,,,800:Unknown 801:Unknown 3 802:Unknown 2 804:Serpent
+93,blackbg1,,10,114,0,,,0 27 117 203 263 271 278 284 290 293 302 305 314 335 370 372 373 376 380 387 400 557 641 664 673 999 1003 1010 1015 1016 1178 1182 1186 1199 1299 1391 1397 1398 1399 1568 1599 1600 1620 1997,sea sky blackbg9 md1stin md1_1 nrthmk nmkin_4 smkin_4 pillar_2 mds5_5 colne_b1 roadend eleout blin66_1 blin67_1 blin67_2 blin68_1 blin68_2 blin70_1 blin70_2 sinin1_1 sinin2_1 sininb1 sininb2 mtnvl2 mtnvl6b nvdun1 nvdun2 nvmkin1 nvmkin22 fr_e junair junbin3 junbin4 junbin5 junone2 junone5 rckt3 bonevil slfrst_1 anfrst_3 sandun_1 lost3 loslake1 loslake3 white2 ancnt1 ancnt4 md8_5 las3_2 fallp junone22 rckt32 md8_52 midgal sininb35 nivgate4,,
+94,blackbg2,,18,46,0,,,48 51 63 72 78 90 96 105 108 188 191 192 212 218 221 251 406 448 469 604 1008 1108 1197 1250 1286 1299,cargoin tin_1 tin_2 tin_3 tin_4 rootmap mds7st3 mds7_w2 mds7 min71 mds7pb_1 mds7pb_2 mds7plr1 mrkt3 onna_1 onna_52 junon junonr1 junonr2 junonr3 junonr4 jun_wa jun_i1 jun_m junmin1 junmin2 junmin3 junonl1 junonl2 junonl3 jun_w jun_a jun_i2 juninn junpb_1 junpb_2 junpb_3 junmin4 junmin5 jundoc1a jundoc1b junin1 junin1a junele1 junin3 junele2 junin4 junin5 junin6 junin7 junsbd1 subin_1a subin_1b subin_2a subin_2b subin_3 del1 del12 del2 del3 mtcrl_0 mtcrl_3 mtcrl_4 mtcrl_5 mtcrl_6 mtcrl_7 mtcrl_8 mtcrl_9 jtempl jtemplb jtmpin1 jtmpin2 kuro_1 kuro_2 kuro_3 kuro_4 kuro_5 kuro_6 kuro_7 kuro_8 kuro_82 kuro_9 kuro_10 kuro_11 kuro_12 jtemplc mds7st33,,
+95,blackbg3,DEBUG MODE,10,38,0,,,114 128 149 326 341 385 469 532 638 661 674 1000 1299 1314 1620,startmap qa blackbgb southmk1 tunnel_1 chrin_2 elmpb elm psdun_2 gonjun2 rckt rcktin5 sango1 losin2 las0_1,,
+96,blackbg4,,17,109,0,,,33 36 39 158 164 176 236 239 248 255 341 433 436 440 442 445 446 457 463 466 469 566 583 586 589 592 595 598 601 1008 1197 1299 1999,zz1 zz2 zz3 zz4 zz5 zz6 zz7 zz8 blackbgc md1stin md8_1 md8_2 md8_4 md8brdg ealin_1 ealin_12 ealin_2 mds6_1 mds6_2 mds6_22 farm frmin frcyo sichi jail1 jail2 jailin4 dyne astage_a astage_b jetin1 bigwheel bwhlin ghotin_1 ghotin_4 ghotin_2 gldst coloss coloin1 clsin2_2 games_1 games_2 mogu_1 chorace chorace2 crcin_1 gldelev las3_1 las3_2 las3_3 las4_0 las4_1 las4_2 las4_3 las4_4 las4_42,999:êúô2(ñ),
+97,blackbg5,,16,16,0,,,96 158 344 370 385 673 794 1102 1197 1318 1566 1578 1598 1604 1610 1612,fship_1 fship_22 fship_23 fship_25 fship_3 fship_4 fship_5 blackbgd chrin_1a chrin_1b niv_w nvmin1_1 nvmin1_2 nivinn_1 nivinn_2 niv_cl trackin trackin2 nivgate nivgate2 nivl nivl_2 nivl_3 niv_ti1 niv_ti2 niv_ti3 niv_ti4 nivl_b1 nivl_b22 nivl_e1 nivl_e2 trnad_51 trnad_52 trnad_53 ztruck,,
+98,blackbg6,,15,18,0,,,155 158 173 190 192 257 326 472 514 1008 1389 1391 1600 1610,mds5_4 mds5_3 mds5_2 mds5_dk mds5_1 church colne_1 colne_2 colne_3 colne_4 colne_5 colne_6 md0 sinbil_1 sinbil_2 blinst_1 blinst_2 blinst_3 blinele blin1 blin59 blin60_1 blin61 blin62_1 blin63_1 blin64 shpin_2 corel2 corelin cos_btm cos_btm2 cosmo2 cosmin2 bugin1b bugin1c bugin2 bugin3 seto1 yougan yougan2 yougan3 uutai1 md_e1 lastmap,,
+99,blackbg7,DEBUG,13,37,0,,,0 185 191 192 212 257 387 999 1000 1102 1566 1572,mds7st1 mds7st2 mrkt2 mkt_mens mrkt1 wcrimb_1 wcrimb_2 blin70_4 condor1 convil_1 convil_2 hyou1 hyou3 hyou5_2 hyou13_1 las0_3,288:CMD.Grand Horn 999:êúô2(ñ),
+100,blackbg8,,12,10,2,430,433,388 400 560 1022 1102 1104 1199 1318 1566 1572 1580 1583 1589 1591 1593 1598,fship_12 fship_24 blin66_6 ujunon1 ujunon2 ujunon3 ujunon4 ncorel ncorel2 ncorel3 ropest snow gaiafoot gaia_1 gaia_2 gaia_31 gaia_32 crater_2 trnad_1 trnad_2 woa_1 woa_2 woa_3,,
+101,blackbg9,,3,114,5,326,400,332 370,roadend mtnvl6b elminn_2 junair2,468:Motor Ball,
+103,blackbgb,Midgar Highway,8,38,1,638,638,,roadend gninn rktsid lost2 las0_1,468:Motor Ball,
+104,blackbgc,,2,5,1,239,239,245,mds6_1 nivinn_3,,
+105,blackbgd,,3,35,0,,,,blackbgb,,
+106,blackbge,,4,8,0,,,,las4_0,924:Safer‧Sephiroth,
+109,blackbgh,BLACKBGH,2,254,0,,,,,,
+110,blackbgi,BLACKBGI,13,254,0,,,1102 1110,blackbgh blackbgi spgate spipe_1 spipe_2 semkin_1 semkin_2 semkin_8 semkin_3 semkin_4 semkin_5 semkin_6 semkin_7 mtcrl_2 mogu_1 tower5 datiao_1 datiao_2 datiao_3 datiao_4 datiao_5 datiao_6 datiao_7 datiao_8 zcoal_1 zcoal_2 zcoal_3 md8_6 md8_b1 md8_b2 sbwy4_22 tunnel_4 tunnel_5 md8brdg2 md8_32 canon_1 canon_2 las0_6 las0_7 las0_8 las2_1 las2_2 las2_3 las2_4 tunnel_6,,
+111,blackbgj,,3,11,1,1120,1120,1122,zmind1,,
+112,blackbgk,Dark city fourth street,14,27,0,,,1015 1100 1116 1120 1122 1126 1130 1180 1188 1195 1610,fship_23 hill itown1a itown12 itown1b itown2 ithos life zmind1 zmind2 zmind3 hill2,,
+115,whitebg3,,9,177,1,1178,1178,1180,zmind1,,
+116,md1stin,Platform,12,114,2,0,1,1 6,,300:MP,301:MP 302:Guard Hound 303:Guard Hound + MP
+117,md1_1,Sector 1 Station,12,114,1,7,7,7,md1_2,,301:MP 302:Guard Hound 303:Guard Hound + MP
+118,md1_2,Sector 1,11,114,1,8,8,8,,,301:MP 302:Guard Hound 303:Guard Hound + MP
+119,nrthmk,No.1 Reactor,10,114,2,10,27,10 33,md8_4,,305:Mono Drive 306:MP + Mono Drive 307:MP
+120,nmkin_1,No.1 Reactor,15,114,3,10,27,11,nrthmk,,310:Grunt 311:1st Ray + Grunt 312:1st Ray 313:Grunt
+121,elevtr1,No.5 Reactor / No.1 Reactor,11,114,3,12,33,12,nrthmk nmkin_1 nmkin_2 smkin_1 smkin_2,,
+122,nmkin_2,No.5 Reactor / No.1 Reactor,8,114,2,13,27,13,nrthmk,,308:1st Ray + Mono Drive 309:1st Ray 310:Grunt 311:1st Ray + Grunt 312:1st Ray 313:Grunt
+123,nmkin_3,No.5 Reactor / No.1 Reactor,14,114,2,14,27,14,nrthmk,,316:Grunt + Mono Drive 317:Grunt + Mono Drive 318:Grunt
+124,nmkin_4,No.5 Reactor / No.1 Reactor,9,114,1,27,27,,nrthmk,,320:Sweeper 321:Grunt + Sweeper 322:Grunt + Sweeper
+125,nmkin_5,No.5 Reactor / No.1 Reactor,10,114,5,15,123,15 27 123 127,nrthmk,324:Guard Scorpion,
+126,southmk1,No.5 Reactor,11,45,0,,,,southmk2,,
+127,southmk2,,9,45,0,,,140,chrin_1b,364:Air Buster,
+128,smkin_1,,12,0,2,127,128,128,,,344:Special Combatant 345:Proto Machinegun 346:Proto Machinegun + Special Combatant 347:Blood Taste + Special Combatant 348:Blood Taste
+129,smkin_2,No.5 Reactor,7,114,0,,,,,,352:Smogger + Special Combatant 353:Proto Machinegun + Smogger 354:Special Combatant 355:Smogger
+130,smkin_3,No.5 Reactor,11,114,0,,,,,,352:Smogger + Special Combatant 353:Proto Machinegun + Smogger 354:Special Combatant 355:Smogger
+131,smkin_4,No.5 Reactor / No.1 Reactor,10,114,1,27,27,,nrthmk,,356:Proto Machinegun 357:Blood Taste + Smogger 358:Blood Taste + Smogger
+132,smkin_5,No.5 Reactor,9,114,5,15,123,15 123 127,nrthmk nvmkin1,324:Guard Scorpion,356:Proto Machinegun 357:Blood Taste + Smogger 358:Blood Taste + Smogger
+133,md8_1,Sector 8,8,5,2,33,45,36,,,
+134,md8_2,,9,14,2,36,39,39,,,
+135,md8_3,,14,5,0,,,,,,
+136,md8_4,,7,5,1,33,33,,md8_1,,
+137,md8brdg,Sector 8,20,13,1,39,39,,cargoin,328:MP 329:MP 330:MP,
+138,cargoin,Last Train from Midgar,16,35,2,48,108,48,tin_1,,
+139,tin_1,Inside Train / Last Train from Midgar,42,108,3,48,108,51,cargoin tin_2 rootmap mds7st3 tunnel_1,,
+140,tin_2,Inside Train,32,36,0,,,,tin_4 tunnel_1,,
+141,tin_3,Inside Train,22,45,0,,,,tunnel_1,,
+142,tin_4,Inside Train,30,47,0,,,,tin_3 tin_4 tunnel_1,,
+143,rootmap,Last Train from Midgar,14,31,0,,,,tin_1 mds7st3,,
+144,mds7st1,Train Graveyard,23,9,1,212,212,212,colne_b3,,392:Mono Drive 393:Guard Hound 394:Mono Drive 395:Sweeper 396:Cripshay + Deenglow 397:Deenglow 398:Ghost 399:Deenglow + Ghost
+145,mds7st2,Train Graveyard,23,9,2,69,212,,,,392:Mono Drive 393:Guard Hound 394:Mono Drive 395:Sweeper 397:Deenglow 398:Ghost 399:Deenglow + Ghost 400:Eligor 401:Deenglow
+146,mds7st3,Sector 7 Station,23,51,5,63,251,63,tin_1 mds7st32,,
+147,mds7st32,,16,3,1,251,251,253,mds7st3 ealin_12,,
+148,mds7_w1,Sector 7 Weapon Shop,12,22,1,108,108,,,,
+149,mds7_w2,Beginner's Hall / Sector 7 Slums,23,67,1,108,108,,,,
+150,mds7_w3,Sector 7 Slums,5,8,3,69,212,,,,
+151,mds7,Sector 7 Slums,32,82,6,63,108,84 90,mds7pb_1 nivl_e1,,
+152,mds7_im,Sector 7 Item Store,5,5,0,,,,,,
+153,min71,Johnny's Home,19,31,2,90,108,,,,
+154,mds7pb_1,7th Heaven,31,117,8,69,105,69 72 78 81 84 90 96 105 108,mds7pb_2 trackin nivl_e1,,
+155,mds7pb_2,AVALANCHE Hideout,21,50,0,,,78 105,whitebg2 mds7pb_1,,
+156,mds7plr1,Sector 7 Slums,24,53,6,63,221,215 221,mds7plr2,,
+157,mds7plr2,Sector 7 Mechanized Tower,22,1,1,215,215,218,mds7plr1,,
+158,pillar_1,,4,0,0,,,,,,404:Aero Combatant 405:Aero Combatant 406:Aero Combatant
+159,pillar_2,,11,0,0,,,,pillar_3,,404:Aero Combatant 405:Aero Combatant 406:Aero Combatant
+160,pillar_3,,13,0,0,,,236,mds6_22,412:Pyramid + Turks:Reno,
+161,tunnel_1,Winding Tunnel,6,35,0,,,,tunnel_1 tunnel_2 tunnel_3,,332:Rocket Launcher 333:Grashtrike 334:Grashtrike
+162,tunnel_2,Winding Tunnel,11,35,0,,,117,tunnel_1 sbwy4_1,,
+163,tunnel_3,Winding Tunnel,8,35,0,,,,tunnel_1,367:Special Combatant,
+164,sbwy4_1,4th Street Plate Int.,5,35,0,,,,sbwy4_4,,336:Chuse Tank + Grashtrike 337:Chuse Tank 338:Chuse Tank + Grashtrike
+165,sbwy4_2,4th Street Plate Int.,2,35,0,,,,sbwy4_3 sbwy4_5,,
+166,sbwy4_3,4th Street Plate Int.,7,35,0,,,,sbwy4_2 sbwy4_5 sbwy4_6,,336:Chuse Tank + Grashtrike 337:Chuse Tank 338:Chuse Tank + Grashtrike
+167,sbwy4_4,Lower Sector 4 Plate,8,35,0,,,,sbwy4_1 sbwy4_5,,340:Rocket Launcher 341:Blugu + Rocket Launcher 342:Blugu + Rocket Launcher
+168,sbwy4_5,Lower Sector 4 Plate,7,35,0,,,,sbwy4_2 sbwy4_3 sbwy4_4,,340:Rocket Launcher 341:Blugu + Rocket Launcher 342:Blugu + Rocket Launcher
+169,sbwy4_6,Lower Sector 4 Plate,9,35,0,,,,smkin_2 sbwy4_3,,340:Rocket Launcher 341:Blugu + Rocket Launcher 342:Blugu + Rocket Launcher
+170,mds5_5,Slum Outskirts,12,177,4,335,1195,341,,,
+171,mds5_4,Sector 5 Slum,9,15,0,,,,mds5_2,,
+172,mds5_3,Sector 5 Slum,8,7,1,173,173,176,mds6_1,,376:Whole Eater 377:Hedgehog Pie + Whole Eater 378:Vice
+173,mds5_2,Sector 5 Slum,10,16,5,158,1008,,,,376:Whole Eater 377:Hedgehog Pie + Whole Eater 378:Vice
+174,min51_1,House 1f.,9,15,6,185,1008,,,,
+175,min51_2,House 2f.,9,15,2,236,1008,,,,
+176,mds5_dk,Earthen Pipe,8,7,2,236,305,,,,
+177,mds5_1,Sector 5 Slum,16,18,5,173,1008,,mds5_dk,,
+178,mds5_w,Weapon Store,10,8,4,173,1008,,,,
+179,mds5_i,Item Store,6,3,1,236,236,,,,
+180,mds5_m,Materia store,9,5,2,236,1008,,,,
+181,church,Church,9,15,1,155,155,158,mds5_4,,
+182,chrin_1a,church in the slums,11,30,2,158,673,143 146 149,chrin_1b chrin_2,,
+183,chrin_1b,church in the slums,12,82,0,,,,chrin_1a chrin_2,,
+184,chrin_2,Inside the Church,14,32,2,152,155,152,chrin_3a,372:MP 373:Guard Hound 374:Guard Hound + MP,368:Hedgehog Pie 369:Hedgehog Pie
+185,chrin_3a,Church Roof,3,32,0,,,,chrin_3b,,368:Hedgehog Pie 369:Hedgehog Pie
+186,chrin_3b,Church Roof,4,32,0,,,155,church,,368:Hedgehog Pie 369:Hedgehog Pie
+187,eals_1,{AERIS}'s House,15,10,5,170,385,173,ealin_1 ealin_12,,
+188,ealin_1,{AERIS}'s House,16,98,10,158,1008,164 251 255 257,mds7st3 eals_1 ealin_12,,
+189,ealin_12,,16,98,8,158,1008,164 251 255 257,mds7st3 eals_1 ealin_1,,
+190,ealin_2,{AERIS}'s House,17,22,5,164,257,167 170,ealin_2 niv_cl,,
+191,mds6_1,Sector 6,10,11,3,236,245,248,blackbgc mds6_2 mds6_22,,380:Hell House 381:Whole Eater
+192,mds6_2,Sector 6 park,10,32,1,176,176,179 183 185,,,
+193,mds6_22,Sector 6 park,11,50,2,236,341,239,mds6_1,,
+194,mds6_3,Sector 6,5,1,1,236,236,,mds6_2 mds6_22,,
+195,mrkt2,Wall Market,25,32,5,188,999,188,,,
+196,mkt_w,Weapon Store,10,24,3,192,999,,,,
+197,mkt_mens,Men's Hall,13,60,3,192,999,,,,
+198,mkt_ia,Item Store,17,10,2,192,999,,,,
+199,mktinn,Inn,18,7,3,192,999,,,,
+200,mkt_m,Materia Store,6,31,3,191,239,,,,
+201,mkt_s1,Boutique,12,55,2,191,192,192,,,
+202,mkt_s2,Diner,20,24,2,192,236,,,,
+203,mkt_s3,Pharmacy,9,9,2,192,236,,,,
+204,mktpb,Bar,17,38,2,192,236,,,,
+205,mrkt1,Wall Market,20,13,3,192,257,,,,
+206,colne_1,Corneo Hall,16,21,2,190,192,191,colne_2,,
+207,colne_2,"Corneo Hall,1f.",15,13,2,192,197,,,,
+208,colne_3,"Corneo Hall,2f.",19,21,0,,,,,384:Corneo's Lackey 385:Corneo's Lackey + Scotch,
+209,colne_4,Torture Room,24,71,0,,,197,,,
+210,colne_5,"Corneo Hall,2f.",15,17,0,,,,colne_3 colne_6,,
+211,colne_6,"Corneo Hall,2f.",20,66,0,,,203,blin70_1,,
+212,colne_b1,Sewer,14,228,2,206,209,209,colne_b3,386:Aps,388:Ceasar 389:Ceasar + Sahagin 390:Sahagin 391:Sahagin
+213,colne_b3,Sewer,5,228,0,,,,mds7st1,,388:Ceasar 389:Ceasar + Sahagin 390:Sahagin 391:Sahagin
+214,mrkt3,Honey Bee Inn,22,63,5,188,1008,190,onna_4,,
+216,onna_2,Honey Bee Inn,11,32,0,,,,,,
+218,onna_4,Honey Bee Inn,26,47,0,,,,onna_5 onna_52,,
+219,onna_5,Honey Bee Inn,13,52,0,,,,onna_4,,
+220,onna_52,Honey Bee Inn,19,95,0,,,,onna_4,,
+222,mrkt4,Wall Market,11,14,4,192,999,,wcrimb_1,,
+223,wcrimb_1,Plate Section,37,11,0,,,,mrkt4 wcrimb_2,,
+224,wcrimb_2,Plate Section,14,11,0,,,,wcrimb_1,,
+225,md0,sector 0,11,1,1,1008,1008,,sinbil_1 tunnel_4,,
+226,roadend,Outside Plates,11,177,0,,,335,mds5_5,,
+227,sinbil_1,Shinra Bldg.,17,14,1,1008,1008,,,,416:Grenade Combatant 417:Grenade Combatant
+228,sinbil_2,Shinra Bldg.,10,1,0,,,,,,
+229,blinst_1,Shinra Bldg. Stairs,11,7,1,1008,1008,,sinbil_2 blinst_2,,
+230,blinst_2,Shinra Bldg. Stairs,18,45,1,1008,1008,,blinst_1 blinst_2 blinst_3,,
+231,blinst_3,Shinra Bldg. Stairs,11,3,0,,,,blinst_2 blin59,,
+232,blinele,Elevator,26,18,1,263,263,,blin1 blin59,416:Grenade Combatant 417:Grenade Combatant 419:Mighty Grunt 420:Mighty Grunt 424: + Hammer Blaster 425:Sword Dance 427:Sword Dance 436:Moth Slasher,
+233,eleout,Outside Elevator,15,174,3,263,311,263 290 314,blin1 blin59 blin60_1 blin61 blin62_1 blin63_1 blin64 blin65_1 blin66_1 blin69_1 blin70_1 blin70_3,460:Hundred Gunner,
+234,blin1,Shinra Bldg. 1f. lobby,39,34,3,257,326,260 332,blackbgb blinele eleout,415:Grenade Combatant,416:Grenade Combatant 417:Grenade Combatant
+235,blin2,Shinra Bldg. 2f. Lobby,21,2,1,326,326,,blinele,,416:Grenade Combatant 417:Grenade Combatant 419:Mighty Grunt
+236,blin2_i,Shinra Bldg. 2f. Shop,19,22,2,326,1008,,,,
+237,blin3_1,Shinra Bldg. 3f. Lobby,15,3,1,326,326,,blinele,,416:Grenade Combatant 417:Grenade Combatant 419:Mighty Grunt
+238,blin59,Shinra Bldg. 59f.,25,9,2,260,263,260,blinst_3 blinele eleout,422:Mighty Grunt,419:Mighty Grunt 420:Mighty Grunt 421:Mighty Grunt
+239,blin60_1,Shinra Bldg. 60f.,46,14,1,1008,1008,,eleout blin60_1 blin60_2,423:Mighty Grunt,
+240,blin60_2,Shinra Bldg. 60f.,14,14,0,,,,eleout blin60_1,,
+241,blin61,Shinra Bldg. 61f.,21,14,1,1008,1008,,eleout,,
+242,blin62_1,Shinra Bldg. 62f.,27,51,1,1008,1008,,eleout,,
+243,blin62_2,Shinra Bldg. 62f.,31,35,0,,,,,,
+244,blin62_3,,31,31,0,,,,,,
+245,blin63_1,Shinra Bldg. 63f.,48,24,1,1008,1008,,eleout blin63_t,,424: + Hammer Blaster 425:Sword Dance 426: + Hammer Blaster 427:Sword Dance
+246,blin63_t,Shinra Bldg. 63f.,11,1,1,1008,1008,,blin63_1,,
+247,blin64,Shinra Bldg. 64f.,47,24,1,1008,1008,,eleout,,
+248,blin65_1,Shinra Bldg. 65f.,21,4,1,1008,1008,,eleout,,424: + Hammer Blaster 425:Sword Dance 426: + Hammer Blaster 427:Sword Dance 428:Sword Dance
+249,blin65_2,Shinra Bldg. 65f.,16,6,1,1008,1008,,,,
+250,blin66_1,,43,0,5,264,302,264 270 271,eleout blin67_1 blin671b,,
+251,blin66_2,,10,0,2,266,269,266 267,blin66_5,,
+252,blin66_3,,4,0,0,,,,blin66_4,,
+253,blin66_4,,3,0,1,267,267,269,blin66_3 blin66_5,,
+254,blin66_5,,10,0,2,266,267,,blin66_2 blin66_4,,
+255,blin66_6,Conference Room,13,40,3,1104,1591,1106 1586 1593,fship_23 fship_24 canon_2,,
+256,blin67_1,,31,0,6,271,302,272 273 280,blin67_3 blin68_1,,432:Laser Cannon + Machine Gun + Warning Board 436:Moth Slasher 437:SOLDIER:3rd 438:Moth Slasher
+257,blin671b,,28,0,3,272,335,,blin673b blin68_1,,444:Brain Pod 445:Brain Pod 446:Vargid Police
+258,blin67_2,,12,0,4,293,305,296 302,blin67_1 blin671b,,
+259,blin67_3,,9,0,3,273,284,275 278,blin67_4,,432:Laser Cannon + Machine Gun + Warning Board 436:Moth Slasher 437:SOLDIER:3rd 438:Moth Slasher
+260,blin673b,,7,0,1,335,335,,,,444:Brain Pod 445:Brain Pod 446:Vargid Police
+261,blin67_4,,2,0,0,,,,blin67_3,,
+262,blin68_1,,29,0,4,278,1008,,blin67_1 blin671b blin68_2,,433:Laser Cannon + Machine Gun + Warning Board 440:SOLDIER:3rd 441:Moth Slasher 442:Moth Slasher + SOLDIER:3rd 448:Zenene 449:Vargid Police + Zenene 450:Brain Pod + Zenene
+263,blin68_2,,11,0,3,278,302,284,blin68_2,456:Sample:H0512 + Sample:H0512-opt,433:Laser Cannon + Machine Gun + Warning Board 440:SOLDIER:3rd 441:Moth Slasher 442:Moth Slasher + SOLDIER:3rd 448:Zenene 449:Vargid Police + Zenene 450:Brain Pod + Zenene
+264,blin69_1,Shinra Bldg. 69f.,36,177,8,284,1008,311 323 326,eleout blin1,,449:Vargid Police + Zenene 450:Brain Pod + Zenene 452:Zenene 453:Vargid Police
+266,blin70_1,Shinra Bldg. 70f.,15,177,5,203,320,,blin70_2,,
+267,blin70_2,Shinra Bldg. 70f.,14,177,5,203,341,206 293 305,colne_b1 blin67_2 blin70_1,,
+268,blin70_3,Shinra Bldg. 70f.,10,177,3,305,320,308 320,blin69_1,464: + Dark Nation + Rufus,
+269,blin70_4,Shinra Building 70f,8,17,3,1566,1578,1566 1572 1578,fship_12 loslake1 md8_52,,
+270,niv_w,Nibelheim Item Store,15,18,3,384,999,,nivl nivl_3,,
+271,nvmin1_1,Nibelheim House,20,18,1,384,384,,nvmin1_2 nivl_3,,
+272,nvmin1_2,,9,6,2,384,677,,,,
+273,nivinn_1,Nibelheim Inn,22,40,3,384,794,,nivinn_2 nivl_3,,
+274,nivinn_2,Nibelheim Inn,13,10,1,384,384,,nivl,,
+275,nivinn_3,,4,0,0,,,,sininb33,,
+276,niv_cl,{CLOUD}'s House,12,47,3,167,999,170,ealin_2 nivl nivl_3,,
+277,trackin,,13,31,2,96,344,347 350,whitebg2 elminn_2,292:Dragon,
+278,trackin2,,10,38,1,1186,1186,1184,nivgate2,292:Dragon,
+279,nivgate,,20,49,1,384,384,353,nivl_b1 elminn_2,,
+280,nivgate2,,12,40,2,1126,1184,1126 1181,nivl_2 nivl_b12 zmind2,,
+281,nivgate3,,4,0,0,,,,,,
+282,nivl,Nibelheim,16,63,1,370,370,,sinin1_1 mtnvl2,,
+283,nivl_2,,7,5,2,347,1181,1182,trackin nvmkin22,,
+284,nivl_3,Nibelheim,21,30,2,384,677,,,,
+285,nivl_4,,7,0,0,,,,,,
+286,niv_ti1,{TIFA}'s House,21,11,2,384,677,,nivl nivl_3 niv_ti2,,
+287,niv_ti2,{TIFA}'s House,22,43,5,384,796,,niv_ti1,,
+288,niv_ti3,{TIFA}'s House,11,16,1,1174,1174,1174 1178,niv_ti4 mtnvl2,,
+289,niv_ti4,{TIFA}'s House,11,34,1,1172,1172,1172 1176,niv_ti3,,
+290,nivl_b1,Nibelheim,21,25,1,384,384,,nivl_b2 nivl_b22,,
+291,nivl_b12,Nibelheim,21,25,2,384,1184,1186,nivl_b2 nivl_b22 nvmkin22,,
+292,nivl_b2,Nibelheim,11,84,1,384,384,,blackbg9,,
+293,nivl_b22,Nibelheim,14,84,2,770,1008,770,nivl_e3 trnad_51,,
+294,nivl_e1,,7,27,0,,,87,mds7pb_1,,
+295,nivl_e2,,6,14,0,,,1130,zmind3,,
+296,nivl_e3,Nibelheim,4,1,0,,,,nivl_b22,,
+297,sinin1_1,"Mansion, 1f.",9,182,2,376,385,,nivl_3 nivl_b1,,556:Dorky Face 557:Dorky Face 558:Chain + Ghirofelgo
+298,sinin1_2,"Mansion, 1f.",16,72,1,385,385,,,,556:Dorky Face 557:Dorky Face 558:Chain + Ghirofelgo
+299,sinin2_1,"Mansion, 2f.",13,182,2,372,385,373,,576:Lost Number,558:Chain + Ghirofelgo 560:Dorky Face 561:Dorky Face + Mirage 562:Jersey
+300,sinin2_2,"Mansion, 2f.",11,72,3,370,385,,,,558:Chain + Ghirofelgo 560:Dorky Face 561:Dorky Face + Mirage 562:Jersey
+301,sinin3,"Mansion, Hidden Steps",5,177,1,385,385,,,,558:Chain + Ghirofelgo 564:Black Bat + Dorky Face 565:Dorky Face + Mirage
+302,sininb1,"Mansion, Basement",12,165,2,385,1604,,,,567:Black Bat 568:Black Bat 569:Black Bat 572:Yang + Ying + Ying/Yang 573:Yang + Ying + Ying/Yang
+303,sininb2,"Mansion, Basement",19,165,3,384,1195,,sininb32,,567:Black Bat 568:Black Bat 569:Black Bat 572:Yang + Ying + Ying/Yang 573:Yang + Ying + Ying/Yang
+304,sininb31,"Mansion, Basement",6,182,4,370,385,372 374,sininb41,,
+305,sininb32,"Mansion, Basement",13,72,1,1199,1199,,sininb42 sininb36,,
+306,sininb33,,7,7,0,,,,zz4 blackbgc,,
+307,sininb41,"Mansion, Basement",9,182,5,370,385,371 376,sinin2_1 sininb31,,
+308,sininb42,"Mansion, Basement",6,182,0,,,,,,
+309,sininb51,"Mansion, Basement",4,182,2,374,385,375,sininb41,,
+310,sininb52,"Mansion, Basement",8,72,0,,,,,,
+311,mtnvl2,Mt. Nibel,23,177,3,357,1178,357,nivl mtnvl3,,580:Kyuvilduns 581:Kyuvilduns 582:Kyuvilduns + Sonic Speed 583:Sonic Speed
+312,mtnvl3,Mt. Nibel,16,228,4,358,1178,359,whitebg3 mtnvl4,,584:Sonic Speed 585:Sonic Speed 586:Zuu
+313,mtnvl4,Mt. Nibel,10,228,2,361,385,361,,,580:Kyuvilduns 581:Kyuvilduns 582:Kyuvilduns + Sonic Speed 583:Sonic Speed
+314,mtnvl5,Mt. Nibel,9,177,2,363,385,,mtnvl6,,588:Sonic Speed + Twin Brain 589:Twin Brain 590:Sonic Speed 591:Zuu 592:Screamer + Twin Brain
+315,mtnvl6,Nibel Reactor,7,182,2,363,385,364,,,588:Sonic Speed + Twin Brain 589:Twin Brain 590:Sonic Speed 591:Zuu 592:Screamer + Twin Brain
+316,mtnvl6b,Nibel Reactor,9,182,5,365,1182,365 380 1184,trackin2 nvmkin1,,588:Sonic Speed + Twin Brain 589:Twin Brain 590:Sonic Speed 591:Zuu 592:Screamer + Twin Brain
+317,nvdun1,Mt. Nibel,31,182,1,385,385,,,595:Materia Keeper,596:Kyuvilduns 597:Twin Brain 598:Kyuvilduns + Twin Brain 599:Dragon
+318,nvdun2,Mt. Nibel Cave,12,182,2,362,385,362,,,596:Kyuvilduns 597:Twin Brain 598:Kyuvilduns + Twin Brain 599:Dragon
+319,nvdun3,Mt. Nibel Cave,16,182,3,363,1182,,mtnvl6b nvdun31,,
+320,nvdun31,Mt. Nibel Cave,13,182,2,363,385,363,mtnvl5,,
+321,nvdun4,Mt. Nibel Cave,7,182,1,385,385,,,,596:Kyuvilduns 597:Twin Brain 598:Kyuvilduns + Twin Brain 599:Dragon
+322,nvmkin1,Nibel Reactor(Int.),18,177,6,120,1186,120 366 381 1188,smkin_5 zmind3,,
+323,nvmkin21,Nibel Reactor(Int.),11,182,10,366,385,367 368 369 382 383,blackbg9 nvmkin23,,
+324,nvmkin22,Nibel Reactor(Int.),16,182,3,381,1186,368,nvmkin1 nvmkin32,,
+325,nvmkin23,,7,172,0,,,,nvmkin21,,
+326,nvmkin31,Nibel Reactor(Int.),3,182,2,382,384,,nvmkin32,,
+327,nvmkin32,Nibel Reactor(Int.),12,182,2,383,1182,384,nvdun3 elminn_2,,
+328,elm_wa,Weapon Store,14,225,1,999,999,,,,
+329,elm_i,Item Store,9,225,1,999,999,,,,
+330,elmpb,Bar,13,225,2,999,1603,,,,
+331,elminn_1,Inn: 1f,12,225,3,384,999,,,,
+332,elminn_2,Inn: 2f / {CLOUD}'s Past,16,225,8,341,999,344 355 385,trackin nivgate nivl elminn_1,,
+333,elmin1_1,House: 1f,9,225,2,999,1603,,,,
+334,elmin1_2,House: 2f,7,225,1,999,999,,,,
+335,elm,Kalm,23,225,8,344,1603,,elmtow,,
+336,elmin2_1,House: 1f,10,225,2,999,1576,,,,
+337,elmin2_2,House: 2f,10,225,1,999,999,,,,
+338,elmin3_1,House: 1f,7,225,1,999,999,,,,
+339,elmin3_2,House: 2f,10,225,1,999,999,,,,
+340,elmtow,Rear Tower (Pagoda),9,225,1,999,999,,elm,,
+341,elmin4_1,House: 1f,10,225,1,999,999,,,,
+342,elmin4_2,House: 2f,11,225,2,796,999,,,,
+343,farm,Chocobo farm,11,9,1,1008,1008,,,,
+344,frmin,Chocobo farm,7,34,2,566,1008,,,,
+345,frcyo,Chocobo Ranch,23,131,1,1008,1008,,wm2,,
+347,fr_e,,12,172,1,1568,1568,1570,blin70_4,980:Diamond Weapon,
+348,sichi,Marshes,23,7,0,,,,wm31,,
+349,psdun_1,Mythril Mine,12,58,1,387,387,387,,,472:Madouge 473:Crawler + Madouge 474:Castanets
+350,psdun_2,Mythril Mine,9,58,1,387,387,,,,472:Madouge 473:Crawler + Madouge 474:Castanets
+351,psdun_3,Mythril Mine,9,58,0,,,,,,476:Ark Dragon + Crawler 477:Castanets 478:Ark Dragon + Castanets + Crawler
+352,psdun_4,Mythril Mine,8,58,0,,,,,,476:Ark Dragon + Crawler 477:Castanets 478:Ark Dragon + Castanets + Crawler 479:Crawler
+353,condor1,Base of Fort Condor,11,8,1,409,409,,,,
+354,condor2,Entrance to Fort Condor,14,54,0,,,1116,convil_1,,
+355,convil_1,Fort Condor,32,159,3,523,1102,1116,condor2,,
+356,convil_2,Watch Room,23,94,1,1102,1102,,condor2 convil_4,288:CMD.Grand Horn 289:CMD.Grand Horn 290:CMD.Grand Horn,
+358,convil_4,top of the mountain,16,3,0,,,,convil_2,,
+359,junon,Upper Junon,9,1,0,,,,junonr1,,
+360,junonr1,Upper Junon,26,13,3,406,1250,,junonr4 junone22,,
+361,junonr2,Upper Junon,23,25,1,406,406,,junonr3 junin1a,,
+362,junonr3,Upper Junon,8,1,1,1008,1008,,,,
+363,junonr4,Upper Junon,31,27,0,,,,junonr2 junin1,,
+364,jun_wa,Weapon Store,9,3,2,406,1008,,,,
+365,jun_i1,Item Store,9,4,2,406,1008,,,,
+366,jun_m,Materia Store,9,3,2,406,1008,,,,
+367,junmin1,Barracks,13,13,3,406,1197,,junpb_2,,
+368,junmin2,Barracks,17,4,2,406,1008,,,,
+369,junmin3,Barracks,15,10,2,406,1008,,,,
+370,junonl1,Lower Junon,27,7,3,406,1008,,wm6 junonr1 jundoc1a jundoc1b,,
+371,junonl2,Lower Junon,15,3,1,406,406,,junonl3,,
+372,junonl3,Lower Junon,8,1,1,1008,1008,,,,
+373,jun_w,Weapon Store,11,6,2,406,1008,,,,
+374,jun_a,Item Store,10,3,2,406,1008,,,,
+375,jun_i2,Materia Store,15,12,2,406,1008,,,,
+376,juninn,Junon Inn,16,9,2,406,1008,,,,
+377,junpb_1,Shinra Member's Bar,17,10,3,406,1008,,,,
+378,junpb_2,Respectable Inn,18,39,1,406,406,,junmin1,,
+379,junpb_3,Bar,15,11,2,406,1008,,,,
+380,junmin4,Barracks,12,7,2,406,1008,,,,
+381,junmin5,Barracks,10,6,2,406,1008,,,,
+382,jundoc1a,Junon Dock,26,40,3,406,1008,409,wm35 wm37,,
+383,jundoc1b,Junon Dock,10,5,0,,,,,,
+384,junair,Airport,23,72,10,403,1318,403,junair junair2,,744:Pedestal + Roulette Cannon 745:SOLDIER:2nd 746:Pedestal + Roulette Cannon + SOLDIER:2nd 940:SOLDIER:2nd 941:Pedestal + Roulette Cannon 942:SOLDIER:2nd
+385,junair2,Airport,15,165,4,400,1022,,junbin5,,
+386,junin1,Junon Airport Path,22,18,8,406,1566,,junon junele2,,
+387,junin1a,Locker Room,22,75,4,406,1250,406,junonr1,,
+388,junele1,Elevator,13,8,1,1253,1253,,junin3 junin4,763:Submarine Crew,
+389,junin2,Path 2,19,174,6,406,1022,1003,junone2,,748:Slalom 749:Slalom 750:Death Machine 944:SOLDIER:2nd 945:SOLDIER:2nd
+390,junin3,Junon Path,23,9,6,406,1253,1253,junele1,,748:Slalom 749:Slalom 750:Death Machine
+391,junele2,Elevator,10,1,1,406,406,,junin1 junin6 junin7,,
+392,junin4,Junon Path,19,10,4,1008,1289,1256,junele1,763:Submarine Crew,748:Slalom 749:Slalom 750:Death Machine
+393,junin5,Junon Path,8,1,0,,,,,,753:Death Machine 754:SOLDIER:2nd + Slalom 756:Guard System + Quick Machine Gun + Rocket Launcher 757:Guard System + Quick Machine Gun + Rocket Launcher
+394,junin6,Junon Path,11,2,0,,,,junele2,,753:Death Machine 754:SOLDIER:2nd + Slalom 756:Guard System + Quick Machine Gun + Rocket Launcher 757:Guard System + Quick Machine Gun + Rocket Launcher
+395,junin7,Elevator,12,1,1,406,406,,junele2 spgate ujunon1,,
+396,junbin1,"Junon Branch, 1f.",6,174,2,1001,1008,1002,,,
+397,junbin12,"Junon Branch, 2f.",9,174,3,1000,1022,1001,,,
+398,junbin21,Office,12,174,4,999,1014,1000,junbin22,,
+399,junbin22,Office,11,174,3,1012,1016,1014,junbin5 junone3,,
+400,junbin3,Dr.'s Office,12,174,1,999,999,,junbin21,,
+401,junbin4,Press Room,20,174,7,1003,1022,1010 1012 1015,junbin21 junbin5,947:Attack Squad,
+402,junbin5,Gas Room,17,174,4,1003,1017,1008 1017,junbin4 junone5,,
+404,junsbd1,Submarine Dock,19,5,0,,,,subin_2a,,761:SOLDIER:2nd 762:SOLDIER:2nd
+405,subin_1a,,26,15,0,,,,wm53 wm55,786:Captain + Submarine Crew,
+406,subin_1b,Submarine Bridge,30,107,2,1283,1286,1283 1286 1299,wm41 wm55 subin_3,786:Captain + Submarine Crew,
+407,subin_2a,Inside Submarine,19,8,0,,,,,784:Submarine Crew,
+408,subin_2b,Inside Submarine,21,7,2,1280,1283,1280,,785:Submarine Crew,
+409,subin_3,Inside Submarine,15,11,0,,,,ujunon5,,
+411,junone2,Aljunon,14,174,4,1014,1022,1016,junair junbin21,,744:Pedestal + Roulette Cannon 745:SOLDIER:2nd 746:Pedestal + Roulette Cannon + SOLDIER:2nd 940:SOLDIER:2nd 941:Pedestal + Roulette Cannon 942:SOLDIER:2nd
+412,junone3,Aljunon,7,174,2,1014,1015,,junone2,,
+413,junone4,Canon,4,174,0,,,,,,
+414,junone5,"Junon branch,(ext.)",12,174,0,,,,junone6,,
+415,junone6,Canon,4,174,1,1020,1020,1020,,,
+416,junone7,Canon,14,165,1,1022,1022,1022,fship_1,,
+417,spgate,Underwater Reactor,7,254,0,,,,,,
+418,spipe_1,Underwater Reactor,11,254,0,,,,,,764:Diver Nest 765:Ghost Ship 766:Corvette
+419,spipe_2,Underwater Reactor,13,254,1,1299,1299,,,,764:Diver Nest 765:Ghost Ship 766:Corvette
+420,semkin_1,Underwater Reactor,10,254,0,,,,spipe_2 semkin_2,,
+421,semkin_2,Underwater Reactor,5,254,0,,,,semkin_1,,772:Gun Carrier + Senior Grunt 773:Hard Attacker 774:Hard Attacker + Senior Grunt 776:Guardian + Guardian(Left) + Guardian(Right)
+422,semkin_8,Underwater Reactor,8,254,0,,,,,,772:Gun Carrier + Senior Grunt 773:Hard Attacker 774:Hard Attacker + Senior Grunt 776:Guardian + Guardian(Left) + Guardian(Right)
+423,semkin_3,Underwater Reactor,11,254,0,,,,,768:Submarine Crew 769:Submarine Crew 770:Submarine Crew 771:Underwater MP,
+424,semkin_4,Underwater Reactor,18,254,0,,,,semkin_5,,772:Gun Carrier + Senior Grunt 773:Hard Attacker 776:Guardian + Guardian(Left) + Guardian(Right) 777:Guardian + Guardian(Left) + Guardian(Right)
+425,semkin_5,Underwater Reactor,18,254,0,,,,semkin_6,780:Carry Armor + Left Arm + Right Arm,
+426,semkin_6,Underwater Reactor,16,254,0,,,,,,
+427,semkin_7,Underwater Reactor,11,254,0,,,,subin_2b,769:Submarine Crew,
+428,ujunon1,Under Junon,24,71,14,388,1566,,junin7 jumin,,
+429,ujunon2,Dolphin Offing,15,33,5,388,1008,388 400,wm37 ujunon3 ujunon4,480:Bottomswell + Waterpolo,
+430,ujunon3,,21,2,0,,,,junair2 ujunon2,,
+431,prisila,Priscilla's House,13,20,3,1022,1199,,,,
+432,ujun_w,Weapon Store,7,3,0,,,,,,
+433,jumin,Under Junon,12,34,4,388,1008,394,,,
+434,ujunon4,Dolphin Offing,18,23,0,,,,ujunon1,,
+435,ujunon5,,18,18,0,,,,ujunon1,,
+436,ship_1,Cargo Ship,25,38,1,415,415,,ship_2,,
+437,ship_2,Cargo Ship,8,8,1,415,415,415,ship_1,,
+438,shpin_22,,10,1,0,,,,,,
+439,shpin_2,Cargo Ship,17,26,1,415,415,,,,484:Scrutin Eye 485:Marine 486:Marine
+440,shpin_3,Cargo Ship,20,56,0,,,,wm36,488:Jenova‧BIRTH,484:Scrutin Eye 485:Marine 486:Marine
+441,del1,Costa del Sol Harbor,20,69,3,422,1008,,wm38 del12,,
+442,del12,,16,69,0,,,,del2,,
+443,del2,Costa del Sol,24,55,4,422,1008,,,,
+444,delinn,Costa del Sol Inn,15,45,2,422,1008,,,,
+445,delpb,Bar,16,20,3,469,1008,,,,
+446,delmin1,{CLOUD}'s Villa / House for Sale,15,23,1,1008,1008,,,,
+447,delmin12,Cellar,11,9,0,,,,,,
+448,delmin2,Johnny's New Home,16,27,4,422,1197,,,,
+449,del3,Costa del Sol,18,88,2,422,1008,,,,
+450,ncorel,North Corel,26,63,7,427,1199,427,ropest,,
+451,ncorel2,North Corel,21,40,2,1022,1199,,ropest,,
+452,ncorel3,North Corel,26,18,0,,,,ncoinn ropest,,
+453,ncoin1,North Corel,9,8,2,1022,1102,,ncorel ncorel2,,
+454,ncoin2,North Corel,9,11,0,,,,ncorel,,
+455,ncoin3,North Corel,16,11,0,,,,ncorel ncorel2,,
+456,ncoinn,North Corel Inn,13,9,0,,,,ncorel ncorel2,,
+457,ropest,Ropeway Station,17,36,4,430,1199,433,ncorel ncorel2 corel2 gldst,,
+458,mtcrl_0,Mt. Corel,14,12,2,422,427,422,,,492:Needle Kiss 493:Needle Kiss + Search Crown 494:Bagnadrana + Needle Kiss + Search Crown
+459,mtcrl_1,Mt. Corel,13,1,0,,,,,,492:Needle Kiss 493:Needle Kiss + Search Crown 494:Bagnadrana + Needle Kiss + Search Crown
+460,mtcrl_2,Corel Reactor,18,254,1,1110,1110,,zcoal_1,813:Attack Squad,496:Bloatfloat 497:Bagnadrana 498:Bloatfloat 499:Bagnadrana + Bloatfloat
+461,mtcrl_3,Mt. Corel,20,24,2,448,451,454,corel1 jailin2,,500:Bomb 501:Bomb 502:Bloatfloat + Cokatolis 503:Cokatolis
+462,mtcrl_4,Mt. Corel,34,10,1,1008,1008,,mtcrl_5,,504:Cokatolis + Needle Kiss 505:Cokatolis
+463,mtcrl_5,Mt. Corel,7,3,0,,,,mtcrl_4,,
+464,mtcrl_6,Mt. Corel,23,22,1,427,427,,mtcrl_6 mtcrl_8,,508:Search Crown 509:Bagnadrana + Needle Kiss 510:Needle Kiss + Search Crown
+465,mtcrl_7,Mt. Corel,11,7,0,,,,,,
+466,mtcrl_8,"{AERIS}
+“How cute!!”",12,18,1,427,427,,mtcrl_6,512:Cokatolis,
+467,mtcrl_9,Mt. Corel,12,16,1,1008,1008,,ncorel ncorel2 ncorel3,,513:Bomb 514:Bagnadrana
+468,corel1,,6,3,0,,,451,mtcrl_3,,
+469,corel2,,15,5,0,,,430,corelin,,
+470,corel3,,19,4,0,,,430,ropest,,
+471,jail1,Corel Prison,25,29,5,445,463,446,jailin1 jail2 jail3 desert2,,516:2-Faced + Bandit 517:2-Faced + Bandit 518:2-Faced
+472,jailin1,Basement,8,2,0,,,,jail1,,520:2-Faced
+473,jail2,Corel Prison,28,24,2,457,463,,jail1 jailin3,,516:2-Faced + Bandit 517:2-Faced + Bandit 518:2-Faced
+474,jailpb,Prison Pub,8,2,0,,,,jail2,,
+475,jailin2,Mayor's Old House,13,35,3,446,457,448 457,mtcrl_3 jail2,,
+476,jailin3,,6,1,0,,,,jail2,,
+477,jailin4,Container,12,45,1,463,463,466,jail2 gldelev,,
+478,jail3,Corel Prison,14,3,0,,,,jail1 jail4 desert1 desert2,,516:2-Faced + Bandit 521:Death Claw 522:Bullmotor 523:Bullmotor + Death Claw
+479,jail4,Corel Prison,6,1,0,,,,jail3 dyne,,517:2-Faced + Bandit 521:Death Claw 522:Bullmotor 523:Bullmotor + Death Claw
+480,dyne,,13,66,1,457,457,463,jailin4,527:Dyne,
+481,desert1,,8,3,1,463,463,,wm15 jail3 desert1 desert2,,256:Cactuar 524:Land Worm
+482,desert2,Corel Desert,8,1,1,463,463,,wm15 jail1 jail3 jail4 desert1,,
+483,corelin,,14,11,0,,,,corel3,,
+484,astage_a,Event square,17,16,3,592,1008,,astage_b gldgate,,
+485,astage_b,,11,67,0,,,,gldgate,,
+486,jet,Speed square,19,38,4,440,1008,,,,
+487,jetin1,Platform,20,28,3,598,1197,,,,
+488,bigwheel,Round Square,14,38,5,592,1620,,bwhlin gldgate,,
+489,bwhlin,Inside the Ferris Wheel,14,67,1,592,592,595,bigwheel bwhlin2,,
+490,bwhlin2,Inside the Ferris Wheel,11,8,0,,,,bigwheel,,
+491,ghotel,Ghost Hotel,21,1,1,598,598,,astage_a jet bigwheel gldgate coloss games chorace,,
+492,ghotin_1,Hotel Lobby,22,18,2,598,1008,,,,
+493,ghotin_4,Hotel Lobby,20,68,1,601,601,589 604,ghotel ghotin_2,,
+494,ghotin_2,Hotel,17,24,2,589,601,592,ghotin_4 gldgate,,
+495,ghotin_3,Hotel Shop,12,2,1,598,598,,,,
+496,gldst,Ropeway Station,26,45,7,433,1197,436 586,ropest ghotin_4,,
+497,gldgate,Terminal Floor,15,55,6,436,598,439 440 598,astage_a jet jetin1 bigwheel ghotel gldinfo coloss games chorace crcin_1,,
+498,gldinfo,,3,10,0,,,,gldgate,,
+499,coloss,Battle Square,17,25,4,442,1008,,coloin2,,
+500,coloin1,Arena Lobby,24,82,4,566,1197,,clsin2_1,,
+501,coloin2,Arena Lobby,18,17,2,442,598,,clsin2_1,,
+502,clsin2_1,Arena,22,6,4,442,1008,,coloin1 clsin2_2 clsin2_3,95:Spencer 100:Joker 107:Flapbeat 117:Flapbeat 118:Flapbeat 119:Flapbeat + Spencer 182:Dual Horn 305:Mono Drive 310:Grunt 313:Grunt 325:Guard Hound 326:Guard Hound 327:Grashtrike 331:Chuse Tank 333:Grashtrike 525:Bullmotor 526:Bullmotor 604:Razor Weed 606:Bizarre Bug + Jayjujayme 609:Foulander 610:Foulander 613:Garuda 614:Garuda + Jayjujayme 617:Garuda 960:Sea Worm,
+503,clsin2_2,Dio's Museum,18,35,4,566,598,580 583,clsin2_1,,
+504,clsin2_3,,13,5,1,442,442,445,jail1,,
+505,games,Wonder Square,29,45,3,440,1008,442,astage_a jet bigwheel ghotel gldgate coloss chorace,,
+506,games_1,Building 1f.,21,55,2,598,1008,,,,
+507,games_2,Building 2f.,26,47,12,469,1299,,mogu_1,,
+508,mogu_1,,22,111,0,,,,games_2,,
+509,chorace,Chocobo Square,23,60,2,442,598,,,,
+510,chorace2,Chocobo Square,22,61,2,442,598,601,ghotin_2,,
+511,crcin_1,Ticket Office,31,101,2,598,1008,,chorace2,,
+512,crcin_2,Waiting Room,15,52,2,466,467,467 469,wm15,,
+513,gldelev,,5,3,0,,,,crcin_2,,
+514,gonjun1,Jungle,7,199,2,638,999,,,,528:Kimara Bug 529:Touch Me 530:Kimara Bug
+515,gonjun2,Jungle,14,199,3,520,999,,,539:Turks:Reno + Turks:Rude,528:Kimara Bug 529:Touch Me 530:Kimara Bug 532:Flower Prong
+516,gnmkf,Meltdown Reactor,4,199,1,999,999,,,,536:Heavy Tank
+517,gnmk,Meltdown Reactor,10,199,2,604,999,,,,536:Heavy Tank
+518,gongaga,Gongaga Village,21,199,4,638,1318,641,wm16 gonjun1,,
+519,gon_wa1,Weapons Store,9,199,0,,,,gon_wa2,,
+520,gon_wa2,Weapons Store,9,199,0,,,,gon_wa1,,
+521,gon_i,Item Store,9,199,0,,,,,,
+522,gninn,Inn,10,199,2,638,999,,,,
+523,gomin,Inn / Zack's Home,13,199,1,1116,1116,,,,
+524,goson,Mayor's Home,8,199,0,,,,,,
+525,cos_btm,Cosmo Canyon,31,69,7,475,1610,523,cos_btm2 cosmo,,
+526,cos_btm2,Cosmo Candle,18,56,2,493,514,502,cos_btm,,
+527,cosmo,Cosmo Canyon,15,1,0,,,,cos_btm,,
+528,cosmo2,,18,1,0,,,,bugin3,,
+529,cosin1,Cosmo Canyon,9,6,2,523,1008,,,,
+530,cosin1_1,Elder's Room,6,16,4,493,1610,,,,
+531,cosin2,Gate of Naught,19,10,3,502,1008,,cosin5 cos_top,,
+532,cosin3,"Pub ""Starlet""",15,26,4,493,1610,,cosmin6,,
+533,cosin4,Cosmo Canyon,4,1,0,,,,,,
+534,cosin5,Sealed Cave,16,3,1,514,514,,gidun_1,,
+535,cosmin2,Materia Shop,7,12,2,493,1008,,,,
+536,cosmin3,Cosmo Canyon,7,15,3,493,1610,,,,
+537,cosmin4,Nanaki's Room,11,11,4,493,1610,,,,
+538,cosmin6,Shildra Inn,12,2,0,,,,,,
+539,cosmin7,Item Store,10,9,1,1008,1008,,,,
+540,cos_top,Observatory,10,1,0,,,,cosin2 bugin2,,
+541,bugin1a,Observatory,17,53,9,493,1391,1391,fship_4 bugin1b bugin1c,,
+542,bugin1b,Observatory,15,24,0,,,,fship_4 bugin1a,,
+543,bugin1c,Observatory,17,34,0,,,493,bugin1a,,
+544,bugin2,Bugen Research Center,24,51,3,493,1610,,cos_btm2 cos_top,,
+545,bugin3,,6,1,0,,,,md_e1,,
+546,gidun_1,Cave of the Gi,25,13,0,,,,gidun_2,553:Gi Spector 554:Gi Spector,540:Heg 541:Sneaky Step 542:Heg + Sneaky Step
+547,gidun_2,Cave of the Gi,23,6,0,,,,gidun_1,,543:Sneaky Step 544:Sneaky Step 545:Heg
+548,gidun_4,Cave of the Gi,22,7,0,,,,gidun_2,551:Stinger,542:Heg + Sneaky Step 545:Heg 547:Gi Spector 548:Heg + Sneaky Step
+549,gidun_3,Cave of the Gi,18,9,0,,,514,,555:Gi Nattak + Soul Fire,
+550,seto1,Cet Wall,16,32,1,514,514,514,cos_btm2,,
+551,rckt2,Rocket Town,14,194,2,550,1299,,,,
+552,rckt3,,11,228,1,535,535,535,,,
+553,rkt_w,Weapons Store,18,194,2,999,1308,,rckt2 rckt,,
+554,rkt_i,Item Store,18,194,2,999,1308,,rckt2 rckt,,
+555,rktinn1,Shanghai Inn,16,194,5,560,1603,,rckt2 rckt,,
+556,rktinn2,Shanghai Inn,10,194,1,999,999,,,,
+557,rckt,Rocket Town,16,194,5,550,1299,553,rktsid,,
+558,rktsid,{CID}'s House / House,26,194,9,538,1308,550 557,rckt2 rckt3 rckt rcktin6 rckt32,,
+559,rktmin1,House,12,194,3,999,1308,,rckt2 rckt,,
+560,rktmin2,House,19,194,3,999,1308,,rckt2 rckt,,
+561,rcktbas1,Rocket Launching Pad,23,194,2,999,1299,,rckt rcktbas2,816:Attack Squad 817:Attack Squad + Senior Grunt,
+562,rcktbas2,Rocket Launching Pad,13,194,3,535,1299,,rcktbas1,818:Attack Squad + Turks:Rude,
+563,rcktin1,Duct,3,213,0,,,,rcktin4,,
+564,rcktin2,Ship Hallway,15,213,5,532,1314,538,rcktin5 rcktin8,819:Senior Grunt,
+565,rcktin3,Ship Hallway,9,213,0,,,,rcktin6 rcktin7,,
+566,rcktin4,Materia Room,15,213,0,,,,rcktin1,,
+567,rcktin5,Cockpit,20,213,3,1308,1314,1308 1311 1314,blackbgb rcktin2 rcktin5 rcktin6,,
+568,rcktin6,Engine Room,19,213,1,1314,1314,,rcktin2 rcktin3 rcktin5 rcktin8,,
+569,rcktin7,Escape Pod,15,213,0,,,,md_e1,,
+570,rcktin8,Duct,4,213,0,,,,rcktin2 rcktin6,,
+572,yougan,Wilderness,18,85,0,,,,wm33,620:Attack Squad,
+573,yougan2,Plains,18,69,1,502,502,,wm32,,
+574,yougan3,Wilderness,19,85,0,,,,wm22,621:Attack Squad,
+575,uta_wa,,9,7,1,1008,1008,,uutai1,,
+576,uta_im,Item Store,10,9,1,1008,1008,,uutai1,,
+577,utmin1,"Wutai, Cat's House",17,1,0,,,,uutai1,,
+578,utmin2,"Wutai, Old Man's House",19,10,1,1008,1008,,uutai1,,
+579,uutai1,Wutai,30,35,1,1008,1008,,utapb,,
+580,utapb,Bar [Turtle Paradise],18,46,1,1008,1008,,uutai1 yufy1,,
+581,yufy1,{YUFFIE}'s House,14,23,0,,,,wm22 uutai1,,
+582,yufy2,{YUFFIE}'s House,15,38,0,,,,,,
+583,hideway1,Hidden Passage,11,2,0,,,,,,
+584,hideway2,Hidden Passage,11,2,0,,,,,,
+585,hideway3,Hidden Passage,12,3,0,,,,,,
+586,tower5,"Wutai, Godo's Pagoda",22,253,0,,,,tower5 uutai2,623:Gorkii 624:Shake 625:Chekhov 626:Staniv 628:Godo,
+587,uutai2,"Wutai, Pagoda",18,17,1,1008,1008,,uutai1,,
+588,uttmpin1,"Wutai, Main Mtn.",18,4,0,,,,,,
+589,uttmpin2,"Wutai, Main Mtn.",19,22,0,,,,,,
+590,uttmpin3,"Wutai, Main Mtn.",22,8,1,1008,1008,,,622:Attack Squad,
+591,uttmpin4,Hidden Room,14,17,0,,,,,,
+592,datiao_1,"Wutai, Da-chao Statue",8,253,0,,,,uutai1,,604:Razor Weed 605:Bizarre Bug 606:Bizarre Bug + Jayjujayme
+593,datiao_2,"Wutai, Da-chao Statue",5,253,0,,,,,,606:Bizarre Bug + Jayjujayme 608:Bizarre Bug + Foulander 609:Foulander 610:Foulander
+594,datiao_3,"Wutai, Da-chao Statue",5,253,0,,,,,,608:Bizarre Bug + Foulander 609:Foulander 610:Foulander
+595,datiao_4,"Wutai, Da-chao Statue",5,253,0,,,,,,612:Garuda + Jayjujayme 613:Garuda 614:Garuda + Jayjujayme
+596,datiao_5,"Wutai, Da-chao Statue",5,253,0,,,,,,605:Bizarre Bug 612:Garuda + Jayjujayme 613:Garuda 614:Garuda + Jayjujayme
+597,datiao_6,"Wutai, Da-chao Statue",14,253,0,,,,yufy1,619:Rapps,
+598,datiao_7,"Wutai, Da-chao Statue",5,253,0,,,,,,609:Foulander 614:Garuda + Jayjujayme 616:Foulander + Garuda 617:Garuda
+599,datiao_8,"Wutai, Da-chao Statue",21,253,0,,,,,,
+600,jtempl,Temple of the Ancients,18,18,3,604,638,,jtemplb,,
+601,jtemplb,Temple of the Ancients,18,60,2,630,638,,slfrst_1 jtemplc,,
+602,jtmpin1,Temple of the Ancients,17,17,2,604,609,604,jtmpin2 kuro_1,,
+603,jtmpin2,Temple of the Ancients,12,1,0,,,609,jtmpin1,,
+604,kuro_1,Temple of the Ancients,36,20,0,,,,kuro_4,,632:Kelzmelzer 633:Under Lizard 634:Kelzmelzer + Toxic Frog 635:Toxic Frog + Under Lizard 636:Doorbull
+605,kuro_2,Temple of the Ancients,18,14,0,,,,,,
+606,kuro_3,Temple of the Ancients,32,35,3,612,618,612 618,kuro_8,,
+607,kuro_4,Temple of the Ancients,27,10,1,627,627,,kuro_1 kuro_5 kuro_10 kuro_11,,
+608,kuro_5,Temple of the Ancients,23,10,0,,,,,648:Ancient Dragon,
+609,kuro_6,Temple of the Ancients,8,4,0,,,,,645:Jemnezmy + Toxic Frog 649:8 eye,
+610,kuro_7,Temple of the Ancients,29,13,1,627,627,,kuro_8 kuro_82,,
+611,kuro_8,Temple of the Ancients,24,46,3,612,621,615,kuro_3 kuro_9,,640:Ancient Dragon 641:Doorbull 642:Ancient Dragon
+612,kuro_82,Temple of the Ancients,21,54,4,621,630,624,kuro_9,652:Red Dragon,640:Ancient Dragon 641:Doorbull 642:Ancient Dragon
+613,kuro_9,,18,62,2,624,630,621 627,jtempl kuro_82,,
+614,kuro_10,Temple of the Ancients,6,1,0,,,,kuro_4,,
+615,kuro_11,Temple of the Ancients,6,1,0,,,,kuro_4 kuro_6,,
+616,kuro_12,Temple of the Ancients,17,22,1,627,627,630,jtempl kuro_82,644:Demons Gate,
+617,bonevil,Bone Village,16,228,4,641,1620,,bonevil2,,
+618,slfrst_1,Sleeping Forest,6,172,1,638,638,638,blackbgb,,
+619,slfrst_2,Sleeping Forest,6,172,1,652,652,652,slfrst_2 sango1,,
+620,anfrst_1,Ancient Forest,44,72,0,,,,anfrst_3,,788:Rilfsak 789:Epiolnis 790:Diablo 791:Diablo + Rilfsak
+621,anfrst_2,Ancient Forest,11,72,0,,,,,,788:Rilfsak 789:Epiolnis 790:Diablo 791:Diablo + Rilfsak
+622,anfrst_3,Ancient Forest,33,72,0,,,,anfrst_3,,788:Rilfsak 789:Epiolnis 790:Diablo 791:Diablo + Rilfsak
+623,anfrst_4,Ancient Forest,47,72,0,,,,anfrst_2 anfrst_3,,788:Rilfsak 789:Epiolnis 790:Diablo 791:Diablo + Rilfsak
+624,anfrst_5,Ancient Forest,7,72,0,,,,,,976:Diablo 977:Epiolnis + Rilfsak 978:Diablo
+625,sango1,Corel Valley,5,174,0,,,,,,656:Boundfat + Malldancer 657:Malldancer 658:Boundfat + Malldancer
+626,sango2,Corel Valley,4,147,0,,,,,,659:Hungry
+627,sango3,Forgotten City,10,172,0,,,,,,660:Boundfat 661: + Boundfat + Trickplay 662: + Trickplay
+628,sandun_1,Corel Valley Cave,27,174,0,,,,,,664:Grimguard 665:Boundfat + Hungry 666:Boundfat 668:Acrophies 669:Hungry
+629,sandun_2,Corel Valley Cave,5,174,0,,,,,,664:Grimguard 665:Boundfat + Hungry 666:Boundfat 668:Acrophies 669:Hungry
+630,lost1,Forgotten Capital,11,147,0,,,,,,
+631,losin1,,7,147,0,,,,,,
+632,losin2,Forgotten Capital,18,147,1,674,674,677,blackbgb,,
+633,losin3,Forgotten Capital,11,147,0,,,,,,
+634,lost2,Forgotten Capital,14,147,1,664,664,,lost1,,
+635,lost3,Forgotten Capital,8,147,0,,,,lost1 loslake1,,
+636,losinn,Forgotten Capital,22,147,2,664,999,664,,,
+637,loslake1,Forgotten City,25,172,8,664,1400,1392 1398 1399,blin70_4 loslake3 white2,,
+638,loslake2,Forgotten City,9,165,2,664,1399,,,,
+639,loslake3,,7,172,1,1398,1398,,loslake1,,
+640,blue_1,Forgotten City,5,165,1,664,664,,lost1,,
+641,blue_2,Forgotten City,15,165,2,664,673,674,losin2,,
+642,white1,,13,172,5,1008,1400,1397,loslake1 hekiga,,
+643,white2,,15,172,2,1399,1620,1400,loslake1,,
+644,hekiga,,11,172,0,,,1396 1397,loslake1 white1,,
+645,whitein,Forgotten City,6,228,1,664,664,,,,
+646,ancnt1,Forgotten City,21,228,4,664,673,667,ancnt2 ancnt4,,
+647,ancnt2,Water Altar,9,228,2,669,673,669 671,ancnt3,,
+648,ancnt3,,7,228,0,,,673,ancnt4,671:Jenova‧LIFE,
+649,ancnt4,Water Altar,13,228,1,673,673,,blue_2 ancnt1,,
+650,snw_w,Weapon Store,13,4,0,,,,,,
+651,sninn_1,Icicle Inn,18,10,0,,,,,,
+652,sninn_2,Icicle Inn,11,2,0,,,,,,
+653,sninn_b1,Icicle Inn Bar,19,26,1,1008,1008,,,,
+654,snow,Icicle Inn,33,56,2,1008,1576,,snmayor,,
+655,snmin1,Icicle Inn,12,11,1,1008,1008,,,,
+656,snmin2,Icicle Inn,14,15,1,1008,1008,,hyoumap,,
+657,snmayor,Gast's House,31,82,0,,,,,,
+658,hyou1,Great Glacier,17,75,0,,,,wm47 hyou2 hyou3 hyoumap move_s move_f move_r hyou7 holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+659,hyou2,Great Glacier,18,75,0,,,,hyoumap move_f holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+660,hyou3,Great Glacier,17,75,0,,,,icedun_1 hyoumap move_r holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+661,icedun_1,Frostbite Cave,22,75,0,,,,hyou3 icedun_2 holu_1 holu_2,,680:Lessaloploth 681:Hungry 682:Bandersnatch
+662,icedun_2,Frostbite Cave,14,75,0,,,,wm47 icedun_1 holu_1 holu_2,,680:Lessaloploth 681:Hungry 682:Bandersnatch
+663,hyou4,Great Glacier,28,75,0,,,,hyoumap move_s move_f holu_1 holu_2,,684:Bandersnatch 685:Ice Golem 686:Bandersnatch 687:Snow 688:Ice Golem
+664,hyou5_1,Great Glacier,24,75,0,,,,hyou5_2 hyoumap move_f move_r holu_1 holu_2,,684:Bandersnatch 685:Ice Golem 686:Bandersnatch 687:Snow 688:Ice Golem
+665,hyou5_2,Great Glacier,32,75,0,,,,hyou5_1 hyou5_4,,
+666,hyou5_3,Cave,14,75,0,,,,hyou5_4 holu_1 holu_2,,684:Bandersnatch 685:Ice Golem 686:Bandersnatch 687:Snow 688:Ice Golem
+667,hyou5_4,Great Glacier,15,75,0,,,,hyou5_2 hyou5_3 holu_1 holu_2,,684:Bandersnatch 685:Ice Golem 686:Bandersnatch 687:Snow 688:Ice Golem
+668,hyou6,Great Glacier,26,75,0,,,,hyoumap move_s holu_1 holu_2,,692:Lessaloploth 693:Bandersnatch 694:Lessaloploth + Snow 695:Snow 696: + Magnade 697: + Magnade
+669,hyoumap,,5,75,0,,,,snmin2 hyou1 hyou2 hyou3 hyou4 hyou5_1 hyou6 hyou7 hyou8_1 hyou9 hyou10 hyou11 hyou13_1,,
+670,move_s,Great Glacier,15,75,0,,,,wm60 wm61 wm62 hyou1 hyou4 hyou6 move_s move_i move_u move_d hyou8_1 hyou11 holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+671,move_i,Great Glacier,15,75,0,,,,move_s move_r hyou7 holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+672,move_f,Great Glacier,26,75,0,,,,hyou1 hyou2 hyou4 hyou5_1 hyou7 holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+673,move_r,Great Glacier,15,75,0,,,,hyou1 hyou3 hyou5_1 move_i move_r move_u move_d hyou13_1 holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+674,move_u,Great Glacier,15,75,0,,,,move_s move_r move_u hyou7 hyou9 hyou10 hyou13_1 holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+675,move_d,Great Glacier,21,75,0,,,,move_s move_r move_d hyou7 hyou9 hyou10 holu_1 holu_2,,672:Shred 673:Frozen Nail 674:Frozen Nail + Shred 675:Bandersnatch 676:Frozen Nail
+676,hyou7,Great Glacier,18,75,0,,,,hyoumap move_i move_f move_u holu_1 holu_2,,684:Bandersnatch 685:Ice Golem 686:Bandersnatch 687:Snow 688:Ice Golem
+677,hyou8_1,Great Glacier,21,75,0,,,,hyoumap move_s hyou8_2 holu_1 holu_2,,692:Lessaloploth 693:Bandersnatch 694:Lessaloploth + Snow 695:Snow 696: + Magnade 697: + Magnade
+678,hyou8_2,Cave,13,75,0,,,,hyou8_1 holu_1 holu_2,,692:Lessaloploth 693:Bandersnatch 694:Lessaloploth + Snow 695:Snow 696: + Magnade 697: + Magnade
+679,hyou9,Great Glacier,17,75,0,,,,hyoumap move_u move_d holu_1 holu_2,,684:Bandersnatch 685:Ice Golem 686:Bandersnatch 687:Snow 688:Ice Golem
+680,hyou10,Great Glacier,33,75,0,,,,hyoumap move_u move_d holu_1 holu_2,,
+681,hyou11,Great Glacier,18,75,0,,,,hyoumap move_s holu_1 holu_2,,692:Lessaloploth 693:Bandersnatch 694:Lessaloploth + Snow 695:Snow 696: + Magnade 697: + Magnade
+682,hyou12,Cave,12,75,0,,,,wm63 holu_1 holu_2,,684:Bandersnatch 685:Ice Golem 686:Bandersnatch 687:Snow 688:Ice Golem
+683,hyou13_1,Great Glacier,25,75,0,,,,hyoumap move_r move_u move_d hyou13_2 holu_1 holu_2,,692:Lessaloploth 693:Bandersnatch 694:Lessaloploth + Snow 695:Snow 696: + Magnade 697: + Magnade
+684,hyou13_2,Cave,15,75,0,,,,hyou13_1 holu_1 holu_2,679:Snow,692:Lessaloploth 693:Bandersnatch 694:Lessaloploth + Snow 695:Snow 696: + Magnade 697: + Magnade
+686,gaiafoot,Base of Gaea's Cliff,15,16,1,999,999,,gaia_1,,
+687,holu_1,Base of Gaea's Cliff,15,16,0,,,,,,
+688,holu_2,Base of Gaea's Cliff,14,14,2,999,1576,,,,
+689,gaia_1,Gaea's Cliff,22,3,0,,,,gaiafoot holu_1,,700:Headbomber 701:Malboro 702:Zolokalter 703:Headbomber + Zolokalter
+690,gaiin_1,Inside of Gaea's Cliff,10,4,0,,,,gaia_1 gaia_2,,705:Stilva 706:Headbomber + Zolokalter 707:Zolokalter 708:Evilhead
+691,gaiin_2,Inside of Gaea's Cliff,15,2,0,,,,,,705:Stilva 706:Headbomber + Zolokalter 707:Zolokalter 708:Evilhead
+692,gaia_2,Gaea's Cliff,30,7,0,,,,holu_1,,700:Headbomber 701:Malboro 702:Zolokalter 703:Headbomber + Zolokalter
+693,gaiin_3,Inside of Gaea's Cliff,25,4,0,,,,gaia_2 gaiin_4,,705:Stilva 706:Headbomber + Zolokalter 707:Zolokalter 708:Evilhead
+694,gaia_31,Gaea's Cliff,27,6,0,,,,holu_1,,700:Headbomber 701:Malboro 702:Zolokalter 703:Headbomber + Zolokalter
+695,gaia_32,Gaea's Cliff,9,1,0,,,,crater_1,,
+696,gaiin_4,Inside of Gaea's Cliff,8,2,0,,,,,,700:Headbomber 701:Malboro 702:Zolokalter 703:Headbomber + Zolokalter
+697,gaiin_5,Inside of Gaea's Cliff,17,4,0,,,,gaiin_3 gaia_31 gaiin_4,716:Evilhead + Icicle 717:Evilhead + Icicle 718:Evilhead + Icicle,
+698,gaiin_6,Inside of Gaea's Cliff,12,2,0,,,,,740:Schizo(Left) + Schizo(Right),711:Evilhead 712:Cuahl 713:Cuahl + Headbomber 714:Blue Dragon
+699,gaiin_7,Inside of Gaea's Cliff,10,3,0,,,,gaia_31,,711:Evilhead 712:Cuahl 713:Cuahl + Headbomber 714:Blue Dragon
+700,crater_1,Crater,13,13,0,,,,,,720:Grenade 721:Gigas 722:Grenade
+701,crater_2,Crater,15,15,0,,,,trnad_2,,
+702,trnad_1,Whirlwind Maze,20,68,0,,,792,trnad_4 trnad_51,,
+703,trnad_2,Whirlwind Maze,24,6,0,,,,fship_22,,
+704,trnad_3,Whirlwind Maze,23,3,0,,,,,,724:Gremlin 725:Sculpture 726:Ironite 727:Gremlin + Sculpture
+705,trnad_4,Whirlwind Maze,31,30,1,999,999,,trnad_1,743:Jenova‧DEATH,730:Wind Wing 731:Dragon Rider 732:Ironite + Wind Wing 733:Ironite 736:Killbin
+706,trnad_51,Inside Northern Cave,20,74,3,790,794,790 792 794 999,junbin3 trnad_1 trnad_52 mds7st33,,732:Ironite + Wind Wing 737:Gremlin + Killbin 738:Tonberry 739:Tonberry
+707,trnad_52,,14,20,0,,,,trnad_51,,
+708,trnad_53,Great Cave,13,2,0,,,999,junbin3,,
+709,woa_1,Whirlwind Maze,22,6,0,,,,,729:Wind Wing,
+710,woa_2,Whirlwind Maze,16,1,0,,,,,729:Wind Wing,
+711,woa_3,Whirlwind Maze,22,10,0,,,,nivgate,729:Wind Wing,
+712,itown1a,Mideel,24,50,4,1100,1118,,itown2 ithos,,
+713,itown12,Mideel,17,28,2,1100,1102,1101,ithos,,
+714,itown1b,Mideel,24,38,0,,,,,,
+715,itown2,"{CID}
+“Damn!!
+	That &%$^%$ Weapon!!”{NEW}
+“Of all the times to show up!”",13,25,0,,,1120,ithos,280:Ultimate Weapon,
+716,ithill,,11,13,0,,,1197,fship_3,,
+717,itown_w,"Mideel,Weapon Store",15,79,0,,,,itown1a,,
+718,itown_i,"Mideel,Item Store",14,33,0,,,,itown1a,,
+719,itown_m,"Mideel,Materia Store",14,33,0,,,,itown1a,,
+720,ithos,"Mideel,Clinic",13,89,4,1100,1120,1100 1102 1118 1120,fship_23 itown1a itown12 life,,
+721,itmin1,"Mideel,House1",14,6,0,,,,itown1a,,
+722,itmin2,"Mideel,House2",12,11,0,,,,itown1a,,
+723,life,"akao! , # ∂28Bdw!     {CLOUD} H¿",4,1,0,,,,blackbgj,,
+724,life2,"akao! , # ∂28Bdw!     {CLOUD} H¿",4,1,0,,,,ithill,,
+725,zmind1,,10,24,2,1122,1180,1124 1181,nivgate2,,
+726,zmind2,,6,11,1,1126,1126,1128,nivl_e2,,
+727,zmind3,"“A promise under a starry sky…
+   But what if that was just a
+   memory {TIFA} imagined?”",8,43,2,1130,1188,1132,niv_ti4 life2,,
+728,zcoal_1,Coal Train,19,254,0,,,1116,ncorel zcoal_2,,
+729,zcoal_2,Coal Train,14,254,0,,,1116,ncoinn zcoal_3,808:Gas Ducter 809:Gas Ducter 810:Wolfmeister 811:Eagle Gun,
+730,zcoal_3,Coal Train,15,254,0,,,1116,ncorel3 ncoinn,812:Attack Squad,
+731,md8_5,8th Street,13,172,1,1599,1599,1600,,,
+732,md8_6,"Midgar, Sector 8",17,254,0,,,1601,md8_b1,,
+733,md8_b1,"Sector 8, Underground",19,254,0,,,,md8_6 md8_b2 sbwy4_22,,820:Cromwell 822:Manhole + Manhole(Lid) 823:Manhole + Manhole(Lid) 824:Behemoth 825:Crazy Saw 826:Crazy Saw + Cromwell
+734,md8_b2,"Sector 8, Underground",18,254,0,,,,md8_b1,,821:Cromwell 822:Manhole + Manhole(Lid) 823:Manhole + Manhole(Lid) 824:Behemoth 825:Crazy Saw 826:Crazy Saw + Cromwell
+735,sbwy4_22,"Sector 8, Underground",2,254,0,,,,md8_b1 tunnel_6,,
+736,tunnel_4,Winding Tunnel,22,254,0,,,,md0 tunnel_5,,830:Crazy Saw 831:Shadow Maker 832:Shadow Maker 833:Crazy Saw + Shadow Maker
+737,tunnel_5,Winding Tunnel,20,254,0,,,,tunnel_4 md8brdg2 tunnel_6,,830:Crazy Saw 831:Shadow Maker 832:Shadow Maker 833:Crazy Saw + Shadow Maker
+738,md8brdg2,"Midgar, Sector 8",17,254,0,,,1603,tunnel_5,844:Jamar Armor + Proud Clod,
+739,md8_32,"Midgar, Sector 8",8,254,0,,,,,,836:Grosspanzer‧Big + Grosspanzer‧Mobile + Grosspanzer‧Small 837:Grosspanzer‧Big + Grosspanzer‧Mobile + Grosspanzer‧Small 838:Grosspanzer‧Big + Grosspanzer‧Mobile + Grosspanzer‧Small 839:Grosspanzer‧Big + Grosspanzer‧Mobile + Grosspanzer‧Small
+740,canon_1,Mako Cannon,5,254,0,,,,canon_2,,848:SOLDIER:1st 849:XCannon 850:SOLDIER:1st 852:Maximum Kimaira 853:SOLDIER:1st
+741,canon_2,Mako Cannon,14,254,2,1600,1603,1589 1604,fship_24 fship_25,856:Bad Rap Sample + Hojo + Poodler Sample,
+742,md_e1,,14,1,0,,,1318,fship_25 cosmo2,,
+744,las0_1,"Highwind, on deck",9,26,1,1997,1997,,fship_4 las0_2,,
+745,las0_2,Northern Cave Crater,5,26,0,,,,las0_1 las0_3,,
+746,las0_3,Northern Cave,10,8,0,,,,las0_2 las0_4,,
+747,las0_4,Inside Northern Cave,34,26,0,,,,las0_5,,868:Gargoyle 869:Gargoyle 870:Dark Dragon 873:Parasite
+748,las0_5,Inside Northern Cave,38,26,0,,,,,,869:Gargoyle 870:Dark Dragon 873:Parasite 948:Scissors + Scissors(Lower) + Scissors(Upper)
+749,las0_6,Inside Northern Cave,40,111,0,,,,las0_8,,870:Dark Dragon 873:Parasite 874:Parasite 948:Scissors + Scissors(Lower) + Scissors(Upper) 949:Scissors + Scissors(Lower) + Scissors(Upper)
+750,las0_7,Inside Northern Cave,14,111,0,,,,,,870:Dark Dragon 872:Master Tonberry 873:Parasite 874:Parasite 948:Scissors + Scissors(Lower) + Scissors(Upper) 949:Scissors + Scissors(Lower) + Scissors(Upper)
+751,las0_8,Inside Northern Cave,21,111,1,1997,1997,,,,870:Dark Dragon 872:Master Tonberry 873:Parasite 874:Parasite 948:Scissors + Scissors(Lower) + Scissors(Upper) 949:Scissors + Scissors(Lower) + Scissors(Upper)
+752,las1_1,Inside Northern Cave,11,26,0,,,,,,876:Pollensalta 877:Death Dealer 878:Parasite + Pollensalta 879:Parasite 880:Malboro 881:Dragon Zombie
+753,las1_2,Inside Northern Cave,10,26,0,,,,,,876:Pollensalta 877:Death Dealer 878:Parasite + Pollensalta 879:Parasite 880:Malboro 881:Dragon Zombie
+754,las1_3,Inside Northern Cave,9,26,0,,,,,,876:Pollensalta 877:Death Dealer 878:Parasite + Pollensalta 879:Parasite 880:Malboro 881:Dragon Zombie
+755,las1_4,Inside Northern Cave,4,26,0,,,,,,876:Pollensalta 877:Death Dealer 878:Parasite + Pollensalta 879:Parasite 880:Malboro 881:Dragon Zombie
+756,las2_1,Inside Northern Cave / Secret Cow Level,16,111,1,1997,1997,,,,892:King Behemoth 893:Allemagne 894:Armored Golem 896:Master Tonberry
+757,las2_2,Inside Northern Cave,26,111,0,,,,,,884:Christopher + Gighee 885:Magic Pot 886:Magic Pot 889:Allemagne 890:Mover 891:Master Tonberry
+758,las2_3,Inside Northern Cave,26,111,0,,,,,,884:Christopher + Gighee 885:Magic Pot 886:Magic Pot 889:Allemagne 890:Mover 891:Master Tonberry
+759,las2_4,Inside Northern Cave,14,111,0,,,,,,892:King Behemoth 893:Allemagne 894:Armored Golem 896:Master Tonberry
+760,las3_1,Inside Northern Cave,25,7,0,,,,,,892:King Behemoth 893:Allemagne 894:Armored Golem 896:Master Tonberry
+761,las3_2,Inside Northern Cave,23,6,0,,,,las3_1 las3_3,,892:King Behemoth 893:Allemagne 894:Armored Golem 896:Master Tonberry
+762,las3_3,Inside Northern Cave,34,7,1,1998,1998,,las3_2,,892:King Behemoth 893:Allemagne 894:Armored Golem 896:Master Tonberry
+763,las4_0,Bottom of Northern Cave,15,92,1,1999,1999,1999,las4_1 las4_2,925:Sephiroth,
+764,las4_1,Bottom of Northern Cave,19,25,2,1997,1998,1997 1998,las4_0 las4_2,,
+765,las4_2,Inside the Planet,20,9,0,,,,las4_3,900:Iron Man 901:Dragon Zombie 902:Allemagne,
+766,las4_3,Inside the Planet,15,1,0,,,,las4_4,900:Iron Man 901:Dragon Zombie 902:Allemagne,
+767,las4_4,,16,11,0,,,1999,las4_42,908:Jenova‧SYNTHESIS,
+768,lastmap,????,20,50,0,,,,las4_0,912:Bizarro‧Sephiroth 916:Bizarro‧Sephiroth 920:Bizarro‧Sephiroth 924:Safer‧Sephiroth 928:Bizarro‧Sephiroth 932:Bizarro‧Sephiroth 936:Bizarro‧Sephiroth,
+771,hill2,,9,19,0,,,1612,fship_4,,
+772,bonevil2,Bone Village,23,72,0,,,,bonevil,,
+773,junone22,,10,72,0,,,,junonr1,,
+774,rckt32,,16,228,1,557,557,,sky,600: + Palmer,
+775,jtemplc,Temple of the Ancients,18,60,1,638,638,,jtemplb slfrst_1,,
+777,las4_42,,13,0,0,,,,,,
+778,tunnel_6,Winding Tunnel,22,254,0,,,1602,sbwy4_22 tunnel_5,840:Turks:Elena + Turks:Reno + Turks:Rude,830:Crazy Saw 831:Shadow Maker 832:Shadow Maker 833:Crazy Saw + Shadow Maker
+779,md8_52,,15,72,0,,,,fship_25,,
+780,sininb34,,7,8,0,,,,nivgate4,,
+781,mds7st33,,12,32,0,,,999,junbin3,,
+782,midgal,,9,8,0,,,,sininb32 midgal,,
+783,sininb35,,5,8,0,,,,sininb34,,
+784,nivgate4,,3,8,0,,,,ztruck,,
+785,sininb36,,4,8,0,,,,sininb35,,
+786,ztruck,,9,42,0,,,,midgal,,

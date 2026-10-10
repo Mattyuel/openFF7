@@ -1,0 +1,132 @@
+formation,enemies,max_level,no_escape,fields
+95,Spencer,17,,clsin2_1
+100,Joker,18,,clsin2_1
+107,Flapbeat,18,,clsin2_1
+117,Flapbeat,18,,clsin2_1
+118,Flapbeat,18,,clsin2_1
+119,Flapbeat + Spencer,18,,clsin2_1
+182,Dual Horn,30,,clsin2_1
+280,Ultimate Weapon,61,yes,itown2
+288,CMD.Grand Horn,19,yes,blackbg7 convil_2
+289,CMD.Grand Horn,25,yes,convil_2
+290,CMD.Grand Horn,37,yes,convil_2
+292,Dragon,32,yes,trackin trackin2
+300,MP,2,yes,md1stin
+305,Mono Drive,2,,clsin2_1
+310,Grunt,7,,clsin2_1
+313,Grunt,7,,clsin2_1
+324,Guard Scorpion,12,yes,nmkin_5 smkin_5
+325,Guard Hound,3,,clsin2_1
+326,Guard Hound,3,,clsin2_1
+327,Grashtrike,8,,clsin2_1
+328,MP,2,,md8brdg
+329,MP,2,,md8brdg
+330,MP,2,,md8brdg
+331,Chuse Tank,6,,clsin2_1
+333,Grashtrike,8,,clsin2_1
+364,Air Buster,15,yes,southmk2
+367,Special Combatant,9,yes,tunnel_3
+372,MP,2,yes,chrin_2
+373,Guard Hound,3,yes,chrin_2
+374,Guard Hound + MP,3,,chrin_2
+384,Corneo's Lackey,8,yes,colne_3
+385,Corneo's Lackey + Scotch,11,yes,colne_3
+386,Aps,18,yes,colne_b1
+412,Pyramid + Turks:Reno,17,yes,pillar_3
+415,Grenade Combatant,10,yes,blin1
+416,Grenade Combatant,10,,blinele
+417,Grenade Combatant,10,,blinele
+419,Mighty Grunt,12,,blinele
+420,Mighty Grunt,12,,blinele
+422,Mighty Grunt,12,,blin59
+423,Mighty Grunt,12,,blin60_1
+424, + Hammer Blaster,12,,blinele
+425,Sword Dance,11,,blinele
+427,Sword Dance,11,,blinele
+436,Moth Slasher,13,,blinele
+456,Sample:H0512 + Sample:H0512-opt,19,yes,blin68_2
+460,Hundred Gunner,18,yes,eleout
+464, + Dark Nation + Rufus,21,yes,blin70_3
+468,Motor Ball,19,yes,blackbg9 blackbgb
+480,Bottomswell + Waterpolo,23,yes,ujunon2
+488,Jenova‧BIRTH,25,yes,shpin_3
+512,Cokatolis,17,,mtcrl_8
+525,Bullmotor,19,,clsin2_1
+526,Bullmotor,19,,clsin2_1
+527,Dyne,23,yes,dyne
+539,Turks:Reno + Turks:Rude,23,yes,gonjun2
+551,Stinger,25,yes,gidun_4
+553,Gi Spector,23,yes,gidun_1
+554,Gi Spector,23,yes,gidun_1
+555,Gi Nattak + Soul Fire,29,yes,gidun_3
+576,Lost Number,35,yes,sinin2_1
+595,Materia Keeper,38,yes,nvdun1
+600, + Palmer,38,yes,rckt32
+604,Razor Weed,27,,clsin2_1
+606,Bizarre Bug + Jayjujayme,28,,clsin2_1
+609,Foulander,27,,clsin2_1
+610,Foulander,27,,clsin2_1
+613,Garuda,29,,clsin2_1
+614,Garuda + Jayjujayme,29,,clsin2_1
+617,Garuda,29,,clsin2_1
+619,Rapps,39,yes,datiao_6
+620,Attack Squad,34,yes,yougan
+621,Attack Squad,34,yes,yougan3
+622,Attack Squad,34,yes,uttmpin3
+623,Gorkii,30,yes,tower5
+624,Shake,32,yes,tower5
+625,Chekhov,34,yes,tower5
+626,Staniv,36,yes,tower5
+628,Godo,41,yes,tower5
+644,Demons Gate,45,yes,kuro_12
+645,Jemnezmy + Toxic Frog,26,yes,kuro_6
+648,Ancient Dragon,34,yes,kuro_5
+649,8 eye,30,yes,kuro_6
+652,Red Dragon,39,yes,kuro_82
+671,Jenova‧LIFE,50,yes,ancnt3
+679,Snow,32,yes,hyou13_2
+716,Evilhead + Icicle,30,,gaiin_5
+717,Evilhead + Icicle,30,,gaiin_5
+718,Evilhead + Icicle,30,,gaiin_5
+729,Wind Wing,36,,woa_1 woa_2 woa_3
+740,Schizo(Left) + Schizo(Right),43,yes,gaiin_6
+743,Jenova‧DEATH,55,yes,trnad_4
+763,Submarine Crew,32,yes,junele1 junin4
+768,Submarine Crew,32,yes,semkin_3
+769,Submarine Crew,32,yes,semkin_3 semkin_7
+770,Submarine Crew,32,yes,semkin_3
+771,Underwater MP,34,yes,semkin_3
+780,Carry Armor + Left Arm + Right Arm,45,yes,semkin_5
+784,Submarine Crew,32,yes,subin_2a
+785,Submarine Crew,32,yes,subin_2b
+786,Captain + Submarine Crew,34,yes,subin_1a subin_1b
+807,Turks:Reno + Turks:Rude,49,yes,qb
+808,Gas Ducter,42,yes,zcoal_2
+809,Gas Ducter,42,yes,zcoal_2
+810,Wolfmeister,43,yes,zcoal_2
+811,Eagle Gun,46,yes,zcoal_2
+812,Attack Squad,34,yes,zcoal_3
+813,Attack Squad,34,yes,mtcrl_2
+816,Attack Squad,34,yes,rcktbas1
+817,Attack Squad + Senior Grunt,35,yes,rcktbas1
+818,Attack Squad + Turks:Rude,42,yes,rcktbas2
+819,Senior Grunt,35,yes,rcktin2
+840,Turks:Elena + Turks:Reno + Turks:Rude,53,yes,tunnel_6
+844,Jamar Armor + Proud Clod,62,yes,md8brdg2
+856,Bad Rap Sample + Hojo + Poodler Sample,50,yes,canon_2
+900,Iron Man,46,,las4_2 las4_3
+901,Dragon Zombie,54,,las4_2 las4_3
+902,Allemagne,48,,las4_2 las4_3
+908,Jenova‧SYNTHESIS,61,yes,las4_4
+912,Bizarro‧Sephiroth,61,yes,lastmap
+916,Bizarro‧Sephiroth,61,yes,lastmap
+920,Bizarro‧Sephiroth,61,yes,lastmap
+924,Safer‧Sephiroth,87,yes,blackbge lastmap
+925,Sephiroth,50,yes,las4_0
+928,Bizarro‧Sephiroth,61,yes,lastmap
+932,Bizarro‧Sephiroth,61,yes,lastmap
+936,Bizarro‧Sephiroth,61,yes,lastmap
+947,Attack Squad,34,,junbin4
+960,Sea Worm,22,,clsin2_1
+980,Diamond Weapon,49,yes,fr_e
+999,êúô2(ñ),4,,blackbg4 blackbg7 startmap
