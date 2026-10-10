@@ -447,6 +447,13 @@ def plan_world(args):
     print("planned %d fields -> %s" % (len(plan), out))
 
 
+def _with(base, bits):
+    st = base.copy()
+    for b in bits:
+        st.bit(*b, True)
+    return st
+
+
 def quiet_flags(args):
     """Search 'seen' flags that silence entry scenes in every field of the last
     build, keep those that make no field worse, write patches/world_flags.json."""
@@ -465,6 +472,21 @@ def quiet_flags(args):
     def real(rep):
         return [x for x in rep.summary() if "control locked" not in x]
 
+    # Characters with a recruitment talk script (MMBUD 01 in script 1) must stay visible.
+    from ff7.script import Script as _Script
+    recruits = {}
+    for n in names:
+        sc = _Script.parse(secs[n])
+        for e, raw_name in enumerate(sc.entity_names):
+            if any(o.op == 0xCD and o.raw[1] == 1 for o in sc.script_ops(e, 1)):
+                recruits.setdefault(n, []).append(raw_name.split(b"\0")[0].decode("latin-1"))
+
+    def hides_recruit(n, state):
+        if n not in recruits:
+            return False
+        vis = simulate(secs[n], state.copy()).final_visible
+        return any(not vis.get(r, True) for r in recruits[n])
+
     before = {n: len(real(simulate(secs[n], base.copy()))) for n in names}
     found = []
     for n in names:
@@ -479,6 +501,13 @@ def quiet_flags(args):
         for b in found:
             st.bit(*b, True)
         worse = [n for n in names if len(real(simulate(secs[n], st.copy()))) > before[n]]
+        hidden = [n for n in recruits if hides_recruit(n, st)]
+        if hidden:
+            # drop the flags that hide a recruit, one field at a time
+            n = hidden[0]
+            culprits = [b for b in found if hides_recruit(n, _with(base, [b]))]
+            found = [b for b in found if b not in culprits] if culprits else found[:-1]
+            continue
         if not worse:
             break
         # drop flags tested by the first worsened field and retry

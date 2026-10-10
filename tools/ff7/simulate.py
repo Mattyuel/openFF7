@@ -70,6 +70,7 @@ class Report:
         self.signals = []        # (entity, script, what)
         self.tested_flags = set()  # (nibble, addr, bit) tested via bit_on/bit_off/&
         self.visible_party = []    # (entity name, char)
+        self.final_visible = {}    # entity name -> visible after entering (model entities)
 
     @property
     def cutscene(self):
@@ -196,10 +197,16 @@ def simulate(script_section, state, max_steps=20000):
     # The engine draws only the party leader's PC entity by default; other
     # party-member entities appear when a script shows them (VISI 01).
     for ent in has_model:
+        rep.final_visible[names[ent]] = visible.get(ent, ent not in pc_char)
+    for ent in has_model:
         ch = pc_char.get(ent)
         if ch is not None and ch != 0 and visible.get(ent, False) and ent in shown:
             rep.visible_party.append((names[ent], ch))
     return rep
+
+
+# openFF7's own save variables (bank 4, 224-255): never chosen as "seen" flags.
+OWN_VARS = (4, range(224, 256))
 
 
 def _flag_bits(tested):
@@ -207,6 +214,8 @@ def _flag_bits(tested):
     out = set()
     for nib, addr, v in tested:
         if nib not in BANKS or BANKS[nib][0] not in SAVE_BANKS:
+            continue
+        if BANKS[nib][0] == OWN_VARS[0] and addr in OWN_VARS[1]:
             continue
         if v < 0:  # '&' mask
             m = -v
