@@ -135,3 +135,18 @@ Existing saves load, but they keep their own story progress; use a new game.
 - Leave Midgar through the Sector 5 church exterior -> Slum Outskirts -> the
   gate (now unlocked; you also hold the Key to Sector 5) -> world map.
   Walking back to the gate from the world map re-enters Midgar.
+
+## Modified exe test (does Steam accept a changed ff7_en.exe?)
+
+```
+python tools/ff7tool.py exe-test      # -> build/exe_test/ff7_en.exe (patches your own copy)
+```
+
+1. In the Steam folder rename `ff7_en.exe` to `ff7_en.exe.original` and copy
+   `build\exe_test\ff7_en.exe` in.
+2. Start the game from Steam, load any save (or new game) and open the menu.
+   - Menu shows **ITEM** and **QUIT** (capitals): the modified exe runs.
+   - Menu shows "Item"/"Quit": Steam replaced or bypassed the file (check
+     whether Steam "verified" or re-downloaded it).
+   - Error / crash / nothing starts: Steam's DRM rejects modified exes.
+3. Undo: delete the copied exe and rename `ff7_en.exe.original` back.

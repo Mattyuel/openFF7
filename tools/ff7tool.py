@@ -312,6 +312,22 @@ class BuildContext:
         return [n for n in self._fields]
 
 
+def exe_test(args):
+    """Write build/exe_test/ff7_en.exe: the Steam exe with a harmless visible
+    change (see ff7/exepatch.py) to test whether a modified exe still runs."""
+    from ff7 import exepatch
+    src = os.path.join(os.path.dirname(GAME), "ff7_en.exe")
+    out_dir = os.path.join(ROOT, "build", "exe_test")
+    os.makedirs(out_dir, exist_ok=True)
+    data = exepatch.apply(open(src, "rb").read(), exepatch.EXE_TEST)
+    out = os.path.join(out_dir, "ff7_en.exe")
+    with open(out, "wb") as fh:
+        fh.write(data)
+    for _off, _old, _new, desc in exepatch.EXE_TEST:
+        print("  patched:", desc)
+    print("wrote", out)
+
+
 def api_index(args):
     """Regenerate docs/api_index.md (signatures + docstring summaries)."""
     from ff7 import apiindex
@@ -595,6 +611,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("extract").set_defaults(func=extract)
     sub.add_parser("api-index").set_defaults(func=api_index)
+    sub.add_parser("exe-test").set_defaults(func=exe_test)
     d = sub.add_parser("dump")
     d.add_argument("fields", nargs="*")
     d.add_argument("--all", action="store_true")

@@ -152,6 +152,11 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   the exe holds per-map-variant .hrc name tables (~0x56B289 in the file). The
   leader -> world map model choice is in the exe (not in wm*.ev); not found yet.
 - Party slots: 0xDC0230 (savemap 0x04F8). PHS exit check: 0x700C22.
+- Main menu labels (FF7 text, 20-byte slots) at file 0x5192C0 (Item, Magic,
+  Materia, Equip, Status, Order, Limit, Config, PHS, Save, Quit).
+- exe patching: `ff7/exepatch.py` (expected-bytes checks + PE checksum, which
+  reproduces the original's). `ff7tool.py exe-test` makes a harmless test exe;
+  whether Steam's DRM accepts a modified exe is **untested** (asked the user).
 
 ## Verified facts: KERNEL.BIN
 
