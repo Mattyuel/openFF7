@@ -78,7 +78,14 @@ def localise_progress(script, const=None, var=None):
             dst = (r[1] >> 4, r[2])
             src = (r[1] & 15, r[3])
             if src == (pb, pa) and code == SETWORD:
-                raise ValueError("copy from story progress not supported: %r" % op)
+                # var = progress  ->  var = M (literal)  or  var = region var
+                if const is not None:
+                    r[1] = r[1] & 0xF0
+                    struct.pack_into("<H", r, 3, const & 0xFFFF)
+                else:
+                    r[1] = (r[1] & 0xF0) | var[0]
+                    struct.pack_into("<H", r, 3, var[1])
+                stats["reads"] += 1
             if dst == (pb, pa):
                 if const is not None:
                     script.remove(op)

@@ -57,7 +57,8 @@ The `.exe` itself only compares story progress against 1000/1200/1580/1620 (worl
 map setup), and the world map script has ~25 checks, so 100 keeps the world map
 in its disc 1 state until it is opened up. See `docs/exe_notes.md`.
 
-Midgar per-field choices: `docs/midgar_plan.md`.
+Midgar per-field choices: `docs/midgar_plan.md`. Kalm: `patches/300_kalm.py`.
+Everything else: `docs/world_plan.md` (automatic first pass, with overrides).
 
 ## 3. Decisions so far
 

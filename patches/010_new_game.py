@@ -14,6 +14,16 @@ from ff7.disasm import PROGRESS_VAR
 from ff7.script import Script
 
 FIELD = "md1stin"
+
+
+def _world_flags():
+    """Flags from patches/world_flags.json (ff7tool.py quiet-flags), if present."""
+    import json
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "world_flags.json")
+    if not os.path.exists(path):
+        return []
+    return [tuple(b) for b in json.load(open(path))]
 MENU_MASK = (2, 28)
 
 
@@ -48,7 +58,7 @@ def apply(ctx):
     new.append(asm.setbyte(*HQ_ACCESS_LEVEL))
     for var, bit in HQ_KEYCARD_BITS:
         new.append(asm.biton(var, bit))
-    for nibble, addr, bit in INITIAL_EVENT_FLAGS:
+    for nibble, addr, bit in INITIAL_EVENT_FLAGS + _world_flags():
         new.append(asm.biton((nibble, addr), bit))
     new.append(asm.add_item(BATTERIES_ITEM, BATTERIES_QTY))
     for var, bit in BATTERY_BITS:

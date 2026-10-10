@@ -1,0 +1,8 @@
+{
+ "_comment": "Per-field story moments that override world_moments.json. Temple of the Ancients stays intact (it shrinks at 638); Forgotten City stays before the altar scene.",
+ "blue_2": 668,
+ "jtempl": 631,
+ "jtemplb": 631,
+ "jtemplc": 631,
+ "losin2": 668
+}

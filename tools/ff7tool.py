@@ -8,6 +8,8 @@
   ff7tool.py inventory          Write the field/boss inventory to docs/inventory/
   ff7tool.py build [--out DIR]  Apply patches/*.py and write a standalone game folder
   ff7tool.py scenes FIELD...    Simulate entering patched fields; list likely cutscenes
+  ff7tool.py plan-world         Propose a story moment for every unhandled field
+  ff7tool.py quiet-flags        Search new-game flags that silence entry scenes (after build)
 """
 import argparse
 import collections
@@ -384,10 +386,111 @@ def scenes(args):
         state.bit(nibble, addr, bit, True)
     names = args.fields or [n for n in maplist()[1:] if n in built]
     for name in names:
-        rep = simulate(FieldFile(lzss.decompress(built[name])).sections[0], state.copy())
+        sec = FieldFile(lzss.decompress(built[name])).sections[0]
+        if ScriptSection(sec).broken:
+            continue
+        rep = simulate(sec, state.copy())
         found = sorted(set(x for x in rep.summary() if "control locked" not in x))
         if found:
             print("%-10s %s" % (name, "; ".join(found[:5])))
+
+
+DISC2 = 999  # story values from here on are disc 2/3; the open world uses disc 1 states
+
+
+def plan_world(args):
+    """Write patches/world_moments.json: a story moment for every field that has
+    story checks and is not handled by a specific patch. Rule: just after the
+    field's last disc 1 story event (or its highest disc 1 check), never equal
+    to a value the field tests with ==. Overrides: patches/world_overrides.json."""
+    import importlib.util
+    rows = {r["field"]: r for r in csv.DictReader(open(os.path.join(INV_DIR, "fields.csv")))}
+    handled = set()
+    for path in sorted(glob.glob(os.path.join(ROOT, "patches", "[0-9]*.py"))):
+        spec = importlib.util.spec_from_file_location("p", path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, os.path.join(ROOT, "patches"))
+        spec.loader.exec_module(mod)
+        for moment_fields in getattr(mod, "PINNED", {}).values():
+            handled.update(moment_fields)
+        handled.update(getattr(mod, "FIELDS", []))
+    handled.update(["md1stin", "startmap"])
+    plan = {}
+    for name, r in rows.items():
+        if name in handled or r["progress_checks"] == "0" or name.startswith("blackbg"):
+            continue
+        _, sec = load_field(name)
+        checks, eq = set(), set()
+        for _e, _si, code in field_scripts(sec):
+            for ins in code:
+                a = ins.args
+                if ins.op in (0x16, 0x17, 0x18, 0x19) and (a["bank_a"], a["a"]) == PROGRESS_VAR \
+                        and a["bank_b"] == 0:
+                    checks.add(a["b"])
+                    if a["cmp"] == 0:
+                        eq.add(a["b"])
+        sets = [int(v) for v in r["progress_sets"].split()]
+        early_sets = [v for v in sets if v < DISC2]
+        early_checks = [v for v in checks if v < DISC2]
+        if early_sets:
+            moment, why = max(early_sets) + 1, "after its last disc 1 event (%d)" % max(early_sets)
+        elif early_checks:
+            moment, why = max(early_checks) + 1, "after its highest disc 1 check (%d)" % max(early_checks)
+        else:
+            moment, why = DISC2 - 1, "disc 1 state (all its checks are disc 2+)"
+        while moment in eq:
+            moment += 1
+        plan[name] = {"moment": moment, "location": r["location"].split(" / ")[0], "why": why}
+    out = os.path.join(ROOT, "patches", "world_moments.json")
+    with open(out, "w", encoding="utf-8") as fh:
+        json.dump(plan, fh, indent=1, sort_keys=True)
+    print("planned %d fields -> %s" % (len(plan), out))
+
+
+def quiet_flags(args):
+    """Search 'seen' flags that silence entry scenes in every field of the last
+    build, keep those that make no field worse, write patches/world_flags.json."""
+    from ff7.simulate import State, find_quiet_flags, simulate
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    base = State()
+    for n, a, b in _config.INITIAL_EVENT_FLAGS:
+        base.bit(n, a, b, True)
+    names = [n for n in maplist()[1:] if n in built and not n.startswith("blackbg")]
+    secs = {n: FieldFile(lzss.decompress(built[n])).sections[0] for n in names}
+    secs = {n: d for n, d in secs.items() if not ScriptSection(d).broken}
+    names = [n for n in names if n in secs]
+
+    def real(rep):
+        return [x for x in rep.summary() if "control locked" not in x]
+
+    before = {n: len(real(simulate(secs[n], base.copy()))) for n in names}
+    found = []
+    for n in names:
+        if not before[n]:
+            continue
+        bits, _b, after = find_quiet_flags(secs[n], base.copy())
+        if bits and len(real(after)) < before[n]:
+            found.extend(b for b in bits if b not in found)
+    # Keep only flags that, all together, make no field worse.
+    while True:
+        st = base.copy()
+        for b in found:
+            st.bit(*b, True)
+        worse = [n for n in names if len(real(simulate(secs[n], st.copy()))) > before[n]]
+        if not worse:
+            break
+        # drop flags tested by the first worsened field and retry
+        rep = simulate(secs[worse[0]], st.copy())
+        tested = {(t[0], t[1], t[2]) for t in rep.tested_flags if t[2] >= 0}
+        drop = [b for b in found if b in tested] or found[-1:]
+        found = [b for b in found if b not in drop]
+    after = sum(len(real(simulate(secs[n], st.copy()))) for n in names)
+    out = os.path.join(ROOT, "patches", "world_flags.json")
+    with open(out, "w") as fh:
+        json.dump(sorted(found), fh, indent=0)
+    print("%d flags; scene signals %d -> %d; wrote %s" % (len(found), sum(before.values()), after, out))
 
 
 def main():
@@ -400,6 +503,8 @@ def main():
     d.set_defaults(func=dump)
     sub.add_parser("inventory").set_defaults(func=inventory)
     sub.add_parser("wmdump").set_defaults(func=wmdump)
+    sub.add_parser("plan-world").set_defaults(func=plan_world)
+    sub.add_parser("quiet-flags").set_defaults(func=quiet_flags)
     sc = sub.add_parser("scenes")
     sc.add_argument("fields", nargs="*")
     sc.set_defaults(func=scenes)

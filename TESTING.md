@@ -66,6 +66,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   he stands on the tracks, not in the air or inside the rails.
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue.
+- **Rest of the world** (first automatic pass, `docs/world_plan.md`): every
+  town and dungeon should be in a quiet, after-the-story state. Expect some
+  leftovers; report the location and what played.
 - Known still to do: re-entering Midgar from the world map, Air Buster's reactor entrance, the
   Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train
