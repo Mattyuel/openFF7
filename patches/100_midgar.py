@@ -23,8 +23,10 @@ PINNED = {
     # Sector 8 streets: after the reactor 1 escape scenes (33-45).
     46: ["md8_1", "md8_2", "md8_3", "md8_4", "md8brdg"],
     # Sector 4 tunnels and No.5 Reactor: before the reactor 5 events (120+).
-    112: ["tunnel_1", "tunnel_2", "tunnel_3", "smkin_1", "smkin_2", "smkin_3",
+    112: ["tunnel_1", "tunnel_2", "tunnel_3", "smkin_2", "smkin_3",
           "smkin_4", "smkin_5", "southmk1", "southmk2"],
+    # No.5 Reactor exit room: after the three-button door (127), door open.
+    129: ["smkin_1"],
     # Sector 7 slums, station, Train Graveyard, pillar: after AVALANCHE's
     # morning scenes (108), before the plate events (212+).
     110: ["mds7st1", "mds7st2", "mds7st3", "mds7st32", "mds7_w1", "mds7_w2", "mds7_w3",
@@ -78,17 +80,6 @@ def _edit(ctx, field, **kw):
     return stats
 
 
-def _disable_train_boarding(ctx):
-    """Sector 7 station: the line at the train door ('border1') boards the train
-    to the next story scene. Trains are not transport (yet), so switch it off."""
-    script = Script.parse(ctx.field("mds7st3").sections[0])
-    ent = script.entity_index("border1")
-    linon = [o for o in script.script_ops(ent, 0) if o.op == 0xD1]
-    assert linon and linon[0].raw[1] == 1, "expected LINON 01 in border1 init"
-    linon[0].raw[1] = 0
-    ctx.field("mds7st3").sections[0] = script.build()
-
-
 SLUMS_THEME = 35  # music id of the Sector 7 slums theme (the only track in mds7)
 
 
@@ -115,7 +106,6 @@ def _slums_music(ctx):
 
 
 def apply(ctx):
-    _disable_train_boarding(ctx)
     _slums_music(ctx)
     total = 0
     for moment, fields in PINNED.items():

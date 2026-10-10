@@ -11,6 +11,8 @@ python3 tools/ff7tool.py dump --all       # dump every field
 python3 tools/ff7tool.py inventory        # regenerate docs/inventory/
 python3 tools/ff7tool.py wmdump           # world map script dumps -> work/worldmap/
 python3 tools/ff7tool.py build            # apply patches/*.py -> build/openFF7/
+python3 tools/ff7tool.py scenes FIELD...  # simulate entering built fields, list likely cutscenes
+python3 tools/ff7tool.py reach FIELD...   # can each entrance walk to each exit (locked floor)?
 python3 tools/tests/test_formats.py       # format round-trip checks (~1 min)
 ```
 
@@ -37,6 +39,7 @@ python3 tools/tests/test_formats.py       # format round-trip checks (~1 min)
 | `kernel.py` | `KERNEL.BIN` sections and the new-game data (characters, party, items). |
 | `models.py` | Field model loader (which character models a field loads); copy a model between fields. |
 | `simulate.py` | Rough simulation of entering a field (init + main scripts, REQ calls) to detect entry cutscenes, and `find_quiet_flags` to search for event flags that suppress them. |
+| `reach.py` | Walkmesh reachability between a field's entrances and exits, given locked triangles. |
 | `varscan.py` | Which save variables the original scripts use. |
 
 ## Variables

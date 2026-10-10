@@ -522,6 +522,41 @@ def quiet_flags(args):
     print("%d flags; scene signals %d -> %d; wrote %s" % (len(found), sum(before.values()), after, out))
 
 
+def reach(args):
+    """For each given field of the last build: can each entrance reach each exit,
+    with the triangles that are locked after entering (new-game state)?"""
+    from ff7 import reach as rc, triggers as tg
+    from ff7.simulate import State, simulate
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    import importlib
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    names = maplist()
+    state = State()
+    flags = list(_config.INITIAL_EVENT_FLAGS)
+    wf = os.path.join(ROOT, "patches", "world_flags.json")
+    if os.path.exists(wf):
+        flags += [tuple(b) for b in json.load(open(wf))]
+    for n, a, b in flags:
+        state.bit(n, a, b, True)
+    # entrances: gateway destinations and map jumps from every field into the target
+    into = collections.defaultdict(list)
+    for src in names[1:]:
+        if src not in built:
+            continue
+        ff = FieldFile(lzss.decompress(built[src]))
+        for g in tg.gateways(ff.section("triggers")):
+            if g["field"] < len(names):
+                into[names[g["field"]]].append(("from " + src, g["dest_triangle"]))
+    for field in args.fields:
+        raw = lzss.decompress(built[field])
+        rep = simulate(FieldFile(raw).sections[0], state.copy())
+        res = rc.check(raw, rep.locked, into.get(field, []), names)
+        bad = sorted({(e, x) for (e, x), ok in res.items() if not ok})
+        print("%-9s locked %-28s %s" % (field, sorted(rep.locked)[:8],
+              "all exits reachable" if not bad else "BLOCKED: " + "; ".join("%s -> %s" % b for b in bad[:6])))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -532,6 +567,9 @@ def main():
     d.set_defaults(func=dump)
     sub.add_parser("inventory").set_defaults(func=inventory)
     sub.add_parser("wmdump").set_defaults(func=wmdump)
+    rp = sub.add_parser("reach")
+    rp.add_argument("fields", nargs="+")
+    rp.set_defaults(func=reach)
     sub.add_parser("plan-world").set_defaults(func=plan_world)
     sub.add_parser("quiet-flags").set_defaults(func=quiet_flags)
     sc = sub.add_parser("scenes")

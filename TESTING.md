@@ -69,7 +69,19 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Rest of the world** (first automatic pass, `docs/world_plan.md`): every
   town and dungeon should be in a quiet, after-the-story state. Expect some
   leftovers; report the location and what played.
-- Known still to do: Air Buster's reactor entrance, the
+- **Train travel**: at the Sector 7 station walk into the train door: a menu
+  offers Upper Midgar (Sector 8 bridge), No. 1 Reactor (Sector 1 platform)
+  and No. 5 Reactor (the tunnel after jumping off the train). At each
+  destination a Train Attendant stands next to where you arrive and takes
+  you back to Sector 7.
+- **No. 1 Reactor**: walk from the platform through Sector 1 into the
+  reactor; all gates/doors should be open with no scenes. Guard Scorpion
+  (a stand-in robot) waits at the core: talk to it to fight. After winning
+  it is gone. The reactor entrance also leads out to Upper Midgar.
+- **No. 5 Reactor**: tunnel -> plate interior -> reactor; the three-button
+  door is already open. On the bridge outside, Air Buster (same stand-in
+  robot) waits: talk to it to fight.
+- Known still to do: the
   Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train
   Graveyard, the pillar, Sector 6, Wall Market, Sector 5, the church and

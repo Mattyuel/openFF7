@@ -124,6 +124,15 @@ Everything else: `docs/world_plan.md` (automatic first pass, with overrides).
 - Midgar connects to the world map **the way it does on disc 3: past the church
   in Sector 5, using the key**.
 
+### Sector 7 train
+- Walking into the train at the Sector 7 station offers **Upper Midgar**
+  (Sector 8 bridge), **No. 1 Reactor** (Sector 1 platform) and **No. 5
+  Reactor** (the tunnel after the train). A Train Attendant at each
+  destination takes you back.
+- Reactor doors are open (no cutscenes, no button puzzle). Guard Scorpion and
+  Air Buster are touchable NPCs (stand-in robot model) that start their
+  battle; once beaten they are gone.
+
 ### Travel
 - **On foot / chocobo:** as in the original.
 - **Ferry:** the Junon ⇄ Costa del Sol cargo ship works as a regular ferry.

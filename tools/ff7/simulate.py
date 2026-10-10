@@ -71,6 +71,7 @@ class Report:
         self.tested_flags = set()  # (nibble, addr, bit) tested via bit_on/bit_off/&
         self.visible_party = []    # (entity name, char)
         self.final_visible = {}    # entity name -> visible after entering (model entities)
+        self.locked = set()        # walkmesh triangles locked (IDLCK) after entering
 
     @property
     def cutscene(self):
@@ -145,6 +146,12 @@ def simulate(script_section, state, max_steps=20000):
                 state.bit(r[1] >> 4, r[2], state.get(r[1] & 15, r[3]), True)
             elif op == 0x83:
                 state.bit(r[1] >> 4, r[2], state.get(r[1] & 15, r[3]), False)
+            elif op == 0x6D:  # IDLCK triangle u16, on
+                tri = r[1] | r[2] << 8
+                if r[3]:
+                    rep.locked.add(tri)
+                else:
+                    rep.locked.discard(tri)
             elif op == 0x33:  # UC
                 if r[1] == 1:
                     rep.signals.append((names[ent], 0, "player control locked"))

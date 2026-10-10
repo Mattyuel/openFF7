@@ -43,6 +43,8 @@ HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
 
 # openFF7 event flags: one byte of bits at bank 4 offset 240 (8-bit nibble 13).
 FLAGS = (OPEN_VAR_BANK8, 240)
+FLAG_GUARD_SCORPION = 1   # Guard Scorpion beaten (No.1 Reactor core)
+FLAG_AIR_BUSTER = 2       # Air Buster beaten (No.5 Reactor bridge)
 
 # Event flags set at new game so rooms behave as if their story scenes were
 # already seen (found with tools/ff7/simulate.py: find_quiet_flags, then
@@ -64,6 +66,9 @@ INITIAL_EVENT_FLAGS = [
     (3, 163, 2),   # colne_4: Kotch gone from the dungeon
     (15, 38, 3),   # mds5_5: Sector 5 gate opened with the key (Midgar exit unlocked)
     (1, 67, 5),    # Key item: Key to Sector 5
+    (1, 225, 3),   # nmkin_1: No.1 Reactor gate opened (Biggs' code)
+    (1, 225, 4),   # nmkin_1: No.1 Reactor second door opened
+    (1, 226, 1),   # nmkin_1: No.1 Reactor button door - Barret's lines seen
     (3, 168, 5),   # md0: Sector 0 arrival scene seen
     (3, 168, 6),   # sinbil_1: Shinra HQ entrance scene seen
     (3, 163, 4),   # blinst_1: HQ stairs start scene seen
