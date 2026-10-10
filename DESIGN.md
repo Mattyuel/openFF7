@@ -61,9 +61,11 @@ The original game gates almost everything on one story-progress variable (the
 #### Party leader
 - **Any recruited character can be party leader.**
 - The leader is the character the player controls when walking around.
-- Technical note: many field files only define a walking model for Cloud, and
-  the world map only ships walking models for Cloud, Tifa and Cid. Other
-  leaders need entities/models added. See open questions.
+- Many field files only define a walking model for Cloud. Every playable
+  character's entity is added to those fields.
+- The world map only ships walking models for Cloud, Tifa and Cid. **World map
+  models and animations for the other characters are converted from their
+  field models.**
 
 ### Enemies and bosses
 - **Regular enemies are unchanged** (stats, levels, encounter areas).
@@ -110,7 +112,11 @@ The original game gates almost everything on one story-progress variable (the
 ### Story-locked items and places
 - **Temple of the Ancients is open from the start.** No Keystone is needed.
 - **The Huge Materia is already in Cosmo Canyon** (Bugenhagen's observatory) and
-  can be interacted with from the start.
+  can be interacted with from the start. The resulting materia (e.g. Bahamut
+  ZERO) being available early is intended: it still has to be levelled against
+  strong enemies.
+- **Fort Condor, Corel train and submarine minigames** award a **1/35 soldier**
+  key item instead of Huge Materia (once per minigame, on the first win).
 - **Shop stock scales with the highest character level.** Shops keep their
   original item lists. Where a shop's stock changes with story progress in the
   original, each tier is unlocked when the highest-level character in the roster
@@ -160,11 +166,4 @@ fights tied to story scripts.
 
 ## Open questions
 
-1. **Non-Cloud leaders outside Midgar** — on the world map, only Cloud, Tifa and
-   Cid have walking models. Options: (a) convert field models for the others,
-   (b) world map always shows Cloud/Tifa/Cid as a stand-in. Needs a look at the
-   data before deciding.
-2. **Huge Materia balance** — touching the Huge Materia gives very strong
-   materia (e.g. Bahamut ZERO) from the very start. Intended?
-3. **Fort Condor / train / submarine rewards** — those minigames originally
-   award Huge Materia. What should they award now?
+None at the moment.
