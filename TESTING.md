@@ -69,6 +69,13 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Rest of the world** (first automatic pass, `docs/world_plan.md`): every
   town and dungeon should be in a quiet, after-the-story state. Expect some
   leftovers; report the location and what played.
+- **Train Graveyard**: the three movable trains start in their moved
+  positions every time you enter, so you can cross the graveyard in both
+  directions. Climbing the ladder out should play no Aerith scene. If the
+  way is still blocked, say which screen and where.
+- If Tifa (7th Heaven) or Aerith (church) are missing, start a **new game**:
+  a save made with the build from two updates ago carries flags that hid
+  them.
 - **Train travel**: at the Sector 7 station walk into the train door: a menu
   offers Upper Midgar (Sector 8 bridge), No. 1 Reactor (Sector 1 platform)
   and No. 5 Reactor (the tunnel after jumping off the train). At each

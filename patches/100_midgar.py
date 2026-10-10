@@ -105,6 +105,32 @@ def _slums_music(ctx):
     ctx.field("mds7plr1").sections[0] = entrance.build()
 
 
+TRAINS_MOVED = 0x07   # var[1][164] bits 0-2: the three movable graveyard trains
+
+
+def _train_graveyard(ctx):
+    """Train Graveyard: keep the movable trains in their moved positions so the
+    graveyard can be crossed both ways, and drop the Aerith scene that played
+    when climbing the ladder out (it also reset the trains)."""
+    from ff7 import asm
+    sec = Script.parse(ctx.field("mds7st2").sections[0])
+    init = sec.script_ops(sec.entity_index("init"), 0)
+    end = next(o for o in init if o.op == 0x00)
+    main_first = init[init.index(end) + 1]
+    sec.insert_before(main_first, [asm.setbyte((1, 164), TRAINS_MOVED)])
+    ctx.field("mds7st2").sections[0] = sec.build()
+
+    sec = Script.parse(ctx.field("mds7st1").sections[0])
+    for op in sec.script_ops(sec.entity_index("cloud"), 3):
+        # pinned: `if not (110 < 212) goto normal_ladder` -> always take the normal ladder
+        if op.op in (0x16, 0x17, 0x18, 0x19) and op.raw[1] == 0 and op.raw[4] | op.raw[5] << 8 == 212:
+            sec.replace(op, [asm.goto(op.target)])
+            break
+    else:
+        raise RuntimeError("graveyard ladder scene check not found")
+    ctx.field("mds7st1").sections[0] = sec.build()
+
+
 def apply(ctx):
     _slums_music(ctx)
     total = 0
@@ -115,5 +141,6 @@ def apply(ctx):
         var = REGION_VARS[region][0]
         for field in fields:
             total += _edit(ctx, field, var=var)["reads"]
+    _train_graveyard(ctx)   # after pinning: it looks for the pinned check
     print("  midgar: %d story checks localised in %d fields" %
           (total, sum(map(len, PINNED.values())) + sum(map(len, REGIONS.values()))))

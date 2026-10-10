@@ -28,6 +28,12 @@ def _seventh_heaven(ctx):
     # Hidden once recruited (end of her init).
     init_ret = next(o for o in sec.script_ops(tifa, 0) if o.op == 0x00)
     sec.insert_before(init_ret, hide_if_recruited(TIFA), retarget=False)
+    # Her bar-setup script hides her if var[3][213] bit 6 is set (a story flag
+    # some builds set at new game); always take the "stand at the bar" branch.
+    for op in sec.script_ops(tifa, 6):
+        if op.op == 0x14 and op.raw[2] == 213 and op.raw[3] == 6:
+            sec.replace(op, [asm.goto(op.target)])
+            break
     # Barret is not recruited here: the bar setup script (stagedr -> ballet
     # script 9) always hides him.
     barret = sec.entity_index("ballet")

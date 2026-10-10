@@ -142,6 +142,11 @@ def simulate(script_section, state, max_steps=20000):
                 state.set(r[1] >> 4, r[2], state.get(r[1] & 15, r[3]))
             elif op == 0x81:
                 state.set(r[1] >> 4, r[2], state.get(r[1] & 15, struct.unpack_from("<H", r, 3)[0]))
+            elif op in (0x85, 0x87, 0x8F, 0x91, 0x93):   # PLUS/MINUS/AND/OR/XOR (8-bit)
+                a = state.get(r[1] >> 4, r[2])
+                b = state.get(r[1] & 15, r[3])
+                state.set(r[1] >> 4, r[2], {0x85: a + b, 0x87: a - b, 0x8F: a & b,
+                                            0x91: a | b, 0x93: a ^ b}[op])
             elif op == 0x82:
                 state.bit(r[1] >> 4, r[2], state.get(r[1] & 15, r[3]), True)
             elif op == 0x83:
