@@ -315,18 +315,17 @@ class BuildContext:
 
 
 def exe_test(args):
-    """Write build/exe_test/ff7_en.exe: the Steam exe with a harmless visible
-    change (see ff7/exepatch.py) to test whether a modified exe still runs."""
+    """Write build/exe_test/ff7_en.exe: the Steam exe with a new code section
+    (exepatch.section_test) to test whether Steam accepts an added section."""
     from ff7 import exepatch
     src = os.path.join(os.path.dirname(GAME), "ff7_en.exe")
     out_dir = os.path.join(ROOT, "build", "exe_test")
     os.makedirs(out_dir, exist_ok=True)
-    data = exepatch.apply(open(src, "rb").read(), exepatch.EXE_TEST)
+    data = exepatch.section_test(open(src, "rb").read())
     out = os.path.join(out_dir, "ff7_en.exe")
     with open(out, "wb") as fh:
         fh.write(data)
-    for _off, _old, _new, desc in exepatch.EXE_TEST:
-        print("  patched:", desc)
+    print("  Quit -> QUIT (static); new section .openff7 whose code turns Item into CAVE")
     print("wrote", out)
 
 

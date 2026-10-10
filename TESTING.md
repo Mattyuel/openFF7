@@ -136,7 +136,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   gate (now unlocked; you also hold the Key to Sector 5) -> world map.
   Walking back to the gate from the world map re-enters Midgar.
 
-## Modified exe test (does Steam accept a changed ff7_en.exe?)
+## Modified exe test (does Steam accept an exe with a new code section?)
 
 ```
 python tools/ff7tool.py exe-test      # -> build/exe_test/ff7_en.exe (patches your own copy)
@@ -145,8 +145,10 @@ python tools/ff7tool.py exe-test      # -> build/exe_test/ff7_en.exe (patches yo
 1. In the Steam folder rename `ff7_en.exe` to `ff7_en.exe.original` and copy
    `build\exe_test\ff7_en.exe` in.
 2. Start the game from Steam, load any save (or new game) and open the menu.
-   - Menu shows **ITEM** and **QUIT** (capitals): the modified exe runs.
-   - Menu shows "Item"/"Quit": Steam replaced or bypassed the file (check
-     whether Steam "verified" or re-downloaded it).
-   - Error / crash / nothing starts: Steam's DRM rejects modified exes.
+   - Menu shows **CAVE** (instead of Item) and **QUIT**: an added code section
+     works. This is what Tame/Call/Bestiary need.
+   - Shows "Item" but **QUIT**: the exe loads but code in the new section
+     didn't run (tell me).
+   - Error / crash / nothing starts: Steam's DRM rejects an exe with an extra
+     section; we'd need another place for the new code.
 3. Undo: delete the copied exe and rename `ff7_en.exe.original` back.
