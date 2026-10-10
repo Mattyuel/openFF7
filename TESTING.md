@@ -69,7 +69,7 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Rest of the world** (first automatic pass, `docs/world_plan.md`): every
   town and dungeon should be in a quiet, after-the-story state. Expect some
   leftovers; report the location and what played.
-- Known still to do: re-entering Midgar from the world map, Air Buster's reactor entrance, the
+- Known still to do: Air Buster's reactor entrance, the
   Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train
   Graveyard, the pillar, Sector 6, Wall Market, Sector 5, the church and
@@ -87,4 +87,4 @@ Existing saves load, but they keep their own story progress; use a new game.
   scenes.
 - Leave Midgar through the Sector 5 church exterior -> Slum Outskirts -> the
   gate (now unlocked; you also hold the Key to Sector 5) -> world map.
-  Re-entering Midgar from the world map is not possible yet.
+  Walking back to the gate from the world map re-enters Midgar.
