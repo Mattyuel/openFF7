@@ -46,9 +46,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   should include three **Batteries**.
 - **Corneo's mansion**: the doorman is gone and you can walk in. On the
   ground floor the office door (upstairs) and the dungeon door are open. No
-  scenes should play in the right-hand room (lackey fight), the dungeon (Tifa
-  and Aerith), the upstairs office (bride choice) or the bedroom; in the
-  bedroom only Corneo's "A man!?" line and his escape when you talk to him.
+  scenes should play anywhere in the mansion: right-hand room (lackey
+  fight), dungeon (Tifa/Aerith, Kotch chase), office door (Aerith "No!"),
+  upstairs office (bride choice) or bedroom. Corneo is not in the mansion.
 - **Wire climb to Shinra HQ**: in Wall Market's back street (where the wire
   hangs from the plate) you can now start climbing. Use the batteries on the
   way up; at the top (Plate Section -> Sector 0 -> Shinra HQ) no cutscenes
@@ -74,4 +74,6 @@ Existing saves load, but they keep their own story progress; use a new game.
   You hold all keycards (check Key Items); every floor should be reachable by
   stairs/elevator, with infiltration random encounters and no capture/escape
   scenes.
-- Leave Midgar through the Sector 5 church exterior -> Slum Outskirts -> world map.
+- Leave Midgar through the Sector 5 church exterior -> Slum Outskirts -> the
+  gate (now unlocked; you also hold the Key to Sector 5) -> world map.
+  Re-entering Midgar from the world map is not possible yet.

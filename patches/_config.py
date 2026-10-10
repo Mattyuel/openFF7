@@ -43,7 +43,6 @@ HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
 
 # openFF7 event flags: one byte of bits at bank 4 offset 240 (8-bit nibble 13).
 FLAGS = (OPEN_VAR_BANK8, 240)
-FLAG_CORNEO_FLED = 0  # Corneo ran from his bedroom; he appears in Wutai instead
 
 # Event flags set at new game so rooms behave as if their story scenes were
 # already seen (found with tools/ff7/simulate.py: find_quiet_flags, then
@@ -58,6 +57,13 @@ INITIAL_EVENT_FLAGS = [
     (3, 163, 0),   # colne_5: Corneo's hall audition done (hall Corneo hidden)
     (3, 162, 3),   # colne_4: dungeon - Tifa/Aerith meeting done (lines off, Tifa gone)
     (3, 163, 3),   # colne_3: right-hand room - lackey fight done
+    (3, 163, 1),   # colne_6: Corneo's bedroom scene done - Corneo, dressed
+                   #   Aerith/Tifa and disguised Cloud all gone from the mansion
+    (3, 162, 7),   # colne_2/colne_4: escape done - no Aerith "No---!! Help!!"
+                   #   scene at the office door, no Kotch chase line in the dungeon
+    (3, 163, 2),   # colne_4: Kotch gone from the dungeon
+    (15, 38, 3),   # mds5_5: Sector 5 gate opened with the key (Midgar exit unlocked)
+    (1, 67, 5),    # Key item: Key to Sector 5
     (3, 168, 5),   # md0: Sector 0 arrival scene seen
     (3, 168, 6),   # sinbil_1: Shinra HQ entrance scene seen
     (3, 163, 4),   # blinst_1: HQ stairs start scene seen
