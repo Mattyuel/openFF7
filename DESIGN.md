@@ -29,22 +29,30 @@ The original game gates almost everything on one story-progress variable (the
 "Game Moment", `var[2][0]`, values 0–1999). 391 of the 702 fields compare
 against it. openFF7 replaces that with **per-location state**:
 
-1. **Pin each field to a story moment.** `tools/ff7/patch.py: pin_progress`
+1. **Pin each field to a story moment.** `tools/ff7/patch.py: localise_progress`
    rewrites every `if (var[2][0] <op> N)` in a field into `if (M <op> N)` where
-   `M` is the moment chosen for that location (§4). Instruction sizes don't
-   change, so nothing else in the file moves. The field then always looks and
-   behaves as it did at moment `M`, whatever the global value is.
-2. **Remove story events.** Cutscenes that fire at the pinned moment, and writes
-   that advance `var[2][0]`, are removed or disabled per field.
-3. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
-   Corneo's move) use unused save variables.
-4. **Build.** Patches live in `patches/*.py` and are applied by
+   `M` is the moment chosen for that location (§4), and removes writes to the
+   story value. The field then always looks and behaves as it did at moment
+   `M`. `M` is picked between the field's story events so its cutscenes don't
+   fire.
+2. **Regions with their own story line.** Where a side quest is built on the
+   story value (e.g. Wall Market / Corneo), the region's fields read and write
+   a private variable instead, so the quest still plays out on its own.
+3. **Remove remaining story barriers** (guards, locked doors, lines) per field,
+   found by testing.
+4. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
+   Corneo's move, region progress) use save variables bank 4, offsets 224–255,
+   which no original script uses.
+5. **Build.** Patches live in `patches/*.py` and are applied by
    `tools/ff7tool.py build`, which writes a separate game folder
    (`build/openFF7/`) and leaves the original data untouched.
 
-Still to investigate: world map scripts (`world_us.lgp`), new-game data in
-`KERNEL.BIN`, and code in the `.exe` that reads story progress directly (e.g.
-PHS and save restrictions).
+The global story value is set to 100 at new game (`patches/_config.py`).
+The `.exe` itself only compares story progress against 1000/1200/1580/1620 (world
+map setup), and the world map script has ~25 checks, so 100 keeps the world map
+in its disc 1 state until it is opened up. See `docs/exe_notes.md`.
+
+Midgar per-field choices: `docs/midgar_plan.md`.
 
 ## 3. Decisions so far
 

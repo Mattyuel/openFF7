@@ -81,7 +81,51 @@ def test_scene():
     assert forms[324]["enemies"] == ["Guard Scorpion"]
 
 
+def test_open_vars_unused():
+    """openFF7's own save variables (bank 4, 224-255) are unused by the original scripts."""
+    from ff7 import varscan
+    archive = LGP.read(os.path.join(DATA, "field", "flevel.lgp"))
+    secs = [ScriptSection(FieldFile(lzss.decompress(archive[n])).sections[0])
+            for n in archive.names() if "." not in n and n != "maplist"]
+    used = varscan.field_usage(secs)
+    assert not used[4] & set(range(224, 256))
+    wm = LGP.read(os.path.join(DATA, "wm", "world_us.lgp"))
+    for ev in ("wm0.ev", "wm2.ev", "wm3.ev"):
+        offsets = varscan.worldmap_usage(wm[ev])
+        assert not offsets & set(range(0x300 + 224, 0x300 + 256)), ev
+
+
+def test_patches():
+    """Apply patches/ in memory; patched fields must parse and lose all story-progress refs."""
+    import importlib.util
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    spec = importlib.util.spec_from_file_location("ff7tool", os.path.join(ROOT, "tools", "ff7tool.py"))
+    tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tool)
+    if not os.path.isdir(tool.FIELD_DIR):
+        tool.extract()
+    ctx = tool.BuildContext()
+    midgar = None
+    for path in sorted(os.listdir(os.path.join(ROOT, "patches"))):
+        if path[0].isdigit() and path.endswith(".py"):
+            spec = importlib.util.spec_from_file_location(path[:-3], os.path.join(ROOT, "patches", path))
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            mod.apply(ctx)
+            if path.endswith("_midgar.py"):
+                midgar = mod
+    from ff7.disasm import PROGRESS_VAR
+    fields = [f for v in midgar.PINNED.values() for f in v] + [f for v in midgar.REGIONS.values() for f in v]
+    for f in fields:
+        sec = ScriptSection(FieldFile(ctx.field(f).build()).sections[0])
+        for ins in disassemble(sec.data, min(sec.script_bounds()), sec.string_offset):
+            if ins.op in (0x16, 0x17, 0x18, 0x19):
+                assert (ins.args["bank_a"], ins.args["a"]) != PROGRESS_VAR, f
+            if ins.op == 0x81:
+                assert (ins.args["bank_d"], ins.args["dst"]) != PROGRESS_VAR, f
+
+
 if __name__ == "__main__":
-    for fn in [test_lgp_roundtrip, test_fields, test_scene]:
+    for fn in [test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches]:
         fn()
         print("ok", fn.__name__)

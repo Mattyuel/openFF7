@@ -274,7 +274,8 @@ def build(args):
     shutil.copytree(src, out)
     ctx = BuildContext()
     patch_dir = os.path.join(ROOT, "patches")
-    for path in sorted(glob.glob(os.path.join(patch_dir, "*.py"))):
+    sys.path.insert(0, patch_dir)  # lets patches `import _config`
+    for path in sorted(glob.glob(os.path.join(patch_dir, "[0-9]*.py"))):
         spec = importlib.util.spec_from_file_location(os.path.basename(path)[:-3], path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
