@@ -76,6 +76,15 @@ class InitData:
         members = list(members) + [0xFF] * (3 - len(members))
         self.data[self.PARTY:self.PARTY + 3] = bytes(members[:3])
 
+    def set_name(self, i, name):
+        """Set character i's default name (max 11 characters)."""
+        from .text import encode
+        raw = encode(name)
+        if len(raw) > 12:
+            raise ValueError("name too long: %s" % name)
+        o = i * self.CHAR + 0x10
+        self.data[o:o + 12] = raw.ljust(12, b"\xff")
+
     def items(self):
         out = []
         for i in range(320):

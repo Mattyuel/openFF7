@@ -1,12 +1,12 @@
-"""New game: Cloud alone at the Sector 7 station, PHS and full menu available,
-all Shinra HQ keycards held.
+"""New game: Cloud (named "Cloud") alone at the Sector 7 station, PHS and full
+menu available, all Shinra HQ keycards and three Batteries held.
 
 The original new game runs in md1stin (Sector 1 station): entity 0's main
 script has `if (progress == 0) { opening movie; menu mask; party; ...;
 progress = 1 }`. That block is replaced with the openFF7 setup, ending in a
 jump to the Sector 7 station.
 """
-from _config import (CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, MENU_ALL, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
+from _config import (BATTERIES_ITEM, BATTERIES_QTY, BATTERY_BITS, CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, MENU_ALL, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
                      START_TRIANGLE, START_X, START_Y)
 
 from ff7 import asm
@@ -33,6 +33,9 @@ def _find_new_game_block(sec):
 
 
 def apply(ctx):
+    # Cloud's default name (the naming prompt is part of the skipped opening).
+    ctx.kernel_init().set_name(CLOUD, "Cloud")
+
     sec = Script.parse(ctx.field(FIELD).sections[0])
     cond, body = _find_new_game_block(sec)
     # The original block ends by writing progress = 1 then falls through to the target.
@@ -50,6 +53,9 @@ def apply(ctx):
         new.append(asm.biton(var, bit))
     for nibble, addr, bit in INITIAL_EVENT_FLAGS:
         new.append(asm.biton((nibble, addr), bit))
+    new.append(asm.add_item(BATTERIES_ITEM, BATTERIES_QTY))
+    for var, bit in BATTERY_BITS:
+        new.append(asm.biton(var, bit))
     new += [
         asm.setword(PROGRESS_VAR, OPEN_WORLD_PROGRESS),
         asm.Op(bytes([0x33, 0x00])),  # UC 00: player control on

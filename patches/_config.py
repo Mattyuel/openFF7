@@ -63,7 +63,14 @@ INITIAL_EVENT_FLAGS = [
     (3, 172, 4),   # blin60_1: HQ 60f sneaking scene seen
     (3, 181, 0),   # blin65_2: HQ 65f model room scene seen
     (1, 226, 7),   # blin671b/673b: HQ 67f Red XIII state
+    (3, 18, 6),    # chrin_1a: church - flower kids scene seen
+    (3, 18, 7),    # chrin_1a: church - Aerith flower-bed scene seen
 ]
+
+# Batteries for the Wall Market wire climb: item 85 x3, plus the three
+# "battery held" bits the Wall Market weapon store sets when you buy them.
+BATTERIES_ITEM, BATTERIES_QTY = 85, 3
+BATTERY_BITS = [((1, 165), 5), ((1, 165), 6), ((1, 165), 7)]
 
 # Recruited characters: one bit per character id in this byte (8-bit, bank 4).
 RECRUITED = (OPEN_VAR_BANK8, 241)

@@ -11,19 +11,21 @@ python tools/ff7tool.py build
 ```
 
 This writes `build/openFF7/` (a full copy of the game folder with the patched
-files). Right now only `data/field/flevel.lgp` changes.
+files). The build prints which game files changed; right now that is
+`data/field/flevel.lgp` and `data/lang-en/kernel/KERNEL.BIN`.
 
 ## 2. Install the changed file into Steam (for now)
 
 The separate `build/openFF7` folder has not been tested to start on its own
 (see `docs/exe_notes.md`), so for now test inside the Steam install:
 
-1. In the Steam folder (`...\steamapps\common\FINAL FANTASY VII\data\field\`),
-   rename `flevel.lgp` to `flevel.lgp.original`.
-2. Copy `build\openFF7\data\field\flevel.lgp` there.
-3. Start the game from Steam and choose **New Game**.
+1. In the Steam folder (`...\steamapps\common\FINAL FANTASY VII\`), for each
+   changed file: rename the original (e.g. `data\field\flevel.lgp` ->
+   `flevel.lgp.original`, `data\lang-en\kernel\KERNEL.BIN` ->
+   `KERNEL.BIN.original`) and copy the built one from `build\openFF7\` there.
+2. Start the game from Steam and choose **New Game**.
 
-To undo: delete the copied `flevel.lgp` and rename `flevel.lgp.original` back.
+To undo: delete the copied files and rename the `.original` files back.
 Steam's "Verify integrity of game files" also restores it.
 
 Existing saves load, but they keep their own story progress; use a new game.
@@ -38,15 +40,21 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Recruit Tifa** in 7th Heaven: talk to her, choose "Come with me, Tifa."
   She should join the party, appear in the PHS and leave the bar. Choosing
   "Not right now." leaves her there. Check her level after joining.
-- **Recruit Barret** in the Sector 7 weapon shop (he is standing left of the
-  counter area): same as Tifa. Check that his model looks right and that he
-  is not stuck in a wall or the counter.
+- **Recruit Aerith** in the Sector 5 church: she is at the flower bed. Same
+  as Tifa. Check her position and pose look right.
+- Cloud's name should be "Cloud" (not "Ex-SOLDIER"), and Key Items / Items
+  should include three **Batteries**.
+- **Corneo's mansion**: the doorman is gone and you can walk in.
+- **Wire climb to Shinra HQ**: in Wall Market's back street (where the wire
+  hangs from the plate) you can now start climbing. Use the batteries on the
+  way up; at the top (Plate Section -> Sector 0 -> Shinra HQ) no cutscenes
+  should play.
 - **Sector 7 <-> Sector 6 gate**: on the Sector 7 screen with the two guards
   (in front of the pillar), the guards now stand either side of the passage.
   Walk down the passage to reach the Sector 6 playground. There the giant
   gate is open; walk through it to come back to the guard screen. Check the
   gate halves look open (not floating or clipping) and nothing blocks you.
-- Known still to do: the church (Aerith), Air Buster's reactor entrance, the
+- Known still to do: Barret's recruitment (location to be decided), Air Buster's reactor entrance, the
   Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train
   Graveyard, the pillar, Sector 6, Wall Market, Sector 5, the church and

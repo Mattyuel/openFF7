@@ -244,6 +244,7 @@ class BuildContext:
         self.flevel = LGP.read(os.path.join(GAME, "field", "flevel.lgp"))
         self.maplist = maplist()
         self._fields = {}
+        self._kernel = None
 
     def field(self, name):
         """Return a mutable FieldFile for `name` (cached; saved at the end of the build)."""
@@ -256,6 +257,25 @@ class BuildContext:
 
     def set_script(self, name, data):
         self.field(name).sections[0] = bytes(data)
+
+    def kernel_init(self):
+        """Editable new-game data (KERNEL.BIN section 3); written by the build."""
+        if self._kernel is None:
+            from ff7.kernel import InitData, read_sections
+            path = os.path.join(GAME, "lang-en", "kernel", "KERNEL.BIN")
+            self._kernel_sections, self._kernel_tail = read_sections(open(path, "rb").read())
+            self._kernel = InitData(self._kernel_sections[3]["data"])
+        return self._kernel
+
+    def save_kernel(self, out_dir):
+        if self._kernel is None:
+            return False
+        from ff7.kernel import build_sections
+        self._kernel_sections[3]["data"] = bytes(self._kernel.data)
+        path = os.path.join(out_dir, "data", "lang-en", "kernel", "KERNEL.BIN")
+        with open(path, "wb") as fh:
+            fh.write(build_sections(self._kernel_sections, self._kernel_tail))
+        return True
 
     def save(self):
         for name, ff in self._fields.items():
@@ -284,7 +304,13 @@ def build(args):
         mod.apply(ctx)
     touched = ctx.save()
     ctx.flevel.write(os.path.join(out, "data", "field", "flevel.lgp"))
+    changed = ["data/field/flevel.lgp"]
+    if ctx.save_kernel(out):
+        changed.append("data/lang-en/kernel/KERNEL.BIN")
     print("built %s (%d field files touched)" % (out, len(touched)))
+    print("changed game files (copy these into the game folder):")
+    for path in changed:
+        print("   ", path)
 
 
 WM_MODELS = {  # world map model ids (function id 0x4000 | model << 8 | n). UNVERIFIED: from community docs, some look wrong

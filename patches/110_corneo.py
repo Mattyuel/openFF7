@@ -59,6 +59,20 @@ def _hall(ctx):
     ctx.field("colne_5").sections[0] = sec.build()
 
 
+def _entrance(ctx):
+    """Mansion entrance (colne_1): the doorman blocked the door and the floor in
+    front of it was locked until Corneo's bedroom scene was done. Remove both."""
+    sec = Script.parse(ctx.field("colne_1").sections[0])
+    ad = sec.entity_index("AD")
+    for op in [o for o in sec.script_ops(ad, 0) if o.op == 0x6D and o.raw[3] == 1]:
+        sec.remove(op)                                       # IDLCK .. 01 (lock)
+    doorman = sec.entity_index("DOORMAN")
+    cond = next(o for o in sec.script_ops(doorman, 0) if o.op == 0x14 and o.raw[2] == 163)
+    sec.remove(cond)                                         # always hidden
+    ctx.field("colne_1").sections[0] = sec.build()
+
+
 def apply(ctx):
     _bedroom(ctx)
     _hall(ctx)
+    _entrance(ctx)

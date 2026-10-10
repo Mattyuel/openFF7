@@ -40,10 +40,13 @@ PINNED = {
     342: ["mds5_5"],
     # Wall Market, Honey Bee Inn, Corneo's mansion and sewers: just after the
     # dress-up step (192), before the mansion events (197+). No cutscenes.
-    193: ["mrkt1", "mrkt2", "mrkt3", "mrkt4", "mkt_w", "mkt_mens", "mkt_ia", "mktinn",
+    193: ["mrkt1", "mrkt2", "mrkt3", "mkt_w", "mkt_mens", "mkt_ia", "mktinn",
           "mkt_m", "mkt_s1", "mkt_s2", "mkt_s3", "mktpb", "onna_2", "onna_4", "onna_5",
           "onna_52", "colne_1", "colne_2", "colne_3", "colne_4", "colne_5", "colne_6",
           "colne_b1", "colne_b3"],
+    # Wall Market, back street with the wire up to the plate: the climb line
+    # and the cable only exist from 257 (after the plate falls).
+    258: ["mrkt4"],
 }
 
 # Shinra HQ, per floor: each field's moment sits between its own events
