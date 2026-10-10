@@ -1,12 +1,13 @@
 """New game: Cloud (named "Cloud" via SPCNM) alone at the Sector 7 station, PHS and full
-menu available, all Shinra HQ keycards and three Batteries held.
+menu available, all Shinra HQ keycards and three Batteries held. Battle speed
+starts at fastest and Cloud at level 1 (KERNEL.BIN new-game data).
 
 The original new game runs in md1stin (Sector 1 station): entity 0's main
 script has `if (progress == 0) { opening movie; menu mask; party; ...;
 progress = 1 }`. That block is replaced with the openFF7 setup, ending in a
 jump to the Sector 7 station.
 """
-from _config import (BATTERIES_ITEM, BATTERIES_QTY, BATTERY_BITS, CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, MENU_ALL, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
+from _config import (BATTLE_SPEED, CLOUD_START_LEVEL, MENU_LOCK, BATTERIES_ITEM, BATTERIES_QTY, BATTERY_BITS, CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, MENU_ALL, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
                      START_TRIANGLE, START_X, START_Y)
 
 from ff7 import asm
@@ -42,12 +43,24 @@ def _find_new_game_block(sec):
     raise RuntimeError("new-game block not found in %s" % FIELD)
 
 
+def _cloud_level(ctx):
+    from ff7.kernel import baseline, exp_for_level
+    growth = ctx.kernel_growth()
+    lv = CLOUD_START_LEVEL
+    exp = exp_for_level(growth, CLOUD, lv)
+    ctx.kernel_init().set_level(CLOUD, lv, baseline(growth, CLOUD, lv), exp,
+                                exp_for_level(growth, CLOUD, lv + 1) - exp)
+
+
 def apply(ctx):
+    _cloud_level(ctx)
     sec = Script.parse(ctx.field(FIELD).sections[0])
     cond, body = _find_new_game_block(sec)
     # The original block ends by writing progress = 1 then falls through to the target.
     new = [
         asm.setword(MENU_MASK, MENU_ALL),
+        asm.setword(MENU_LOCK, 0),                    # nothing greyed out (PHS, Save)
+        asm.Op(bytes([0x0F, 0xF7, BATTLE_SPEED])),    # GMSPD: battle speed
         asm.party(CLOUD),
         asm.Op(bytes([0xCD, 0x01, CLOUD])),  # MMBUD: Cloud available in PHS
     ]

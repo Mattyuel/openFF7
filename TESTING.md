@@ -11,9 +11,9 @@ python tools/ff7tool.py build
 ```
 
 This writes `build/openFF7/` (a full copy of the game folder with the patched
-files). The build prints which game files changed; right now that is only
-`data/field/flevel.lgp`. (If you copied a `KERNEL.BIN` from an earlier build,
-restore the original; it is no longer changed.)
+files). The build prints which game files changed; right now that is
+`data/field/flevel.lgp` and `data/lang-en/kernel/KERNEL.BIN` (Cloud's
+starting level). Copy both.
 
 ## 2. Install the changed file into Steam (for now)
 
@@ -36,6 +36,12 @@ Existing saves load, but they keep their own story progress; use a new game.
 - New game skips the opening and starts with Cloud alone at street level in
   front of the Sector 7 station with the slums theme playing; menu (including
   PHS) is available. Walking up to the train should no longer board it.
+- Cloud starts at **level 1** (Str 14, Vit 11, Mag 13, Spr 11, Dex 6, Luck 15,
+  HP 219, MP 18, EXP 0) and should reach level 2 after a few battles.
+- **Battle speed** (Config) should start at the fastest setting. Note if it
+  is at the slowest instead or unchanged.
+- **PHS** should be usable at save points from the start (Sector 7 save
+  points used to lock it until Kalm).
 - Entering the Sector 7 slums should no longer play the AVALANCHE / Barret /
   Tifa arrival scene, and Barret should not be on the station platform.
 - **Recruit Tifa** in 7th Heaven: talk to her, choose "Come with me, Tifa."
@@ -56,7 +62,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   should play.
 - **Sector 7 <-> Sector 6 gate**: on the Sector 7 screen with the two guards
   (in front of the pillar), the guards now stand either side of the passage.
-  Walk down the passage to reach the Sector 6 playground. There the giant
+  Walk down the passage to reach the Sector 6 playground; the exit line is
+  now higher up and wider, so you shouldn't need to hunt for it. There the giant
   gate is open; walk through it to come back to the guard screen. Check the
   gate halves look open (not floating or clipping) and nothing blocks you.
 - **Shinra HQ 2f shop**: the two treasure boxes can be opened (Pile Bunker
@@ -65,7 +72,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   Corel Reactor (needs the world map to get there). Check his model and that
   he stands on the tracks, not in the air or inside the rails.
 - **Kalm**: entering the town, the inn and the houses should play no
-  arrival scene, flashback or story dialogue.
+  arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
+  in the party should no longer play "everyone's waiting at the inn" or
+  remove them (needs a new game).
 - **Rest of the world** (first automatic pass, `docs/world_plan.md`): every
   town and dungeon should be in a quiet, after-the-story state. Expect some
   leftovers; report the location and what played.

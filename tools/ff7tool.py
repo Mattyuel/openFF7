@@ -269,6 +269,11 @@ class BuildContext:
             self._kernel = InitData(self._kernel_sections[3]["data"])
         return self._kernel
 
+    def kernel_growth(self):
+        """KERNEL.BIN section 2 (battle and growth data), read-only."""
+        self.kernel_init()
+        return self._kernel_sections[2]["data"]
+
     def save_kernel(self, out_dir):
         if self._kernel is None:
             return False

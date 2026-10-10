@@ -28,6 +28,11 @@ GUARD_LINES = {
 }
 # Where you arrive on the Sector 7 side, just inside the passage.
 ARRIVE_S7 = (-20, -840, 95)
+# The exit to Sector 6 (gateway slot 2) sat ~20 units above the floor's bottom
+# edge and only just spanned it, so it was easy to miss. Move it up the passage
+# and run it past both walls (the floor here spans x -170..85).
+EXIT_S7_SLOT = 2
+EXIT_S7_LINE = ((-260, -920, 0), (180, -920, 0))
 
 # mds6_2 (Sector 6 playground): gate halves, open positions (from their
 # original opening scripts), and the passage behind the gate.
@@ -58,6 +63,14 @@ def _guards(ctx):
         if o.op == 0xD1:
             o.raw[1] = 0
     ctx.field("mds7plr1").sections[0] = sec.build()
+
+    field = ctx.field("mds7plr1")
+    gate = next(g for g in triggers.gateways(field.section("triggers")) if g["slot"] == EXIT_S7_SLOT)
+    assert gate["field"] == ctx.maplist.index("mds6_2"), gate
+    field.set_section("triggers", triggers.set_gateway(
+        field.section("triggers"), EXIT_S7_SLOT, *EXIT_S7_LINE,
+        (gate["dest_x"], gate["dest_y"], gate["dest_triangle"]), gate["field"], gate["dir"],
+        template_slot=EXIT_S7_SLOT))
 
 
 def _playground(ctx):

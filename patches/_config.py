@@ -9,6 +9,15 @@ OPEN_WORLD_PROGRESS = 100
 # Menu visibility mask (var[2][28]). Original new game: 763; Seventh Heaven
 # later sets 0xFEFF (everything except PHS); Kalm adds 0x0100 (PHS).
 MENU_ALL = 0xFFFF
+# Menu locking mask (var[2][30]): a set bit greys an entry out. 0x0100 is PHS,
+# 0x0200 Save. Midgar's save points set 0x0100 (no PHS yet); 900_phs.py clears it.
+MENU_LOCK = (2, 30)
+PHS_LOCK_BIT = 0x0100
+
+# New-game settings: battle speed (0 = fastest, set with SPECIAL GMSPD) and
+# Cloud's starting level (stats recomputed from the game's growth curves).
+BATTLE_SPEED = 0
+CLOUD_START_LEVEL = 1
 
 # Character ids used by party/PHS opcodes.
 CLOUD, BARRET, TIFA, AERITH, RED_XIII, YUFFIE, CAIT_SITH, VINCENT, CID = range(9)
@@ -55,6 +64,7 @@ INITIAL_EVENT_FLAGS = [
     (3, 211, 2),   # mds7pb_1: 7th Heaven - Marlene greeting seen
     (3, 129, 7),   # tunnel_1: Sector 4 tunnel - Barret/Tifa scene seen
     (3, 128, 0),   # tunnel_2: tunnel - Cloud scene seen
+    (3, 128, 1),   # elm: Kalm arrival ("everyone's waiting at the inn", party leaves) seen
     (3, 220, 6),   # onna_4: Honey Bee Inn room scene seen
     (3, 163, 0),   # colne_5: Corneo's hall audition done (hall Corneo hidden)
     (3, 162, 3),   # colne_4: dungeon - Tifa/Aerith meeting done (lines off, Tifa gone)
