@@ -17,6 +17,9 @@ Every field that has at least one PC entity also gets an entity
 whose entries for all nine characters load just stand/walk/run, rescaled to
 the target field (ModelLoader.add_from).
 
+Cutscene copies of party members hide themselves on load (VISI 00); those
+hides are skipped when that character leads (_keep_leader_visible).
+
 Known limits (see CLAUDE.md): field interactions scripted on Cloud's entity
 (ladders, jumps, climbs) still move Cloud's hidden entity, not another
 leader. Busy fields only get the characters that fit in 16 models; with a
@@ -66,6 +69,25 @@ def _sync_party(sec):
     sec.entry[0][0] = ops[0]
 
 
+def _keep_leader_visible(sec):
+    """Party-member entities that exist for cutscenes hide themselves when the
+    field loads (VISI 00 in script 0). When that character leads, the engine
+    controls that entity, so the hide is skipped if they are the leader
+    (var[3][9], the field party copy, already synced)."""
+    bank, addr = FIELD_PARTY
+    targets = []
+    for ent in range(len(sec.entry)):
+        code = sec.script_ops(ent, 0)
+        pcs = [o.raw[1] for o in code if o.op == 0xA0]
+        if pcs:
+            targets += [(pcs[0], o) for o in code if o.op == 0xA4 and o.raw[1] == 0]
+    for char, visi in targets:
+        skip = asm.nop()
+        sec.insert_before(visi, [asm.if_byte((bank, addr), "!=", char, skip)], retarget=True)
+        sec.insert_after(visi, [skip])
+    return len(targets)
+
+
 def _fallback_leader(sec, have, lacking):
     """After the party sync: if the leader is a character this field has no
     entity for (no room), let a present character be controlled instead,
@@ -101,6 +123,7 @@ def apply(ctx):
             continue          # no playable entity: menus, movies, cutscene-only fields
         field = ctx.field(name)
         _sync_party(sec)
+        _keep_leader_visible(sec)
         missing = [c for c in LEADERS if c not in present]
         if not missing:
             field.sections[0] = sec.build()

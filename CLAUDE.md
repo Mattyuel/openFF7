@@ -148,6 +148,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   swap failed). The build refuses > 16; `950_leader_entities` fills only the
   room left, in priority order, and falls back to Cloud for a leader without
   an entity there.
+- Cutscene copies of party members hide themselves on field load (VISI 00
+  in their script 0; 147 fields). When that character leads they'd be an
+  invisible player, so `950` guards each such VISI 00 with `var[3][9] != char`.
 - `CHAR` indices always follow entity order and the CHAR count equals the
   model count in every field: append models and CHAR entities together.
 - GETPC `[0x74][dst bank][party slot][var]`: slot 0 = leader (`_recruit.get_leader`).
