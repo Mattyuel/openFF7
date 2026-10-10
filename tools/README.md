@@ -34,6 +34,7 @@ python3 tools/tests/test_formats.py       # format round-trip checks (~1 min)
 | `worldmap.py` | World map scripts (`.ev`) and the world map -> field entrance table (`field.tbl`). |
 | `patch.py` | Patch helpers: `localise_progress` pins a field to a story moment or moves it to a region variable (see `DESIGN.md` §2). |
 | `kernel.py` | `KERNEL.BIN` sections and the new-game data (characters, party, items). |
+| `simulate.py` | Rough simulation of entering a field (init + main scripts, REQ calls) to detect entry cutscenes, and `find_quiet_flags` to search for event flags that suppress them. |
 | `varscan.py` | Which save variables the original scripts use. |
 
 ## Variables

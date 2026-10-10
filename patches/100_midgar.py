@@ -14,7 +14,7 @@ infiltration random encounters. Trains and disc 2 Midgar are not handled yet.
 from _config import REGION_VARS
 
 from ff7.patch import localise_progress
-from ff7.script import Script
+from ff7.script import Op, Script
 
 PINNED = {
     # Sector 1 and No.1 Reactor: after entering (>=15), before the bomb (27).
@@ -86,8 +86,34 @@ def _disable_train_boarding(ctx):
     ctx.field("mds7st3").sections[0] = script.build()
 
 
+SLUMS_THEME = 35  # music id of the Sector 7 slums theme (the only track in mds7)
+
+
+def _slums_music(ctx):
+    """Play the slums theme at the Sector 7 station (the new-game start, silent
+    in the original at this point) and in the slums entrance (mds7plr1), which
+    switches to another track after story moment 108."""
+    slums = Script.parse(ctx.field("mds7").sections[0])
+    theme = slums.akao_block(slums.akao_ids().index(SLUMS_THEME))
+
+    station = Script.parse(ctx.field("mds7st3").sections[0])
+    track = station.add_akao(theme)
+    produce = station.entity_index("produce")
+    init_ret = next(o for o in station.script_ops(produce, 0) if o.op == 0x00)
+    station.insert_before(init_ret, [Op(bytes([0xF0, track]))], retarget=False)  # MUSIC
+    ctx.field("mds7st3").sections[0] = station.build()
+
+    entrance = Script.parse(ctx.field("mds7plr1").sections[0])
+    track = entrance.akao_ids().index(SLUMS_THEME)
+    for op in entrance.script_ops(entrance.entity_index("produce"), 0):
+        if op.op == 0xF0:
+            op.raw[1] = track
+    ctx.field("mds7plr1").sections[0] = entrance.build()
+
+
 def apply(ctx):
     _disable_train_boarding(ctx)
+    _slums_music(ctx)
     total = 0
     for moment, fields in PINNED.items():
         for field in fields:

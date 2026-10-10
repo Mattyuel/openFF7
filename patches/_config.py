@@ -44,3 +44,23 @@ HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
 # openFF7 event flags: one byte of bits at bank 4 offset 240 (8-bit nibble 13).
 FLAGS = (OPEN_VAR_BANK8, 240)
 FLAG_CORNEO_FLED = 0  # Corneo ran from his bedroom; he appears in Wutai instead
+
+# Event flags set at new game so rooms behave as if their story scenes were
+# already seen (found with tools/ff7/simulate.py: find_quiet_flags, then
+# checked together across every pinned Midgar field). (nibble, addr, bit).
+INITIAL_EVENT_FLAGS = [
+    (3, 208, 0),   # mds7plr1: Sector 7 slums entrance - AVALANCHE run-in seen
+    (3, 214, 5),   # mds7pb_2: AVALANCHE hideout entry scene seen
+    (3, 211, 2),   # mds7pb_1: 7th Heaven - Marlene greeting seen
+    (3, 129, 7),   # tunnel_1: Sector 4 tunnel - Barret/Tifa scene seen
+    (3, 128, 0),   # tunnel_2: tunnel - Cloud scene seen
+    (3, 220, 6),   # onna_4: Honey Bee Inn room scene seen
+    (3, 163, 0),   # colne_5: Corneo's hall audition done (hall Corneo hidden)
+    (3, 168, 5),   # md0: Sector 0 arrival scene seen
+    (3, 168, 6),   # sinbil_1: Shinra HQ entrance scene seen
+    (3, 163, 4),   # blinst_1: HQ stairs start scene seen
+    (3, 163, 5),   # blinst_2/3: HQ stairs climbing scenes seen
+    (3, 172, 4),   # blin60_1: HQ 60f sneaking scene seen
+    (3, 181, 0),   # blin65_2: HQ 65f model room scene seen
+    (1, 226, 7),   # blin671b/673b: HQ 67f Red XIII state
+]

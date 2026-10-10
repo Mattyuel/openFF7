@@ -176,6 +176,23 @@ class Script:
                 if o is old:
                     ent[k] = new
 
+    # ---- music ------------------------------------------------------
+
+    def akao_block(self, index):
+        """Raw bytes of music block `index` (offsets are relative to `tail`)."""
+        start = self.akao_offsets[index]
+        later = [o for o in self.akao_offsets if o > start]
+        return self.tail[start:min(later) if later else len(self.tail)]
+
+    def akao_ids(self):
+        return [struct.unpack_from("<H", self.tail, o + 4)[0] for o in self.akao_offsets]
+
+    def add_akao(self, block):
+        """Append a music block; returns its index for the MUSIC opcode."""
+        self.akao_offsets.append(len(self.tail))
+        self.tail += bytes(block)
+        return len(self.akao_offsets) - 1
+
     # ---- assembly ---------------------------------------------------
 
     def build(self):

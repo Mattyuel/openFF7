@@ -7,6 +7,7 @@
   ff7tool.py wmdump             Write world map script dumps to work/worldmap/
   ff7tool.py inventory          Write the field/boss inventory to docs/inventory/
   ff7tool.py build [--out DIR]  Apply patches/*.py and write a standalone game folder
+  ff7tool.py scenes FIELD...    Simulate entering patched fields; list likely cutscenes
 """
 import argparse
 import collections
@@ -345,6 +346,24 @@ def write_worldmap(names):
         fh.write("\n".join(lines) + "\n")
 
 
+def scenes(args):
+    """Simulate entering each field of the last build (new-game state) and list
+    signs of a cutscene. Approximate: see tools/ff7/simulate.py."""
+    from ff7.simulate import State, simulate
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    state = State()
+    for nibble, addr, bit in getattr(_config, "INITIAL_EVENT_FLAGS", []):
+        state.bit(nibble, addr, bit, True)
+    names = args.fields or [n for n in maplist()[1:] if n in built]
+    for name in names:
+        rep = simulate(FieldFile(lzss.decompress(built[name])).sections[0], state.copy())
+        found = sorted(set(x for x in rep.summary() if "control locked" not in x))
+        if found:
+            print("%-10s %s" % (name, "; ".join(found[:5])))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -355,6 +374,9 @@ def main():
     d.set_defaults(func=dump)
     sub.add_parser("inventory").set_defaults(func=inventory)
     sub.add_parser("wmdump").set_defaults(func=wmdump)
+    sc = sub.add_parser("scenes")
+    sc.add_argument("fields", nargs="*")
+    sc.set_defaults(func=scenes)
     b = sub.add_parser("build")
     b.add_argument("--out", default=os.path.join(ROOT, "build", "openFF7"))
     b.set_defaults(func=build)
