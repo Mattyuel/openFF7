@@ -8,6 +8,8 @@ installed; standard library only.
 python3 tools/ff7tool.py extract          # decompress all field files to work/field/
 python3 tools/ff7tool.py dump md1stin     # readable script dump -> work/scripts/md1stin.txt
 python3 tools/ff7tool.py dump --all       # dump every field
+python3 tools/ff7tool.py dump --built F   # dump a field from the last build -> work/scripts_built/
+python3 tools/ff7tool.py api-index        # regenerate docs/api_index.md (tests check it is current)
 python3 tools/ff7tool.py inventory        # regenerate docs/inventory/
 python3 tools/ff7tool.py wmdump           # world map script dumps -> work/worldmap/
 python3 tools/ff7tool.py build            # apply patches/*.py -> build/openFF7/
@@ -41,6 +43,7 @@ python3 tools/tests/test_formats.py       # format round-trip checks (~1 min)
 | `simulate.py` | Rough simulation of entering a field (init + main scripts, REQ calls) to detect entry cutscenes, and `find_quiet_flags` to search for event flags that suppress them. |
 | `reach.py` | Walkmesh reachability between a field's entrances and exits, given locked triangles. |
 | `varscan.py` | Which save variables the original scripts use. |
+| `apiindex.py` | Generates `docs/api_index.md` (signatures + docstring summaries). |
 
 ## Variables
 

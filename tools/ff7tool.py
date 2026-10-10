@@ -79,16 +79,28 @@ def field_scripts(sec):
 
 
 def dump(args):
-    if not os.path.isdir(FIELD_DIR):
+    """Readable script dumps -> work/scripts/ (original game), or with --built
+    from the last build's flevel.lgp -> work/scripts_built/."""
+    built = None
+    if getattr(args, "built", False):
+        built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    elif not os.path.isdir(FIELD_DIR):
         extract()
     names = maplist()[1:] if args.all else args.fields
-    out_dir = os.path.join(WORK, "scripts")
+    out_dir = os.path.join(WORK, "scripts_built" if built else "scripts")
     os.makedirs(out_dir, exist_ok=True)
     ids = {n: i for i, n in enumerate(maplist())}
     for name in names:
-        if not name or not os.path.exists(os.path.join(FIELD_DIR, name + ".dec")):
-            continue
-        _, sec = load_field(name)
+        if built is not None:
+            if not name or name not in built:
+                continue
+            sec = ScriptSection(FieldFile(lzss.decompress(built[name])).sections[0])
+            if sec.broken:
+                continue
+        else:
+            if not name or not os.path.exists(os.path.join(FIELD_DIR, name + ".dec")):
+                continue
+            _, sec = load_field(name)
         lines = ["# field %s (id %s)" % (name, ids.get(name)), ""]
         for e, si, code in field_scripts(sec):
             lines.append("## entity %d '%s' script %d" % (e, sec.entity_names[e], si))
@@ -298,6 +310,14 @@ class BuildContext:
             if raw != lzss.decompress(self.flevel[name]):
                 self.flevel[name] = lzss.compress(raw)
         return [n for n in self._fields]
+
+
+def api_index(args):
+    """Regenerate docs/api_index.md (signatures + docstring summaries)."""
+    from ff7 import apiindex
+    with open(apiindex.path(), "w", encoding="utf-8") as fh:
+        fh.write(apiindex.generate())
+    print("wrote", apiindex.path())
 
 
 def build(args):
@@ -574,9 +594,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("extract").set_defaults(func=extract)
+    sub.add_parser("api-index").set_defaults(func=api_index)
     d = sub.add_parser("dump")
     d.add_argument("fields", nargs="*")
     d.add_argument("--all", action="store_true")
+    d.add_argument("--built", action="store_true", help="dump the last build instead of the original")
     d.set_defaults(func=dump)
     sub.add_parser("inventory").set_defaults(func=inventory)
     sub.add_parser("wmdump").set_defaults(func=wmdump)

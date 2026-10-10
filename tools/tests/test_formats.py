@@ -125,7 +125,14 @@ def test_patches():
                 assert (ins.args["bank_d"], ins.args["dst"]) != PROGRESS_VAR, f
 
 
+def test_api_index_current():
+    """docs/api_index.md matches the source (run `ff7tool.py api-index` after code changes)."""
+    from ff7 import apiindex
+    have = open(apiindex.path(), encoding="utf-8").read() if os.path.exists(apiindex.path()) else ""
+    assert have == apiindex.generate(), "docs/api_index.md is stale: run python3 tools/ff7tool.py api-index"
+
+
 if __name__ == "__main__":
-    for fn in [test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches]:
+    for fn in [test_api_index_current, test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches]:
         fn()
         print("ok", fn.__name__)
