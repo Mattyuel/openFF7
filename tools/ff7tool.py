@@ -302,6 +302,8 @@ class BuildContext:
             # The script header's model count (byte 3) must match the model
             # loader, or added NPCs get no proper actor (can't be talked to).
             n = len(ModelLoader(ff.section("models")).models)
+            if n > 16:   # the engine's field model table (0xCC1670) holds 16
+                raise SystemExit("BUILD CHECK FAILED: %s has %d models (max 16)" % (name, n))
             if ff.sections[0][3] != n:
                 head = bytearray(ff.sections[0])
                 head[3] = n
@@ -336,14 +338,24 @@ def api_index(args):
     print("wrote", apiindex.path())
 
 
+def _verify_build(flevel_path):
+    """Re-read the written flevel.lgp and check the new game is patched."""
+    built = LGP.read(flevel_path)
+    script = FieldFile(lzss.decompress(built["md1stin"])).sections[0]
+    jump = bytes([0x60]) + maplist().index("mds7st3").to_bytes(2, "little")
+    if jump not in script or b"\x0f\xfd" not in script:
+        raise SystemExit("BUILD CHECK FAILED: md1stin has no openFF7 new-game block")
+    print("check: md1stin new-game block present (SPCNM + jump to mds7st3)")
+
+
 def build(args):
+    """Apply patches/ and write the game folder to build/openFF7. All or nothing:
+    patches run first, the folder is only replaced once everything succeeded
+    (a failed build used to leave the original game files there)."""
     if not os.path.isdir(FIELD_DIR):
         extract()
     out = os.path.abspath(args.out)
     src = os.path.dirname(GAME)
-    if os.path.exists(out):
-        shutil.rmtree(out)
-    shutil.copytree(src, out)
     ctx = BuildContext()
     patch_dir = os.path.join(ROOT, "patches")
     sys.path.insert(0, patch_dir)  # lets patches `import _config`
@@ -354,14 +366,24 @@ def build(args):
         print("applying", os.path.basename(path))
         mod.apply(ctx)
     touched = ctx.save()
-    ctx.flevel.write(os.path.join(out, "data", "field", "flevel.lgp"))
+    tmp = out + ".partial"
+    if os.path.exists(tmp):
+        shutil.rmtree(tmp)
+    shutil.copytree(src, tmp)
+    flevel = os.path.join(tmp, "data", "field", "flevel.lgp")
+    ctx.flevel.write(flevel)
     changed = ["data/field/flevel.lgp"]
-    if ctx.save_kernel(out):
+    if ctx.save_kernel(tmp):
         changed.append("data/lang-en/kernel/KERNEL.BIN")
+    _verify_build(flevel)
+    if os.path.exists(out):
+        shutil.rmtree(out)
+    os.rename(tmp, out)
     print("built %s (%d field files touched)" % (out, len(touched)))
     print("changed game files (copy these into the game folder):")
     for path in changed:
-        print("   ", path)
+        full = os.path.join(out, path)
+        print("    %-35s %d bytes" % (path, os.path.getsize(full)))
 
 
 WM_MODELS = {  # world map model ids (function id 0x4000 | model << 8 | n). UNVERIFIED: from community docs, some look wrong

@@ -35,7 +35,9 @@ START_X, START_Y, START_TRIANGLE, START_DIR = -2940, 2562, 23, 0
 # openFF7 save variables. Bank 4 (opcode nibbles 13 = 8-bit, 14 = 16-bit),
 # offsets 224-255 (savemap 0x0F84-0x0FA3), are not used by any field or world
 # map script in the original game (checked by tools/tests/test_formats.py).
-# Whether the .exe uses them is not yet verified.
+# BUT the exe's world map code zeroes savemap 0x0F8C-0x0F97 (offsets 232-243)
+# on world map entry (0x766C7A) and writes world map object data to 244-255,
+# so only offsets 224-231 are safe for openFF7 (no exe reference found).
 OPEN_VAR_BANK8, OPEN_VAR_BANK16 = 13, 14
 OPEN_VARS_FIRST = 224
 
@@ -53,8 +55,8 @@ HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
                    ((1, 68), 1),   # Keycard 66
                    ((1, 68), 2)]   # Keycard 68
 
-# openFF7 event flags: one byte of bits at bank 4 offset 240 (8-bit nibble 13).
-FLAGS = (OPEN_VAR_BANK8, 240)
+# openFF7 event flags: one byte of bits at bank 4 offset 224 (8-bit nibble 13).
+FLAGS = (OPEN_VAR_BANK8, 224)
 FLAG_GUARD_SCORPION = 1   # Guard Scorpion beaten (No.1 Reactor core)
 FLAG_AIR_BUSTER = 2       # Air Buster beaten (No.5 Reactor bridge)
 FLAG_IN_REACTOR5 = 3      # last reactor room entered was No.5's (the elevator is shared)
@@ -100,7 +102,7 @@ BATTERIES_ITEM, BATTERIES_QTY = 85, 3
 BATTERY_BITS = [((1, 165), 5), ((1, 165), 6), ((1, 165), 7)]
 
 # Recruited characters: one bit per character id in this byte (8-bit, bank 4).
-RECRUITED = (OPEN_VAR_BANK8, 241)
+RECRUITED = (OPEN_VAR_BANK8, 225)
 # Characters recruited so far, Cloud included (set to 1 at new game).
-RECRUIT_COUNT = (OPEN_VAR_BANK8, 242)
+RECRUIT_COUNT = (OPEN_VAR_BANK8, 226)
 PHS_MIN_PARTY = 3

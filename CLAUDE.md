@@ -17,7 +17,7 @@ something new, hit a trap, or a feature's status changes.
 | What to test in-game, install steps | `TESTING.md` |
 | Midgar / rest-of-world pinning plans | `docs/midgar_plan.md`, `docs/world_plan.md` |
 | Fields, locations, exits, battles, world map | `docs/inventory/` |
-| .exe findings | `docs/exe_notes.md` |
+| .exe findings | `docs/exe_notes.md`, `docs/research_menu.md`, `docs/research_battle.md` |
 | Shared constants (start point, flags, own vars) | `patches/_config.py` |
 | Script dumps of the original game | `work/scripts/<field>.txt` (`ff7tool.py dump --all`) |
 | Script dumps of the last build | `work/scripts_built/` (`ff7tool.py dump --built FIELD...`) |
@@ -77,8 +77,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   that play **on field entry**; scenes triggered by LINE crossings or triangle
   checks (e.g. Kalm arrival) must be found by reading the script.
 - openFF7's own save vars: bank 4 offsets 224-255 (nibble 13 = 8-bit), unused
-  by the original scripts. `FLAGS` = (13,240) bits: 1 Guard Scorpion, 2 Air Buster.
-  `RECRUITED` = (13,241) bit per character id. Temp vars (5,240),(5,241) for menus.
+  by the original scripts. `FLAGS` = (13,224) bits: 1 Guard Scorpion, 2 Air Buster, 3 in No.5 Reactor.
+  `RECRUITED` = (13,225) bit per character id, `RECRUIT_COUNT` (13,226).
+  **Bank 4 offsets 232-255 are NOT free**: the exe's world map zeroes 232-243
+  on entry and stores world map object data in 244-255; only 224-231 are safe.
+  Bank 3 offsets 192-255 (nibble 11, savemap 0x0E64) look unused (planned for
+  tamed-enemy bits). Temp vars (5,240),(5,241) for menus.
 
 ## Verified facts: field scripts
 
@@ -117,7 +121,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - **PHS exit rule** (ff7_en.exe 0x700c22): opened from the menu, the PHS can
   only be left with exactly 3 in the party (opened by a field with a count
   param, that count). So the PHS entry is hidden until 3 are recruited
-  (`RECRUIT_COUNT` (13,242), `_recruit.count_recruit`). Savemap 0x10A4 = PHS
+  (`RECRUIT_COUNT` (13,226), `_recruit.count_recruit`). Savemap 0x10A4 = PHS
   lock mask, 0x10A6 = PHS available mask (MMBUD). Party = savemap 0x04F8 (0xDC0230).
 - SPCNM (0F FD char text) sets a name. The .exe forces "Ex-SOLDIER" at new
   game, so the name is set in the script, not KERNEL.BIN.
@@ -137,6 +141,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   fields cover all nine characters (models from blue_2: stand/walk/run only).
   Interactions scripted on Cloud's entity (ladders, jumps) don't move another
   leader yet.
+- **Max 16 models per field**: the engine's model table is a static array
+  (0xCC1670, 0x88 each, next variable at 0xCC1EF0). Exceeding it corrupted
+  memory (md1stin at 18 models played the opening FMV on new game, leader
+  swap failed). The build refuses > 16; `950_leader_entities` fills only the
+  room left, in priority order, and falls back to Cloud for a leader without
+  an entity there.
 - `CHAR` indices always follow entity order and the CHAR count equals the
   model count in every field: append models and CHAR entities together.
 - GETPC `[0x74][dst bank][party slot][var]`: slot 0 = leader (`_recruit.get_leader`).
@@ -193,7 +203,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - mds7plr1: gateway slot 2 is the exit to Sector 6 (mds6_2).
 - Reactors: No.1 rooms nmkin_1-5, No.5 rooms smkin_1-5; only the elevator
   elevtr1 is shared and chose by progress (< 33 = No.1). `260_reactor_elevator.py`
-  uses FLAG_IN_REACTOR5 (13,240 bit 3), set in smkin_1/2, cleared in nmkin_1/2.
+  uses FLAG_IN_REACTOR5 (13,224 bit 3), set in smkin_1/2, cleared in nmkin_1/2.
 - tunnel_2 duct = entity `cloud` script 4 (Barret/Tifa scene); sbwy4_1 ladder ->
   sbwy4_4 vent; vent end line1 drops to sbwy4_5 (onward to No.5).
 - md8brdg: md8_3's arrival (-422,1387) is at the top of the screen; train uses (-420,100,tri 33).
@@ -214,7 +224,7 @@ Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 
 Not done: world map leader models + new models (needs .exe work), player
-speed boost (hard-coded in .exe), leader-aware interactions (ladders etc.),
+leader-aware interactions (ladders etc.),
 battle speed default (needs .exe patch), other recruits (Red XIII,
 Cait Sith, Cid, Vincent, Yuffie), remaining bosses as world NPCs + rare
 encounters, vehicles (buggy, Tiny Bronco, airship, submarine), world-map

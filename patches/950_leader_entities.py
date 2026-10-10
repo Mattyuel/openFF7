@@ -19,15 +19,25 @@ the target field (ModelLoader.add_from).
 
 Known limits (see CLAUDE.md): field interactions scripted on Cloud's entity
 (ladders, jumps, climbs) still move Cloud's hidden entity, not another
-leader; and the model count per field rises up to 24 (original max 16).
+leader. Busy fields only get the characters that fit in 16 models; with a
+leader who didn't fit, the field lets Cloud (or another present character) be
+controlled instead.
 Runs last so it sees every other patch's entities.
 """
+from ff7 import asm
 from ff7.models import ModelLoader
 from ff7.script import Op, Script
 
 DONOR = "blue_2"
 FIELD_PARTY = (3, 9)  # var[3][9..11]: the party copy the PC opcode reads
 LEADERS = range(9)  # character ids; 6/7 are Cait Sith/Vincent (Young Cloud/Sephiroth in flashbacks)
+# The engine's field model table holds 16 models (static array at 0xCC1670,
+# 0x88 bytes each, ending where the next variable starts at 0xCC1EF0; no
+# original field uses more). Going over corrupted memory (md1stin at 18
+# models played the opening FMV on new game). Missing characters are added in
+# this order while there is room.
+MAX_MODELS = 16
+PRIORITY = [2, 3, 1, 4, 8, 5, 7, 6, 0]   # Tifa, Aerith, Barret, Red XIII, Cid, Yuffie, Vincent, Cait Sith, Cloud
 
 
 def _pc_chars(sec):
@@ -56,6 +66,25 @@ def _sync_party(sec):
     sec.entry[0][0] = ops[0]
 
 
+def _fallback_leader(sec, have, lacking):
+    """After the party sync: if the leader is a character this field has no
+    entity for (no room), let a present character be controlled instead,
+    Cloud if possible (only the field copy changes; the real party doesn't)."""
+    if not lacking:
+        return
+    stand_in = 0 if 0 in have else min(have)
+    bank, addr = FIELD_PARTY
+    first = sec.entry[0][0]
+    after = first
+    for _ in range(3):                       # the three GETPCs
+        after = sec.ops[sec.index(after) + 1]
+    ops = []
+    for char in lacking:
+        skip = asm.nop()
+        ops += [asm.if_byte((bank, addr), "==", char, skip), asm.setbyte((bank, addr), stand_in), skip]
+    sec.insert_before(after, ops, retarget=False)
+
+
 def apply(ctx):
     donor_models = _donor_models(ctx)
     donor = ModelLoader(ctx.field(DONOR).section("models"))
@@ -77,7 +106,10 @@ def apply(ctx):
             field.sections[0] = sec.build()
             continue
         loader = ModelLoader(field.section("models"))
-        for char in missing:
+        room = MAX_MODELS - len(loader.models)
+        fit = [c for c in PRIORITY if c in missing][:max(room, 0)]
+        _fallback_leader(sec, present | set(fit), [c for c in missing if c not in fit])
+        for char in fit:
             model = loader.add_from(donor, donor_models[char])
             sec.add_entity("pc%d" % char, {0: [Op(bytes([0xA1, model])),    # CHAR
                                                Op(bytes([0xA0, char])),     # PC
