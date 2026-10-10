@@ -58,7 +58,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   Walk down the passage to reach the Sector 6 playground. There the giant
   gate is open; walk through it to come back to the guard screen. Check the
   gate halves look open (not floating or clipping) and nothing blocks you.
-- Known still to do: Barret's recruitment (location to be decided), Air Buster's reactor entrance, the
+- **Shinra HQ 2f shop**: the two treasure boxes can be opened (Pile Bunker
+  and the other item); the assistant no longer stops you.
+- **Recruit Barret** on Mt. Corel, on the railway screen just after the
+  Corel Reactor (needs the world map to get there). Check his model and that
+  he stands on the tracks, not in the air or inside the rails.
+- Known still to do: re-entering Midgar from the world map, Air Buster's reactor entrance, the
   Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train
   Graveyard, the pillar, Sector 6, Wall Market, Sector 5, the church and

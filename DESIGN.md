@@ -75,7 +75,7 @@ Midgar per-field choices: `docs/midgar_plan.md`.
 |---|---|---|
 | Aerith | Sector 5 church | New recruitment dialogue |
 | Tifa | Seventh Heaven bar, Sector 7 | New recruitment dialogue |
-| Barret | **TBD** (being decided) | New recruitment dialogue |
+| Barret | Mt. Corel, railway screen just after the Corel Reactor | New recruitment dialogue |
 | Red XIII | Shinra HQ lab (specimen area) | New recruitment dialogue |
 | Cait Sith | Gold Saucer, Wonder Square arcade (fortune reading) | Adapted from the original recruitment |
 | Cid | Rocket Town, near the rocket | New recruitment dialogue |

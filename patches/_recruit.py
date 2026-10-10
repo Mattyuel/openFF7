@@ -60,3 +60,30 @@ def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined):
     ops += say(script, joined)
     ops += hide() + [Op(b"\x33\x00"), asm.ret()]
     return ops + decline + end_decline
+
+
+def xyzi(x, y, z, tri):
+    return Op(bytes([0xA5, 0, 0]) + x.to_bytes(2, "little", signed=True)
+              + y.to_bytes(2, "little", signed=True) + z.to_bytes(2, "little", signed=True)
+              + tri.to_bytes(2, "little"))
+
+
+def add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines):
+    """Add a new NPC for `char` to `field`, with the model copied from
+    `donor_field` (model index `donor_model`), standing at pos (x, y, z,
+    triangle), whose talk script is the recruitment. Hidden once recruited."""
+    from ff7.models import ModelLoader
+    from ff7.script import Script
+    donor = ModelLoader(ctx.field(donor_field).section("models"))
+    loader = ModelLoader(ctx.field(field).section("models"))
+    model = loader.add(donor.models[donor_model])
+    ctx.field(field).set_section("models", loader.build())
+
+    sec = Script.parse(ctx.field(field).sections[0])
+    init = [Op(bytes([0xA1, model])), xyzi(*pos), Op(bytes([0xB3, 0x00, direction]))]
+    init += hide_if_recruited(char) + [asm.ret(), asm.ret()]
+    ent = sec.add_entity(name, {0: init})
+    talk = recruit_talk(sec, char, **lines)
+    sec.ops.extend(talk)
+    sec.entry[ent][1] = talk[0]
+    ctx.field(field).sections[0] = sec.build()
