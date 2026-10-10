@@ -44,6 +44,20 @@ The original game gates almost everything on one story-progress variable (the
 - **Aerith is permanent.** Her death and all related content are removed.
 - The PHS (party switching) must be usable from the start or from the first
   recruit (see open questions).
+- **Starting point:** Cloud starts at the **Sector 7 train station**.
+
+#### Recruitment locations
+
+| Character | Where | How |
+|---|---|---|
+| Aerith | Sector 5 church | New recruitment dialogue |
+| Tifa | Nibelheim, at her piano (Tifa's house) | New recruitment dialogue |
+| Barret | Outside North Corel, on the train tracks | New recruitment dialogue |
+| Cait Sith | Gold Saucer, Wonder Square arcade (fortune reading) | Adapted from the original recruitment |
+| Cid | Rocket Town, near the rocket | New recruitment dialogue |
+| Vincent | Shinra Mansion basement | As in the original (Basement Key from the safe) |
+| Yuffie | Random forest encounters | As in the original |
+| Red XIII | **TBD** | |
 
 ### Enemies and bosses
 - **Regular enemies are unchanged** (stats, levels, encounter areas).
@@ -51,6 +65,14 @@ The original game gates almost everything on one story-progress variable (the
   near its original location. Touching it starts the fight.
 - After a boss is defeated once, its battle formation is **added to that zone's
   encounter table as a rare encounter**.
+- **Drops and steals repeat** on every rare-encounter fight, not just the first kill.
+- **Jenova and Sephiroth fights stay.** They are reached from the bottom of the
+  spiral section of the Northern Crater. The game **continues afterwards**:
+  no game-ending sequence, and the player returns to the world.
+
+### NPCs that move
+- **Don Corneo** starts in Wall Market. After he is beaten there, he moves to
+  Wutai, where Yuffie's Wutai quest picks him up.
 
 ### Midgar
 - Midgar is in its **early disc 1 state**: the Sector 7 plate is intact and the
@@ -66,6 +88,7 @@ The original game gates almost everything on one story-progress variable (the
 - **Submarine:** available **from the start**.
 - **Buggy:** unlocked the **first time the player leaves Costa del Sol**.
 - **Airship (Highwind):** unlocked by **visiting the landing strip at Junon**.
+- **Tiny Bronco:** available (location and unlock to be decided).
 
 ### Minigames
 - Minigames outside the story stay (Gold Saucer, chocobo racing/breeding, etc.).
@@ -113,26 +136,19 @@ fights tied to story scripts.
 
 ## Open questions
 
-1. **Midgar key** — in the open world, where is the key to the Sector 5 exit
-   obtained? Or is the exit simply open?
-2. **Starting location** — where does Cloud start (e.g. Sector 7 slums, the
-   Sector 1 station, near the church)?
-3. **Party leader and PHS** — is Cloud always the party leader? Can anyone
-   be swapped in at a save point from the first recruit onward?
-4. **Boss rewards on repeat** — should boss drops and steals repeat on the
-   rare-encounter version, or only on the first kill?
-5. **Unique-story bosses** — Jenova forms, Sephiroth forms, Rufus, Hojo,
-   Bizarro/Safer Sephiroth: placed in the world like the others, or excluded?
-6. **End goal** — is there a final challenge (e.g. Northern Crater capstone),
-   or is the game fully open-ended?
-7. **Story-tied minigames** — Fort Condor, Corel train, submarine Huge
-   Materia chase, Junon parade, motorcycle chase, Shinra HQ stair race: keep
+1. **Red XIII** — where is he recruited (e.g. Cosmo Canyon, or the Shinra HQ lab
+   specimen tank)?
+2. **Tiny Bronco** — where is it, and is it available from the start or after
+   something (e.g. recruiting Cid)?
+3. **Party leader and PHS** — is Cloud always the party leader? Is the PHS held
+   from the start?
+4. **Wall Market / Corneo mansion** — the original sequence needs Tifa and Aerith.
+   Proposal: it works with whoever is in the party, and the cross-dressing
+   quest still applies to Cloud.
+5. **Story-tied minigames** — Fort Condor, Corel train, submarine Huge Materia
+   chase, Junon parade, motorcycle chase, Shinra HQ stair race: keep
    as repeatable activities?
-8. **Story-locked rewards** — where do the Huge Materia items, the Ancient
-   Key, the Keystone, the Black Materia temple rewards, etc. come from now?
-9. **Tiny Bronco** — include it, given the ferry, submarine and airship?
-10. **Characters appearing in two places** — e.g. Don Corneo in Wall Market
-    (disc 1) and in Wutai (Yuffie quest). Which appearances survive?
-11. **Recruitment locations** for each character.
-12. **Shop inventories** — one fixed inventory per shop, or unlocked by
-    condition?
+6. **Story-locked rewards** — where do the Huge Materia items, the Ancient
+   Key, the Keystone, the Temple of the Ancients rewards, etc. come from now?
+7. **Shop inventories** — one fixed inventory per shop, or unlocked by
+   condition?
