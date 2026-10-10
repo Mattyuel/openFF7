@@ -64,6 +64,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
+| `950_leader_entities.py` | Every playable field gets a PC entity for all nine characters (any leader). |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
 
 ## Core approach
@@ -122,9 +123,35 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   game, so the name is set in the script, not KERNEL.BIN.
 - **Do not use SPECIAL GMSPD (0F F7)**: never used by the game; adding it to
   the new game caused a black screen. SMSPD is `0F F8 00 speed`.
+- **Party leader in fields**: the engine controls the entity whose `PC <char>`
+  matches party slot 0 and hides other party members' PC entities (no VISI
+  needed: see blue_2, which has all nine). PC entities used as NPCs (Tifa in
+  7th Heaven, Aerith in the church) show themselves with VISI 01.
+  `950_leader_entities.py` adds `CHAR m; PC c` entities so all 663 playable
+  fields cover all nine characters (models from blue_2: stand/walk/run only).
+  Interactions scripted on Cloud's entity (ladders, jumps) don't move another
+  leader yet.
+- `CHAR` indices always follow entity order and the CHAR count equals the
+  model count in every field: append models and CHAR entities together.
+- GETPC `[0x74][dst bank][party slot][var]`: slot 0 = leader (`_recruit.get_leader`).
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
   via `ModelLoader.add` works.
+
+## Verified facts: ff7_en.exe (static reading, capstone)
+
+- Field opcode handler table: 0x9055A0 (256 dwords). Current entity 0xCC0964,
+  script positions 0xCC0CF8 (u16 per entity), model structs at [0xCC0B60]
+  (0x88 bytes each; entity -> model 0xCBFB70), field header ptr 0xCBF9D8
+  (+0x10 = field scale).
+- MSPED (0x618369) writes model+0x76 = speed*scale>>9; default at field load
+  = 0x400 equivalent; scripted MOVE runs when speed > 0x600. **Player-controlled
+  walking does not read +0x76**, so MSPED can't speed up the player: player
+  speed is hard-coded elsewhere (not found yet).
+- World map models are field-style files in world_us.lgp (.hrc/.rsd/.p/.tex/.a);
+  the exe holds per-map-variant .hrc name tables (~0x56B289 in the file). The
+  leader -> world map model choice is in the exe (not in wm*.ev); not found yet.
+- Party slots: 0xDC0230 (savemap 0x04F8). PHS exit check: 0x700C22.
 
 ## Verified facts: KERNEL.BIN
 
@@ -162,10 +189,13 @@ Done (awaiting in-game confirmation where noted): new game start, Midgar
 pinning, Tifa/Aerith/Barret recruitment, Corneo removed, Wall Market/HQ open,
 wire climb, Sector 6 gate, train menu + conductors (untested), reactor doors,
 reactor elevator (untested), duct/vent (untested), PHS hidden until 3 recruits (untested),
+field leader entities (untested),
 Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 
-Not done: battle speed default (needs .exe patch), other recruits (Red XIII,
+Not done: world map leader models + new models (needs .exe work), player
+speed boost (hard-coded in .exe), leader-aware interactions (ladders etc.),
+battle speed default (needs .exe patch), other recruits (Red XIII,
 Cait Sith, Cid, Vincent, Yuffie), remaining bosses as world NPCs + rare
 encounters, vehicles (buggy, Tiny Bronco, airship, submarine), world-map
 models for other leaders, minigame NPCs, shop scaling, crater bosses.

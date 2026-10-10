@@ -48,6 +48,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   climb the ladder into the vent; at its far end (or walking onto that spot)
   choose "Drop down." (onward) or "Climb back to the train tunnel." Note if
   the vent menu pops up repeatedly while you stand there.
+- **Party leader** (needs 3 recruits so the PHS shows): in the PHS put
+  someone else in the first party slot. Walk around several screens (Midgar,
+  Kalm, world map entrances): you should control that character, with their
+  own walk/run. Note any screen where you can't move, the character is
+  invisible, or the game crashes on entering (each screen now loads up to 24
+  character models). Ladders/jumps/climbs are not adapted yet with a
+  non-Cloud leader, so expect those to fail. The world map still shows Cloud.
 - **No.5 Reactor elevator** should go to No.5's rooms, and No.1's to No.1's.
 - Conductors should now be the same size as other characters; on Upper
   Midgar you and he start mid-screen.

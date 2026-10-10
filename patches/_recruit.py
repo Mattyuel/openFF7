@@ -35,10 +35,23 @@ def hide():
     return [Op(b"\x7E\x01"), Op(b"\xC7\x01"), Op(b"\xA4\x00")]  # TLKON 01, SOLID 01, VISI 00
 
 
-def hide_if_recruited(char):
-    """Ops for an init script: hide this NPC once `char` has been recruited."""
+LEADER = (5, 242)  # temporary field variable: party leader's character id
+
+
+def get_leader():
+    """GETPC: LEADER = character id in party slot 0."""
+    return Op(bytes([0x74, LEADER[0], 0, LEADER[1]]))
+
+
+def hide_if_recruited(char, pc_entity=False):
+    """Ops for an init script: hide this NPC once `char` has been recruited.
+    For a PC entity (CHAR + PC char) it is also the character's own entity
+    when they lead the party, so it is not hidden then."""
     end = asm.nop()
-    return [asm.if_byte(RECRUITED, "bit_on", char, end)] + hide() + [end]
+    ops = [asm.if_byte(RECRUITED, "bit_on", char, end)]
+    if pc_entity:
+        ops += [get_leader(), asm.if_byte(LEADER, "!=", char, end)]
+    return ops + hide() + [end]
 
 
 def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined):

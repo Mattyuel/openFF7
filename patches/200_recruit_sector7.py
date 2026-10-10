@@ -27,7 +27,7 @@ def _seventh_heaven(ctx):
     sec.entry[tifa][1] = talk[0]
     # Hidden once recruited (end of her init).
     init_ret = next(o for o in sec.script_ops(tifa, 0) if o.op == 0x00)
-    sec.insert_before(init_ret, hide_if_recruited(TIFA), retarget=False)
+    sec.insert_before(init_ret, hide_if_recruited(TIFA, pc_entity=True), retarget=False)
     # Her bar-setup script hides her if var[3][213] bit 6 is set (a story flag
     # some builds set at new game); always take the "stand at the bar" branch.
     for op in sec.script_ops(tifa, 6):

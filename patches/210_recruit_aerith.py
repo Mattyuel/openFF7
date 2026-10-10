@@ -26,7 +26,7 @@ def apply(ctx):
                 + tri.to_bytes(2, "little")),
              Op(b"\xA2\x05\x01"),                  # DFANM 05: tending the flowers
              Op(b"\x7E\x00"), Op(b"\xC7\x00"), Op(b"\xA4\x01")]
-    place += hide_if_recruited(AERITH) + [Op(b"\x00")]
+    place += hide_if_recruited(AERITH, pc_entity=True) + [Op(b"\x00")]
     sec.insert_before(sec.entry[ent][6], place, retarget=False)
     sec.entry[ent][6] = place[0]
     talk = recruit_talk(sec, AERITH, **LINES)
