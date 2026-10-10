@@ -13,10 +13,11 @@ MENU_ALL = 0xFFFF
 # Character ids used by party/PHS opcodes.
 CLOUD, BARRET, TIFA, AERITH, RED_XIII, YUFFIE, CAIT_SITH, VINCENT, CID = range(9)
 
-# New game start: Sector 7 train station platform (same spot the Sector 1
-# train arrives at in the original; from tin_1's MAPJUMP).
+# New game start: Sector 7 station, street level in front of the platform
+# (walkmesh triangle 23). The original train arrival spot (triangle 26) is on
+# the train-door trigger line and made Cloud board the train.
 START_FIELD = "mds7st3"
-START_X, START_Y, START_TRIANGLE, START_DIR = -2891, 3392, 26, 0
+START_X, START_Y, START_TRIANGLE, START_DIR = -2940, 2562, 23, 0
 
 # ---------------------------------------------------------------------------
 # openFF7 save variables. Bank 4 (opcode nibbles 13 = 8-bit, 14 = 16-bit),
