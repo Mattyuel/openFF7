@@ -104,13 +104,18 @@ The original game gates almost everything on one story-progress variable (the
   - Corel train chase: North Corel
   - Submarine chase: Junon
   - Junon parade: Junon
-  - Motorcycle chase: Midgar (NPC location TBD)
+  - Motorcycle chase: Midgar, by interacting with the motorbike on display in
+    the Shinra HQ lobby showroom
 
 ### Story-locked items and places
 - **Temple of the Ancients is open from the start.** No Keystone is needed.
 - **The Huge Materia is already in Cosmo Canyon** (Bugenhagen's observatory) and
   can be interacted with from the start.
-- **Shops keep their original stock.**
+- **Shop stock scales with the highest character level.** Shops keep their
+  original item lists. Where a shop's stock changes with story progress in the
+  original, each tier is unlocked when the highest-level character in the roster
+  reaches a threshold. Thresholds are set per shop, based on the typical party
+  level at that point in the original story.
 
 ### Locations restored
 - Areas that become inaccessible later in the original (e.g. Cave of the Gi in
@@ -159,10 +164,7 @@ fights tied to story scripts.
    Cid have walking models. Options: (a) convert field models for the others,
    (b) world map always shows Cloud/Tifa/Cid as a stand-in. Needs a look at the
    data before deciding.
-2. **Shop stock that changes with story progress** — some shops add items later
-   in the original. Use the final (largest) list, or the earliest?
-3. **Motorcycle chase NPC** — where in Midgar?
-4. **Huge Materia balance** — touching the Huge Materia gives very strong
+2. **Huge Materia balance** — touching the Huge Materia gives very strong
    materia (e.g. Bahamut ZERO) from the very start. Intended?
-5. **Fort Condor / train / submarine rewards** — those minigames originally
+3. **Fort Condor / train / submarine rewards** — those minigames originally
    award Huge Materia. What should they award now?
