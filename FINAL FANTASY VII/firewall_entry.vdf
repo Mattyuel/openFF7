@@ -1,0 +1,11 @@
+"installscript"
+{
+	"Firewall"
+	{
+		"FINAL FANTASY VII"		"%INSTALLDIR%\\FF7_Launcher.exe"
+	}
+}
+"kvsignatures"
+{
+	"installscript"		"1d95b596f16ea86c6bb3b13c6b21fb991707c24c377563ce9500c27568f29d7ff718eb89cf0d3a4a686381c8a53792b8c1337b30a383044726580f180ff24316c896fe5aedf266c5bd00e0b249e9594b0a554645af2211666a20fac5b38ce4f55c434e709d338abf024867ccc3e0fe487acf19bf90328d205d595f17b0df8ca6"
+}

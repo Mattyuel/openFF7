@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1"> 
+      <application> 
+        <!--This Id value indicates the application supports Windows Vista functionality -->
+          <supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f0}"/> 
+        <!--This Id value indicates the application supports Windows 7 functionality-->
+          <supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>
+      </application> 
+  </compatibility>
+
+  <assemblyIdentity type="win32" 
+                    name="SquareEnix.FINALFANTASYVII.ff7_en" 
+                    version="1.0.5.0" 
+                    processorArchitecture="x86" 
+  />
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" 
+                        name="Microsoft.VC90.CRT" 
+                        version="9.0.21022.8" 
+                        processorArchitecture="X86" 
+                        publicKeyToken="1fc8b3b9a1e18e3b" 
+      />
+    </dependentAssembly>
+  </dependency>
+</assembly>
