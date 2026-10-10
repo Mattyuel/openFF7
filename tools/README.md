@@ -9,6 +9,7 @@ python3 tools/ff7tool.py extract          # decompress all field files to work/f
 python3 tools/ff7tool.py dump md1stin     # readable script dump -> work/scripts/md1stin.txt
 python3 tools/ff7tool.py dump --all       # dump every field
 python3 tools/ff7tool.py inventory        # regenerate docs/inventory/
+python3 tools/ff7tool.py wmdump           # world map script dumps -> work/worldmap/
 python3 tools/ff7tool.py build            # apply patches/*.py -> build/openFF7/
 python3 tools/tests/test_formats.py       # format round-trip checks (~1 min)
 ```
@@ -27,6 +28,10 @@ python3 tools/tests/test_formats.py       # format round-trip checks (~1 min)
 | `text.py` | FF7 text encoding -> readable text. |
 | `encounters.py` | Field random encounter tables. |
 | `scene.py` | `scene.bin` battle formations and enemy names. |
+| `script.py` | Editable script model and assembler: insert/remove/replace instructions; jumps and entry points are relocated automatically. |
+| `asm.py` | Constructors for new instructions (variables, conditions, map jumps, party, items, battles). |
+| `triggers.py` | Walk-off gateways (room exits). |
+| `worldmap.py` | World map scripts (`.ev`) and the world map -> field entrance table (`field.tbl`). |
 | `patch.py` | Patch helpers, e.g. `pin_progress` (see `DESIGN.md` §2). |
 
 ## Variables
@@ -37,6 +42,6 @@ the 702 fields compare against it.
 
 ## Not covered yet
 
-World map scripts (`world_us.lgp` `.ev` files), kernel/new-game data, battle AI
+Editing world map scripts (reading works), kernel/new-game data, battle AI
 scripts, model conversion, and checking that the built `.exe` starts without the
 Steam launcher.
