@@ -1,9 +1,11 @@
 """Train travel from the Sector 7 station, the reactors, and their bosses.
 
-- Sector 7 station (mds7st3): walking into the train door offers Upper
-  Midgar (Sector 8 bridge), No.1 Reactor (Sector 1 platform, where the game
-  originally starts) and No.5 Reactor (the tunnel after jumping off the train).
-- Each destination has a train attendant who takes you back to Sector 7.
+- Sector 7 station (mds7st3): talk to the conductor for a list of
+  destinations: Upper Midgar (Sector 8 bridge), No.1 Reactor (Sector 1
+  platform, where the game originally starts) and No.5 Reactor (the tunnel
+  after jumping off the train). He calls "ALL ABOARD!", the train sound plays
+  and you are there.
+- Each destination has a train attendant who takes you back the same way.
 - No.1 Reactor: entrance gate open, Biggs' gate open (new-game flag), the
   button door opens on its own. Guard Scorpion stands at the core: talk to it
   to fight; beaten, it is gone.
@@ -19,6 +21,7 @@ from _travel import add_npc, choice_menu, copy_model, mapjump, near
 
 from ff7 import asm
 from ff7.script import Op, Script
+from ff7.text import encode
 
 DESTINATIONS = {
     # name: (field, x, y, triangle, direction)
@@ -34,17 +37,35 @@ AIR_BUSTER = dict(field="southmk1", formation=364, triangle=2, flag=FLAG_AIR_BUS
                   line="“Target acquired.\n Engaging.”")
 
 
+TRAIN_SOUND = 0x190        # the train sound used when trains pull in
+ALL_ABOARD_TEXT = 49       # mds7st3: “ALL ABOARD! The train is about to depart.”
+
+
+def _depart(sec, jump, text_id=None):
+    """Conductor's call, train sound, short wait, then the map jump."""
+    from _recruit import window
+    if text_id is None:
+        text_id = sec.add_string(encode("“ALL ABOARD!”"))
+    return [window("“ALL ABOARD!\n The train is about to depart.”"),
+            asm.message(0, text_id),
+            Op(bytes([0xF1, 0x00]) + TRAIN_SOUND.to_bytes(2, "little") + b"\x40"),   # SOUND
+            Op(b"\x24\x1e\x00"),                                                    # WAIT 30
+            jump]
+
+
 def _train_menu(ctx):
+    """The station conductor ('guard') offers the destinations."""
     sec = Script.parse(ctx.field("mds7st3").sections[0])
-    ent = sec.entity_index("border1")
-    for o in sec.script_ops(ent, 0):
-        if o.op == 0xD1:
-            o.raw[1] = 1                                     # LINON 01: train door line on
+    ent = sec.entity_index("guard")
     names = list(DESTINATIONS)
-    jumps = [[mapjump(ctx, *DESTINATIONS[n])] for n in names] + [None]
-    menu = choice_menu(sec, "Train\n“Where to?”", names + ["Stay here"], jumps)
-    sec.insert_before(sec.entry[ent][2], menu, retarget=False)
-    sec.entry[ent][2] = menu[0]
+    jumps = [_depart(sec, mapjump(ctx, *DESTINATIONS[n]), ALL_ABOARD_TEXT) for n in names] + [None]
+    menu = choice_menu(sec, "Conductor\n“Where are you headed?”", names + ["Nowhere, thanks."], jumps)
+    sec.insert_before(sec.entry[ent][1], menu, retarget=False)
+    sec.entry[ent][1] = menu[0]
+    # The line at the train door ('border1') boarded the story train; switch it off.
+    linon = [o for o in sec.script_ops(sec.entity_index("border1"), 0) if o.op == 0xD1]
+    assert linon and linon[0].raw[1] == 1, "expected LINON 01 in border1 init"
+    linon[0].raw[1] = 0
     ctx.field("mds7st3").sections[0] = sec.build()
 
 
@@ -54,7 +75,7 @@ def _attendants(ctx):
         pos = near(ctx, field, tri)
 
         def talk(sec):
-            back = [mapjump(ctx, START_FIELD, START_X, START_Y, START_TRIANGLE)]
+            back = _depart(sec, mapjump(ctx, START_FIELD, START_X, START_Y, START_TRIANGLE))
             return choice_menu(sec, "Train Attendant\n“Heading back to Sector 7?”",
                                ["Yes, take me back.", "Not yet."], [back, None])
         add_npc(ctx, field, "attend", model, pos, 0x80, talk)

@@ -76,11 +76,12 @@ Existing saves load, but they keep their own story progress; use a new game.
 - If Tifa (7th Heaven) or Aerith (church) are missing, start a **new game**:
   a save made with the build from two updates ago carries flags that hid
   them.
-- **Train travel**: at the Sector 7 station walk into the train door: a menu
+- **Train travel**: at the Sector 7 station talk to the conductor: a menu
   offers Upper Midgar (Sector 8 bridge), No. 1 Reactor (Sector 1 platform)
   and No. 5 Reactor (the tunnel after jumping off the train). At each
   destination a Train Attendant stands next to where you arrive and takes
-  you back to Sector 7.
+  you back to Sector 7. Picking a destination shows “ALL ABOARD!” and plays
+  the train sound before the jump. Walking into the train itself does nothing.
 - **No. 1 Reactor**: walk from the platform through Sector 1 into the
   reactor; all gates/doors should be open with no scenes. Guard Scorpion
   (a stand-in robot) waits at the core: talk to it to fight. After winning
