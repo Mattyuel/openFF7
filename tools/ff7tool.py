@@ -285,7 +285,15 @@ class BuildContext:
         return True
 
     def save(self):
+        from ff7.models import ModelLoader
         for name, ff in self._fields.items():
+            # The script header's model count (byte 3) must match the model
+            # loader, or added NPCs get no proper actor (can't be talked to).
+            n = len(ModelLoader(ff.section("models")).models)
+            if ff.sections[0][3] != n:
+                head = bytearray(ff.sections[0])
+                head[3] = n
+                ff.sections[0] = bytes(head)
             raw = ff.build()
             if raw != lzss.decompress(self.flevel[name]):
                 self.flevel[name] = lzss.compress(raw)

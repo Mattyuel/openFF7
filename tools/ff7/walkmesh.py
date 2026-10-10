@@ -40,3 +40,22 @@ class Walkmesh:
         """Edges of triangle i on the mesh boundary: [(p1, p2)]."""
         v = self.tris[i]
         return [(v[k], v[(k + 1) % 3]) for k in range(3) if self.access[i][k] == -1]
+
+    def height(self, i, x, y):
+        """z of the point (x, y) on triangle i's plane."""
+        (x1, y1, z1), (x2, y2, z2), (x3, y3, z3) = self.tris[i]
+        det = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3)
+        if det == 0:
+            return round((z1 + z2 + z3) / 3)
+        a = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / det
+        b = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / det
+        return round(a * z1 + b * z2 + (1 - a - b) * z3)
+
+    def nearby(self, i, depth=4):
+        """Triangles reachable from i within `depth` steps (i first)."""
+        seen, frontier = [i], [i]
+        for _ in range(depth):
+            frontier = [n for t in frontier for n in self.access[t] if n >= 0 and n not in seen]
+            frontier = list(dict.fromkeys(frontier))
+            seen += frontier
+        return seen

@@ -5,19 +5,20 @@
   platform, where the game originally starts) and No.5 Reactor (the tunnel
   after jumping off the train). He calls "ALL ABOARD!", the train sound plays
   and you are there.
-- Each destination has a train attendant who takes you back the same way.
+- Each destination has a conductor (the station conductor's model) standing
+  beside where you arrive, at floor height, who takes you back the same way.
 - No.1 Reactor: entrance gate open, Biggs' gate open (new-game flag), the
-  button door opens on its own. Guard Scorpion stands at the core: talk to it
-  to fight; beaten, it is gone.
+  button door opens on its own. At the core (nmkin_5) the bomb-planting scene
+  is off; walking onto the core platform starts Guard Scorpion (once).
 - No.5 Reactor: the three-button door is open (smkin_1 fixed after it). On
   the bridge outside, the Barret scene line is off and Air Buster stands on
   the bridge instead: talk to it to fight.
-The bosses use a stand-in robot model (there are no field models for them).
+Air Buster uses a stand-in robot model (there is no field model for it).
 """
 from _config import (FLAG_AIR_BUSTER, FLAG_GUARD_SCORPION, FLAGS, START_FIELD, START_TRIANGLE,
                      START_X, START_Y)
 from _recruit import hide, say
-from _travel import add_npc, choice_menu, copy_model, mapjump, near
+from _travel import add_line, add_npc, beside, choice_menu, copy_model, mapjump
 
 from ff7 import asm
 from ff7.script import Op, Script
@@ -27,12 +28,16 @@ DESTINATIONS = {
     # name: (field, x, y, triangle, direction)
     "Upper Midgar": ("md8brdg", -422, 1387, 3, 0),
     "No. 1 Reactor": ("md1stin", 3655, 27432, 25, 0x80),
-    "No. 5 Reactor": ("tunnel_1", 21, -365, 48, 128),
+    "No. 5 Reactor": ("tunnel_1", 21, -365, 205, 128),   # (the train-jump arrival said tri 48; the point is in 205)
 }
-ATTENDANT_MODEL = ("mds7_w1", 1)   # a Sector 7 townsman model
+CONDUCTOR_MODEL = ("mds7st3", 6)   # shinra_guard: the Sector 7 station conductor
 ROBOT_MODEL = ("md8brdg2", None)   # 'another_robo' (found by name below)
-GUARD_SCORPION = dict(field="nmkin_5", formation=324, triangle=3, flag=FLAG_GUARD_SCORPION,
-                      line="“Intruder detected.\n Commencing elimination.”")
+# nmkin_5 (No.1 Reactor core): the original scene starts when Cloud's entity
+# is on walkmesh triangle 2 (the platform at the far end). A line across the
+# walkway where it meets that platform starts the fight instead, whoever leads.
+GUARD_SCORPION_FIELD = "nmkin_5"
+GUARD_SCORPION_FORMATION = 324
+GUARD_SCORPION_LINE = ((-200, -1506, -184), (30, -1506, -184))
 AIR_BUSTER = dict(field="southmk1", formation=364, triangle=2, flag=FLAG_AIR_BUSTER,
                   line="“Target acquired.\n Engaging.”")
 
@@ -50,6 +55,7 @@ def _depart(sec, jump, text_id=None):
             asm.message(0, text_id),
             Op(bytes([0xF1, 0x00]) + TRAIN_SOUND.to_bytes(2, "little") + b"\x40"),   # SOUND
             Op(b"\x24\x1e\x00"),                                                    # WAIT 30
+            Op(b"\x33\x00"),                                                       # UC 00
             jump]
 
 
@@ -69,16 +75,16 @@ def _train_menu(ctx):
     ctx.field("mds7st3").sections[0] = sec.build()
 
 
-def _attendants(ctx):
+def _conductors(ctx):
     for name, (field, x, y, tri, _d) in DESTINATIONS.items():
-        model = copy_model(ctx, field, *ATTENDANT_MODEL)
-        pos = near(ctx, field, tri)
+        model = copy_model(ctx, field, *CONDUCTOR_MODEL)
+        pos = beside(ctx, field, x, y, tri)
 
         def talk(sec):
             back = _depart(sec, mapjump(ctx, START_FIELD, START_X, START_Y, START_TRIANGLE))
-            return choice_menu(sec, "Train Attendant\n“Heading back to Sector 7?”",
-                               ["Yes, take me back.", "Not yet."], [back, None])
-        add_npc(ctx, field, "attend", model, pos, 0x80, talk)
+            return choice_menu(sec, "Conductor\n“Heading back to Sector 7?”",
+                               ["Yes, take me back to Sector 7.", "Not yet."], [back, None])
+        add_npc(ctx, field, "conduct", model, pos, 0x80, talk)
 
 
 def _robot_index(ctx):
@@ -99,6 +105,26 @@ def _boss(ctx, field, formation, triangle, flag, line):
                 + [asm.battle(formation), asm.biton(FLAGS, flag)]
                 + hide() + [Op(b"\x33\x00"), asm.ret()])
     add_npc(ctx, field, "boss", model, (x, y, z, triangle), 0x00, talk, init)
+
+
+def _guard_scorpion(ctx):
+    field = GUARD_SCORPION_FIELD
+    # Disable the scene: the main loop compares Cloud's triangle with var[6][7]
+    # (set to 2 in the init); no triangle is 255.
+    sec = Script.parse(ctx.field(field).sections[0])
+    init = sec.script_ops(sec.entity_index("dir"), 0)
+    target = next(o for o in init if o.op == 0x81 and o.raw[1] == 0x60 and o.raw[2] == 7)  # var[6][7] = 2
+    assert target.raw[3] == 2, target.raw.hex()
+    target.raw[3] = 255
+    ctx.field(field).sections[0] = sec.build()
+
+    def fight(sec):
+        done = asm.ret()
+        return [asm.if_byte(FLAGS, "bit_off", FLAG_GUARD_SCORPION, done),   # skip once beaten
+                asm.biton(FLAGS, FLAG_GUARD_SCORPION),
+                asm.battle(GUARD_SCORPION_FORMATION),
+                done]
+    add_line(ctx, field, "gscorp", *GUARD_SCORPION_LINE, fight)
 
 
 def _reactor1_doors(ctx):
@@ -128,8 +154,8 @@ def _reactor5_bridge(ctx):
 
 def apply(ctx):
     _train_menu(ctx)
-    _attendants(ctx)
+    _conductors(ctx)
     _reactor1_doors(ctx)
     _reactor5_bridge(ctx)
-    _boss(ctx, **GUARD_SCORPION)
+    _guard_scorpion(ctx)
     _boss(ctx, **AIR_BUSTER)

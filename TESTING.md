@@ -88,13 +88,15 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Train travel**: at the Sector 7 station talk to the conductor: a menu
   offers Upper Midgar (Sector 8 bridge), No. 1 Reactor (Sector 1 platform)
   and No. 5 Reactor (the tunnel after jumping off the train). At each
-  destination a Train Attendant stands next to where you arrive and takes
-  you back to Sector 7. Picking a destination shows “ALL ABOARD!” and plays
+  destination a conductor (same model as the station one) stands right next
+  to where you arrive, on the floor; talk to him and choose "Yes, take me
+  back to Sector 7." You should be able to move as soon as you arrive. Picking a destination shows “ALL ABOARD!” and plays
   the train sound before the jump. Walking into the train itself does nothing.
 - **No. 1 Reactor**: walk from the platform through Sector 1 into the
-  reactor; all gates/doors should be open with no scenes. Guard Scorpion
-  (a stand-in robot) waits at the core: talk to it to fight. After winning
-  it is gone. The reactor entrance also leads out to Upper Midgar.
+  reactor; all gates/doors should be open with no scenes. At the core there
+  is no robot and no Barret/bomb conversation: walking onto the platform at
+  the end of the walkway starts the Guard Scorpion fight. After winning it
+  doesn't happen again. The reactor entrance also leads out to Upper Midgar.
 - **No. 5 Reactor**: tunnel -> plate interior -> reactor; the three-button
   door is already open. On the bridge outside, Air Buster (same stand-in
   robot) waits: talk to it to fight.
