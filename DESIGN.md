@@ -119,6 +119,9 @@ Midgar per-field choices: `docs/midgar_plan.md`.
   bombing story events are gone.
 - **No invisible walls** or story barriers. Every area that is reachable at any
   point in the story is reachable.
+- **Sector 7 and Sector 6 are joined by the gate** in the Sector 6 playground:
+  the gate stays open, the Sector 7 guards no longer block the passage, and it
+  works in both directions (no Aerith / chocobo carriage scene).
 - Midgar connects to the world map **the way it does on disc 3: past the church
   in Sector 5, using the key**.
 

@@ -41,6 +41,11 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Recruit Barret** in the Sector 7 weapon shop (he is standing left of the
   counter area): same as Tifa. Check that his model looks right and that he
   is not stuck in a wall or the counter.
+- **Sector 7 <-> Sector 6 gate**: on the Sector 7 screen with the two guards
+  (in front of the pillar), the guards now stand either side of the passage.
+  Walk down the passage to reach the Sector 6 playground. There the giant
+  gate is open; walk through it to come back to the guard screen. Check the
+  gate halves look open (not floating or clipping) and nothing blocks you.
 - Known still to do: the church (Aerith), Air Buster's reactor entrance, the
   Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train
