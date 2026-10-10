@@ -64,3 +64,6 @@ INITIAL_EVENT_FLAGS = [
     (3, 181, 0),   # blin65_2: HQ 65f model room scene seen
     (1, 226, 7),   # blin671b/673b: HQ 67f Red XIII state
 ]
+
+# Recruited characters: one bit per character id in this byte (8-bit, bank 4).
+RECRUITED = (OPEN_VAR_BANK8, 241)

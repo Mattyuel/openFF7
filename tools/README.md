@@ -25,15 +25,16 @@ python3 tools/tests/test_formats.py       # format round-trip checks (~1 min)
 | `field.py` | Field file sections and the script/dialogue section header. |
 | `opcodes.py` | Field script opcode table (validated: all 699 scripted fields disassemble exactly, all 38,046 jumps land on instructions). |
 | `disasm.py` | Disassembler with decoded operands for conditions, variables, map jumps, battles, items, messages. |
-| `text.py` | FF7 text encoding -> readable text. |
+| `text.py` | FF7 text encoding: `decode` to readable text, `encode` back (names, choices, colours). |
 | `encounters.py` | Field random encounter tables. |
 | `scene.py` | `scene.bin` battle formations and enemy names. |
-| `script.py` | Editable script model and assembler: insert/remove/replace instructions; jumps and entry points are relocated automatically. |
+| `script.py` | Editable script model and assembler: insert/remove/replace instructions (jumps and entry points are relocated), add entities, dialogue strings and music blocks. |
 | `asm.py` | Constructors for new instructions (variables, conditions, map jumps, party, items, battles). |
 | `triggers.py` | Walk-off gateways (room exits). |
 | `worldmap.py` | World map scripts (`.ev`) and the world map -> field entrance table (`field.tbl`). |
 | `patch.py` | Patch helpers: `localise_progress` pins a field to a story moment or moves it to a region variable (see `DESIGN.md` §2). |
 | `kernel.py` | `KERNEL.BIN` sections and the new-game data (characters, party, items). |
+| `models.py` | Field model loader (which character models a field loads); copy a model between fields. |
 | `simulate.py` | Rough simulation of entering a field (init + main scripts, REQ calls) to detect entry cutscenes, and `find_quiet_flags` to search for event flags that suppress them. |
 | `varscan.py` | Which save variables the original scripts use. |
 

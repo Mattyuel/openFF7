@@ -34,9 +34,15 @@ Existing saves load, but they keep their own story progress; use a new game.
   front of the Sector 7 station with the slums theme playing; menu (including
   PHS) is available. Walking up to the train should no longer board it.
 - Entering the Sector 7 slums should no longer play the AVALANCHE / Barret /
-  Tifa arrival scene. Known still to do: Tifa and Barret in 7th Heaven (to be
-  replaced by Tifa's recruitment), the church (Aerith), Air Buster's reactor
-  entrance, the Sector 6 sewer (Aps), the Reno pillar fight.
+  Tifa arrival scene, and Barret should not be on the station platform.
+- **Recruit Tifa** in 7th Heaven: talk to her, choose "Come with me, Tifa."
+  She should join the party, appear in the PHS and leave the bar. Choosing
+  "Not right now." leaves her there. Check her level after joining.
+- **Recruit Barret** in the Sector 7 weapon shop (he is standing left of the
+  counter area): same as Tifa. Check that his model looks right and that he
+  is not stuck in a wall or the counter.
+- Known still to do: the church (Aerith), Air Buster's reactor entrance, the
+  Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train
   Graveyard, the pillar, Sector 6, Wall Market, Sector 5, the church and
   Aerith's house. Note anywhere you are blocked, a cutscene plays, or the game

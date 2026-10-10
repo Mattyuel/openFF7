@@ -54,3 +54,42 @@ def decode(raw):
         else:
             out.append("{%02X}" % b)
     return "".join(out)
+
+
+_ENCODE = {}
+for _i, _c in enumerate(_CHARS):
+    _ENCODE.setdefault(_c, _i)
+_TOKENS = {v: k for k, v in NAMES.items()}
+_TOKENS.update({"{CHOICE}": 0xE0, "{NEW}": 0xE8})
+_COLOR_TOKENS = {v: k for k, v in COLORS.items()}
+
+
+def encode(text):
+    """Readable text -> FF7 bytes (ends with 0xFF). Supports the {TOKENS} that
+    decode() produces for names, choices, colours and {NEW}; newline = new line."""
+    out = bytearray()
+    i = 0
+    while i < len(text):
+        if text[i] == "{":
+            j = text.index("}", i)
+            tok = text[i:j + 1]
+            if tok in _TOKENS:
+                out.append(_TOKENS[tok])
+            elif tok in _COLOR_TOKENS:
+                out += bytes([0xFE, _COLOR_TOKENS[tok]])
+            else:
+                raise ValueError("unknown text token %s" % tok)
+            i = j + 1
+            continue
+        c = text[i]
+        if c == "\n":
+            out.append(0xE7)
+        elif c == "\t":
+            out.append(0xE1)
+        elif c in _ENCODE:
+            out.append(_ENCODE[c])
+        else:
+            raise ValueError("character not in the FF7 font: %r" % c)
+        i += 1
+    out.append(0xFF)
+    return bytes(out)

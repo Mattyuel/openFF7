@@ -176,6 +176,43 @@ class Script:
                 if o is old:
                     ent[k] = new
 
+    # ---- text -------------------------------------------------------
+
+    def add_string(self, raw):
+        """Append an encoded string (see text.encode); returns its text id.
+
+        The text table is at the start of `tail`: u16 count, u16 offsets[],
+        then the strings; music blocks follow and are shifted accordingly."""
+        n, = struct.unpack_from("<H", self.tail, 0)
+        offs = list(struct.unpack_from("<%dH" % n, self.tail, 2))
+        strings_end = min(self.akao_offsets) if self.akao_offsets else len(self.tail)
+        body = self.tail[2 + 2 * n:strings_end]
+        rest = self.tail[strings_end:]
+        offs = [o + 2 for o in offs] + [2 + 2 * (n + 1) + len(body)]
+        new_table = struct.pack("<H", n + 1) + struct.pack("<%dH" % (n + 1), *offs)
+        body = body + bytes(raw)
+        grow = len(new_table) + len(body) - strings_end
+        self.tail = new_table + body + rest
+        self.akao_offsets = [o + grow for o in self.akao_offsets]
+        return n
+
+    # ---- entities ---------------------------------------------------
+
+    def add_entity(self, name, scripts):
+        """Add an entity. `scripts` maps script index -> list of Ops (each must
+        end with RET); unset indices share an empty RET. Returns entity index.
+        New code goes before the end of the code area."""
+        empty = Op(b"\x00")
+        block = [empty]
+        entry = [empty] * 32
+        for idx, ops in sorted(scripts.items()):
+            entry[idx] = ops[0]
+            block.extend(ops)
+        self.ops.extend(block)
+        self.entity_names.append(name.encode("latin-1")[:8].ljust(8, b"\0"))
+        self.entry.append(entry)
+        return len(self.entity_names) - 1
+
     # ---- music ------------------------------------------------------
 
     def akao_block(self, index):
