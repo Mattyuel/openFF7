@@ -123,6 +123,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   game, so the name is set in the script, not KERNEL.BIN.
 - **Do not use SPECIAL GMSPD (0F F7)**: never used by the game; adding it to
   the new game caused a black screen. SMSPD is `0F F8 00 speed`.
+- **The PC opcode reads the field party copy** var[3][9..11] (savemap
+  0x0CAD-0x0CAF), not the real party (savemap 0x04F8) that the PHS edits;
+  party opcodes write the copy and sync it, the world map copies real -> copy.
+  After a PHS swap the copy is stale, so `950_leader_entities` refreshes it with
+  GETPC (reads the real party) at the start of every playable field.
+  Original scripts test the leader as `var[3][9] == <char>`.
 - **Party leader in fields**: the engine controls the entity whose `PC <char>`
   matches party slot 0 and hides other party members' PC entities (no VISI
   needed: see blue_2, which has all nine). PC entities used as NPCs (Tifa in

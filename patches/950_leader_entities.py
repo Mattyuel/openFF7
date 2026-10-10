@@ -6,7 +6,13 @@ original fields include such entities for whoever could lead there (disc 2
 fields have Tifa and Cid, a few have everyone, e.g. blue_2). A field without
 one for the current leader leaves you with no one to control.
 
-So every field that has at least one PC entity gets an entity
+The PC opcode (ff7_en.exe 0x61BCD7) compares against the *field party copy*
+at savemap 0x0CAD-0x0CAF (var[3][9..11]), not the real party (0x04F8) that
+the PHS edits; the copy is only refreshed by party opcodes and the world map.
+So each playable field first copies the real party into it (GETPC, which reads
+the real party), before any PC opcode runs (entity 0's init runs first).
+
+Every field that has at least one PC entity also gets an entity
 `CHAR <model>; PC <char>` for each character it lacks. Models come from blue_2,
 whose entries for all nine characters load just stand/walk/run, rescaled to
 the target field (ModelLoader.add_from).
@@ -20,6 +26,7 @@ from ff7.models import ModelLoader
 from ff7.script import Op, Script
 
 DONOR = "blue_2"
+FIELD_PARTY = (3, 9)  # var[3][9..11]: the party copy the PC opcode reads
 LEADERS = range(9)  # character ids; 6/7 are Cait Sith/Vincent (Young Cloud/Sephiroth in flashbacks)
 
 
@@ -41,6 +48,14 @@ def _donor_models(ctx):
     return out
 
 
+def _sync_party(sec):
+    """At the very start of entity 0's init: field party copy = real party."""
+    bank, addr = FIELD_PARTY
+    ops = [Op(bytes([0x74, bank, slot, addr + slot])) for slot in range(3)]   # GETPC
+    sec.insert_before(sec.entry[0][0], ops, retarget=False)
+    sec.entry[0][0] = ops[0]
+
+
 def apply(ctx):
     donor_models = _donor_models(ctx)
     donor = ModelLoader(ctx.field(DONOR).section("models"))
@@ -55,10 +70,12 @@ def apply(ctx):
         present = _pc_chars(sec)
         if not present:
             continue          # no playable entity: menus, movies, cutscene-only fields
+        field = ctx.field(name)
+        _sync_party(sec)
         missing = [c for c in LEADERS if c not in present]
         if not missing:
+            field.sections[0] = sec.build()
             continue
-        field = ctx.field(name)
         loader = ModelLoader(field.section("models"))
         for char in missing:
             model = loader.add_from(donor, donor_models[char])
