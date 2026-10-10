@@ -11,8 +11,9 @@ python tools/ff7tool.py build
 ```
 
 This writes `build/openFF7/` (a full copy of the game folder with the patched
-files). The build prints which game files changed; right now that is
-`data/field/flevel.lgp` and `data/lang-en/kernel/KERNEL.BIN`.
+files). The build prints which game files changed; right now that is only
+`data/field/flevel.lgp`. (If you copied a `KERNEL.BIN` from an earlier build,
+restore the original; it is no longer changed.)
 
 ## 2. Install the changed file into Steam (for now)
 
@@ -42,7 +43,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   "Not right now." leaves her there. Check her level after joining.
 - **Recruit Aerith** in the Sector 5 church: she is at the flower bed. Same
   as Tifa. Check her position and pose look right.
-- Cloud's name should be "Cloud" (not "Ex-SOLDIER"), and Key Items / Items
+- Cloud's name should be "Cloud" (not "Ex-SOLDIER") from the very start, and Key Items / Items
   should include three **Batteries**.
 - **Corneo's mansion**: the doorman is gone and you can walk in. On the
   ground floor the office door (upstairs) and the dungeon door are open. No
@@ -63,6 +64,8 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Recruit Barret** on Mt. Corel, on the railway screen just after the
   Corel Reactor (needs the world map to get there). Check his model and that
   he stands on the tracks, not in the air or inside the rails.
+- **Kalm**: entering the town, the inn and the houses should play no
+  arrival scene, flashback or story dialogue.
 - Known still to do: re-entering Midgar from the world map, Air Buster's reactor entrance, the
   Sector 6 sewer (Aps), the Reno pillar fight.
 - Walk around Sector 7 slums, 7th Heaven, the weapon/item shops, Train

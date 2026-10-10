@@ -1,4 +1,4 @@
-"""New game: Cloud (named "Cloud") alone at the Sector 7 station, PHS and full
+"""New game: Cloud (named "Cloud" via SPCNM) alone at the Sector 7 station, PHS and full
 menu available, all Shinra HQ keycards and three Batteries held.
 
 The original new game runs in md1stin (Sector 1 station): entity 0's main
@@ -33,9 +33,6 @@ def _find_new_game_block(sec):
 
 
 def apply(ctx):
-    # Cloud's default name (the naming prompt is part of the skipped opening).
-    ctx.kernel_init().set_name(CLOUD, "Cloud")
-
     sec = Script.parse(ctx.field(FIELD).sections[0])
     cond, body = _find_new_game_block(sec)
     # The original block ends by writing progress = 1 then falls through to the target.
@@ -63,6 +60,11 @@ def apply(ctx):
         asm.mapjump(ctx.maplist.index(START_FIELD), START_X, START_Y, START_TRIANGLE, START_DIR),
         asm.ret(),
     ]
+    # Cloud's name: the .exe gives him "Ex-SOLDIER" at new game (the naming
+    # prompt was part of the skipped opening), so set it with SPCNM.
+    from ff7.text import encode
+    name_text = sec.add_string(encode("Cloud"))
+    new.insert(0, asm.Op(bytes([0x0F, 0xFD, CLOUD, name_text])))  # SPCNM char text
     first = body[0]
     sec.insert_before(first, new)
     for op in body:
