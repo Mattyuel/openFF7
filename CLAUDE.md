@@ -162,7 +162,16 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   Materia, Equip, Status, Order, Limit, Config, PHS, Save, Quit).
 - exe patching: `ff7/exepatch.py` (expected-bytes checks + PE checksum, which
   reproduces the original's). `ff7tool.py exe-test` makes a harmless test exe;
-  whether Steam's DRM accepts a modified exe is **untested** (asked the user).
+  **Confirmed by the user: a modified exe (.data and .text changes, checksum
+  fixed) runs fine through Steam.** So exe patching is a viable route.
+- Field opcode handlers: PC 0x61BCD7 (compares char with the field party copy
+  0xDC09E5; leader -> field header+0x2A = player model index), GETPC 0x61F238
+  (reads real party 0xDC0230), PRTYP 0x61BE95, IFKEY 0x61220D, MSPED 0x618369.
+- Input: global button mask 0x9A85D4 (read by 0x7186B9); each frame 0x75EF46
+  copies it into the field header +0x68 (held) / +0x70 (newly pressed) and
+  +0x78/+0x80. IFKEY tests header +0x68.
+- Player-controlled movement code: not found yet (doesn't read model+0x76
+  directly; no field code reads the global input mask).
 
 ## Verified facts: KERNEL.BIN
 
