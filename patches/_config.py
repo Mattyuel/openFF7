@@ -39,3 +39,7 @@ HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
                    ((1, 68), 0),   # Keycard 65
                    ((1, 68), 1),   # Keycard 66
                    ((1, 68), 2)]   # Keycard 68
+
+# openFF7 event flags: one byte of bits at bank 4 offset 240 (8-bit nibble 13).
+FLAGS = (OPEN_VAR_BANK8, 240)
+FLAG_CORNEO_FLED = 0  # Corneo ran from his bedroom; he appears in Wutai instead

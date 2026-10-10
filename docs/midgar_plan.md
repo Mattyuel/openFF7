@@ -97,7 +97,7 @@ climb -> Sector 0 -> HQ entrance).
 | `onna_4` | Honey Bee Inn | 193 | — |  |
 | `onna_5` | Honey Bee Inn | 193 | — |  |
 | `onna_52` | Honey Bee Inn | 193 | — |  |
-| `colne_1` | Corneo Hall | 193 | 190–192 (2) | Corneo's mansion. Dress-up/audition events do not fire; Corneo's fight and move to Wutai come later. |
+| `colne_1` | Corneo Hall | 193 | 190–192 (2) | Corneo's mansion. Dress-up/audition events do not fire; Corneo is on the bed in his bedroom (`colne_6`, see `patches/110_corneo.py`); the 2f hall copy of him is hidden. |
 | `colne_2` | Corneo Hall,1f. | 193 | 192–197 (2) |  |
 | `colne_3` | Corneo Hall,2f. | 193 | — |  |
 | `colne_4` | Torture Room | 193 | — |  |

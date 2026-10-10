@@ -104,8 +104,10 @@ Midgar per-field choices: `docs/midgar_plan.md`.
   with the infiltration random encounters. A new game holds all keycards.
 
 ### NPCs that move
-- **Don Corneo** starts in Wall Market. After he is beaten there, he moves to
-  Wutai, where Yuffie's Wutai quest picks him up.
+- **Don Corneo** lies on the bed in his bedroom (Corneo's mansion, 2f). Talk
+  to him: he says his original line "A man!? What's goin' on?", runs for the
+  door and is gone for good (flag `FLAG_CORNEO_FLED`). He then appears in
+  Wutai, where Yuffie's Wutai quest picks him up (Wutai side not built yet).
 
 ### Midgar
 - Midgar is in its **early disc 1 state**: the Sector 7 plate is intact and the
