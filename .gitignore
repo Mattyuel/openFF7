@@ -1,0 +1,19 @@
+
+# Not needed for openFF7 (large media)
+**/data/movies/
+**/data/music/
+**/data/music_ogg/
+**/data/music_2/
+**/data/sound/
+**/data/voice/
+*.avi
+*.ogg
+*.wav
+*.mp4
+
+**/movies/
+**/music/
+**/music_ogg/
+**/music_2/
+**/sound/
+**/voice/
