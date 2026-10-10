@@ -11,7 +11,7 @@ script has `if (progress == 0) { opening movie; menu mask; party; ...;
 progress = 1 }`. That block is replaced with the openFF7 setup, ending in a
 jump to the Sector 7 station.
 """
-from _config import (CLOUD_START_LEVEL, MENU_LOCK, BATTERIES_ITEM, BATTERIES_QTY, BATTERY_BITS, CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, MENU_ALL, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
+from _config import (CLOUD_START_LEVEL, MENU_LOCK, MENU_START, RECRUIT_COUNT, BATTERIES_ITEM, BATTERIES_QTY, BATTERY_BITS, CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
                      START_TRIANGLE, START_X, START_Y)
 
 from ff7 import asm
@@ -62,7 +62,8 @@ def apply(ctx):
     cond, body = _find_new_game_block(sec)
     # The original block ends by writing progress = 1 then falls through to the target.
     new = [
-        asm.setword(MENU_MASK, MENU_ALL),
+        asm.setword(MENU_MASK, MENU_START),           # all but PHS (shown at 3 recruits)
+        asm.setbyte(RECRUIT_COUNT, 1),                # Cloud
         asm.setword(MENU_LOCK, 0),                    # nothing greyed out (PHS, Save)
         asm.party(CLOUD),
         asm.Op(bytes([0xCD, 0x01, CLOUD])),  # MMBUD: Cloud available in PHS

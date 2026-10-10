@@ -198,6 +198,22 @@ class Script:
 
     # ---- entities ---------------------------------------------------
 
+    def replace_script(self, entity, script, new_ops):
+        """Make `new_ops` (ending with RET) the code of entity's script, and of
+        every other script slot of that entity that shared the old code
+        (unused slots often point at a used script's start). The old code
+        stays in place, unreferenced. Returns the slots redirected."""
+        old = self.entry[entity][script]
+        anchor = old if old is not self._end else None
+        if anchor is not None:
+            self.insert_before(anchor, new_ops, retarget=False)
+        else:
+            self.ops.extend(new_ops)
+        slots = [k for k, e in enumerate(self.entry[entity]) if e is old]
+        for k in slots:
+            self.entry[entity][k] = new_ops[0]
+        return slots
+
     def add_entity(self, name, scripts):
         """Add an entity. `scripts` maps script index -> list of Ops (each must
         end with RET); unset indices share an empty RET. Returns entity index.

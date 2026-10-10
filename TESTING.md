@@ -40,8 +40,17 @@ Existing saves load, but they keep their own story progress; use a new game.
   HP 219, MP 18, EXP 0) and should reach level 2 after a few battles.
 - If a new game goes to a **black screen**, try again with the original
   `KERNEL.BIN` (keep the new `flevel.lgp`) and say whether that fixes it.
-- **PHS** should be usable at save points from the start (Sector 7 save
-  points used to lock it until Kalm).
+- **PHS**: the menu entry is hidden until you have recruited two others
+  (3 characters), then it appears and works at save points. (The game won't
+  let you leave the PHS with fewer than 3 in the party.) Needs a new game.
+- **Sector 4 duct** (end of the train tunnel to No.5): pressing [OK] at the
+  duct gives "Go down." / "Not now." with no Barret/Tifa. In the next room,
+  climb the ladder into the vent; at its far end (or walking onto that spot)
+  choose "Drop down." (onward) or "Climb back to the train tunnel." Note if
+  the vent menu pops up repeatedly while you stand there.
+- **No.5 Reactor elevator** should go to No.5's rooms, and No.1's to No.1's.
+- Conductors should now be the same size as other characters; on Upper
+  Midgar you and he start mid-screen.
 - Entering the Sector 7 slums should no longer play the AVALANCHE / Barret /
   Tifa arrival scene, and Barret should not be on the station platform.
 - **Recruit Tifa** in 7th Heaven: talk to her, choose "Come with me, Tifa."

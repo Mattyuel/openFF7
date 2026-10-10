@@ -4,7 +4,7 @@ A recruitment talk script asks whether the character should join. On "yes":
 the character becomes available in the PHS, joins the active party if there is
 room, a recruited flag is set and the NPC disappears. On "no": a short reply.
 """
-from _config import RECRUITED
+from _config import MENU_PHS, PHS_MIN_PARTY, RECRUIT_COUNT, RECRUITED
 
 from ff7 import asm
 from ff7.script import Op
@@ -57,9 +57,20 @@ def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined):
     ops += [Op(bytes([0xCD, 0x01, char])),                   # MMBUD: available in PHS
             Op(bytes([0xC8, char])),                         # PRTYP: join active party
             asm.biton(RECRUITED, char)]
+    ops += count_recruit()
     ops += say(script, joined)
     ops += hide() + [Op(b"\x33\x00"), asm.ret()]
     return ops + decline + end_decline
+
+
+def count_recruit():
+    """Ops: one more character recruited; show the PHS once there are enough
+    to fill the party (the PHS can't be left with fewer than 3 in it)."""
+    shown = asm.nop()
+    return [Op(bytes([0x95, RECRUIT_COUNT[0], RECRUIT_COUNT[1]])),      # INC
+            asm.if_byte(RECRUIT_COUNT, ">=", PHS_MIN_PARTY, shown),
+            Op(bytes([0x92, 0x20, 28]) + MENU_PHS.to_bytes(2, "little")),  # OR2 var[2][28] |= PHS
+            shown]
 
 
 def xyzi(x, y, z, tri):
@@ -76,7 +87,7 @@ def add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direc
     from ff7.script import Script
     donor = ModelLoader(ctx.field(donor_field).section("models"))
     loader = ModelLoader(ctx.field(field).section("models"))
-    model = loader.add(donor.models[donor_model])
+    model = loader.add_from(donor, donor_model)
     ctx.field(field).set_section("models", loader.build())
 
     sec = Script.parse(ctx.field(field).sections[0])

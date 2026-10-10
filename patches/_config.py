@@ -9,6 +9,11 @@ OPEN_WORLD_PROGRESS = 100
 # Menu visibility mask (var[2][28]). Original new game: 763; Seventh Heaven
 # later sets 0xFEFF (everything except PHS); Kalm adds 0x0100 (PHS).
 MENU_ALL = 0xFFFF
+MENU_PHS = 0x0100
+# The PHS can only be left with exactly 3 in the party (ff7_en.exe 0x700c22),
+# so its menu entry stays hidden until 3 characters are recruited (counted in
+# RECRUIT_COUNT, shown by recruit_talk); fields that show it are neutralised.
+MENU_START = MENU_ALL & ~MENU_PHS
 # Menu locking mask (var[2][30]): a set bit greys an entry out. 0x0100 is PHS,
 # 0x0200 Save. Midgar's save points set 0x0100 (no PHS yet); 900_phs.py clears it.
 MENU_LOCK = (2, 30)
@@ -52,6 +57,7 @@ HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
 FLAGS = (OPEN_VAR_BANK8, 240)
 FLAG_GUARD_SCORPION = 1   # Guard Scorpion beaten (No.1 Reactor core)
 FLAG_AIR_BUSTER = 2       # Air Buster beaten (No.5 Reactor bridge)
+FLAG_IN_REACTOR5 = 3      # last reactor room entered was No.5's (the elevator is shared)
 
 # Event flags set at new game so rooms behave as if their story scenes were
 # already seen (found with tools/ff7/simulate.py: find_quiet_flags, then
@@ -95,3 +101,6 @@ BATTERY_BITS = [((1, 165), 5), ((1, 165), 6), ((1, 165), 7)]
 
 # Recruited characters: one bit per character id in this byte (8-bit, bank 4).
 RECRUITED = (OPEN_VAR_BANK8, 241)
+# Characters recruited so far, Cloud included (set to 1 at new game).
+RECRUIT_COUNT = (OPEN_VAR_BANK8, 242)
+PHS_MIN_PARTY = 3

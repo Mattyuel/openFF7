@@ -26,7 +26,7 @@ from ff7.text import encode
 
 DESTINATIONS = {
     # name: (field, x, y, triangle, direction)
-    "Upper Midgar": ("md8brdg", -422, 1387, 3, 0),
+    "Upper Midgar": ("md8brdg", -420, 100, 33, 0),    # mid-walkway (md8_3's arrival is at the top)
     "No. 1 Reactor": ("md1stin", 3655, 27432, 25, 0x80),
     "No. 5 Reactor": ("tunnel_1", 21, -365, 205, 128),   # (the train-jump arrival said tri 48; the point is in 205)
 }

@@ -37,7 +37,7 @@ def mapjump(ctx, field, x, y, tri, direction=0):
 def copy_model(ctx, field, donor_field, donor_index):
     donor = ModelLoader(ctx.field(donor_field).section("models"))
     loader = ModelLoader(ctx.field(field).section("models"))
-    idx = loader.add(donor.models[donor_index])
+    idx = loader.add_from(donor, donor_index)
     ctx.field(field).set_section("models", loader.build())
     return idx
 

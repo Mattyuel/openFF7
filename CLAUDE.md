@@ -59,6 +59,8 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `130_shinra_hq.py` | HQ 2F boxes openable. |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (Mt. Corel mtcrl_3). |
 | `250_train_destinations.py` | Station conductor menu, conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
+| `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
+| `270_sector4_duct.py` | Tunnel duct = plain choice; vent end offers drop / back to tunnel. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
@@ -102,8 +104,20 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   count (true for all 702 fields). `BuildContext.save()` now syncs it. When it
   was wrong, added NPCs were visible but could not be talked to.
 - TALKR is 0xC5 [bank][radius]; the station conductor uses 0x46.
+- **Unused script slots often point at a used script's code** (e.g. a LINE's
+  slots 1-3 sharing one script, an NPC's 5..31 sharing 6). Replacing only
+  `entry[ent][k]` leaves the others running the old code: use
+  `Script.replace_script(ent, k, ops)`, which redirects every slot that shared it.
+- Model loader entries carry their own scale (ASCII, e.g. "650"); fields use
+  512 or 650 etc. Copy models with `ModelLoader.add_from(donor, i)`, which
+  rescales to the target field (a 650 model in a 512 field looked too big).
 - Menu visibility mask var[2][28] (0xFFFF = all), menu lock mask var[2][30]
   (set bit = greyed; 0x0100 PHS, 0x0200 Save). Early Midgar save points set the PHS lock.
+- **PHS exit rule** (ff7_en.exe 0x700c22): opened from the menu, the PHS can
+  only be left with exactly 3 in the party (opened by a field with a count
+  param, that count). So the PHS entry is hidden until 3 are recruited
+  (`RECRUIT_COUNT` (13,242), `_recruit.count_recruit`). Savemap 0x10A4 = PHS
+  lock mask, 0x10A6 = PHS available mask (MMBUD). Party = savemap 0x04F8 (0xDC0230).
 - SPCNM (0F FD char text) sets a name. The .exe forces "Ex-SOLDIER" at new
   game, so the name is set in the script, not KERNEL.BIN.
 - **Do not use SPECIAL GMSPD (0F F7)**: never used by the game; adding it to
@@ -130,6 +144,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - mds7st3 (Sector 7 station): `border1` LINE boards the story train; kept off.
   Conductor = entity `guard` (model 6, shinra_guard).
 - mds7plr1: gateway slot 2 is the exit to Sector 6 (mds6_2).
+- Reactors: No.1 rooms nmkin_1-5, No.5 rooms smkin_1-5; only the elevator
+  elevtr1 is shared and chose by progress (< 33 = No.1). `260_reactor_elevator.py`
+  uses FLAG_IN_REACTOR5 (13,240 bit 3), set in smkin_1/2, cleared in nmkin_1/2.
+- tunnel_2 duct = entity `cloud` script 4 (Barret/Tifa scene); sbwy4_1 ladder ->
+  sbwy4_4 vent; vent end line1 drops to sbwy4_5 (onward to No.5).
+- md8brdg: md8_3's arrival (-422,1387) is at the top of the screen; train uses (-420,100,tri 33).
 - nmkin_5 (No.1 Reactor core): bomb scene fires when entity `cl` is on
   triangle var[6][7] (init sets 2); we set 255. Shared with the No.5 visit (progress 120).
 - elm (Kalm): arrival line checks (3,128,1) only — no progress check.
@@ -141,6 +161,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 Done (awaiting in-game confirmation where noted): new game start, Midgar
 pinning, Tifa/Aerith/Barret recruitment, Corneo removed, Wall Market/HQ open,
 wire climb, Sector 6 gate, train menu + conductors (untested), reactor doors,
+reactor elevator (untested), duct/vent (untested), PHS hidden until 3 recruits (untested),
 Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 

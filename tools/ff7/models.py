@@ -36,6 +36,27 @@ class ModelLoader:
         nl, = struct.unpack_from("<H", entry, 0)
         return entry[2 + nl + 2:2 + nl + 10].decode("latin-1")
 
+    @staticmethod
+    def entry_scale(entry):
+        """The model's scale (ASCII digits, e.g. b"512\0")."""
+        nl, = struct.unpack_from("<H", entry, 0)
+        return int(entry[2 + nl + 10:2 + nl + 14].split(b"\0")[0] or b"0")
+
+    @staticmethod
+    def with_scale(entry, scale):
+        nl, = struct.unpack_from("<H", entry, 0)
+        text = str(scale).encode("ascii")
+        assert len(text) <= 4, scale
+        return entry[:2 + nl + 10] + text.ljust(4, b"\0") + entry[2 + nl + 14:]
+
+    def add_from(self, donor, index):
+        """Copy model `index` from loader `donor`, rescaled from the donor
+        field's scale to this one's (e.g. 650 -> 512), so it is the same size
+        relative to the other characters. Returns the new model index."""
+        entry = donor.models[index]
+        scale = round(self.entry_scale(entry) * self.scale / donor.scale)
+        return self.add(self.with_scale(entry, scale))
+
     def add(self, entry):
         self.models.append(bytes(entry))
         return len(self.models) - 1
