@@ -63,6 +63,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `270_sector4_duct.py` | Tunnel duct = plain choice; vent end offers drop / back to tunnel. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
+| `500_tame.py` | Tame milestone 1: command 0x1C (Manipulate's record + sequence for now), materia 38, kernel2 text, orb on mds6_2. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `950_leader_entities.py` | Every playable field gets a PC entity for all nine characters (any leader). |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -167,6 +168,13 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - World map models are field-style files in world_us.lgp (.hrc/.rsd/.p/.tex/.a);
   the exe holds per-map-variant .hrc name tables (~0x56B289 in the file). The
   leader -> world map model choice is in the exe (not in wm*.ev); not found yet.
+- **New code section works** (user-confirmed: code in an added `.openff7`
+  section runs). Build it with `ctx.exe()` (`ff7/exebuild.py`: `alloc`,
+  `place_at`, `patch`, `patch_u32`); the build writes `ff7_en.exe`.
+- Battle command routine sequences: table 0x7B75A8 (segments per command,
+  0x1F-separated), readers 0x43656A/0x436B6A (disp32 +2), bound imm8 at
+  0x436B44. kernel2.bin text via `ctx.kernel2()` (`ff7/kernel2.py`, keeps
+  sections byte-exact, appends changed strings; pool limit 0x6C00).
 - Party slots: 0xDC0230 (savemap 0x04F8). PHS exit check: 0x700C22.
 - Main menu labels (FF7 text, 20-byte slots) at file 0x5192C0 (Item, Magic,
   Materia, Equip, Status, Order, Limit, Config, PHS, Save, Quit).

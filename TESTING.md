@@ -11,9 +11,11 @@ python tools/ff7tool.py build
 ```
 
 This writes `build/openFF7/` (a full copy of the game folder with the patched
-files). The build prints which game files changed; right now that is
-`data/field/flevel.lgp` and `data/lang-en/kernel/KERNEL.BIN` (Cloud's
-starting level). Copy both.
+files). The build prints which game files changed and their sizes; right now
+that is `data/field/flevel.lgp`, `data/lang-en/kernel/KERNEL.BIN`,
+`data/lang-en/kernel/kernel2.bin` and `ff7_en.exe`. Copy all of them, and
+check the sizes in the Steam folder match what the build printed (Steam can
+silently restore original files; the original flevel.lgp is 128,204,987 bytes).
 
 ## 2. Install the changed file into Steam (for now)
 
@@ -48,6 +50,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   climb the ladder into the vent; at its far end (or walking onto that spot)
   choose "Drop down." (onward) or "Climb back to the train tunnel." Note if
   the vent menu pops up repeatedly while you stand there.
+- **Tame materia** (milestone 1): on the Sector 6 playground, right next to
+  where you arrive from Sector 7, a materia orb: talk to it -> "Received
+  "Tame" Materia!". Equip it: in battle a **Tame** command appears; for now it
+  behaves like Manipulate (that's expected). Check the materia's name and
+  description in the Materia menu, the command name in battle, and that the
+  battle doesn't crash.
 - **Party leader** (needs 3 recruits so the PHS shows): in the PHS put
   someone else in the first party slot. Walk around several screens (Midgar,
   Kalm, world map entrances): you should control that character, with their

@@ -286,11 +286,54 @@ class BuildContext:
         self.kernel_init()
         return self._kernel_sections[2]["data"]
 
+    def kernel_section(self, index):
+        """Mutable bytearray of KERNEL.BIN section `index` (0 commands,
+        1 attacks, 4 items, 8 materia, ...); written by the build."""
+        self.kernel_init()
+        if index == 3:
+            return self._kernel.data
+        self._kernel_edits = getattr(self, "_kernel_edits", {})
+        if index not in self._kernel_edits:
+            self._kernel_edits[index] = bytearray(self._kernel_sections[index]["data"])
+        return self._kernel_edits[index]
+
+    def kernel2(self):
+        """Editable kernel2.bin (the text the game shows); written by the build."""
+        if getattr(self, "_kernel2", None) is None:
+            from ff7.kernel2 import Kernel2
+            path = os.path.join(GAME, "lang-en", "kernel", "kernel2.bin")
+            self._kernel2 = Kernel2(open(path, "rb").read())
+        return self._kernel2
+
+    def exe(self):
+        """ExeBuilder for ff7_en.exe (byte patches + the .openff7 section)."""
+        if getattr(self, "_exe", None) is None:
+            from ff7.exebuild import ExeBuilder
+            self._exe = ExeBuilder(open(os.path.join(os.path.dirname(GAME), "ff7_en.exe"), "rb").read())
+        return self._exe
+
+    def save_extra(self, out_dir):
+        """Write kernel2.bin and ff7_en.exe if patches touched them; returns paths."""
+        out = []
+        if getattr(self, "_kernel2", None) is not None:
+            rel = "data/lang-en/kernel/kernel2.bin"
+            with open(os.path.join(out_dir, rel), "wb") as fh:
+                fh.write(self._kernel2.build())
+            out.append(rel)
+        if getattr(self, "_exe", None) is not None:
+            rel = "ff7_en.exe"
+            with open(os.path.join(out_dir, rel), "wb") as fh:
+                fh.write(self._exe.build())
+            out.append(rel)
+        return out
+
     def save_kernel(self, out_dir):
         if self._kernel is None:
             return False
         from ff7.kernel import build_sections
         self._kernel_sections[3]["data"] = bytes(self._kernel.data)
+        for index, data in getattr(self, "_kernel_edits", {}).items():
+            self._kernel_sections[index]["data"] = bytes(data)
         path = os.path.join(out_dir, "data", "lang-en", "kernel", "KERNEL.BIN")
         with open(path, "wb") as fh:
             fh.write(build_sections(self._kernel_sections, self._kernel_tail))
@@ -374,6 +417,7 @@ def build(args):
     changed = ["data/field/flevel.lgp"]
     if ctx.save_kernel(tmp):
         changed.append("data/lang-en/kernel/KERNEL.BIN")
+    changed += ctx.save_extra(tmp)
     _verify_build(flevel)
     if os.path.exists(out):
         shutil.rmtree(out)

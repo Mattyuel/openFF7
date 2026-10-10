@@ -60,6 +60,7 @@ FLAGS = (OPEN_VAR_BANK8, 224)
 FLAG_GUARD_SCORPION = 1   # Guard Scorpion beaten (No.1 Reactor core)
 FLAG_AIR_BUSTER = 2       # Air Buster beaten (No.5 Reactor bridge)
 FLAG_IN_REACTOR5 = 3      # last reactor room entered was No.5's (the elevator is shared)
+FLAG_TAME_MATERIA = 4     # Tame materia picked up (Sector 6 playground)
 
 # Event flags set at new game so rooms behave as if their story scenes were
 # already seen (found with tools/ff7/simulate.py: find_quiet_flags, then
