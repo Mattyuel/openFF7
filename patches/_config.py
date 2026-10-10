@@ -56,6 +56,8 @@ INITIAL_EVENT_FLAGS = [
     (3, 128, 0),   # tunnel_2: tunnel - Cloud scene seen
     (3, 220, 6),   # onna_4: Honey Bee Inn room scene seen
     (3, 163, 0),   # colne_5: Corneo's hall audition done (hall Corneo hidden)
+    (3, 162, 3),   # colne_4: dungeon - Tifa/Aerith meeting done (lines off, Tifa gone)
+    (3, 163, 3),   # colne_3: right-hand room - lackey fight done
     (3, 168, 5),   # md0: Sector 0 arrival scene seen
     (3, 168, 6),   # sinbil_1: Shinra HQ entrance scene seen
     (3, 163, 4),   # blinst_1: HQ stairs start scene seen

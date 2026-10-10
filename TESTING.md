@@ -44,7 +44,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   as Tifa. Check her position and pose look right.
 - Cloud's name should be "Cloud" (not "Ex-SOLDIER"), and Key Items / Items
   should include three **Batteries**.
-- **Corneo's mansion**: the doorman is gone and you can walk in.
+- **Corneo's mansion**: the doorman is gone and you can walk in. On the
+  ground floor the office door (upstairs) and the dungeon door are open. No
+  scenes should play in the right-hand room (lackey fight), the dungeon (Tifa
+  and Aerith), the upstairs office (bride choice) or the bedroom; in the
+  bedroom only Corneo's "A man!?" line and his escape when you talk to him.
 - **Wire climb to Shinra HQ**: in Wall Market's back street (where the wire
   hangs from the plate) you can now start climbing. Use the batteries on the
   way up; at the top (Plate Section -> Sector 0 -> Shinra HQ) no cutscenes
