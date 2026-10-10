@@ -33,6 +33,15 @@ class Kernel2:
             n, = struct.unpack_from("<I", data, pos)
             self.sections.append(bytearray(data[pos + 4:pos + 4 + n]))
             pos += 4 + n
+        self.edits = []   # (section, index, text) for mirroring into KERNEL.BIN
+
+    @classmethod
+    def from_sections(cls, sections):
+        """Same editing API over raw section bytes (KERNEL.BIN sections 9-26)."""
+        obj = cls.__new__(cls)
+        obj.sections = [bytearray(s) for s in sections]
+        obj.edits = []
+        return obj
 
     def count(self, section):
         return struct.unpack_from("<H", self.sections[section], 0)[0] // 2
@@ -52,6 +61,7 @@ class Kernel2:
         sec = self.sections[section]
         struct.pack_into("<H", sec, 2 * index, len(sec))
         sec += bytes(text) + b"\xff"
+        self.edits.append((section, index, text))
         if len(sec) > 0xFFFF:
             raise ValueError("kernel2 section %d too large" % section)
 

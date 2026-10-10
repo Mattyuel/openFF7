@@ -28,6 +28,11 @@ TAME_MATERIA = 38
 SEQ_TABLE, SEQ_LEN = 0x7B75A8, 0x6D
 SEQ_READERS = [0x43656A, 0x436B6A]       # mov cl/al, [reg + SEQ_TABLE]: disp32 at +2
 SEQ_BOUND = 0x436B41                     # cmp dword [ebp-4], 0x6D (imm8 at +3)
+# Per-command action info, 4 bytes per command (0x26 entries), copied into the
+# action context at 0x435FF5..0x436029: byte -> +0x1C (action animation),
+# byte -> +0x20, u16 -> +0x40 (damage formula; Manipulate 0x90 = type 9, its
+# roll). Command 0x1C's entry is all zero: Tame hung after its camera.
+CMD_INFO = 0x7B7510
 ORB_MODEL = ("nmkin_5", 3)               # fieldbg_mtra3: the materia orb
 ARRIVE_S6 = (-1312, 1270, 241)           # where you enter mds6_2 from Sector 7
 
@@ -58,6 +63,8 @@ def _sequences(ctx):
     for reader in SEQ_READERS:
         exe.patch_u32(reader + 2, SEQ_TABLE, va, "command sequence table reader")
     exe.patch(SEQ_BOUND + 3, bytes([SEQ_LEN]), bytes([len(new)]), "sequence table length")
+    manip = exe.read(CMD_INFO + 4 * MANIPULATE_CMD, 4)
+    exe.patch(CMD_INFO + 4 * TAME_CMD, b"\0\0\0\0", manip, "command 0x1C action info = Manipulate's")
 
 
 def _orb(ctx):

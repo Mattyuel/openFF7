@@ -328,6 +328,18 @@ class BuildContext:
         return out
 
     def save_kernel(self, out_dir):
+        k2 = getattr(self, "_kernel2", None)
+        if k2 is not None and k2.edits:
+            # KERNEL.BIN keeps its own copy of the text (sections 9-26); mirror
+            # every kernel2 edit there too, whichever copy the game shows.
+            from ff7.kernel2 import Kernel2
+            self.kernel_init()
+            mirror = Kernel2.from_sections([self._kernel_sections[9 + i]["data"] for i in range(18)])
+            for section, index, text in k2.edits:
+                mirror.set(section, index, text)
+            for i in range(18):
+                self._kernel_edits = getattr(self, "_kernel_edits", {})
+                self._kernel_edits[9 + i] = mirror.sections[i]
         if self._kernel is None:
             return False
         from ff7.kernel import build_sections

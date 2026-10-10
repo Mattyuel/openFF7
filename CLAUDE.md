@@ -148,6 +148,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   swap failed). The build refuses > 16; `950_leader_entities` fills only the
   room left, in priority order, and falls back to Cloud for a leader without
   an entity there.
+- **Leader interactions:** ladders/jumps (e.g. mds7 border1/border2 ->
+  REQSW to entity `cloud` script 12: MOVE/LADER/JUMP) run on Cloud's entity;
+  with another leader the player gets stuck. Needs redirecting per field.
 - Cutscene copies of party members hide themselves on field load (VISI 00
   in their script 0; 147 fields). When that character leads they'd be an
   invisible player, so `950` guards each such VISI 00 with `var[3][9] != char`.
@@ -174,6 +177,11 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - **New code section works** (user-confirmed: code in an added `.openff7`
   section runs). Build it with `ctx.exe()` (`ff7/exebuild.py`: `alloc`,
   `place_at`, `patch`, `patch_u32`); the build writes `ff7_en.exe`.
+- Per-command action info: table 0x7B7510 (4 bytes x 0x26 commands: action
+  animation -> ctx+0x1C, byte -> ctx+0x20, u16 damage formula -> ctx+0x40;
+  read at 0x435FF5-0x436029). A new command needs an entry (all-zero = hang).
+- kernel2.bin and KERNEL.BIN (sections 9-26) both hold the text; the build
+  mirrors every kernel2 edit into KERNEL.BIN (names showed blank otherwise).
 - Battle command routine sequences: table 0x7B75A8 (segments per command,
   0x1F-separated), readers 0x43656A/0x436B6A (disp32 +2), bound imm8 at
   0x436B44. kernel2.bin text via `ctx.kernel2()` (`ff7/kernel2.py`, keeps
