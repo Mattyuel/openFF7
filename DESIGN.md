@@ -42,8 +42,7 @@ The original game gates almost everything on one story-progress variable (the
 - Other characters are recruited by meeting them in the world, with new
   recruitment dialogue.
 - **Aerith is permanent.** Her death and all related content are removed.
-- The PHS (party switching) must be usable from the start or from the first
-  recruit (see open questions).
+- The PHS (party switching) is available from the start.
 - **Starting point:** Cloud starts at the **Sector 7 train station**.
 
 #### Recruitment locations
@@ -51,13 +50,20 @@ The original game gates almost everything on one story-progress variable (the
 | Character | Where | How |
 |---|---|---|
 | Aerith | Sector 5 church | New recruitment dialogue |
-| Tifa | Nibelheim, at her piano (Tifa's house) | New recruitment dialogue |
-| Barret | Outside North Corel, on the train tracks | New recruitment dialogue |
+| Tifa | Seventh Heaven bar, Sector 7 | New recruitment dialogue |
+| Barret | Sector 7 weapon shop | New recruitment dialogue |
+| Red XIII | Shinra HQ lab (specimen area) | New recruitment dialogue |
 | Cait Sith | Gold Saucer, Wonder Square arcade (fortune reading) | Adapted from the original recruitment |
 | Cid | Rocket Town, near the rocket | New recruitment dialogue |
 | Vincent | Shinra Mansion basement | As in the original (Basement Key from the safe) |
 | Yuffie | Random forest encounters | As in the original |
-| Red XIII | **TBD** | |
+
+#### Party leader
+- **Any recruited character can be party leader.**
+- The leader is the character the player controls when walking around.
+- Technical note: many field files only define a walking model for Cloud, and
+  the world map only ships walking models for Cloud, Tifa and Cid. Other
+  leaders need entities/models added. See open questions.
 
 ### Enemies and bosses
 - **Regular enemies are unchanged** (stats, levels, encounter areas).
@@ -88,10 +94,23 @@ The original game gates almost everything on one story-progress variable (the
 - **Submarine:** available **from the start**.
 - **Buggy:** unlocked the **first time the player leaves Costa del Sol**.
 - **Airship (Highwind):** unlocked by **visiting the landing strip at Junon**.
-- **Tiny Bronco:** available (location and unlock to be decided).
+- **Tiny Bronco:** available **from the start**, moored in the water near Gongaga.
 
 ### Minigames
 - Minigames outside the story stay (Gold Saucer, chocobo racing/breeding, etc.).
+- **Story-tied minigames become repeatable activities** started by talking to an
+  NPC in the associated town:
+  - Fort Condor battles: Fort Condor
+  - Corel train chase: North Corel
+  - Submarine chase: Junon
+  - Junon parade: Junon
+  - Motorcycle chase: Midgar (NPC location TBD)
+
+### Story-locked items and places
+- **Temple of the Ancients is open from the start.** No Keystone is needed.
+- **The Huge Materia is already in Cosmo Canyon** (Bugenhagen's observatory) and
+  can be interacted with from the start.
+- **Shops keep their original stock.**
 
 ### Locations restored
 - Areas that become inaccessible later in the original (e.g. Cave of the Gi in
@@ -136,19 +155,14 @@ fights tied to story scripts.
 
 ## Open questions
 
-1. **Red XIII** — where is he recruited (e.g. Cosmo Canyon, or the Shinra HQ lab
-   specimen tank)?
-2. **Tiny Bronco** — where is it, and is it available from the start or after
-   something (e.g. recruiting Cid)?
-3. **Party leader and PHS** — is Cloud always the party leader? Is the PHS held
-   from the start?
-4. **Wall Market / Corneo mansion** — the original sequence needs Tifa and Aerith.
-   Proposal: it works with whoever is in the party, and the cross-dressing
-   quest still applies to Cloud.
-5. **Story-tied minigames** — Fort Condor, Corel train, submarine Huge Materia
-   chase, Junon parade, motorcycle chase, Shinra HQ stair race: keep
-   as repeatable activities?
-6. **Story-locked rewards** — where do the Huge Materia items, the Ancient
-   Key, the Keystone, the Temple of the Ancients rewards, etc. come from now?
-7. **Shop inventories** — one fixed inventory per shop, or unlocked by
-   condition?
+1. **Non-Cloud leaders outside Midgar** — on the world map, only Cloud, Tifa and
+   Cid have walking models. Options: (a) convert field models for the others,
+   (b) world map always shows Cloud/Tifa/Cid as a stand-in. Needs a look at the
+   data before deciding.
+2. **Shop stock that changes with story progress** — some shops add items later
+   in the original. Use the final (largest) list, or the earliest?
+3. **Motorcycle chase NPC** — where in Midgar?
+4. **Huge Materia balance** — touching the Huge Materia gives very strong
+   materia (e.g. Bahamut ZERO) from the very start. Intended?
+5. **Fort Condor / train / submarine rewards** — those minigames originally
+   award Huge Materia. What should they award now?
