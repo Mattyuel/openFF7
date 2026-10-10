@@ -1,11 +1,12 @@
-"""New game: Cloud alone at the Sector 7 station, PHS and full menu available.
+"""New game: Cloud alone at the Sector 7 station, PHS and full menu available,
+all Shinra HQ keycards held.
 
 The original new game runs in md1stin (Sector 1 station): entity 0's main
 script has `if (progress == 0) { opening movie; menu mask; party; ...;
 progress = 1 }`. That block is replaced with the openFF7 setup, ending in a
 jump to the Sector 7 station.
 """
-from _config import (CLOUD, MENU_ALL, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
+from _config import (CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, MENU_ALL, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
                      START_TRIANGLE, START_X, START_Y)
 
 from ff7 import asm
@@ -44,6 +45,9 @@ def apply(ctx):
         new.append(asm.Op(bytes([0xCD, 0x00, char])))  # everyone else unavailable until recruited
     for var, initial in REGION_VARS.values():
         new.append(asm.setword(var, initial))
+    new.append(asm.setbyte(*HQ_ACCESS_LEVEL))
+    for var, bit in HQ_KEYCARD_BITS:
+        new.append(asm.biton(var, bit))
     new += [
         asm.setword(PROGRESS_VAR, OPEN_WORLD_PROGRESS),
         asm.Op(bytes([0x33, 0x00])),  # UC 00: player control on

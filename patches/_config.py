@@ -29,7 +29,13 @@ OPEN_VARS_FIRST = 224
 # Regions that keep their own story line in a private 16-bit variable
 # (reads/writes of story progress in their fields are redirected to it).
 # name -> (variable, initial value at new game)
-REGION_VARS = {
-    # Wall Market quest (Honey Bee Inn, dress-up, Corneo) runs 188..209.
-    "wall_market": ((OPEN_VAR_BANK16, 224), 188),
-}
+REGION_VARS = {}
+
+# Shinra HQ keycards, all given at new game so the building can be explored
+# freely. Elevator access level is var[1][224]; the cards are key-item bits.
+HQ_ACCESS_LEVEL = ((1, 224), 68)
+HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
+                   ((1, 67), 7),   # Keycard 62
+                   ((1, 68), 0),   # Keycard 65
+                   ((1, 68), 1),   # Keycard 66
+                   ((1, 68), 2)]   # Keycard 68

@@ -35,9 +35,9 @@ against it. openFF7 replaces that with **per-location state**:
    story value. The field then always looks and behaves as it did at moment
    `M`. `M` is picked between the field's story events so its cutscenes don't
    fire.
-2. **Regions with their own story line.** Where a side quest is built on the
-   story value (e.g. Wall Market / Corneo), the region's fields read and write
-   a private variable instead, so the quest still plays out on its own.
+2. **Regions with their own story line** (tool support, not used yet). Where a
+   side quest is built on the story value, a region's fields can read and write
+   a private variable instead, so the quest plays out on its own.
 3. **Remove remaining story barriers** (guards, locked doors, lines) per field,
    found by testing.
 4. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
@@ -96,6 +96,12 @@ Midgar per-field choices: `docs/midgar_plan.md`.
 - **Jenova and Sephiroth fights stay.** They are reached from the bottom of the
   spiral section of the Northern Crater. The game **continues afterwards**:
   no game-ending sequence, and the player returns to the world.
+
+### Wall Market and Shinra HQ
+- **The dress-up sequence is removed.** Wall Market (including the Honey Bee Inn
+  and Corneo's mansion) is a fully walkable area with no cutscenes.
+- **The Shinra HQ infiltration is removed.** The building can be explored freely,
+  with the infiltration random encounters. A new game holds all keycards.
 
 ### NPCs that move
 - **Don Corneo** starts in Wall Market. After he is beaten there, he moves to

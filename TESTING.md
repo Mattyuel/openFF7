@@ -36,4 +36,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   Graveyard, the pillar, Sector 6, Wall Market, Sector 5, the church and
   Aerith's house. Note anywhere you are blocked, a cutscene plays, or the game
   freezes or crashes, with the location name and what you did just before.
+- Wall Market (incl. Honey Bee Inn and Corneo's mansion) should have no
+  dress-up or other cutscenes.
+- Shinra HQ: reach it via the Wall Market wire climb -> Sector 0 -> HQ entrance.
+  You hold all keycards (check Key Items); every floor should be reachable by
+  stairs/elevator, with infiltration random encounters and no capture/escape
+  scenes.
 - Leave Midgar through the Sector 5 church exterior -> Slum Outskirts -> world map.

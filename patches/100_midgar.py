@@ -4,9 +4,12 @@ Each field is detached from the global story-progress value
 (see DESIGN.md §2 and docs/midgar_plan.md):
   - PINNED fields always behave as at one story moment, chosen between the
     story events so that no cutscene in the field fires.
-  - REGION fields share a private progress variable so a multi-step side
-    quest (Wall Market / Corneo) still plays out.
-Shinra HQ, the trains and the disc 2 Midgar areas are not handled yet.
+  - REGION fields share a private progress variable (none in Midgar now).
+Wall Market is pinned after the dress-up step, so the dress-up sequence and
+Corneo's mansion events never play. Shinra HQ is pinned per floor to its
+infiltration state without the capture/escape events, and the new game holds
+every keycard (010_new_game.py), so it can be explored freely with its
+infiltration random encounters. Trains and disc 2 Midgar are not handled yet.
 """
 from _config import REGION_VARS
 
@@ -35,14 +38,34 @@ PINNED = {
     186: ["mds6_1", "mds6_2", "mds6_22", "mds6_3"],
     # Slum outskirts (exit to the world map): after the party-gathering scene (335/336).
     342: ["mds5_5"],
+    # Wall Market, Honey Bee Inn, Corneo's mansion and sewers: just after the
+    # dress-up step (192), before the mansion events (197+). No cutscenes.
+    193: ["mrkt1", "mrkt2", "mrkt3", "mrkt4", "mkt_w", "mkt_mens", "mkt_ia", "mktinn",
+          "mkt_m", "mkt_s1", "mkt_s2", "mkt_s3", "mktpb", "onna_2", "onna_4", "onna_5",
+          "onna_52", "colne_1", "colne_2", "colne_3", "colne_4", "colne_5", "colne_6",
+          "colne_b1", "colne_b3"],
 }
 
-REGIONS = {
-    "wall_market": ["mrkt1", "mrkt2", "mrkt3", "mrkt4", "mkt_w", "mkt_mens", "mkt_ia",
-                    "mktinn", "mkt_m", "mkt_s1", "mkt_s2", "mkt_s3", "mktpb", "onna_2",
-                    "onna_4", "onna_5", "onna_52", "colne_1", "colne_2", "colne_3",
-                    "colne_4", "colne_5", "colne_6", "colne_b1", "colne_b3"],
+# Shinra HQ, per floor: each field's moment sits between its own events
+# (infiltration runs 257-326; 1008+ is disc 2).
+SHINRA_HQ = {
+    "md0": 263, "sinbil_1": 263, "sinbil_2": 263, "blinst_1": 263, "blinst_2": 263,
+    "blinst_3": 263,
+    "blin1": 261, "blin2": 261, "blin2_i": 261, "blin3_1": 261,
+    "blin59": 263, "blinele": 263, "eleout": 263,
+    "blin60_1": 263, "blin60_2": 263, "blin61": 263, "blin62_1": 263, "blin62_2": 263,
+    "blin62_3": 263, "blin63_1": 263, "blin63_t": 263, "blin64": 263, "blin65_1": 263,
+    "blin65_2": 263,
+    "blin66_1": 271, "blin66_2": 271, "blin66_3": 271, "blin66_4": 271, "blin66_5": 271,
+    "blin67_1": 281, "blin671b": 281, "blin67_3": 281, "blin673b": 281, "blin67_4": 281,
+    "blin67_2": 297,
+    "blin68_1": 285, "blin68_2": 285,
+    "blin69_1": 303, "blin70_1": 303, "blin70_2": 303, "blin70_3": 303,
 }
+for _field, _moment in SHINRA_HQ.items():
+    PINNED.setdefault(_moment, []).append(_field)
+
+REGIONS = {}
 
 
 def _edit(ctx, field, **kw):
