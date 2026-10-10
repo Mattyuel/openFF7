@@ -38,12 +38,17 @@ against it. openFF7 replaces that with **per-location state**:
 2. **Regions with their own story line** (tool support, not used yet). Where a
    side quest is built on the story value, a region's fields can read and write
    a private variable instead, so the quest plays out on its own.
-3. **Remove remaining story barriers** (guards, locked doors, lines) per field,
+3. **Mark scenes as already seen.** Many entry scenes are guarded by "seen"
+   flags as well as story progress; the original story sets those as you play.
+   The new game sets the flags that keep each room quiet
+   (`INITIAL_EVENT_FLAGS` in `patches/_config.py`, found with
+   `tools/ff7/simulate.py`).
+4. **Remove remaining story barriers** (guards, locked doors, lines) per field,
    found by testing.
-4. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
+5. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
    Corneo's move, region progress) use save variables bank 4, offsets 224–255,
    which no original script uses.
-5. **Build.** Patches live in `patches/*.py` and are applied by
+6. **Build.** Patches live in `patches/*.py` and are applied by
    `tools/ff7tool.py build`, which writes a separate game folder
    (`build/openFF7/`) and leaves the original data untouched.
 
