@@ -17,3 +17,8 @@
 **/music_2/
 **/sound/
 **/voice/
+
+# openFF7 generated files
+work/
+build/
+__pycache__/
