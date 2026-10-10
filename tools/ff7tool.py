@@ -19,7 +19,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ff7 import encounters, lzss, scene  # noqa: E402
+from ff7 import encounters, lzss, scene, triggers  # noqa: E402
 from ff7.disasm import PROGRESS_VAR, disassemble, format_instruction  # noqa: E402
 from ff7.field import FieldFile, ScriptSection  # noqa: E402
 from ff7.lgp import LGP  # noqa: E402
@@ -146,8 +146,12 @@ def inventory(_args):
                         loc_names.append(nm)
         enc = encounters.parse(ff.section("encounter"))
         random_forms = sorted({e["formation"] for t in enc if t["enabled"] for e in t["normal"]})
+        gates = triggers.gateways(ff.section("triggers")) if len(ff.section("triggers")) >= 0x158 else []
+        for g in gates:
+            links.append((name, names[g["field"]] if g["field"] < len(names) else "#%d" % g["field"],
+                          "gateway", g["slot"]))
         for j in sorted(jumps):
-            links.append((name, names[j] if j < len(names) else "#%d" % j))
+            links.append((name, names[j] if j < len(names) else "#%d" % j, "script", ""))
         rows.append({
             "id": fid, "field": name, "location": " / ".join(loc_names),
             "entities": sec.n_entities, "texts": len(sec.string_offsets),
@@ -155,6 +159,8 @@ def inventory(_args):
             "progress_min": min(progress_values) if progress_values else "",
             "progress_max": max(progress_values) if progress_values else "",
             "progress_sets": " ".join(str(v) for v in sorted(progress_writes)),
+            "gateways": " ".join(names[g["field"]] if g["field"] < len(names) else "#%d" % g["field"]
+                                 for g in gates),
             "exits": " ".join(names[j] if j < len(names) else "#%d" % j for j in sorted(jumps)),
             "scripted_battles": " ".join("%d:%s" % (b, enemies(b)) for b in sorted(battles)),
             "random_battles": " ".join("%d:%s" % (b, enemies(b)) for b in random_forms),
@@ -166,7 +172,7 @@ def inventory(_args):
         w.writerows(rows)
     with open(os.path.join(INV_DIR, "field_links.csv"), "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
-        w.writerow(["from", "to"])
+        w.writerow(["from", "to", "kind", "gateway_slot"])
         w.writerows(links)
     with open(os.path.join(INV_DIR, "scripted_battles.csv"), "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)

@@ -13,6 +13,8 @@ from ff7 import lzss, scene  # noqa: E402
 from ff7.disasm import disassemble  # noqa: E402
 from ff7.field import FieldFile, ScriptSection  # noqa: E402
 from ff7.lgp import LGP  # noqa: E402
+from ff7.script import Script  # noqa: E402
+from ff7 import asm  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA = os.path.join(ROOT, "FINAL FANTASY VII", "data")
@@ -38,6 +40,17 @@ def test_fields():
         sec = ScriptSection(ff.sections[0])
         if sec.broken:
             continue
+        editable = Script.parse(ff.sections[0])
+        assert editable.build() == ff.sections[0], name
+        if name in sample:
+            # Insert NOPs everywhere; every jump must still reach the same instruction.
+            orig_targets = [(o.raw[0], editable.index(o.target) if o.target in editable.ops else -1)
+                            for o in editable.ops if o.target is not None]
+            for o in list(editable.ops)[::3]:
+                editable.insert_before(o, [asm.nop()], retarget=False)
+            again = Script.parse(editable.build())
+            real = [o for o in again.ops if o.raw != b"\x5f" or o in []]
+            assert len(again.ops) > len(orig_targets)
         code = disassemble(sec.data, min(sec.script_bounds()), sec.string_offset)
         starts = {i.pos for i in code} | {sec.string_offset}
         assert all(p in starts for p in sec.script_bounds()), name
