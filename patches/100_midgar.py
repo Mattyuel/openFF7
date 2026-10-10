@@ -75,7 +75,19 @@ def _edit(ctx, field, **kw):
     return stats
 
 
+def _disable_train_boarding(ctx):
+    """Sector 7 station: the line at the train door ('border1') boards the train
+    to the next story scene. Trains are not transport (yet), so switch it off."""
+    script = Script.parse(ctx.field("mds7st3").sections[0])
+    ent = script.entity_index("border1")
+    linon = [o for o in script.script_ops(ent, 0) if o.op == 0xD1]
+    assert linon and linon[0].raw[1] == 1, "expected LINON 01 in border1 init"
+    linon[0].raw[1] = 0
+    ctx.field("mds7st3").sections[0] = script.build()
+
+
 def apply(ctx):
+    _disable_train_boarding(ctx)
     total = 0
     for moment, fields in PINNED.items():
         for field in fields:
