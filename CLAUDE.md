@@ -66,7 +66,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
-| `600_quests.py` | Quest givers (data in `GIVERS`): Manager md8brdg, Betty mds6_2, Gwen mds5_3; orb markers; exe kill-counter hook. Plan: `docs/quest_plan.md`. |
+| `600_quests.py` | Quest givers (data in `GIVERS`): Manager md8brdg, Betty mds6_2, Gwen mds5_3; orb markers; exe kill-counter hook; "Quests" main-menu row + screen (`patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks). Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -171,6 +171,10 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   (== 3) checks the bits and runs `op_300 <model>; op_30C` (mount). 280 appends
   a mount block for its own exits (`ff7.worldmap.EvPatcher`: wm*.ev are fixed
   0x7000 bytes with zero padding; append + repoint a goto, nothing moves).
+  **Mount before placing**: the mount must run before the branch's op_308/op_309
+  placement (as in the farm branch); mounting after it left the chocobo at the
+  map origin (top-left, in the sea). 280 redirects the branch start to
+  [mount block + copy of the branch body].
   World map tutorials are messages in world_us.lgp `mes` (53 world map save,
   57 buggy, 58 Tiny Bronco, 59 chocobo, 61 submarine) gated by bits; world map
   bit address b = savemap 0x0BA4 + b//8, bit b%8 (e.g. 0x1C2B = bank 4 off 133
@@ -178,6 +182,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - Chocobo field models (`AQGC.HRC`) aren't yellow by themselves: scripts tint
   them with KAWAI 06 (fship_5/frcyo: yellow = `1e 00 0f 00 c4 ff`).
 - Cloud is locked as leader (MMBLK 00 at new game); leader swapping shelved.
+- **Screen position of a field point**: `ff7.camera.Camera(section 1).project(x, y, z)`
+  (GTE: zoom * (R.v/4096 + T), y down, relative to the background centre);
+  scroll limits = triggers header +12 (`screen_range`). Checked on md8brdg only.
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
   via `ModelLoader.add` works.
@@ -214,8 +221,14 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   0x9A8748+type*2 (3 types; also read at 0x5D0816). Skipped when fled
   ([0x9AE11C]&0xDE). A defeated, not-removed enemy reaches 0x431536
   (`8B45FC 83C004`), hooked by 600_quests to count kills.
-- Main menu labels (FF7 text, 20-byte slots) at file 0x5192C0 (Item, Magic,
-  Materia, Equip, Status, Order, Limit, Config, PHS, Save, Quit).
+- Main menu labels (FF7 text, 20-byte slots) at VA 0x91A8C0 (Item, Magic,
+  Materia, Equip, Status, Order, Limit, Config, PHS, Save, Quit, then unused
+  "Beginner"). Menu framework: `docs/research_menu.md`. **Menu id 11 is an empty
+  stub** (init 0x6FEB00 / update 0x6FEB0F) and row 10's row->id byte is already
+  0x0B, so a row before Quit opening id 11 needs no title/cursor-return change:
+  600_quests' `MENU_PATCHES` (row count 11->12, heights +0x1A, masks, labels,
+  12-entry confirm table). Submenu API used by quest_menu.asm (text colours:
+  0 grey, 4 green, 5 cyan, 6 yellow, 7 white; smaller z = in front).
 - exe patching: `ff7/exepatch.py` (expected-bytes checks + PE checksum, which
   reproduces the original's). `ff7tool.py exe-test` makes a harmless test exe;
   **Confirmed by the user: a modified exe (.data and .text changes, checksum
@@ -269,8 +282,8 @@ field leader entities (untested),
 Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 
-Quests (600): 3 givers, kill + deliver kinds, orb markers (untested; orb
-height is a guess, ORB_HEIGHT).
+Quests (600): 3 givers, kill + deliver kinds, orb markers (user: orbs were too
+high at 200, now 160), Quests menu (untested).
 
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),

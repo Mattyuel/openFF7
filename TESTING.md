@@ -57,7 +57,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   either: "Ride a chocobo? 100 gil." With under 100 gil Billy says so; with
   enough, 100 gil is taken and you should be on the world map riding a
   (yellow) chocobo, as after catching one in battle. Dismount: it should run
-  away. Check also that you appear at the right spot outside.
+  away. You should now appear outside Midgar / the Mythril Mine on the
+  chocobo (before, you appeared in the sea at the top-left corner).
 - No "Saving on the World Map" window on first entering the world map, and no
   submarine tutorial window (new game).
 - Cloud always leads (he can't be moved in the PHS; needs a new game).
@@ -67,8 +68,7 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Quests** (new game needed for clean quest state). A spinning materia orb
   should float above each quest giver: yellow = a quest to offer, blue =
   ready to hand in, none otherwise. Givers turn to face you when talked to.
-  Report if the orb sits on the floor, inside their head, or far too high
-  (its height is a guess), or if it flickers.
+  Orbs were lowered (too high before): report if they now sit in the head.
   - *Middle Manager* (Upper Midgar, a few steps from the train
     arrival): accept, then win battles in No.1 Reactor against Grunts,
     Sweepers, 1st Rays or Mono Drives (8 in total; enemies that escape or
@@ -76,12 +76,21 @@ Existing saves load, but they keep their own story progress; use a new game.
     500 gil + 3 Hi-Potions. Then he offers the No.5 Reactor job (Smoggers,
     Blood Tastes, Proto Machineguns, 8): 1000 gil, 2 Ethers, Steal materia.
     Kills before accepting don't count.
-  - *Betty* (Sector 6 playground, near the slide): beat 2 Hell Houses (next
-    screen towards Sector 5): 37 gil + an Elixir.
+  - *Betty* (Sector 6 playground with the big gate, now a little girl in
+    the bottom third of the screen): beat 2 Hell Houses (next screen
+    towards Sector 5): 37 gil + an Elixir.
   - *Gwen* (Sector 5 slums, near the tunnel to Sector 6): bring 3 Potions
     (they're taken): HP Plus materia. Talking to her with fewer gives a
     reminder; her orb turns blue while you carry 3 or more.
   - After all quests each giver has a closing line.
+  - **Quests menu** (new `ff7_en.exe`): the main menu has a 12th row
+    "Quests" above Quit (check the menu window is tall enough and nothing
+    overlaps the time/gil box). It lists accepted quests (green = ready to
+    hand in); Up/Down select, the bottom window shows title, giver, where,
+    a description and progress like "Defeated: 3/8" / "Potions: 1/3".
+    Cancel returns to the menu with the cursor on Quests. With none accepted
+    it says "No quests in progress." Note any crash, wrong colours or text
+    drawn outside the windows.
 - **No.5 Reactor elevator** should go to No.5's rooms, and No.1's to No.1's.
 - Conductors should now be the same size as other characters; on Upper
   Midgar you and he start mid-screen.

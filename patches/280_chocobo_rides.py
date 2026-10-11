@@ -12,9 +12,10 @@ then the same MAPJUMP the field's own world map exit uses.
 
 But wm0.ev only mounts you (op_300 <model>; op_30C) in the branch for arriving
 from the farm (push_special 6 == 3); the other entries just place you. So the
-branch for each exit used here gets a block appended in the script's zero
-padding: if bit 0x3F0 (bank 1 byte 126 bit 0): op_300 4; op_30C; then the
-branch's usual `goto L083D`.
+branch for each exit used here is redirected to a block appended in the
+script's zero padding: if bit 0x3F0 (bank 1 byte 126 bit 0): op_300 4;
+op_30C; then the branch's own placement and exit (mount first, as the farm
+branch does).
 
 The ride costs 100 gil (CHGLD/GOLDD). The chocobo model's base colour isn't
 yellow: like the cargo ship's chocobo (fship_5), it is tinted yellow with
@@ -73,14 +74,23 @@ def _ride(ctx, wm_entry):
 
 def _mount_on_arrival(ctx, wm_entry):
     """wm0.ev: in the branch for arriving by `wm_entry`, mount the wild chocobo
-    if its bit is set (see the module docstring)."""
+    if its bit is set (see the module docstring). The mount has to come before
+    the branch's placement (op_308/op_309), as in the farm branch: mounting
+    after it put the chocobo at the map origin (top-left, in the sea). So the
+    branch's first words become a goto to an appended block: [if bit: mount]
+    + a copy of the branch body (placement, then its goto to the exit)."""
     ev = EvPatcher(ctx.wm_file("wm0.ev"))
     body, _else = ev.branch_for(WM_SPECIAL_ENTRY, ctx.maplist.index(wm_entry))
-    exit_goto = next(x for x in body if x.op == 0x200)
-    block = [0x100, 0x114, WILD_RIDE_BIT_ADDR, 0x201, exit_goto.arg,    # if bit:
-             0x100, 0x110, WILD_CHOCOBO_MODEL, 0x300, 0x30C,               #   model 4, mount
-             0x200, exit_goto.arg]                                          # back to the branch's exit
-    ev.set_word(exit_goto.pos + 1, ev.append(block))
+    assert body[0].op == 0x100 and body[1].arg is not None, "branch must start with reset; push n"
+    assert [x.op for x in body if x.op in (0x200, 0x201)] == [0x200] and body[-1].op == 0x200, \
+        "branch body must be straight-line code ending in its exit goto"
+    copy = [w for x in body for w in ((x.op, x.arg) if x.arg is not None else (x.op,))]
+    start = ev.end
+    mount = [0x100, 0x114, WILD_RIDE_BIT_ADDR, 0x201, start + 10,         # if bit:
+             0x100, 0x110, WILD_CHOCOBO_MODEL, 0x300, 0x30C]               #   model 4, mount
+    assert ev.append(mount + copy) == start
+    ev.set_word(body[0].pos, 0x200)                                         # reset; push -> goto block
+    ev.set_word(body[0].pos + 1, start)
     ctx.wm_file("wm0.ev")[:] = ev.build()
 
 

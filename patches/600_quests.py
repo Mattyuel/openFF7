@@ -49,13 +49,16 @@ its counter is below the count, increments the counter. Then it replays the
     add eax, 4
     jmp 0x43153C
 """
+import os
 import struct
 
 from _recruit import say, xyzi
 from _travel import add_npc, choice_menu, copy_model
 
 from ff7 import asm
+from ff7.camera import Camera, screen_range
 from ff7.script import Op, Script
+from ff7.text import encode
 from ff7.walkmesh import Walkmesh
 
 BANK = 11                      # field var nibble for bank 3 (8-bit)
@@ -65,7 +68,7 @@ ITEM_COUNT = (5, 232)          # temp var: CKITM result
 MODE, SHOWN = (5, 233), (5, 234)   # temp vars: marker mode wanted / applied
 
 ORB_MODEL = ("nmkin_5", 3)     # fieldbg_mtra3: the materia orb
-ORB_HEIGHT = 200               # above the giver's feet (untested guess)
+ORB_HEIGHT = 160               # above the giver's feet (200 was too high in game)
 ORB_TINT = {1: (120, 100, -120),   # yellow: quest to offer
             2: (-80, -20, 140)}    # blue: ready to hand in
 
@@ -94,8 +97,13 @@ MGR, BETTY, GWEN = "Middle Manager", "Betty", "Gwen"
 
 GIVERS = [
     dict(field="md8brdg", name="manager", model=("blin1", 9), at=(-620, 250), dir=0x40,
+         who=MGR, where="Upper Midgar, Sector 8 walkway",
          quests=[
              dict(id="manager_n1", kind="kill", enemies=[19, 20, 18, 21], count=8,
+                  title="Pest Control: No.1 Reactor", label="Defeated",
+                  desc=["Scrap 8 Grunts, Sweepers, 1st Rays or",
+                        "Mono Drives in No.1 Reactor so the Middle",
+                        "Manager can close his ticket."],
                   offer=[M(MGR, "Ah, a contractor! Excellent.",
                            "No.1 Reactor is overrun with...",
                            "let's call them 'unpaid interns'."),
@@ -115,6 +123,10 @@ GIVERS = [
                           "Here's your... honorarium.")],
                   reward=dict(gil=500, items=[(1, 3)])),
              dict(id="manager_n5", kind="kill", enemies=[32, 29, 31], count=8,
+                  title="Pest Control: No.5 Reactor", label="Defeated",
+                  desc=["Scrap 8 Smoggers, Blood Tastes or Proto",
+                        "Machineguns in No.5 Reactor. His bonus",
+                        "depends on it."],
                   offer=[M(MGR, "Great news! Your work was so",
                            "adequate, you've been promoted",
                            "to No.5 Reactor. Same pay."),
@@ -137,9 +149,17 @@ GIVERS = [
          all_done=M(MGR, "I'm Upper Middle Manager now.",
                     "Same desk, but the chair spins.")),
 
-    dict(field="mds6_2", name="betty", model=("mds7st3", 11), at=(-150, 100), dir=0x40,
+    # In the open, in the bottom third of the (scrolling) screen; model
+    # std_girl3 (Chole at the chocobo farm).
+    dict(field="mds6_2", name="betty", model=("frcyo", 3), at=(440, -860), dir=0x40,
+         screen="bottom third",
+         who=BETTY, where="Sector 6 playground",
          quests=[
              dict(id="betty", kind="kill", enemies=[44, 45], count=2,
+                  title="The Bullies", label="Hell Houses beaten",
+                  desc=["Beat up 2 Hell Houses so Betty can play",
+                        "in the street. They're mean on the",
+                        "inside too."],
                   offer=[M(BETTY, "Hey mister! There's big mean",
                            "HOUSES out there and they won't",
                            "let me play in the street!"),
@@ -165,8 +185,13 @@ GIVERS = [
                     "are so weird.")),
 
     dict(field="mds5_3", name="gwen", model=("mds5_1", 5), at=(-280, -100), dir=0xC0,
+         who=GWEN, where="Sector 5 slums, by the tunnel",
          quests=[
              dict(id="gwen", kind="deliver", item=0, count=3,
+                  title="A Dare Too Far", label="Potions",
+                  desc=["Bring Gwen 3 Potions for her neighbour",
+                        "Rufus, who licked a Mako pipe on a dare.",
+                        "Again."],
                   offer=[M(GWEN, "Oh, thank goodness, a person!",
                            "My neighbour Rufus (not THAT",
                            "Rufus) is sick as a dog."),
@@ -301,6 +326,13 @@ def _spot(ctx, field, x, y):
     return x, y, mesh.height(tri, x, y), tri
 
 
+def _check_bottom_third(ctx, field, pos):
+    sx, sy = Camera(ctx.field(field).section("camera")).project(*pos[:3])
+    left, top, right, bottom = screen_range(ctx.field(field).section("triggers"))
+    assert left < sx < right and top + (bottom - top) * 2 / 3 < sy < bottom, \
+        "%s: %r is on screen at (%d, %d), not in the bottom third" % (field, pos, sx, sy)
+
+
 def _add_marker(ctx, giver, pos):
     field = giver["field"]
     model = copy_model(ctx, field, *ORB_MODEL)
@@ -345,6 +377,89 @@ def _kill_hook(ctx):
     exe.patch(HOOK_VA, HOOK_OLD, jmp, "reward loop -> quest kill counter")
 
 
+# ---- Quests main-menu entry ------------------------------------------------
+# A 12th main-menu row "Quests" above Quit, opening menu id 11 (an empty stub
+# in the original: init 0x6FEB00 / update 0x6FEB0F). Row 10's row->id byte
+# (0x91AAF8) is already 0x0B and the title/cursor-return code uses id-1 = row,
+# so only counts, heights, masks, labels and the confirm jump table change.
+# The screen itself is patches/asm/quest_menu.asm (prebuilt .bin committed).
+SECTION_VA = 0xFD5000
+MENU_DATA_VA, MENU_CODE_VA = 0xFD5800, 0xFD6000   # = DATA / CODE in quest_menu.asm
+MENU_BIN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "asm", "quest_menu.bin")
+QUESTS_ID = 11
+LABELS, ROW_TO_ID = 0x91A8C0, 0x91AAF8
+MENU_INIT, MENU_UPDATE = 0x91AB40, 0x91AB98
+CONFIRM_TABLE, ROW_SUBMENU, ROW_QUIT = 0x6CB53E, 0x6CA52F, 0x6CA584
+REC_SIZE = 36
+
+# (va, old bytes, new bytes, what)
+MENU_PATCHES = [
+    (0x6CA3BC, "80cc04", "80cc0c", "visible mask: force Quests + Quit rows (bits 10, 11)"),
+    (0x6CA3F5, "6681e1fffb", "6681e1fff3", "lock mask: never lock rows 10, 11"),
+    (0x6CA174, "6a0b", "6a0c", "main cursor: 12 view rows"),
+    (0x6CA17C, "6a0b", "6a0c", "main cursor: 12 rows"),
+    (0x6C9AC6, "83f80b", "83f80c", "draw 12 labels"),
+    (0x6C9F27, "83f80b", "83f80c", "draw 12 labels (low-res)"),
+    (0x6CA4F9, "83bd78fbffff0a", "83bd78fbffff0b", "confirm: rows 0..11"),
+    (0x6C9A84, "c7058012dc0038010000", "c7058012dc0052010000", "window height 0x138 -> 0x152"),
+    (0x6C9987, "69c01e010000", "69c038010000", "opening animation height"),
+    (0x6C9C51, "69c005010000", "69c01f010000", "returning animation height"),
+    (0x6CB5DB, "80e264", "80e257", "initial height (low-res 0x9C -> 0xA9)"),
+    (0x6CB5DE, "81c238010000", "81c252010000", "initial height 0x138 -> 0x152"),
+    (0x6C9EE5, "c7058012dc009c000000", "c7058012dc00a9000000", "low-res window height"),
+    (0x6C9DE8, "69c08f000000", "69c09c000000", "low-res opening animation"),
+    (0x6CA0B2, "69c082000000", "69c08f000000", "low-res returning animation"),
+]
+
+
+def _quest_log_data(base):
+    """DATA block for quest_menu.asm: header, records, then the strings."""
+    quests = [(g, q) for g in GIVERS for q in g["quests"]]
+    head = 12 + REC_SIZE * len(quests)
+    pool = bytearray()
+
+    def text(t):
+        va = base + head + len(pool)
+        pool.extend(encode(t))
+        return va
+    none, ready = text("No quests in progress."), text("Done! Report back to the quest giver.")
+    recs = b""
+    for g, q in quests:
+        ptrs = [text(q["title"]), text("From: " + g["who"]), text("Where: " + g["where"])]
+        ptrs += [text(line) for line in q["desc"]] + [text(q["label"])]
+        assert len(q["desc"]) == 3 and all(len(l) <= 46 for l in q["desc"]), q["id"]
+        recs += struct.pack("<BBBxHxx7I", Q[q["id"]], 0 if q["kind"] == "kill" else 1,
+                            q["count"], q.get("item", 0), *ptrs)
+    assert len(recs) == REC_SIZE * len(quests)
+    return struct.pack("<3I", len(quests), none, ready) + recs + bytes(pool)
+
+
+def _quest_menu(ctx):
+    exe = ctx.exe()
+    assert exe.section_va == SECTION_VA, hex(exe.section_va)
+    data = _quest_log_data(MENU_DATA_VA)
+    assert len(data) <= MENU_CODE_VA - MENU_DATA_VA, len(data)
+    exe.place_at(MENU_DATA_VA, data, "quest_log_data")
+    code = open(MENU_BIN, "rb").read()
+    exe.place_at(MENU_CODE_VA, code, "quest_menu")
+    init_va, update_va = MENU_CODE_VA, MENU_CODE_VA + 5      # jmp near stubs at the start
+    assert code[0] == 0xE9 and code[5] == 0xE9
+
+    for va, old, new, what in MENU_PATCHES:
+        exe.patch(va, bytes.fromhex(old), bytes.fromhex(new), what)
+    old_table = struct.unpack("<11I", exe.read(CONFIRM_TABLE, 44))
+    assert old_table[10] == ROW_QUIT, old_table
+    table = exe.alloc(struct.pack("<12I", *old_table[:10], ROW_SUBMENU, ROW_QUIT), "confirm_table")
+    exe.patch_u32(0x6CA50F, CONFIRM_TABLE, table, "confirm jump table (12 rows)")
+    assert exe.read(ROW_TO_ID + 10, 1)[0] == QUESTS_ID
+    quit_label = exe.read(LABELS + 10 * 20, 20)
+    assert quit_label.startswith(encode("Quit")), quit_label.hex()
+    exe.patch(LABELS + 10 * 20, quit_label, encode("Quests").ljust(20, b"\0"), "row 10 label")
+    exe.patch(LABELS + 11 * 20, exe.read(LABELS + 11 * 20, 20), quit_label, "row 11 label = Quit")
+    exe.patch_u32(MENU_INIT + 4 * QUESTS_ID, 0x6FEB00, init_va, "menu 11 init")
+    exe.patch_u32(MENU_UPDATE + 4 * QUESTS_ID, 0x6FEB0F, update_va, "menu 11 update")
+
+
 def apply(ctx):
     offsets = sorted(Q.values())
     assert all(192 <= o and o + 1 <= 255 for o in offsets) and len(set(offsets)) == len(offsets)
@@ -354,7 +469,10 @@ def apply(ctx):
                 assert Q[q["id"]] + 1 not in Q.values(), q["id"]   # counter byte is free
         field = g["field"]
         pos = _spot(ctx, field, *g["at"])
+        if g.get("screen") == "bottom third":
+            _check_bottom_third(ctx, field, pos)
         model = copy_model(ctx, field, *g["model"])
         add_npc(ctx, field, g["name"], model, pos, g["dir"], _talk(g))
         _add_marker(ctx, g, pos)
     _kill_hook(ctx)
+    _quest_menu(ctx)

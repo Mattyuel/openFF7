@@ -132,7 +132,27 @@ def test_api_index_current():
     assert have == apiindex.generate(), "docs/api_index.md is stale: run python3 tools/ff7tool.py api-index"
 
 
+def test_asm_bins_current():
+    """patches/asm/*.bin must match their .asm (skipped without nasm)."""
+    import shutil
+    import subprocess
+    import tempfile
+    if not shutil.which("nasm"):
+        print("  (nasm not installed: skipped)")
+        return
+    folder = os.path.join(ROOT, "patches", "asm")
+    for name in sorted(os.listdir(folder)):
+        if not name.endswith(".asm"):
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "out.bin")
+            subprocess.run(["nasm", "-f", "bin", os.path.join(folder, name), "-o", out], check=True)
+            built = open(out, "rb").read()
+        assert built == open(os.path.join(folder, name[:-4] + ".bin"), "rb").read(), \
+            name + ": .bin is stale, reassemble it"
+
+
 if __name__ == "__main__":
-    for fn in [test_api_index_current, test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches]:
+    for fn in [test_api_index_current, test_asm_bins_current, test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches]:
         fn()
         print("ok", fn.__name__)
