@@ -76,8 +76,8 @@ Existing saves load, but they keep their own story progress; use a new game.
     500 gil + 3 Hi-Potions. Then he offers the No.5 Reactor job (Smoggers,
     Blood Tastes, Proto Machineguns, 8): 1000 gil, 2 Ethers, Steal materia.
     Kills before accepting don't count.
-  - *Betty* (Sector 6 playground with the big gate, now a little girl in
-    the bottom third of the screen): beat 2 Hell Houses (next screen
+  - *Betty* (Sector 6 playground with the big gate, a little girl, moved up
+    out of the path): beat 2 Hell Houses (next screen
     towards Sector 5): 37 gil + an Elixir.
   - *Gwen* (Sector 5 slums, near the tunnel to Sector 6): bring 3 Potions
     (they're taken): HP Plus materia. Talking to her with fewer gives a

@@ -283,7 +283,7 @@ Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 
 Quests (600): 3 givers, kill + deliver kinds, orb markers (user: orbs were too
-high at 200, now 160), Quests menu (untested).
+high at 200, now 160), Quests menu: user-confirmed working (orbs, menu, kill counting, Betty moved up by 4x her height).
 
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),

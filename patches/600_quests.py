@@ -56,7 +56,6 @@ from _recruit import say, xyzi
 from _travel import add_npc, choice_menu, copy_model
 
 from ff7 import asm
-from ff7.camera import Camera, screen_range
 from ff7.script import Op, Script
 from ff7.text import encode
 from ff7.walkmesh import Walkmesh
@@ -149,10 +148,10 @@ GIVERS = [
          all_done=M(MGR, "I'm Upper Middle Manager now.",
                     "Same desk, but the chair spins.")),
 
-    # In the open, in the bottom third of the (scrolling) screen; model
-    # std_girl3 (Chole at the chocobo farm).
-    dict(field="mds6_2", name="betty", model=("frcyo", 3), at=(440, -860), dir=0x40,
-         screen="bottom third",
+    # Model std_girl3 (Chole at the chocobo farm). At (440, -860) she blocked
+    # the path; moved straight up the screen by ~4x her on-screen height
+    # (ff7.camera: screen (-47, 173) -> (-47, -5)).
+    dict(field="mds6_2", name="betty", model=("frcyo", 3), at=(-120, -280), dir=0x40,
          who=BETTY, where="Sector 6 playground",
          quests=[
              dict(id="betty", kind="kill", enemies=[44, 45], count=2,
@@ -326,13 +325,6 @@ def _spot(ctx, field, x, y):
     return x, y, mesh.height(tri, x, y), tri
 
 
-def _check_bottom_third(ctx, field, pos):
-    sx, sy = Camera(ctx.field(field).section("camera")).project(*pos[:3])
-    left, top, right, bottom = screen_range(ctx.field(field).section("triggers"))
-    assert left < sx < right and top + (bottom - top) * 2 / 3 < sy < bottom, \
-        "%s: %r is on screen at (%d, %d), not in the bottom third" % (field, pos, sx, sy)
-
-
 def _add_marker(ctx, giver, pos):
     field = giver["field"]
     model = copy_model(ctx, field, *ORB_MODEL)
@@ -469,8 +461,6 @@ def apply(ctx):
                 assert Q[q["id"]] + 1 not in Q.values(), q["id"]   # counter byte is free
         field = g["field"]
         pos = _spot(ctx, field, *g["at"])
-        if g.get("screen") == "bottom third":
-            _check_bottom_third(ctx, field, pos)
         model = copy_model(ctx, field, *g["model"])
         add_npc(ctx, field, g["name"], model, pos, g["dir"], _talk(g))
         _add_marker(ctx, g, pos)
