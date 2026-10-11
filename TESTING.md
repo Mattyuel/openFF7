@@ -62,8 +62,26 @@ Existing saves load, but they keep their own story progress; use a new game.
   submarine tutorial window (new game).
 - Cloud always leads (he can't be moved in the PHS; needs a new game).
 - If you installed the Tame test files earlier: put back the original
-  `ff7_en.exe` and `data\lang-en\kernel\kernel2.bin` (the build no longer
-  changes them).
+  `data\lang-en\kernel\kernel2.bin` (the build no longer changes it).
+  `ff7_en.exe` is built again (quest kill counting): copy the new one.
+- **Quests** (new game needed for clean quest state). A spinning materia orb
+  should float above each quest giver: yellow = a quest to offer, blue =
+  ready to hand in, none otherwise. Givers turn to face you when talked to.
+  Report if the orb sits on the floor, inside their head, or far too high
+  (its height is a guess), or if it flickers.
+  - *Middle Manager* (Upper Midgar, a few steps from the train
+    arrival): accept, then win battles in No.1 Reactor against Grunts,
+    Sweepers, 1st Rays or Mono Drives (8 in total; enemies that escape or
+    battles you flee don't count). His orb turns blue at 8; hand in for
+    500 gil + 3 Hi-Potions. Then he offers the No.5 Reactor job (Smoggers,
+    Blood Tastes, Proto Machineguns, 8): 1000 gil, 2 Ethers, Steal materia.
+    Kills before accepting don't count.
+  - *Betty* (Sector 6 playground, near the slide): beat 2 Hell Houses (next
+    screen towards Sector 5): 37 gil + an Elixir.
+  - *Gwen* (Sector 5 slums, near the tunnel to Sector 6): bring 3 Potions
+    (they're taken): HP Plus materia. Talking to her with fewer gives a
+    reminder; her orb turns blue while you carry 3 or more.
+  - After all quests each giver has a closing line.
 - **No.5 Reactor elevator** should go to No.5's rooms, and No.1's to No.1's.
 - Conductors should now be the same size as other characters; on Upper
   Midgar you and he start mid-screen.

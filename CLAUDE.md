@@ -36,8 +36,8 @@ python3 tools/ff7tool.py quiet-flags        # search 'seen' flags (slow, >10 min
 ```
 
 Shipped files: `data/field/flevel.lgp`, `data/lang-en/kernel/KERNEL.BIN`,
-`data/wm/world_us.lgp` (plus `kernel2.bin`/`ff7_en.exe` only when a patch edits
-them; none does now). The build prints the list.
+`data/wm/world_us.lgp`, `ff7_en.exe` (600_quests' kill hook) (plus
+`kernel2.bin` only when a patch edits it; none does now). The build prints the list.
 The user tests by copying them into the Steam install (see `TESTING.md`).
 
 ## Workflow rules
@@ -66,6 +66,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
+| `600_quests.py` | Quest givers (data in `GIVERS`): Manager md8brdg, Betty mds6_2, Gwen mds5_3; orb markers; exe kill-counter hook. Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -84,8 +85,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   `RECRUITED` = (13,225) bit per character id, `RECRUIT_COUNT` (13,226).
   **Bank 4 offsets 232-255 are NOT free**: the exe's world map zeroes 232-243
   on entry and stores world map object data in 244-255; only 224-231 are safe.
-  Bank 3 offsets 192-255 (nibble 11, savemap 0x0E64) look unused (planned for
-  tamed-enemy bits). Temp vars (5,240),(5,241) for menus.
+  Bank 3 offsets 192-255 (nibble 11, savemap 0x0E64, memory 0xDC0B9C) look
+  unused: quest state bytes (`600_quests.Q`: state, +1 kill counter; 192-199 used).
+  Temp vars (5,232)-(5,234) used by quest givers/markers. Temp vars (5,240),(5,241) for menus.
 
 ## Verified facts: field scripts
 
@@ -206,6 +208,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   0x436B44. kernel2.bin text via `ctx.kernel2()` (`ff7/kernel2.py`, keeps
   sections byte-exact, appends changed strings; pool limit 0x6C00).
 - Party slots: 0xDC0230 (savemap 0x04F8). PHS exit check: 0x700C22.
+  Savemap base in memory = 0xDBFD38; field var bank 1 = 0xDC08DC.
+- **Victory reward loop** 0x431481: slot [ebp-4] 0..5, enemy type [ebp-0x20]
+  (word 0x9A8794+slot*16), record 0x9A8E9C+type*0xB8; enemy id = word
+  0x9A8748+type*2 (3 types; also read at 0x5D0816). Skipped when fled
+  ([0x9AE11C]&0xDE). A defeated, not-removed enemy reaches 0x431536
+  (`8B45FC 83C004`), hooked by 600_quests to count kills.
 - Main menu labels (FF7 text, 20-byte slots) at file 0x5192C0 (Item, Magic,
   Materia, Equip, Status, Order, Limit, Config, PHS, Save, Quit).
 - exe patching: `ff7/exepatch.py` (expected-bytes checks + PE checksum, which
@@ -260,6 +268,9 @@ reactor elevator (untested), duct/vent (untested), PHS hidden until 3 recruits (
 field leader entities (untested),
 Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
+
+Quests (600): 3 givers, kill + deliver kinds, orb markers (untested; orb
+height is a guess, ORB_HEIGHT).
 
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),

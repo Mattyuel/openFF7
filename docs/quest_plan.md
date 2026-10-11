@@ -1,6 +1,10 @@
 # Quest system — plan
 
-Status: plan only, nothing built. Requested: NPCs with "!" over their heads
+Status: first version built (`patches/600_quests.py`, untested in game):
+Middle Manager (md8brdg, kill x2 chained), Betty (mds6_2, kill Hell House),
+Gwen (mds5_3, deliver Potions); orb markers; kills counted by an exe hook on
+the victory reward loop (not enemy AI). Not yet: courier kind, EXP/AP reward
+battles, "!" model, quest board. Original plan below. Requested: NPCs with "!" over their heads
 offer quests; talking to them again once the requirement is met completes the
 quest and gives a reward; some quests are gated behind others. Types for now:
 kill X of an enemy, deliver X of an item, carry an item to another NPC.
