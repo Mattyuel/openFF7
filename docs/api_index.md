@@ -367,8 +367,11 @@ Open the Sector 6 / Sector 7 gate both ways.
 - `apply(ctx)` 
 
 ## `patches/130_shinra_hq.py`
-Shinra HQ extras.
+Shinra HQ in its after-the-infiltration state, plus the Rufus fight.
 
+- `_shop_boxes(ctx)` 
+- `_keep_access(ctx)` 
+- `_rufus(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/150_midgar_fixes.py`

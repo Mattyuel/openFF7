@@ -207,6 +207,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   with no scenes; enemies are disc 2 level. The Shinra Deserter at the left end
   of the street gives Turks (tunnel below), Proud Clod (Sector 8 bridge) and
   Hojo (top of the cannon) quests; each fight starts by walking over its spot.
+- **Shinra HQ**: no forced battles or scenes anywhere; the lobby lifts and
+  the elevator work, every elevator floor (incl. 69) is selectable, all
+  doors open. Red XIII is no longer in the 67F tank (his recruit NPC is on
+  67F). On the roof Rufus stands on the helipad: walking towards him starts
+  the fight (once per visit; leave and come back to fight again).
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
   in the party should no longer play "everyone's waiting at the inn" or

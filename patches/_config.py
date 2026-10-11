@@ -52,7 +52,7 @@ REGION_VARS = {}
 
 # Shinra HQ keycards, all given at new game so the building can be explored
 # freely. Elevator access level is var[1][224]; the cards are key-item bits.
-HQ_ACCESS_LEVEL = ((1, 224), 68)
+HQ_ACCESS_LEVEL = ((1, 224), 69)   # 69: every elevator stop and the 69F doors (130 removes lowering writes)
 HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
                    ((1, 67), 7),   # Keycard 62
                    ((1, 68), 0),   # Keycard 65
@@ -65,6 +65,7 @@ FLAG_GUARD_SCORPION = 1   # Guard Scorpion beaten (No.1 Reactor core)
 FLAG_AIR_BUSTER = 2       # Air Buster beaten (No.5 Reactor bridge)
 FLAG_IN_REACTOR5 = 3      # last reactor room entered was No.5's (the elevator is shared)
 FLAG_TAME_MATERIA = 4     # Tame materia picked up (Sector 6 playground)
+FLAG_RUFUS_FOUGHT = 5     # Rufus fought this visit (Shinra HQ roof; cleared on entering it)
 
 # Event flags set at new game so rooms behave as if their story scenes were
 # already seen (found with tools/ff7/simulate.py: find_quiet_flags, then
@@ -124,6 +125,10 @@ INITIAL_EVENT_FLAGS = [
                    #   progress < 387, which the pin skips); the fight leads to yougan2
     (3, 207, 6),   # Wutai done (0xE7E): wm0 never starts the materia theft (yougan, Yuffie
                    #   leaves); only datiao_* read it (hide Da-chao's quest NPCs)
+    # Shinra HQ after the infiltration (130_shinra_hq):
+    (3, 168, 1),   # blin59: guards gone (no forced battle 422), lobby lifts to the elevator work
+    (3, 172, 3),   # blin60_1: sneaking minigame done (guards parked, battle-423 lines off)
+    (1, 226, 5),   # blin68_1: scientist who sets access to 68 talked to (hidden)
     # Disc 2 Midgar (reached from md8_2, 160_midgar_disc2): bank 5 offset 128 bits =
     # scenes done: 0 Cait Sith at the tower (md8_32), 1 hatch opened (md8_6: open,
     # party copies hidden), 2 Turks (tunnel_6), 3 Proud Clod (md8brdg2), 4 Hojo

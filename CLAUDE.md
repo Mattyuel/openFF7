@@ -59,7 +59,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `100_midgar.py` | Pins Midgar fields to moments (`PINNED`), slums music, Train Graveyard trains moved. |
 | `110_corneo.py` | Corneo's mansion open, Corneo removed. |
 | `120_sector6_gate.py` | Sector 7<->6 gate both ways (guards moved, exit line widened, new gateway back). |
-| `130_shinra_hq.py` | HQ 2F boxes openable. |
+| `130_shinra_hq.py` | HQ after the infiltration: 2F boxes openable, access level 69 kept (var[1][224] lowering writes removed in blin59/61/62_1/65_1/67_1/68_1), flags (3,168,1) 59F guards, (3,172,3) 60F sneaking, (1,226,5) 68F scientist; blin67_3 pinned 285; roof (blin70_3) Rufus on the pad + line -> formation 464 once per visit. |
 | `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
 | `160_midgar_disc2.py` | Gateway md8_2 left end <-> md8_6 (disc 2 hatch screen); disc 2 route state via bank 5 offset 128/135 new-game flags; canon_2 pinned 1604. Turks/Proud Clod/Hojo = Shinra Deserter quest bosses (md8_2; md8_6 has 254 texts, no room). |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (Mt. Corel mtcrl_3). |
