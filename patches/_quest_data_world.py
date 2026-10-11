@@ -11,7 +11,7 @@ from _quest_data import M
 
 WORLD_GIVERS = [
     # ---- Kalm ---------------------------------------------------------------
-    dict(field="elm", name="hank", level=12, model=("elm", 7), at=(-230, -666), dir=0,
+    dict(field="elm", name="hank", level=12, model=("elm", 7), at=(-208, -314), dir=0,   # ~2 body heights up-right of (-230,-666), which a roof hid
          who="Farmer Hank", where="Kalm",
          quests=[
              dict(id="hank_mandragora", kind="kill", enemies=[79], count=5, label="Mandragoras",
