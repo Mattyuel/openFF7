@@ -68,12 +68,13 @@ def beside(ctx, field, x, y, triangle, dist=60):
     raise RuntimeError("no floor beside (%d, %d) in %s" % (x, y, field))
 
 
-def add_line(ctx, field, name, p1, p2, on_cross):
+def add_line(ctx, field, name, p1, p2, on_cross, init_extra=()):
     """Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
-    with RET) run when the player walks over it (script 2)."""
+    with RET) run when the player walks over it (script 2); `init_extra` ops
+    run once on field entry."""
     sec = Script.parse(ctx.field(field).sections[0])
     line = Op(bytes([0xD0]) + struct.pack("<6h", *p1, *p2))
-    ent = sec.add_entity(name, {0: [line, asm.ret(), asm.ret()]})
+    ent = sec.add_entity(name, {0: [line] + list(init_extra) + [asm.ret(), asm.ret()]})
     body = on_cross(sec) if callable(on_cross) else on_cross
     sec.ops.extend(body)
     sec.entry[ent][2] = body[0]

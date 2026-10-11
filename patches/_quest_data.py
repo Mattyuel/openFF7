@@ -6,6 +6,9 @@ text), quests (offered in order: the next once the previous is done),
 all_done (line after the last quest). Optional companion: an extra NPC beside
 the giver (model, at, talk text, tinted yellow if chocobo=True).
 
+Each giver also has `level` (the area's enemy level; a quest may override
+it): every quest gives source_count(level) of a Source on top of its reward.
+
 Each quest: id (unique; save bytes are allocated in GIVERS order, so append
 new quests at the end of a giver's list or add new givers at the end, to keep
 existing saves' quest bytes in place), kind "kill" or "deliver",
@@ -29,14 +32,24 @@ def M(speaker, *lines):
 
 
 ITEMS = {0: "Potion", 1: "Hi-Potion", 2: "X-Potion", 3: "Ether", 5: "Elixir", 7: "Phoenix Down",
-         14: "Tranquilizer", 20: "Grenade", 29: "Loco Weed", 56: "Graviball"}
+         14: "Tranquilizer", 20: "Grenade", 29: "Loco Weed", 56: "Graviball",
+         71: "Power Source", 72: "Guard Source", 73: "Magic Source", 74: "Mind Source",
+         75: "Speed Source", 76: "Luck Source"}
+SOURCES = [71, 72, 73, 74, 75, 76]
+
+
+def source_count(level):
+    """Sources a quest gives by its area's enemy level: 1 for early Midgar
+    (level <= 13), rising evenly to 8 for the highest quest areas (level 50,
+    Jenova LIFE)."""
+    return min(8, max(1, 1 + (level - 8) * 7 // 42))
 MATERIA = {0: "MP Plus", 1: "HP Plus", 3: "Magic Plus", 9: "Chocobo Lure", 10: "Pre-Emptive",
            11: "Long Range", 13: "Counter Attack", 23: "All", 29: "Elemental", 36: "Steal"}
 
 MGR, BETTY, GWEN = "Middle Manager", "Betty", "Gwen"
 
 GIVERS = [
-    dict(field="md8brdg", name="manager", model=("blin1", 9), at=(-620, 250), dir=0x40,
+    dict(field="md8brdg", name="manager", level=8, model=("blin1", 9), at=(-620, 250), dir=0x40,
          who=MGR, where="Upper Midgar, Sector 8 walkway",
          quests=[
              dict(id="manager_n1", kind="kill", enemies=[19, 20, 18, 21], count=8,
@@ -92,7 +105,7 @@ GIVERS = [
     # Model std_girl3 (Chole at the chocobo farm). At (440, -860) she blocked
     # the path; moved straight up the screen by ~4x her on-screen height
     # (ff7.camera: screen (-47, 173) -> (-47, -5)).
-    dict(field="mds6_2", name="betty", model=("frcyo", 3), at=(-120, -280), dir=0x40,
+    dict(field="mds6_2", name="betty", level=11, model=("frcyo", 3), at=(-120, -280), dir=0x40,
          who=BETTY, where="Sector 6 playground",
          quests=[
              dict(id="betty", kind="kill", enemies=[44, 45], count=2,
@@ -124,7 +137,7 @@ GIVERS = [
                     "'Monsters', she says. Grown-ups",
                     "are so weird.")),
 
-    dict(field="mds5_3", name="gwen", model=("mds5_1", 5), at=(-280, -100), dir=0xC0,
+    dict(field="mds5_3", name="gwen", level=8, model=("mds5_1", 5), at=(-280, -100), dir=0xC0,
          who=GWEN, where="Sector 5 slums, by the tunnel",
          quests=[
              dict(id="gwen", kind="deliver", item=0, count=3,
@@ -154,7 +167,7 @@ GIVERS = [
                     "already eyeing the next pipe.")),
 
     # ---- Wall Market --------------------------------------------------------
-    dict(field="mrkt3", name="madam_m", model=("mrkt1", 6), at=(81, -262), dir=0,
+    dict(field="mrkt3", name="madam_m", level=10, model=("mrkt1", 6), at=(81, -262), dir=0,
          who="Madam M", where="Wall Market, by the Honey Bee Inn",
          quests=[
              dict(id="madam_m", kind="deliver", item=3, count=2, label="Ethers",
@@ -183,7 +196,7 @@ GIVERS = [
          all_done=M("Madam M", "My client sends his regards.",
                     "Well. He sends something.")),
 
-    dict(field="mrkt1", name="leslie", model=("mrkt2", 5), at=(219, -198), dir=0,
+    dict(field="mrkt1", name="leslie", level=10, model=("mrkt2", 5), at=(219, -198), dir=0,
          who="Leslie", where="Wall Market, by Corneo's mansion",
          quests=[
              dict(id="leslie", kind="deliver", item=14, count=3, label="Tranquilizers",
@@ -213,7 +226,7 @@ GIVERS = [
          all_done=M("Leslie", "The guards sleep like babies",
                     "now. On duty. Don't tell.")),
 
-    dict(field="mds6_3", name="sam", model=("mrkt2", 4), at=(233, 529), dir=0,
+    dict(field="mds6_3", name="sam", level=10, model=("mrkt2", 4), at=(233, 529), dir=0,
          who="Sam", where="Road from the park to Wall Market",
          companion=dict(name="bessie", model=("frcyo", 5), at=(253, 449), chocobo=True,
                         talk="Bessie\n“Wark. (She looks hungry.)”"),
@@ -245,7 +258,7 @@ GIVERS = [
          all_done=M("Sam", "Bessie's back on the job. She",
                     "still glares at me, though.")),
 
-    dict(field="mkt_mens", name="ronnie", model=("mkt_mens", 5), at=(-111, 322), dir=0,
+    dict(field="mkt_mens", name="ronnie", level=10, model=("mkt_mens", 5), at=(-111, 322), dir=0,
          who="Ronnie", where="Wall Market gym",
          quests=[
              dict(id="ronnie", kind="deliver", item=56, count=4, label="Graviballs",
@@ -274,7 +287,7 @@ GIVERS = [
          all_done=M("Ronnie", "I won the squat-off! Still",
                     "can't feel my legs, bro.")),
 
-    dict(field="mkt_s1", name="andrea", model=("onna_2", 1), at=(-99, 57), dir=0,
+    dict(field="mkt_s1", name="andrea", level=12, model=("onna_2", 1), at=(-99, 57), dir=0,
          who="Andrea", where="Wall Market, the boutique",
          quests=[
              dict(id="andrea", kind="kill",
@@ -307,7 +320,7 @@ GIVERS = [
                     "asks what it's made of.")),
 
     # ---- Sector 7 -----------------------------------------------------------
-    dict(field="mds7", name="billybob", model=("mds7", 7), at=(1669, -52), dir=0,
+    dict(field="mds7", name="billybob", level=10, model=("mds7", 7), at=(1669, -52), dir=0,
          who="Billy Bob", where="Sector 7 slums, the street",
          quests=[
              dict(id="billybob", kind="kill",
@@ -336,7 +349,7 @@ GIVERS = [
          all_done=M("Billy Bob", "I stuck it to the man! Now the",
                     "man keeps sending me letters.")),
 
-    dict(field="mds7st2", name="scared", model=("mds7st2", 5), at=(-1918, 3550), dir=0,
+    dict(field="mds7st2", name="scared", level=12, model=("mds7st2", 5), at=(-1918, 3550), dir=0,
          who="Scared Man", where="Train Graveyard",
          quests=[
              dict(id="scared_ghosts", kind="kill", enemies=[41], count=8, label="Ghosts",
@@ -386,7 +399,7 @@ GIVERS = [
          all_done=M("Scared Man", "Zzz... oooh... zzz... no wait,",
                     "that's just me snoring.")),
 
-    dict(field="mds7plr1", name="gwen2", model=("mds7plr1", 11), at=(177, -449), dir=0,
+    dict(field="mds7plr1", name="gwen2", level=10, model=("mds7plr1", 11), at=(177, -449), dir=0,
          who="Gwen", where="Sector 7, by the pillar",
          quests=[
              dict(id="gwen_grenades", kind="deliver", item=20, count=8, label="Grenades",
@@ -414,7 +427,7 @@ GIVERS = [
          all_done=M("Gwen", "Best party ever. Shinra's still",
                     "picking up the confetti.")),
 
-    dict(field="mds7st3", name="wymer", model=("mds7st3", 3), at=(-3734, 2112), dir=0,
+    dict(field="mds7st3", name="wymer", level=12, model=("mds7st3", 3), at=(-3734, 2112), dir=0,
          who="Wymer", where="Sector 7 train station",
          quests=[
              dict(id="wymer", kind="kill", enemies=[57, 58], count=8, label="Mighty Grunts",
@@ -444,7 +457,7 @@ GIVERS = [
                     "cry. I'm crying.")),
 
     # ---- Sector 5 -----------------------------------------------------------
-    dict(field="mds5_5", name="oldman", model=("mds7_im", 1), at=(359, -75), dir=0,
+    dict(field="mds5_5", name="oldman", level=8, model=("mds7_im", 1), at=(359, -75), dir=0,
          who="Old Man", where="Sector 5, in front of the church",
          quests=[
              dict(id="oldman", kind="kill", enemies=[25], count=10, label="Whole Eaters",
@@ -473,7 +486,7 @@ GIVERS = [
          all_done=M("Old Man", "Ate a whole lunch. A whole one!",
                     "Took me 3 hours.")),
 
-    dict(field="ealin_1", name="folia", model=("mds7", 8), at=(20, 471), dir=0,
+    dict(field="ealin_1", name="folia", level=9, model=("mds7", 8), at=(20, 471), dir=0,
          who="Ms Folia", where="Near Aerith's house",
          quests=[
              dict(id="folia_vice", kind="kill", enemies=[34], count=3, label="Vices",
@@ -523,7 +536,7 @@ GIVERS = [
                     "The roses send their regards.")),
 
     # Location not given; the Sector 5 slum town (Hedgehog Pies live nearby).
-    dict(field="mds5_1", name="zhije", model=("mds5_1", 4), at=(-799, 165), dir=0,
+    dict(field="mds5_1", name="zhije", level=8, model=("mds5_1", 4), at=(-799, 165), dir=0,
          who="Zhije", where="Sector 5 slums, the town",
          quests=[
              dict(id="zhije", kind="kill", enemies=[28], count=10, label="Hedgehog Pies",

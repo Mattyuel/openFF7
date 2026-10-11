@@ -82,17 +82,24 @@ def test_scene():
 
 
 def test_open_vars_unused():
-    """openFF7's own save variables (bank 4, 224-255) are unused by the original scripts."""
+    """openFF7's own save variables (bank 3 96-105, quest areas) are unused by
+    the original field and world map scripts."""
     from ff7 import varscan
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    bank_of = {1: 1, 3: 2, 11: 3, 13: 4, 7: 5}          # 8-bit nibble -> bank
+    areas = [(3, 96, 105)] + [(bank_of[n], a, b) for n, a, b in _config.QUEST_AREAS]
     archive = LGP.read(os.path.join(DATA, "field", "flevel.lgp"))
     secs = [ScriptSection(FieldFile(lzss.decompress(archive[n])).sections[0])
             for n in archive.names() if "." not in n and n != "maplist"]
     used = varscan.field_usage(secs)
-    assert not used[4] & set(range(224, 256))
     wm = LGP.read(os.path.join(DATA, "wm", "world_us.lgp"))
-    for ev in ("wm0.ev", "wm2.ev", "wm3.ev"):
-        offsets = varscan.worldmap_usage(wm[ev])
-        assert not offsets & set(range(0x300 + 224, 0x300 + 256)), ev
+    wm_used = [varscan.worldmap_usage(wm[ev]) for ev in ("wm0.ev", "wm2.ev", "wm3.ev")]
+    for bank, first, last in areas:
+        rng = set(range(first, last + 1))
+        assert not used[bank] & rng, (bank, sorted(used[bank] & rng))
+        for offsets in wm_used:
+            assert not offsets & {(bank - 1) * 256 + o for o in rng}, (bank, first, last)
 
 
 def test_patches():

@@ -29,16 +29,21 @@ import os
 import struct
 
 from _recruit import SOUND_ITEM, SOUND_MATERIA, say, sound, xyzi
-from _travel import CHOCOBO_YELLOW, add_npc, choice_menu, copy_model
+from _config import OPEN_VAR_BANK8, QUEST_AREAS
+from _travel import CHOCOBO_YELLOW, add_line, add_npc, choice_menu, copy_model
 
 from ff7 import asm
 from ff7.script import Op, Script
 from ff7.text import encode
 from ff7.walkmesh import Walkmesh
 
-from _quest_data import GIVERS, ITEMS, MATERIA
+from _quest_data import GIVERS, ITEMS, MATERIA, SOURCES, source_count
 
-BANK = 11                      # field var nibble for bank 3 (8-bit)
+BANK_OF = {1: 1, 3: 2, 11: 3, 13: 4, 7: 5}   # 8-bit field var nibble -> bank
+NIBBLE_OF = {b: n for n, b in BANK_OF.items()}
+# Boss "fought this visit" bits: bank 3 offsets 99-101 (openFF7 area), one
+# bit per boss, cleared when its field is entered.
+BOSS_FOUGHT_FIRST, BOSS_FOUGHT_BYTES = 99, 3
 NEW, ACCEPTED, DONE = 0, 2, 4
 ITEM_COUNT = (5, 232)          # temp var: CKITM result
 MODE, SHOWN = (5, 233), (5, 234)   # temp vars: marker mode wanted / applied
@@ -51,7 +56,6 @@ ORB_TINT = {1: (120, 100, -120),   # yellow: quest to offer
 HOOK_VA, HOOK_OLD = 0x431536, bytes.fromhex("8b45fc83c004")
 
 GIL_TEXT = "%d gil"
-SAVE_FIRST, SAVE_END = 192, 256  # bank 3 bytes for quest state + kill counters
 
 
 def parts(q):
@@ -62,23 +66,36 @@ def parts(q):
     return q.get("items") or [(q["label"], q["item"], q["count"])]
 
 
+def _save_bytes():
+    """Quest save bytes as var indices ((bank-1)*256 + offset), in order."""
+    for nibble, first, last in QUEST_AREAS:
+        for off in range(first, last + 1):
+            yield (BANK_OF[nibble] - 1) * 256 + off
+
+
 def _allocate():
-    """Q[id] = state offset; CTR[id] = [counter offset per kill target].
-    Sequential in GIVERS order (the first quests keep the offsets they
-    shipped with: manager_n1 192/193, manager_n5 194/195, betty 196/197,
-    gwen 198)."""
-    q_off, ctr, off = {}, {}, SAVE_FIRST
-    for g in GIVERS:
-        for q in g["quests"]:
-            assert q["id"] not in q_off, q["id"]
-            q_off[q["id"]], off = off, off + 1
-            if q["kind"] == "kill":
-                ctr[q["id"]] = list(range(off, off + len(parts(q))))
-                off += len(parts(q))
-            assert 1 <= len(parts(q)) <= 4, q["id"]
-    assert off <= SAVE_END, "quest save bytes overflow bank 3 (%d)" % off
-    assert (q_off.get("manager_n1"), q_off.get("betty"), q_off.get("gwen")) == (192, 196, 198)
+    """Q[id] = state var; CTR[id] = [counter var per kill target]. Handed out
+    in GIVERS order from QUEST_AREAS (the first quests keep the bytes they
+    shipped with: manager_n1 bank 3 192/193, betty 196/197, gwen 198)."""
+    q_off, ctr, free = {}, {}, _save_bytes()
+    try:
+        for g in GIVERS:
+            for q in g["quests"]:
+                assert q["id"] not in q_off, q["id"]
+                assert 1 <= len(parts(q)) <= 4, q["id"]
+                q_off[q["id"]] = next(free)
+                if q["kind"] == "kill":
+                    ctr[q["id"]] = [next(free) for _ in parts(q)]
+    except StopIteration:
+        raise AssertionError("quest save bytes exhausted: add an area to _config.QUEST_AREAS")
+    b3 = 2 * 256
+    assert (q_off["manager_n1"], q_off["betty"], q_off["gwen"]) == (b3 + 192, b3 + 196, b3 + 198)
     return q_off, ctr
+
+
+def var(index):
+    """Field var (nibble, offset) for a var index."""
+    return NIBBLE_OF[index // 256 + 1], index % 256
 
 
 Q, CTR = _allocate()
@@ -93,11 +110,19 @@ def jump_if(a, cmp, b, target):
 
 
 def state(q):
-    return (BANK, Q[q["id"]])
+    return var(Q[q["id"]])
 
 
 def counters(q):
-    return [(BANK, c) for c in CTR.get(q["id"], [])]
+    return [var(c) for c in CTR.get(q["id"], [])]
+
+
+QUEST_INDEX = {q["id"]: i for i, q in enumerate(q for g in GIVERS for q in g["quests"])}
+
+
+def sources(giver, q):
+    """(item, count): every quest also gives Sources, by area level."""
+    return SOURCES[QUEST_INDEX[q["id"]] % len(SOURCES)], source_count(q.get("level", giver["level"]))
 
 
 def _not_met(q, target):
@@ -113,8 +138,9 @@ def _not_met(q, target):
     return ops
 
 
-def _reward(sec, q):
-    r = q["reward"]
+def _reward(sec, giver, q):
+    r = dict(q["reward"])
+    r["items"] = list(r.get("items", [])) + [sources(giver, q)]
     ops, got = [], []
     if r.get("gil"):
         ops.append(Op(bytes([0x39, 0]) + struct.pack("<I", r["gil"])))           # GOLDU
@@ -150,7 +176,7 @@ def _talk(giver):
                         for _, item, count in parts(q)]
             for page in q["done"]:
                 ops += say(sec, page)
-            ops += _reward(sec, q) + [asm.setbyte(state(q), DONE)] + end
+            ops += _reward(sec, giver, q) + [asm.setbyte(state(q), DONE)] + end
             ops += [progress] + say(sec, q["progress"]) + end
             ops.append(nxt)
         return ops + say(sec, giver["all_done"]) + end
@@ -250,14 +276,14 @@ MENU_PATCHES = [
 
 
 def _kill_table():
-    """{u16 enemy id, u8 state offset, u8 counter offset, u8 count, pad}..., 0xFFFF."""
+    """{u16 enemy id, u16 state var, u16 counter var, u8 count, pad}..., 0xFFFF."""
     rows = b""
     for g in GIVERS:
         for q in g["quests"]:
             if q["kind"] == "kill":
                 for ctr, (_, enemies, count) in zip(CTR[q["id"]], parts(q)):
                     assert count < 256
-                    rows += b"".join(struct.pack("<HBBBxxx", e, Q[q["id"]], ctr, count)
+                    rows += b"".join(struct.pack("<HHHBx", e, Q[q["id"]], ctr, count)
                                      for e in enemies)
     return rows + b"\xff\xff"
 
@@ -284,7 +310,7 @@ def _quest_log_data(base):
         assert len(q["desc"]) == 3 and all(len(l) <= 46 for l in q["desc"]), q["id"]
         ptrs = [text(q["title"]), text("From: " + g["who"]), text("Where: " + g["where"])]
         ptrs += [text(line) for line in q["desc"]]
-        rec = struct.pack("<BBxx6I", Q[q["id"]], len(parts(q)), *ptrs)
+        rec = struct.pack("<HBx6I", Q[q["id"]], len(parts(q)), *ptrs)
         for i, (label, src, count) in enumerate(parts(q)):
             src = CTR[q["id"]][i] if q["kind"] == "kill" else src
             rec += struct.pack("<IHBB", text(label), src, count, 0 if q["kind"] == "kill" else 1)
@@ -332,7 +358,30 @@ def _add_companion(ctx, giver):
     add_npc(ctx, field, c["name"], model, _spot(ctx, field, *c["at"]), giver["dir"], talk, main=main)
 
 
+def _add_boss(ctx, q, slot):
+    """Repeatable boss fight (like the Guard Scorpion line): crossing the
+    quest's boss line fights its formation once per visit, from when the
+    quest is accepted on (also after it's done). The "fought" bit is set by
+    the fight and cleared when the field is entered."""
+    b = q["boss"]
+    assert slot < 8 * BOSS_FOUGHT_BYTES, "more bosses than BOSS_FOUGHT bits"
+    fought = (OPEN_VAR_BANK8, BOSS_FOUGHT_FIRST + slot // 8)
+    bit = slot % 8
+
+    def fight(sec):
+        done = asm.ret()
+        return [jump_if(state(q), "<", ACCEPTED, done),        # not offered/accepted yet
+                asm.if_byte(fought, "bit_off", bit, done),       # skip if fought this visit
+                asm.biton(fought, bit),
+                asm.battle(b["formation"]),
+                done]
+    add_line(ctx, b["field"], "boss%02d" % slot, *b["line"], fight,
+             init_extra=[asm.bitoff(fought, bit)])
+
+
 def apply(ctx):
+    for slot, q in enumerate(q for g in GIVERS for q in g["quests"] if "boss" in q):
+        _add_boss(ctx, q, slot)
     for g in GIVERS:
         field = g["field"]
         assert len(g["name"]) <= 8, g["name"]

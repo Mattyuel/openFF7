@@ -442,28 +442,34 @@ Open-world fixes outside Midgar that pinning and new-game flags can't do
 - `_line_off(ctx, field, name)` 
 - `_junon_elevator(ctx)` 
 - `_gate_of_naught(ctx)` 
+- `_writes_progress(o)` 
+- `_progress_writes(ctx)` Replace writes to the story progress var with NOPs.
 - `apply(ctx)` 
 
 ## `patches/600_quests.py`
 Quests: new NPCs ("givers") offer quests; talking to them again once the
 
 - `parts(q)` [(label, source, count)]: enemy id lists for kill quests, item ids for
-- `_allocate()` Q[id] = state offset; CTR[id] = [counter offset per kill target].
+- `_save_bytes()` Quest save bytes as var indices ((bank-1)*256 + offset), in order.
+- `_allocate()` Q[id] = state var; CTR[id] = [counter var per kill target]. Handed out
+- `var(index)` Field var (nibble, offset) for a var index.
 - `jump_if(a, cmp, b, target)` if (a cmp b) goto target.
 - `state(q)` 
 - `counters(q)` 
+- `sources(giver, q)` (item, count): every quest also gives Sources, by area level.
 - `_not_met(q, target)` Ops: goto target unless every target/item of the quest is complete.
-- `_reward(sec, q)` 
+- `_reward(sec, giver, q)` 
 - `_talk(giver)` 
 - `_marker_mode(giver)` Ops: MODE = 1 (offer), 2 (ready to hand in) or 0 for the giver's
 - `_tint(rgb)` 
 - `_marker_main(giver)` Main loop: every 10 frames recompute the mode; on a change show/hide
 - `_spot(ctx, field, x, y)` 
 - `_add_marker(ctx, giver, pos)` 
-- `_kill_table()` {u16 enemy id, u8 state offset, u8 counter offset, u8 count, pad}..., 0xFFFF.
+- `_kill_table()` {u16 enemy id, u16 state var, u16 counter var, u8 count, pad}..., 0xFFFF.
 - `_quest_log_data(base)` DATA block for quest_menu.asm (layout documented there).
 - `_quest_menu(ctx)` 
 - `_add_companion(ctx, giver)` 
+- `_add_boss(ctx, q, slot)` Repeatable boss fight (like the Guard Scorpion line): crossing the
 - `apply(ctx)` 
 
 ## `patches/900_phs.py`
@@ -481,6 +487,7 @@ Shared openFF7 settings used by the patch modules.
 Quest data for 600_quests.py: who gives which quests, where, and what they say.
 
 - `M(speaker, *lines)` One message page: speaker line + quoted lines (keep each <= 38 chars).
+- `source_count(level)` Sources a quest gives by its area's enemy level: 1 for early Midgar
 
 ## `patches/_recruit.py`
 Shared helpers for character recruitment scenes.
@@ -504,5 +511,5 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 - `copy_model(ctx, field, donor_field, donor_index)` 
 - `near(ctx, field, triangle)` Centre (x, y, z, tri) of a walkmesh triangle next to `triangle`.
 - `beside(ctx, field, x, y, triangle, dist=60)` A spot (x, y, z, tri) about `dist` from (x, y) on walkable floor
-- `add_line(ctx, field, name, p1, p2, on_cross)` Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
+- `add_line(ctx, field, name, p1, p2, on_cross, init_extra=())` Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
 - `add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=())` Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk

@@ -12,6 +12,11 @@ pins in world_overrides.json):
 - Gate of Naught (cosin2) is always open: the opening Bugenhagen does at
   progress 502-513 with (3,170) bit 2 (door BG + hide both door models) runs
   on every entry, without its fade.
+- Story progress stays at 100: fields that still write var[2][0] after
+  pinning (unpinned ones such as gidun_3 after Gi Nattak, trnad_1, ancnt3,
+  jtmpin2, corel1-3, the blackbg cutscene rooms) get those writes removed.
+  The world map reads the global value (e.g. Mideel, vehicles), and every
+  other field is pinned. md1stin (the new-game block) is left alone.
 """
 from ff7 import asm
 from ff7.script import Op, Script
@@ -73,7 +78,42 @@ def _gate_of_naught(ctx):
     ctx.field(field).sections[0] = sec.build()
 
 
+# Ops whose first var operand is a destination: [banks][addr]... with the
+# destination bank in the high nibble, except INC/DEC/RANDOM (low nibble).
+DST_HIGH = set(range(0x76, 0x7A)) | {0x80, 0x81} | set(range(0x84, 0x95)) | {0x9A, 0x9B}
+DST_LOW = set(range(0x7A, 0x7E)) | set(range(0x95, 0x9A))
+PROGRESS = (2, 0)                  # var[2][0] (bank 1, 16-bit, offset 0)
+KEEP_PROGRESS_WRITES = {"md1stin"}
+
+
+def _writes_progress(o):
+    if o.op in DST_HIGH:
+        nibble = o.raw[1] >> 4
+    elif o.op in DST_LOW:
+        nibble = o.raw[1] & 0x0F
+    else:
+        return False
+    return (nibble, o.raw[2]) == PROGRESS
+
+
+def _progress_writes(ctx):
+    """Replace writes to the story progress var with NOPs."""
+    for name in ctx.flevel.names():
+        if "." in name or name == "maplist" or name in KEEP_PROGRESS_WRITES:
+            continue
+        try:
+            sec = Script.parse(ctx.field(name).sections[0])
+        except ValueError:
+            continue
+        hits = [o for o in sec.ops if _writes_progress(o)]
+        for o in hits:
+            sec.replace(o, [asm.nop()])
+        if hits:
+            ctx.field(name).sections[0] = sec.build()
+
+
 def apply(ctx):
+    _progress_writes(ctx)
     _mideel(ctx)
     _line_off(ctx, "shpin_3", "ELINE")
     _junon_elevator(ctx)

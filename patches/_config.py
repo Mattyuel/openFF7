@@ -32,14 +32,18 @@ START_FIELD = "mds7st3"
 START_X, START_Y, START_TRIANGLE, START_DIR = -2940, 2562, 23, 0
 
 # ---------------------------------------------------------------------------
-# openFF7 save variables. Bank 4 (opcode nibbles 13 = 8-bit, 14 = 16-bit),
-# offsets 224-255 (savemap 0x0F84-0x0FA3), are not used by any field or world
-# map script in the original game (checked by tools/tests/test_formats.py).
-# BUT the exe's world map code zeroes savemap 0x0F8C-0x0F97 (offsets 232-243)
-# on world map entry (0x766C7A) and writes world map object data to 244-255,
-# so only offsets 224-231 are safe for openFF7 (no exe reference found).
-OPEN_VAR_BANK8, OPEN_VAR_BANK16 = 13, 14
-OPEN_VARS_FIRST = 224
+# openFF7 save variables. Bank 3 (opcode nibbles 11 = 8-bit, 12 = 16-bit),
+# offsets 96-105, plus the quest areas below: unused by every original field
+# script, the world map scripts and (absolute references) the exe, and zeroed
+# at new game (exe 0x60BB9B clears banks 1-5). Checked by test_open_vars_unused.
+# (These used to be bank 4 224-226, which is world map object slot 5 in the
+# exe (0x76609E writes / 0x76616A reads): not safe.)
+OPEN_VAR_BANK8, OPEN_VAR_BANK16 = 11, 12
+OPEN_VARS_FIRST = 96
+
+# Quest save bytes (600_quests allocates in this order; the first area keeps
+# the offsets quests shipped with): (8-bit nibble, first offset, last offset).
+QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63)]
 
 # Regions that keep their own story line in a private 16-bit variable
 # (reads/writes of story progress in their fields are redirected to it).
@@ -55,8 +59,8 @@ HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
                    ((1, 68), 1),   # Keycard 66
                    ((1, 68), 2)]   # Keycard 68
 
-# openFF7 event flags: one byte of bits at bank 4 offset 224 (8-bit nibble 13).
-FLAGS = (OPEN_VAR_BANK8, 224)
+# openFF7 event flags: one byte of bits (bank 3 offset 96).
+FLAGS = (OPEN_VAR_BANK8, 96)
 FLAG_GUARD_SCORPION = 1   # Guard Scorpion beaten (No.1 Reactor core)
 FLAG_AIR_BUSTER = 2       # Air Buster beaten (No.5 Reactor bridge)
 FLAG_IN_REACTOR5 = 3      # last reactor room entered was No.5's (the elevator is shared)
@@ -120,8 +124,8 @@ INITIAL_EVENT_FLAGS = [
 BATTERIES_ITEM, BATTERIES_QTY = 85, 3
 BATTERY_BITS = [((1, 165), 5), ((1, 165), 6), ((1, 165), 7)]
 
-# Recruited characters: one bit per character id in this byte (8-bit, bank 4).
-RECRUITED = (OPEN_VAR_BANK8, 225)
+# Recruited characters: one bit per character id in this byte (8-bit, bank 3).
+RECRUITED = (OPEN_VAR_BANK8, 97)
 # Characters recruited so far, Cloud included (set to 1 at new game).
-RECRUIT_COUNT = (OPEN_VAR_BANK8, 226)
+RECRUIT_COUNT = (OPEN_VAR_BANK8, 98)
 PHS_MIN_PARTY = 3

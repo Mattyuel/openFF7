@@ -7,15 +7,16 @@
 ;
 ; DATA (built by 600_quests.py):
 ;   +0  u32 quest count   +4 ptr "No quests" text   +8 ptr "ready" text
-;   +12 ptr kill table: {u16 enemy id, u8 state off, u8 counter off,
-;       u8 count, 3 pad} ..., u16 0xFFFF
+;   +12 ptr kill table: {u16 enemy id, u16 state var, u16 counter var,
+;       u8 count, pad} ..., u16 0xFFFF
 ;   +16 quest records, REC bytes each:
-;       +0 u8 state offset (bank 3)  +1 u8 part count (1..4)  +2 pad
+;       +0 u16 state var  +2 u8 part count (1..4)  +3 pad
 ;       +4 name  +8 giver line  +12 where line  +16/+20/+24 description
 ;       +28 parts[4], 8 bytes each: +0 label ptr, +4 u16 source (kill:
-;           counter offset in bank 3; deliver: item id), +6 u8 count,
+;           counter var; deliver: item id), +6 u8 count,
 ;           +7 u8 kind (0 kill, 1 deliver)
-;   Texts are FF7 text, 0xFF-terminated.
+;   Texts are FF7 text, 0xFF-terminated. A "var" is a byte index from the
+;   start of the field variables (savemap bank 1, 0xDC08DC): (bank-1)*256+offset.
 
 bits 32
 CODE      equ 0xFD8000
@@ -24,7 +25,7 @@ REC       equ 60
 PARTS     equ 28
 VIEW      equ 8               ; rows visible in the list window
 MAXLIST   equ 32
-BANK3     equ 0xDC0ADC        ; field var bank 3, offset 0
+VARS      equ 0xDC08DC        ; field var bank 1, offset 0 (banks 1-5 follow)
 INVENTORY equ 0xDC0234        ; savemap 0x04FC: 320 x u16 (id 9 bits, qty 7 bits)
 ACCEPTED  equ 2
 Z_TEXT    equ 0x3dcccccd      ; 0.1f
@@ -93,14 +94,14 @@ q_kill:
     je .done
     cmp edx, eax
     jne .next
-    movzx ecx, byte [esi + 2]
-    cmp byte [BANK3 + ecx], ACCEPTED
+    movzx ecx, word [esi + 2]
+    cmp byte [VARS + ecx], ACCEPTED
     jne .next
-    movzx ecx, byte [esi + 3]
-    mov bl, [BANK3 + ecx]
-    cmp bl, [esi + 4]
+    movzx ecx, word [esi + 4]
+    mov bl, [VARS + ecx]
+    cmp bl, [esi + 6]
     jae .next
-    inc byte [BANK3 + ecx]
+    inc byte [VARS + ecx]
 .next:
     add esi, 8
     jmp .loop
@@ -119,8 +120,8 @@ q_init:
     cmp ebx, [DATA]
     jge .done
     imul eax, ebx, REC
-    movzx eax, byte [DATA + 16 + eax]
-    cmp byte [BANK3 + eax], ACCEPTED
+    movzx eax, word [DATA + 16 + eax]
+    cmp byte [VARS + eax], ACCEPTED
     jne .next
     mov [q_list + ecx], bl
     inc ecx
@@ -143,7 +144,7 @@ q_have:
     movzx edx, word [edi + 4]
     cmp byte [edi + 7], 0
     jne .items
-    movzx eax, byte [BANK3 + edx]
+    movzx eax, byte [VARS + edx]
     jmp .cap
 .items:
     push ebx
@@ -179,7 +180,7 @@ q_have:
 q_ready:
     push edi
     push ecx
-    movzx ecx, byte [esi + 1]
+    movzx ecx, byte [esi + 2]
     lea edi, [esi + PARTS]
 .part:
     call q_have
@@ -320,7 +321,7 @@ q_update:
     TEXT 24, LIST_H + 143, dword [esi + 24], 7
     xor ecx, ecx                    ; part index
 .part:
-    movzx eax, byte [esi + 1]
+    movzx eax, byte [esi + 2]
     cmp ecx, eax
     jge .parts_done
     push ecx
