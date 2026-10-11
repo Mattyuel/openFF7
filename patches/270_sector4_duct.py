@@ -8,14 +8,21 @@
   line only reacted to [OK] and only dropped you onward, so it looked like a
   dead end with no way back. It now offers a choice on [OK] or when walked
   over: drop down (onward to the No.5 Reactor) or climb back to the tunnel.
+- Below the duct (sbwy4_1) there was no way back up: a line across the
+  corridor just left (on screen) of where you land takes you back to the
+  tunnel, beside the duct.
 """
-from _travel import choice_menu, mapjump
+from _travel import add_line, choice_menu, line_across, mapjump
 
+from ff7 import asm
 from ff7.script import Op, Script
 
 TUNNEL = "tunnel_2"
 VENT = "sbwy4_4"
 BACK_TO_TUNNEL = ("tunnel_2", 0, 450, 21, 64)   # beside the duct, past its line
+BELOW_DUCT = "sbwy4_1"
+DUCT_LANDING = (22, -745)        # tunnel_2's jump arrival; the corridor runs to y -951, left on screen
+BACK_LINE_AT = (22, -860)
 
 
 def _copy(op):
@@ -59,6 +66,14 @@ def _vent(ctx):
     ctx.field(VENT).sections[0] = sec.build()
 
 
+def _below_duct(ctx):
+    p1, p2 = line_across(ctx, BELOW_DUCT, *BACK_LINE_AT)
+    assert abs(p1[1] - BACK_LINE_AT[1]) < 40 and abs(p2[1] - BACK_LINE_AT[1]) < 40, (p1, p2)  # across the corridor
+    add_line(ctx, BELOW_DUCT, "toduct", p1, p2,
+             [Op(b"\x33\x00"), mapjump(ctx, *BACK_TO_TUNNEL), asm.ret()])   # UC 00 before leaving
+
+
 def apply(ctx):
     _duct(ctx)
     _vent(ctx)
+    _below_duct(ctx)

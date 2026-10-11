@@ -1,9 +1,9 @@
 """Train travel from the Sector 7 station, the reactors, and their bosses.
 
 - Sector 7 station (mds7st3): talk to the conductor for a list of
-  destinations: Upper Midgar (Sector 8 bridge), No.1 Reactor (Sector 1
-  platform, where the game originally starts) and No.5 Reactor (the tunnel
-  after jumping off the train). He calls "ALL ABOARD!", the train sound plays
+  destinations: Upper Midgar (Sector 8 bridge), Shinra Tower (the plaza in
+  front of HQ), No.1 Reactor (Sector 1 platform, where the game originally
+  starts) and No.5 Reactor (the tunnel screen with the duct down). He calls "ALL ABOARD!", the train sound plays
   and you are there.
 - Each destination has a conductor (the station conductor's model) standing
   beside where you arrive, at floor height, who takes you back the same way.
@@ -27,8 +27,12 @@ from ff7.text import encode
 DESTINATIONS = {
     # name: (field, x, y, triangle, direction)
     "Upper Midgar": ("md8brdg", -420, 100, 33, 0),    # mid-walkway (md8_3's arrival is at the top)
+    "Shinra Tower": ("sinbil_1", -5, -3041, 45, 128),  # plaza in front of HQ (md0's arrival)
     "No. 1 Reactor": ("md1stin", 3655, 27432, 25, 0x80),
-    "No. 5 Reactor": ("tunnel_1", 21, -365, 205, 128),   # (the train-jump arrival said tri 48; the point is in 205)
+    # The tunnel screen with the duct down to the plate interior (tunnel_1's
+    # arrival from it). tunnel_1 repeats (its far line jumps back to itself),
+    # so a conductor there showed up on every loop.
+    "No. 5 Reactor": ("tunnel_2", 6, 338, 3, 128),
 }
 CONDUCTOR_MODEL = ("mds7st3", 6)   # shinra_guard: the Sector 7 station conductor
 ROBOT_MODEL = ("md8brdg2", None)   # 'another_robo' (found by name below)
@@ -76,7 +80,9 @@ def _train_menu(ctx):
 
 
 def _conductors(ctx):
+    from ff7.walkmesh import Walkmesh
     for name, (field, x, y, tri, _d) in DESTINATIONS.items():
+        assert Walkmesh(ctx.field(field).section("walkmesh")).contains(tri, x, y), (field, x, y, tri)
         model = copy_model(ctx, field, *CONDUCTOR_MODEL)
         pos = beside(ctx, field, x, y, tri)
 

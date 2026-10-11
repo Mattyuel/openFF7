@@ -430,6 +430,7 @@ Sector 4 train tunnel (tunnel_2) and the plate interior below it.
 - `_copy(op)` 
 - `_duct(ctx)` 
 - `_vent(ctx)` 
+- `_below_duct(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/280_chocobo_rides.py`
