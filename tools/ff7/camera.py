@@ -8,6 +8,7 @@ relative to the background centre. Checked against md8brdg: md8_3's arrival
 (-420, 100) a little below the middle, as seen in game. The scroll limits in
 the triggers header (`screen_range`) are in the same pixel units.
 """
+import math
 import struct
 
 
@@ -22,6 +23,28 @@ class Camera:
         sv = [sum(a * c for a, c in zip(axis, (x, y, z))) / 4096 + t
               for axis, t in zip(self.axes, self.pos)]
         return self.zoom * sv[0] / sv[2], self.zoom * sv[1] / sv[2]
+
+
+def facing_vector(direction):
+    """Field (x, y) unit vector an entity with DIR `direction` (0-255) faces:
+    (sin a, -cos a), a = direction * 2pi / 256. Fitted on 116 gateway
+    arrivals (each faces away from the exit it came through) and matches
+    0x40 = facing right at mds5_5 (seen in game)."""
+    a = direction * 2 * math.pi / 256
+    return math.sin(a), -math.cos(a)
+
+
+def facing_screen(cam, x, y, z, screen_dir):
+    """DIR value whose facing looks most like `screen_dir` (dx, dy) on screen
+    (y down), e.g. (0, 1) = facing down the screen."""
+    sx, sy = cam.project(x, y, z)
+
+    def miss(d):
+        fx, fy = facing_vector(d)
+        px, py = cam.project(x + fx * 100, y + fy * 100, z)
+        dx, dy = px - sx, py - sy
+        return -(dx * screen_dir[0] + dy * screen_dir[1]) / (math.hypot(dx, dy) or 1)
+    return min(range(256), key=miss)
 
 
 def screen_range(triggers):

@@ -11,6 +11,9 @@ from ff7.script import Op
 from ff7.text import encode
 
 ANSWER = (5, 240)  # temporary field variable for the choice
+# Sound effects as the original scripts use them next to STITM / SMTRA.
+SOUND_ITEM, SOUND_MATERIA = 0x168, 0x1EA
+SOUND_RECRUIT = SOUND_MATERIA      # no "joined" jingle in the game; the materia chime
 
 
 def window(text, win=0, x=8, y=8):
@@ -29,6 +32,11 @@ def say(script, text, win=0):
     """WINDOW + MESSAGE ops for a new line of dialogue."""
     tid = script.add_string(encode(text))
     return [window(text, win), asm.message(win, tid)]
+
+
+def sound(sound_id, pan=0x40):
+    """SOUND [banks][u16 id][pan]."""
+    return Op(bytes([0xF1, 0x00]) + sound_id.to_bytes(2, "little") + bytes([pan]))
 
 
 def hide():
@@ -71,7 +79,7 @@ def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined):
             Op(bytes([0xC8, char])),                         # PRTYP: join active party
             asm.biton(RECRUITED, char)]
     ops += count_recruit()
-    ops += say(script, joined)
+    ops += [sound(SOUND_RECRUIT)] + say(script, joined)
     ops += hide() + [Op(b"\x33\x00"), asm.ret()]
     return ops + decline + end_decline
 

@@ -22,7 +22,7 @@ yellow: like the cargo ship's chocobo (fship_5), it is tinted yellow with
 KAWAI 06 in its main script.
 """
 from _recruit import say
-from _travel import CHOCOBO_YELLOW, add_npc, beside, choice_menu, copy_model
+from _travel import CHOCOBO_YELLOW, add_npc, choice_menu, copy_model
 
 from ff7 import asm
 from ff7.script import Op
@@ -40,17 +40,22 @@ WILD_CHOCOBO_MODEL = 4
 WM_SPECIAL_ENTRY = 0x6           # push_special 6 = the wmN field id you arrived by
 
 # field: (arrival from the world map (x, y, triangle), world map entry it exits
-# to, explicit (x, y) for Billy and the chocobo or None = beside the arrival).
+# to, explicit (x, y) for Billy and the chocobo, their facing direction).
+FACING_RIGHT, FACING_DOWN_MDS5_5 = 0x40, 0xED   # ff7.camera.facing_screen(cam, ..., (0, 1))
 SPOTS = {
-    "mds5_5": ((711, -2420, 16), "wm0", None),                       # Midgar, slum outskirts
+    # Midgar, slum outskirts. User: move them down a little and face down. Was
+    # beside the arrival ((801, -2420), (901, -2420)); now ~25 px (1.5x their
+    # height) lower on screen, ~290 from the world map exit line.
+    "mds5_5": ((711, -2420, 16), "wm0", [(691, -2630), (771, -2640)], FACING_DOWN_MDS5_5),
     # Mythril Mine, first screen: the floor beside the arrival is narrow and the
     # first free spot was past the exit line, so place them below the arrival.
-    "psdun_1": ((175, 8, 23), "wm4", [(190, -90), (200, -180)]),
+    "psdun_1": ((175, 8, 23), "wm4", [(190, -90), (200, -180)], FACING_RIGHT),
 }
 
 
 def _ride(ctx, wm_entry):
     def talk(sec):
+        face = [Op(b"\x33\x01"), Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00")]  # UC 01, PTURA leader, WAIT 8
         ok, done = asm.nop(), asm.nop()
         go = [Op(bytes([0x3B, 0x66, GIL_LO[1], GIL_HI[1]])),                 # CHGLD lo, hi
               asm.if_word(GIL_HI, "==", 0, ok),
@@ -62,8 +67,8 @@ def _ride(ctx, wm_entry):
                Op(b"\x33\x00"),                                              # UC 00 before leaving
                asm.mapjump(ctx.maplist.index(wm_entry), 0, 0, 0, 0),
                done]
-        return choice_menu(sec, "Choco Billy\n\u201cRide a chocobo? %d gil.\u201d" % PRICE,
-                           ["Giddyap!", "Not now."], [go, None])
+        return face + choice_menu(sec, "Choco Billy\n\u201cRide a chocobo? %d gil.\u201d" % PRICE,
+                                  ["Giddyap!", "Not now."], [go, None])
     return talk
 
 
@@ -92,21 +97,17 @@ def _mount_on_arrival(ctx, wm_entry):
 def _at(ctx, field, x, y, near_tri):
     """(x, y, z, tri) on the floor connected to `near_tri`; fails if not walkable."""
     mesh = Walkmesh(ctx.field(field).section("walkmesh"))
-    tri = next((t for t in mesh.nearby(near_tri, 8) if mesh.contains(t, x, y)), None)
+    tri = next((t for t in mesh.nearby(near_tri, 16) if mesh.contains(t, x, y)), None)
     assert tri is not None, "%s: (%d, %d) is not on the floor near triangle %d" % (field, x, y, near_tri)
     return x, y, mesh.height(tri, x, y), tri
 
 
 def apply(ctx):
-    for field, ((x, y, tri), wm_entry, spots) in SPOTS.items():
-        if spots:
-            pos_billy, pos_bird = (_at(ctx, field, sx, sy, tri) for sx, sy in spots)
-        else:
-            pos_billy = beside(ctx, field, x, y, tri, dist=90)
-            pos_bird = beside(ctx, field, x, y, tri, dist=190)
+    for field, ((x, y, tri), wm_entry, spots, facing) in SPOTS.items():
+        pos_billy, pos_bird = (_at(ctx, field, sx, sy, tri) for sx, sy in spots)
         billy = copy_model(ctx, field, *BILLY_MODEL)
         bird = copy_model(ctx, field, *CHOCOBO_MODEL)
-        add_npc(ctx, field, "billy", billy, pos_billy, 0x40, _ride(ctx, wm_entry))
-        add_npc(ctx, field, "ridechoc", bird, pos_bird, 0x40, _ride(ctx, wm_entry),
+        add_npc(ctx, field, "billy", billy, pos_billy, facing, _ride(ctx, wm_entry))
+        add_npc(ctx, field, "ridechoc", bird, pos_bird, facing, _ride(ctx, wm_entry),
                 main=[Op(b) for b in CHOCOBO_YELLOW])
         _mount_on_arrival(ctx, wm_entry)

@@ -187,6 +187,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - **Screen position of a field point**: `ff7.camera.Camera(section 1).project(x, y, z)`
   (GTE: zoom * (R.v/4096 + T), y down, relative to the background centre);
   scroll limits = triggers header +12 (`screen_range`). Checked on md8brdg only.
+- **DIR / facing**: direction d (0-255) faces field vector (sin a, -cos a),
+  a = d*2pi/256 (fitted on 116 gateway arrivals; 0x40 looked right at mds5_5
+  in game). `ff7.camera.facing_screen(cam, x, y, z, (0, 1))` = DIR facing down
+  the screen. NPCs turn to the player on talk with `PTURA 00 08 02` (+ WAIT).
+- Sounds (SOUND F1 00 <u16 id> 40): item received 0x168, materia 0x1EA (as
+  the original scripts use them); `_recruit.sound`, `SOUND_*`.
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
   via `ModelLoader.add` works.

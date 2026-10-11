@@ -28,7 +28,7 @@ The Quests main-menu screen is in the same asm file (see `_quest_menu`).
 import os
 import struct
 
-from _recruit import say, xyzi
+from _recruit import SOUND_ITEM, SOUND_MATERIA, say, sound, xyzi
 from _travel import CHOCOBO_YELLOW, add_npc, choice_menu, copy_model
 
 from ff7 import asm
@@ -125,7 +125,8 @@ def _reward(sec, q):
     for m in r.get("materia", []):
         ops.append(Op(bytes([0x5B, 0, 0, m, 0, 0, 0])))                           # SMTRA, 0 AP
         got.append("“%s” Materia" % MATERIA[m])
-    return ops + say(sec, "Received " + ",\n".join(got) + "!")
+    chime = SOUND_MATERIA if r.get("materia") else SOUND_ITEM
+    return ops + [sound(chime)] + say(sec, "Received " + ",\n".join(got) + "!")
 
 
 def _talk(giver):
