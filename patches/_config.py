@@ -98,6 +98,18 @@ INITIAL_EVENT_FLAGS = [
     (1, 226, 7),   # blin671b/673b: HQ 67f Red XIII state
     (3, 18, 6),    # chrin_1a: church - flower kids scene seen
     (3, 18, 7),    # chrin_1a: church - Aerith flower-bed scene seen
+    # One-off scenes outside Midgar not keyed on story progress (audit of LINE /
+    # world map triggers; wm bit 0xE78+n = bank 2 offset 207 bit n):
+    (3, 207, 3),   # wm0 map cell 0xAA23 -> sichi: Midgar Zolom impaled scene seen
+    (3, 207, 1),   # wm0: buggy broke down near Cosmo Canyon (0xE79) ...
+    (3, 207, 2),   #   ... and was repaired (0xE7A); bit 1 alone = buggy stays broken
+    (3, 20, 2),    # nivl_3: Nibelheim arrival scene (LINE F_NIVL) seen
+    (1, 128, 0),   # ropest: Barret's North Corel flashback (LINE evline2) seen
+    (15, 177, 1),  # itown1a: Mideel arrival line (Tifa) off
+    (3, 132, 2),   # gongaga: "A ruined reactor." pan seen
+    (3, 129, 4),   # gnmk: Gongaga reactor line seen
+    (1, 130, 0),   # snow: Icicle Inn Elena ambush (LINE snowbd) done ...
+    (1, 130, 7),   #   ... and its aftermath (guards / locked triangles released)
 ]
 
 # Batteries for the Wall Market wire climb: item 85 x3, plus the three

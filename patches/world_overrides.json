@@ -1,8 +1,23 @@
 {
- "_comment": "Per-field story moments that override world_moments.json. Temple of the Ancients stays intact (it shrinks at 638); Forgotten City stays before the altar scene.",
+ "_comment": "Per-field story moments that override world_moments.json. Temple of the Ancients stays intact (it shrinks at 638); Forgotten City stays before the altar scene. Nibelheim / Mt. Nibel / Shinra Mansion fields shared with the five-years-ago flashback were pinned to flashback moments (<= 384); they use the present-day visit (678), like nivl_3.",
  "blue_2": 668,
  "jtempl": 631,
  "jtemplb": 631,
  "jtemplc": 631,
- "losin2": 668
+ "losin2": 668,
+ "niv_cl": 678,
+ "mtnvl2": 678,
+ "mtnvl3": 678,
+ "mtnvl4": 678,
+ "nvdun2": 678,
+ "nvdun31": 678,
+ "mtnvl6": 678,
+ "mtnvl6b": 678,
+ "nvmkin1": 678,
+ "nvmkin21": 678,
+ "nvmkin22": 678,
+ "sinin2_1": 678,
+ "sininb31": 678,
+ "sininb41": 678,
+ "sininb51": 678
 }

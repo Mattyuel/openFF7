@@ -18,6 +18,7 @@ something new, hit a trap, or a feature's status changes.
 | Midgar / rest-of-world pinning plans | `docs/midgar_plan.md`, `docs/world_plan.md` |
 | Fields, locations, exits, battles, world map | `docs/inventory/` |
 | .exe findings | `docs/exe_notes.md`, `docs/research_menu.md`, `docs/research_battle.md` |
+| One-off story scenes outside Midgar (applied / open) | `docs/research_story_scenes.md` |
 | Shared constants (start point, flags, own vars) | `patches/_config.py` |
 | Script dumps of the original game | `work/scripts/<field>.txt` (`ff7tool.py dump --all`) |
 | Script dumps of the last build | `work/scripts_built/` (`ff7tool.py dump --built FIELD...`) |
@@ -80,6 +81,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   (`INITIAL_EVENT_FLAGS`, `world_flags.json`). `quiet-flags` only finds scenes
   that play **on field entry**; scenes triggered by LINE crossings or triangle
   checks (e.g. Kalm arrival) must be found by reading the script.
+  World-map scenes are in wm0.ev map-cell functions (e.g. the Zolom: cell 0xAA23
+  -> field `sichi`; buggy breakdown: cell 0xADA0); wm bit 0xE78+n = (3,207,n).
+  `docs/inventory/worldmap.md` "Called from" is off by one (enter_field N = entry N-1).
 - openFF7's own save vars: bank 4 offsets 224-255 (nibble 13 = 8-bit), unused
   by the original scripts. `FLAGS` = (13,224) bits: 1 Guard Scorpion, 2 Air Buster, 3 in No.5 Reactor.
   `RECRUITED` = (13,225) bit per character id, `RECRUIT_COUNT` (13,226).

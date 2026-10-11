@@ -65,6 +65,17 @@ Existing saves load, but they keep their own story progress; use a new game.
 - If you installed the Tame test files earlier: put back the original
   `data\lang-en\kernel\kernel2.bin` (the build no longer changes it).
   `ff7_en.exe` is built again (quest kill counting): copy the new one.
+- **Fewer story scenes** (new game): no Midgar Zolom scene approaching the
+  Mythril Mine; the buggy never breaks down near Cosmo Canyon; no arrival
+  scenes in Nibelheim, Mideel, the Gold Saucer ropeway (Barret flashback),
+  Gongaga's reactor; no Elena ambush at Icicle Inn. Nibelheim's surroundings
+  (Mt. Nibel, reactor, mansion basement) should be the present day, not the
+  flashback (no flashback battles, chests visible, Mt. Nibel leads to the
+  real Nibelheim).
+- **Choco Billy** outside Midgar stands a little lower, faces down, and he and
+  his chocobo turn to you when talked to.
+- **Sounds**: quest rewards play the item chime (materia rewards the materia
+  chime); recruiting Tifa/Aerith/Barret plays the materia chime.
 - **Quests** (new game needed for clean quest state). A spinning materia orb
   should float above each quest giver: yellow = a quest to offer, blue =
   ready to hand in, none otherwise. Givers turn to face you when talked to.
