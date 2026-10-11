@@ -124,6 +124,12 @@ INITIAL_EVENT_FLAGS = [
                    #   progress < 387, which the pin skips); the fight leads to yougan2
     (3, 207, 6),   # Wutai done (0xE7E): wm0 never starts the materia theft (yougan, Yuffie
                    #   leaves); only datiao_* read it (hide Da-chao's quest NPCs)
+    # Disc 2 Midgar (reached from md8_2, 160_midgar_disc2): bank 5 offset 128 bits =
+    # scenes done: 0 Cait Sith at the tower (md8_32), 1 hatch opened (md8_6: open,
+    # party copies hidden), 2 Turks (tunnel_6), 3 Proud Clod (md8brdg2), 4 Hojo
+    # (canon_2: hidden); 7 + offset 135 bits 0-3: party copies in the tunnels hidden.
+    (15, 128, 0), (15, 128, 1), (15, 128, 2), (15, 128, 3), (15, 128, 4), (15, 128, 7),
+    (15, 135, 0), (15, 135, 1), (15, 135, 2), (15, 135, 3),
 ]
 
 # Batteries for the Wall Market wire climb: item 85 x3, plus the three

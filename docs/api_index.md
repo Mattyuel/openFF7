@@ -378,6 +378,13 @@ Small Midgar fixes from play-testing.
 - `_ghost(ctx)` 
 - `apply(ctx)` 
 
+## `patches/160_midgar_disc2.py`
+Join disc 1 Upper Midgar to the disc 2 Midgar route.
+
+- `_arrival(ctx, field, x, y, line)` 
+- `_gateway(ctx, field, line, dest_field, dest, direction)` 
+- `apply(ctx)` 
+
 ## `patches/200_recruit_sector7.py`
 Recruit Tifa in 7th Heaven.
 

@@ -61,6 +61,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `120_sector6_gate.py` | Sector 7<->6 gate both ways (guards moved, exit line widened, new gateway back). |
 | `130_shinra_hq.py` | HQ 2F boxes openable. |
 | `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
+| `160_midgar_disc2.py` | Gateway md8_2 left end <-> md8_6 (disc 2 hatch screen); disc 2 route state via bank 5 offset 128/135 new-game flags; canon_2 pinned 1604. Turks/Proud Clod/Hojo = Shinra Deserter quest bosses (md8_2; md8_6 has 254 texts, no room). |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (Mt. Corel mtcrl_3). |
 | `230_recruit_more.py` | Red XIII (blin67_1, HQ 67F lab), Cid (rcktbas1, by the rocket), Cait Sith (games, his meeting spot; recruit runs his name entry) NPCs; Yuffie's (yougan2) and Vincent's (sininb1) original joins get PRTYP + recruit count (Vincent's PHS menu replaced). |
 | `250_train_destinations.py` | Station conductor menu (Upper Midgar md8brdg, Shinra Tower sinbil_1, No.1 md1stin, No.5 tunnel_2 — not tunnel_1, which loops onto itself), conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
@@ -308,6 +309,11 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - nmkin_5 (No.1 Reactor core): bomb scene fires when entity `cl` is on
   triangle var[6][7] (init sets 2); we set 255. Shared with the No.5 visit (progress 120).
 - elm (Kalm): arrival line checks (3,128,1) only — no progress check.
+- **Text ids are 8-bit** (MESSAGE/ASK): fields with ~254 texts (all disc 2 Midgar
+  fields share one big table) can't take new dialogue; put NPCs next door.
+- Disc 2 Midgar tunnels (tunnel_4/5/6) are one looping maze positioned by the
+  counter var[15][129] (sbwy4_22 sets 4 on entry); bank 5 offset 131 bits 4-6
+  are transient 'arrived by ladder' markers, don't set them.
 - Some fields have script sections the parser rejects (unused fields); catch
   `ValueError` when iterating every field.
 
