@@ -1,22 +1,29 @@
-; openFF7: "Quests" main-menu screen (menu id 11, an empty stub in the original).
+; openFF7 quests: the "Quests" main-menu screen (menu id 11, an empty stub in
+; the original) and the battle kill counter.
 ; Assembled with: nasm -f bin quest_menu.asm -o quest_menu.bin
-; The build (patches/600_quests.py) places the binary at CODE and writes the
-; quest records at DATA; both addresses are asserted there. Entry points:
-; CODE+0 = init(int), CODE+INIT_SIZE... see the jump stubs below.
+; 600_quests.py places the binary at CODE and the data block at DATA (both
+; asserted there). Entry points (5-byte jmp stubs): CODE+0 menu init(int),
+; CODE+5 menu update(frame), CODE+10 kill hook (jumped to from 0x431536).
 ;
-; DATA layout (built by 600_quests.py):
-;   +0  u32 record count     +4 ptr "No quests" text    +8 ptr "ready" text
-;   +12 records, REC bytes each:
-;       +0 u8 state offset (bank 3)  +1 u8 kind (0 kill, 1 deliver)
-;       +2 u8 count  +3 pad  +4 u16 item  +6 pad
-;       +8 name  +12 giver line  +16 where line  +20/+24/+28 description
-;       +32 progress label           (all pointers to FF7 text, 0xFF-ended)
+; DATA (built by 600_quests.py):
+;   +0  u32 quest count   +4 ptr "No quests" text   +8 ptr "ready" text
+;   +12 ptr kill table: {u16 enemy id, u8 state off, u8 counter off,
+;       u8 count, 3 pad} ..., u16 0xFFFF
+;   +16 quest records, REC bytes each:
+;       +0 u8 state offset (bank 3)  +1 u8 part count (1..4)  +2 pad
+;       +4 name  +8 giver line  +12 where line  +16/+20/+24 description
+;       +28 parts[4], 8 bytes each: +0 label ptr, +4 u16 source (kill:
+;           counter offset in bank 3; deliver: item id), +6 u8 count,
+;           +7 u8 kind (0 kill, 1 deliver)
+;   Texts are FF7 text, 0xFF-terminated.
 
 bits 32
-CODE      equ 0xFD6000
-DATA      equ 0xFD5800
-REC       equ 36
-MAXLIST   equ 8
+CODE      equ 0xFD8000
+DATA      equ 0xFD5000
+REC       equ 60
+PARTS     equ 28
+VIEW      equ 8               ; rows visible in the list window
+MAXLIST   equ 32
 BANK3     equ 0xDC0ADC        ; field var bank 3, offset 0
 INVENTORY equ 0xDC0234        ; savemap 0x04FC: 320 x u16 (id 9 bits, qty 7 bits)
 ACCEPTED  equ 2
@@ -39,10 +46,15 @@ KEY_REPEAT    equ 0x6F53B2    ; (mask, 1) -> pressed or repeating
 KEY_NEW       equ 0x41AB74    ; (mask) -> newly pressed
 SOUND         equ 0x74580A    ; (id)
 
+; battle reward loop (kill hook)
+ENEMY_IDS     equ 0x9A8748    ; u16 enemy id per enemy type (3)
+HOOK_BACK     equ 0x43153C
+
 org CODE
 
 entry_init:   jmp near q_init
-entry_update: jmp q_update
+entry_update: jmp near q_update
+entry_kill:   jmp near q_kill
 
 %macro TEXT 4                 ; x, y, text ptr, colour
     push Z_TEXT
@@ -68,6 +80,36 @@ entry_update: jmp q_update
     add esp, 8
 %endmacro
 
+; ---- kill hook: an enemy in formation slot [ebp-4] was defeated ---------
+; Replaces `mov eax,[ebp-4]; add eax,4` at 0x431536.
+q_kill:
+    pushad
+    mov eax, [ebp - 0x20]               ; enemy type
+    movzx eax, word [ENEMY_IDS + eax*2]
+    mov esi, [DATA + 12]
+.loop:
+    movzx edx, word [esi]
+    cmp edx, 0xFFFF
+    je .done
+    cmp edx, eax
+    jne .next
+    movzx ecx, byte [esi + 2]
+    cmp byte [BANK3 + ecx], ACCEPTED
+    jne .next
+    movzx ecx, byte [esi + 3]
+    mov bl, [BANK3 + ecx]
+    cmp bl, [esi + 4]
+    jae .next
+    inc byte [BANK3 + ecx]
+.next:
+    add esi, 8
+    jmp .loop
+.done:
+    popad
+    mov eax, [ebp - 4]
+    add eax, 4
+    jmp HOOK_BACK
+
 ; ---- init(int): list the accepted quests --------------------------------
 q_init:
     push ebx
@@ -77,7 +119,7 @@ q_init:
     cmp ebx, [DATA]
     jge .done
     imul eax, ebx, REC
-    movzx eax, byte [DATA + 12 + eax]
+    movzx eax, byte [DATA + 16 + eax]
     cmp byte [BANK3 + eax], ACCEPTED
     jne .next
     mov [q_list + ecx], bl
@@ -89,17 +131,19 @@ q_init:
     jmp .loop
 .done:
     mov [q_n], ecx
-    mov dword [q_row], 0
+    xor eax, eax
+    mov [q_row], eax
+    mov [q_top], eax
     pop ebx
     ret
 
-; ---- record helpers (esi = record) -----------------------------------------
-; eax = progress so far, capped at the count
+; ---- helpers --------------------------------------------------------------
+; edi = part; eax = progress, capped at its count
 q_have:
-    movzx eax, byte [esi]
-    cmp byte [esi + 1], 0
+    movzx edx, word [edi + 4]
+    cmp byte [edi + 7], 0
     jne .items
-    movzx eax, byte [BANK3 + eax + 1]   ; kill counter
+    movzx eax, byte [BANK3 + edx]
     jmp .cap
 .items:
     push ebx
@@ -107,15 +151,16 @@ q_have:
     xor eax, eax
     xor ecx, ecx
 .scan:
-    movzx edx, word [INVENTORY + ecx*2]
-    cmp edx, 0xFFFF
+    movzx ebx, word [INVENTORY + ecx*2]
+    cmp ebx, 0xFFFF
     je .skip
-    mov ebx, edx
+    push ebx
     and ebx, 0x1FF
-    cmp bx, [esi + 4]
+    cmp ebx, edx
+    pop ebx
     jne .skip
-    shr edx, 9
-    add eax, edx
+    shr ebx, 9
+    add eax, ebx
 .skip:
     inc ecx
     cmp ecx, 320
@@ -123,14 +168,36 @@ q_have:
     pop ecx
     pop ebx
 .cap:
-    movzx edx, byte [esi + 2]
+    movzx edx, byte [edi + 6]
     cmp eax, edx
     jbe .ret
     mov eax, edx
 .ret:
     ret
 
-; edi = dst; eax = value (0..999); edi advanced
+; esi = record; eax = 1 if every part is complete
+q_ready:
+    push edi
+    push ecx
+    movzx ecx, byte [esi + 1]
+    lea edi, [esi + PARTS]
+.part:
+    call q_have
+    movzx edx, byte [edi + 6]
+    cmp eax, edx
+    jb .no
+    add edi, 8
+    loop .part
+    mov eax, 1
+    jmp .out
+.no:
+    xor eax, eax
+.out:
+    pop ecx
+    pop edi
+    ret
+
+; eax = value (0..999), edi = dst; edi advanced
 q_putnum:
     push ebx
     push ecx
@@ -152,39 +219,39 @@ q_putnum:
     pop ebx
     ret
 
-; q_buf = "<label>: have/count"; returns eax = 1 if complete
-q_progress:
-    push edi
+; ebx = part, edi = dst: "<label>: have/count"
+q_parttext:
     push esi
-    mov edi, q_buf
-    mov edx, [esi + 32]
+    mov esi, [ebx]
 .copy:
-    mov al, [edx]
+    lodsb
     cmp al, 0xFF
     je .num
     stosb
-    inc edx
     jmp .copy
 .num:
     mov ax, 0x001A                  ; ':' ' '
     stosw
+    push edi
+    mov edi, ebx
     call q_have
-    push eax
+    pop edi
     call q_putnum
     mov al, 0x0F                    ; '/'
     stosb
-    movzx eax, byte [esi + 2]
+    movzx eax, byte [ebx + 6]
     call q_putnum
     mov al, 0xFF
     stosb
-    pop eax
-    movzx edx, byte [esi + 2]
-    cmp eax, edx
-    setae al
-    movzx eax, al
     pop esi
-    pop edi
     ret
+
+; esi = record for list index eax
+%macro RECORD 1
+    movzx esi, byte [q_list + %1]
+    imul esi, esi, REC
+    add esi, DATA + 16
+%endmacro
 
 ; ---- update(frame) ------------------------------------------------------
 q_update:
@@ -210,27 +277,33 @@ q_update:
     jmp .windows
 
 .list:
-    xor ebx, ebx
+    mov ebx, [q_top]
 .row:
     cmp ebx, [q_n]
     jge .rows_done
-    movzx esi, byte [q_list + ebx]
-    imul esi, esi, REC
-    add esi, DATA + 12
-    call q_progress                 ; green when ready to hand in
+    mov eax, [q_top]
+    add eax, VIEW
+    cmp ebx, eax
+    jge .rows_done
+    RECORD ebx
+    call q_ready                    ; green when ready to hand in
     mov edi, 7
     test eax, eax
     jz .white
     mov edi, 4
 .white:
-    imul eax, ebx, 26
+    mov eax, ebx
+    sub eax, [q_top]
+    imul eax, eax, 26
     add eax, 13
-    TEXT TEXT_X, eax, dword [esi + 8], edi
+    TEXT TEXT_X, eax, dword [esi + 4], edi
     inc ebx
     jmp .row
 .rows_done:
     push Z_TEXT
-    imul eax, [q_row], 26
+    mov eax, [q_row]
+    sub eax, [q_top]
+    imul eax, eax, 26
     add eax, 0x12
     push eax
     push TEXT_X - 0x36
@@ -238,21 +311,44 @@ q_update:
     add esp, 12
 
     mov eax, [q_row]
-    movzx esi, byte [q_list + eax]
-    imul esi, esi, REC
-    add esi, DATA + 12
-    TEXT 24, LIST_H + 13, dword [esi + 8], 6
-    TEXT 24, LIST_H + 39, dword [esi + 12], 7
-    TEXT 24, LIST_H + 65, dword [esi + 16], 7
-    TEXT 24, LIST_H + 99, dword [esi + 20], 7
-    TEXT 24, LIST_H + 125, dword [esi + 24], 7
-    TEXT 24, LIST_H + 151, dword [esi + 28], 7
-    call q_progress
-    mov ebx, eax
-    TEXT 24, LIST_H + 185, q_buf, 7
-    test ebx, ebx
+    RECORD eax
+    TEXT 24, LIST_H + 13, dword [esi + 4], 6
+    TEXT 24, LIST_H + 39, dword [esi + 8], 7
+    TEXT 24, LIST_H + 65, dword [esi + 12], 7
+    TEXT 24, LIST_H + 91, dword [esi + 16], 7
+    TEXT 24, LIST_H + 117, dword [esi + 20], 7
+    TEXT 24, LIST_H + 143, dword [esi + 24], 7
+    xor ecx, ecx                    ; part index
+.part:
+    movzx eax, byte [esi + 1]
+    cmp ecx, eax
+    jge .parts_done
+    push ecx
+    lea ebx, [esi + PARTS + ecx*8]
+    mov edi, ecx
+    shl edi, 6
+    add edi, q_buf
+    push edi
+    call q_parttext
+    pop edi
+    mov ecx, [esp]
+    mov eax, ecx                    ; x = 24 + (i & 1) * 300
+    and eax, 1
+    imul eax, eax, 300
+    add eax, 24
+    mov edx, ecx                    ; y = top + 169 + (i >> 1) * 26
+    shr edx, 1
+    imul edx, edx, 26
+    add edx, LIST_H + 169
+    TEXT eax, edx, edi, 7
+    pop ecx
+    inc ecx
+    jmp .part
+.parts_done:
+    call q_ready
+    test eax, eax
     jz .windows
-    TEXT 24, LIST_H + 211, dword [DATA + 8], 4
+    TEXT 24, LIST_H + 225, dword [DATA + 8], 4
 
 .windows:
     WINDOW q_rect1, 0, 0, 0x1DC, LIST_H
@@ -292,6 +388,15 @@ q_update:
     cmp eax, [q_row]
     je .cancel
     mov [q_row], eax
+    cmp eax, [q_top]                ; keep the row in view
+    jge .below
+    mov [q_top], eax
+.below:
+    sub eax, VIEW - 1
+    cmp eax, [q_top]
+    jle .sound
+    mov [q_top], eax
+.sound:
     push 1
     call SOUND
     add esp, 4
@@ -322,7 +427,8 @@ q_update:
 align 4
 q_n:     dd 0
 q_row:   dd 0
+q_top:   dd 0
 q_rect1: dw 0, 0, 0, 0
 q_rect2: dw 0, 0, 0, 0
 q_list:  times MAXLIST db 0
-q_buf:   times 64 db 0xFF
+q_buf:   times 4 * 64 db 0xFF

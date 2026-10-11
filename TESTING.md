@@ -83,6 +83,25 @@ Existing saves load, but they keep their own story progress; use a new game.
     (they're taken): HP Plus materia. Talking to her with fewer gives a
     reminder; her orb turns blue while you carry 3 or more.
   - After all quests each giver has a closing line.
+  - **New quest givers** (each with an orb; dialogue is meant to be silly):
+    | Who | Where | Quest |
+    |---|---|---|
+    | Madam M | Wall Market, Honey Bee Inn street | bring 2 Ethers |
+    | Leslie | Wall Market, street with Corneo's mansion | bring 3 Tranquilizers |
+    | Sam (+ chocobo Bessie) | Sector 6 road to Wall Market | bring 3 Loco Weed |
+    | Ronnie | Wall Market gym | bring 4 Graviballs |
+    | Andrea | Wall Market boutique | 2 each Ceasar, Blugu, Blood Taste, Chuse Tank |
+    | Billy Bob | Sector 7 slums street | 5 MP + 4 Grenade Combatants |
+    | Scared Man | Train Graveyard (screen next to the station) | 8 Ghosts, then Eligor |
+    | Gwen | Sector 7 pillar screen | bring 8 Grenades |
+    | Wymer | Sector 7 station | 8 Mighty Grunts |
+    | Old Man | Sector 5, in front of the church | 10 Whole Eaters |
+    | Ms Folia | Aerith's house (garden screen) | 3 Vices, then bring 1 X-Potion |
+    | Zhije | Sector 5 slum town | 10 Hedgehog Pies |
+    Check each stands somewhere sensible (not in a doorway or path, not
+    hidden behind scenery). Multi-target quests show one "Name: x/y" per
+    target in the Quests menu (two per line). With more than 8 quests
+    accepted the list should scroll.
   - **Quests menu** (new `ff7_en.exe`): the main menu has a 12th row
     "Quests" above Quit (check the menu window is tall enough and nothing
     overlaps the time/gil box). It lists accepted quests (green = ready to

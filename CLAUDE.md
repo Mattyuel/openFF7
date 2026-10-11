@@ -66,7 +66,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
-| `600_quests.py` | Quest givers (data in `GIVERS`): Manager md8brdg, Betty mds6_2, Gwen mds5_3; orb markers; exe kill-counter hook; "Quests" main-menu row + screen (`patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks). Plan: `docs/quest_plan.md`. |
+| `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data (15 givers, 18 quests): `_quest_data.py`. Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -86,7 +86,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   **Bank 4 offsets 232-255 are NOT free**: the exe's world map zeroes 232-243
   on entry and stores world map object data in 244-255; only 224-231 are safe.
   Bank 3 offsets 192-255 (nibble 11, savemap 0x0E64, memory 0xDC0B9C) look
-  unused: quest state bytes (`600_quests.Q`: state, +1 kill counter; 192-199 used).
+  unused: quest bytes (`600_quests._allocate`: per quest a state byte + one
+  counter per kill target, in GIVERS order; 192-224 used). Append new quests at
+  the end of a giver or new givers at the end, or old saves' bytes shift.
   Temp vars (5,232)-(5,234) used by quest givers/markers. Temp vars (5,240),(5,241) for menus.
 
 ## Verified facts: field scripts
@@ -227,7 +229,8 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   stub** (init 0x6FEB00 / update 0x6FEB0F) and row 10's row->id byte is already
   0x0B, so a row before Quit opening id 11 needs no title/cursor-return change:
   600_quests' `MENU_PATCHES` (row count 11->12, heights +0x1A, masks, labels,
-  12-entry confirm table). Submenu API used by quest_menu.asm (text colours:
+  12-entry confirm table). `.openff7` layout: quest data block at 0xFD5000
+  (12 KB max), quest code at 0xFD8000, then the confirm table. Submenu API used by quest_menu.asm (text colours:
   0 grey, 4 green, 5 cyan, 6 yellow, 7 white; smaller z = in front).
 - exe patching: `ff7/exepatch.py` (expected-bytes checks + PE checksum, which
   reproduces the original's). `ff7tool.py exe-test` makes a harmless test exe;
@@ -282,8 +285,9 @@ field leader entities (untested),
 Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 
-Quests (600): 3 givers, kill + deliver kinds, orb markers (user: orbs were too
-high at 200, now 160), Quests menu: user-confirmed working (orbs, menu, kill counting, Betty moved up by 4x her height).
+Quests (600): first 3 givers user-confirmed working (orbs, menu, kill counting).
+12 more givers / 15 quests added from the user's list (untested): multi-target
+kill quests, quest log scrolling (8 rows visible), Sam's chocobo companion.
 
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),

@@ -11,6 +11,11 @@ from ff7.walkmesh import Walkmesh
 
 CHOICE = (5, 241)  # temporary field variable for menu choices
 TALK_RADIUS = 0x46  # as the Sector 7 station conductor
+# fship_5 'cho' main script, yellow case: tint a chocobo model yellow.
+CHOCOBO_YELLOW = [bytes.fromhex("28180600001e000f00c4ff1e000f00c4ff01000100010001"),  # KAWAI 06 colour
+                  bytes.fromhex("240100"),                                           # WAIT 1
+                  bytes.fromhex("28040601"),                                         # KAWAI 06 apply
+                  bytes.fromhex("29")]                                               # KAWIW
 
 
 def choice_menu(sec, prompt, options, jumps):

@@ -22,7 +22,7 @@ yellow: like the cargo ship's chocobo (fship_5), it is tinted yellow with
 KAWAI 06 in its main script.
 """
 from _recruit import say
-from _travel import add_npc, beside, choice_menu, copy_model
+from _travel import CHOCOBO_YELLOW, add_npc, beside, choice_menu, copy_model
 
 from ff7 import asm
 from ff7.script import Op
@@ -35,11 +35,6 @@ BILLY_MODEL = ("frcyo", 4)       # farm_boy: Choco Billy
 CHOCOBO_MODEL = ("frcyo", 5)     # another_choko
 PRICE = 100
 GIL_LO, GIL_HI = (6, 0xF8), (6, 0xFA)   # temporary 16-bit field vars for CHGLD
-# fship_5 'cho' main script, yellow (var[1][126] bit 2) case: tint, apply.
-YELLOW = [bytes.fromhex("28180600001e000f00c4ff1e000f00c4ff01000100010001"),   # KAWAI 06 colour
-          bytes.fromhex("240100"),                                           # WAIT 1
-          bytes.fromhex("28040601"),                                         # KAWAI 06 apply
-          bytes.fromhex("29")]                                               # KAWIW
 WILD_RIDE_BIT_ADDR = 0x3F0       # the same bit as the world map script sees it
 WILD_CHOCOBO_MODEL = 4
 WM_SPECIAL_ENTRY = 0x6           # push_special 6 = the wmN field id you arrived by
@@ -113,5 +108,5 @@ def apply(ctx):
         bird = copy_model(ctx, field, *CHOCOBO_MODEL)
         add_npc(ctx, field, "billy", billy, pos_billy, 0x40, _ride(ctx, wm_entry))
         add_npc(ctx, field, "ridechoc", bird, pos_bird, 0x40, _ride(ctx, wm_entry),
-                main=[Op(b) for b in YELLOW])
+                main=[Op(b) for b in CHOCOBO_YELLOW])
         _mount_on_arrival(ctx, wm_entry)
