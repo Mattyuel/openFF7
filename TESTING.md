@@ -50,19 +50,16 @@ Existing saves load, but they keep their own story progress; use a new game.
   climb the ladder into the vent; at its far end (or walking onto that spot)
   choose "Drop down." (onward) or "Climb back to the train tunnel." Note if
   the vent menu pops up repeatedly while you stand there.
-- **Tame materia** (milestone 1): on the Sector 6 playground, right next to
-  where you arrive from Sector 7, a materia orb: talk to it -> "Received
-  "Tame" Materia!". Equip it: in battle a **Tame** command appears; for now it
-  behaves like Manipulate (that's expected). Check the materia's name and
-  description in the Materia menu, the command name in battle, and that the
-  battle doesn't crash.
-- **Party leader** (needs 3 recruits so the PHS shows): in the PHS put
-  someone else in the first party slot. Walk around several screens (Midgar,
-  Kalm, world map entrances): you should control that character, with their
-  own walk/run. Note any screen where you can't move, the character is
-  invisible, or the game crashes on entering (each screen now loads up to 24
-  character models). Ladders/jumps/climbs are not adapted yet with a
-  non-Cloud leader, so expect those to fail. The world map still shows Cloud.
+- **Chocobo rides**: on the Midgar slum outskirts screen (where you enter
+  from the world map) Choco Billy and a chocobo stand next to you; same on the
+  first Mythril Mine screen (entrance from the marsh side, psdun_1). Talk to
+  either, choose "Giddyap!": you should be on the world map riding a chocobo,
+  as after catching one in battle. Dismount: it should run away. Check also
+  that you appear at the right spot outside (Midgar / the mine entrance).
+- Cloud always leads (he can't be moved in the PHS; needs a new game).
+- If you installed the Tame test files earlier: put back the original
+  `ff7_en.exe` and `data\lang-en\kernel\kernel2.bin` (the build no longer
+  changes them).
 - **No.5 Reactor elevator** should go to No.5's rooms, and No.1's to No.1's.
 - Conductors should now be the same size as other characters; on Upper
   Midgar you and he start mid-screen.

@@ -67,6 +67,7 @@ def apply(ctx):
         asm.setword(MENU_LOCK, 0),                    # nothing greyed out (PHS, Save)
         asm.party(CLOUD),
         asm.Op(bytes([0xCD, 0x01, CLOUD])),  # MMBUD: Cloud available in PHS
+        asm.member_lock(CLOUD),                       # MMBLK: Cloud can't leave the party (stays leader)
     ]
     for char in range(1, 9):
         new.append(asm.Op(bytes([0xCD, 0x00, char])))  # everyone else unavailable until recruited

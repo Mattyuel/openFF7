@@ -35,7 +35,8 @@ python3 tools/ff7tool.py reach FIELD...     # walkmesh entrance->exit reachabili
 python3 tools/ff7tool.py quiet-flags        # search 'seen' flags (slow, >10 min; background)
 ```
 
-Shipped files: `data/field/flevel.lgp` and `data/lang-en/kernel/KERNEL.BIN`.
+Shipped files: `data/field/flevel.lgp` and `data/lang-en/kernel/KERNEL.BIN`
+(plus `kernel2.bin`/`ff7_en.exe` only when a patch edits them; none does now).
 The user tests by copying them into the Steam install (see `TESTING.md`).
 
 ## Workflow rules
@@ -61,11 +62,11 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `250_train_destinations.py` | Station conductor menu, conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
 | `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
 | `270_sector4_duct.py` | Tunnel duct = plain choice; vent end offers drop / back to tunnel. |
+| `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
-| `500_tame.py` | Tame milestone 1: command 0x1C (Manipulate's record + sequence for now), materia 38, kernel2 text, orb on mds6_2. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
-| `950_leader_entities.py` | Every playable field gets a PC entity for all nine characters (any leader). |
+| `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
 
 ## Core approach
@@ -157,6 +158,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - `CHAR` indices always follow entity order and the CHAR count equals the
   model count in every field: append models and CHAR entities together.
 - GETPC `[0x74][dst bank][party slot][var]`: slot 0 = leader (`_recruit.get_leader`).
+- **Riding a chocobo onto the world map:** savemap bank 1 byte 126 (var[1][126]):
+  bit 0 = wild chocobo (world map model 4, runs off when dismounted), bit 1 =
+  stable chocobo, bits 2-6 = its colour (model 0x13); set the bits then
+  MAPJUMP to a `wmN` field id with x = y = 0 (as frcyo's Choco Billy does).
+  World map entries: mds5_5 -> wm0, psdun_1 -> wm4, psdun_2 -> wm3.
+- Cloud is locked as leader (MMBLK 00 at new game); leader swapping shelved.
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
   via `ModelLoader.add` works.
