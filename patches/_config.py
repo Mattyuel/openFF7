@@ -120,6 +120,10 @@ INITIAL_EVENT_FLAGS = [
     (1, 226, 6),   # junair: airport lift state; clear = Cloud drawn 624 units up on
                    #   arrival (OFST in his init) - spawned in the wrong spot
     (1, 232, 5),   # nvdun1: Materia Keeper beaten (hides the original; it's a quest boss line)
+    (3, 133, 0),   # world map: Yuffie random encounters on (set by psdun_1's Rude scene at
+                   #   progress < 387, which the pin skips); the fight leads to yougan2
+    (3, 207, 6),   # Wutai done (0xE7E): wm0 never starts the materia theft (yougan, Yuffie
+                   #   leaves); only datiao_* read it (hide Da-chao's quest NPCs)
 ]
 
 # Batteries for the Wall Market wire climb: item 85 x3, plus the three

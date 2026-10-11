@@ -395,6 +395,15 @@ Recruit Barret on Mt. Corel, on the railway screen just after the Corel
 
 - `apply(ctx)` 
 
+## `patches/230_recruit_more.py`
+Recruit Red XIII, Cid and Cait Sith as NPCs; make Yuffie's and Vincent's
+
+- `_join_ops(char)` 
+- `_find(sec, raw)` 
+- `_yuffie(ctx)` 
+- `_vincent(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/250_train_destinations.py`
 Train travel from the Sector 7 station, the reactors, and their bosses.
 
@@ -460,6 +469,13 @@ Cargo ship as a place to explore (Junon <-> Costa del Sol).
 - `_first_mate(ctx)` 
 - `apply(ctx)` 
 
+## `patches/430_buggy.py`
+Buggy for sale at Costa del Sol's town exit (del2): 1000 gil, then you
+
+- `_talk(ctx)` 
+- `_check_worldmap(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/600_quests.py`
 Quests: new NPCs ("givers") offer quests; talking to them again once the
 
@@ -516,7 +532,7 @@ Shared helpers for character recruitment scenes.
 - `hide()` 
 - `get_leader()` GETPC: LEADER = character id in party slot 0.
 - `hide_if_recruited(char, pc_entity=False)` Ops for an init script: hide this NPC once `char` has been recruited.
-- `recruit_talk(script, char, question, choices, yes_reply, no_reply, joined)` Build the talk script. `question` is the dialogue before the choices
+- `recruit_talk(script, char, question, choices, yes_reply, no_reply, joined, extra=())` Build the talk script. `question` is the dialogue before the choices
 - `count_recruit()` Ops: one more character recruited; show the PHS once there are enough
 - `xyzi(x, y, z, tri)` 
 - `add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines)` Add a new NPC for `char` to `field`, with the model copied from

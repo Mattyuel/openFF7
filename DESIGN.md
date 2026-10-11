@@ -77,11 +77,16 @@ Everything else: `docs/world_plan.md` (automatic first pass, with overrides).
 | Aerith | Sector 5 church | New recruitment dialogue |
 | Tifa | Seventh Heaven bar, Sector 7 | New recruitment dialogue |
 | Barret | Mt. Corel, railway screen just after the Corel Reactor | New recruitment dialogue |
-| Red XIII | Shinra HQ lab (specimen area) | New recruitment dialogue |
+| Red XIII | Shinra HQ 67F research lab, by the stairs from 66F | New recruitment dialogue |
 | Cait Sith | Gold Saucer, Wonder Square arcade (fortune reading) | Adapted from the original recruitment |
 | Cid | Rocket Town, near the rocket | New recruitment dialogue |
 | Vincent | Shinra Mansion basement | As in the original (Basement Key from the safe) |
-| Yuffie | Random forest encounters | As in the original |
+| Yuffie | Random forest encounters | As in the original (encounters on from new game; the Wutai materia theft is skipped) |
+
+#### Buggy
+Sold for 1000 gil by a salesman at Costa del Sol's town exit; buying it
+puts you on the world map outside Costa del Sol, driving it, and it stays
+yours (instead of the original Gold Saucer gift).
 
 #### Party leader
 - **Any recruited character can be party leader.**

@@ -201,8 +201,9 @@ WORLD_GIVERS = [
                     "wasn't even holding the rod.")),
 
     # ---- Costa del Sol ------------------------------------------------------
-    dict(field="del2", name="sal", level=16, model=("del2", 7), at=(-1022, -340), dir=0,
-         who="Sunbather Sal", where="Costa del Sol",
+    # del1 (harbour): del2 is full once the buggy seller stands at the exit.
+    dict(field="del1", name="sal", level=16, model=("del2", 7), at=(-143, 675), dir=0,
+         who="Sunbather Sal", where="Costa del Sol, the harbour",
          quests=[
              dict(id="sal_beachplug", kind="kill", enemies=[99], count=6, label="Beachplugs",
                   title="Beach Bodies",

@@ -62,6 +62,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `130_shinra_hq.py` | HQ 2F boxes openable. |
 | `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (Mt. Corel mtcrl_3). |
+| `230_recruit_more.py` | Red XIII (blin67_1, HQ 67F lab), Cid (rcktbas1, by the rocket), Cait Sith (games, his meeting spot; recruit runs his name entry) NPCs; Yuffie's (yougan2) and Vincent's (sininb1) original joins get PRTYP + recruit count (Vincent's PHS menu replaced). |
 | `250_train_destinations.py` | Station conductor menu, conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
 | `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
 | `270_sector4_duct.py` | Tunnel duct = plain choice; vent end offers drop / back to tunnel. |
@@ -69,6 +70,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
 | `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open. |
+| `430_buggy.py` | Buggy salesman (Dio model) at Costa del Sol's town exit (del2): 1000 gil, sets (1,127) bits 0+1 and MAPJUMPs to wm12; wm0's Costa del Sol branch already mounts the buggy (asserted). |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
 | `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 37 givers, 66 quests, 10 repeatable boss lines. Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
@@ -260,6 +262,25 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - Player-controlled movement code: not found yet (doesn't read model+0x76
   directly; no field code reads the global input mask).
 
+## Verified facts: characters / recruits
+
+- Character records (9 x 0x84 at savemap 0x54) are found by their id byte
+  (+0); menu/field map id -> record via exe table 0x919928 (`0..8,6,7`: id 9
+  Young Cloud and 10 Sephiroth share records 6/7). New game: record 6 = id 9,
+  record 7 = id 10. **Cait Sith / Vincent only get their record from the name
+  entry** (MENU 00 06 6/7, exe 0x718ADA copies the exe template 0x921EF8 +
+  id*0x84 over it), so a recruit of either must run it.
+- PRTYP (0x61BE95): no-op if already in the party, else first empty slot, else
+  overwrites slot 2; also sets the PHS-available bit. A field-opened PHS
+  (MENU 00 07 00) needs exactly 3 in the party to leave: never use it in joins.
+- Yuffie encounters: exe 0x767641, gated only by (3,133) bit 0; formation by
+  Cloud's level (< 20 = 268, Mystery Ninja level 17). Join = yougan2 YUFI
+  script 9. Wutai theft trigger (wm0) needs 0xE7E (3,207,6) clear; set at new game.
+- Vincent: sinin2_1 safe (needs progress > 385; Lost Number 576) -> basement
+  key (1,232,1); sininb2 coffin talk sets (1,231,7); join LINE in sininb1
+  sets (13,80,2).
+- New-character research (Sephiroth/Turks): `docs/research_new_characters.md`.
+
 ## Verified facts: KERNEL.BIN
 
 - 27 gzip sections. Section 3 = new-game savemap data (9 x 132-byte character
@@ -300,6 +321,8 @@ field leader entities (untested),
 Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 
+All recruits (230) and the buggy purchase (430) built, untested in-game.
+
 Quests (600): first 3 givers user-confirmed working (orbs, menu, kill counting);
 the 12 from the user's list tested (fixes applied: positions, Andrea standing,
 8 visible rows). Untested: cargo ship giver, 21 world givers (Kalm to Gaea's
@@ -311,7 +334,6 @@ quest is accepted; once per visit), Sources in every reward. Boss lines:
 
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),
-battle speed default (needs .exe patch), other recruits (Red XIII,
-Cait Sith, Cid, Vincent, Yuffie), remaining bosses as world NPCs + rare
-encounters, vehicles (buggy, Tiny Bronco, airship, submarine), world-map
+battle speed default (needs .exe patch), remaining bosses as world NPCs + rare
+encounters, vehicles (Tiny Bronco, airship, submarine), world-map
 models for other leaders, minigame NPCs, shop scaling, crater bosses.

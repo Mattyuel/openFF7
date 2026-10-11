@@ -186,6 +186,20 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Recruit Barret** on Mt. Corel, on the railway screen just after the
   Corel Reactor (needs the world map to get there). Check his model and that
   he stands on the tracks, not in the air or inside the rails.
+- **Recruit Red XIII** (Shinra HQ 67F, by the stairs up from 66F), **Cid**
+  (Rocket Town launch pad, by the rocket) and **Cait Sith** (Gold Saucer,
+  Wonder Square, where he first appears; joining opens his name entry).
+  Each should stand on the floor facing you, join on "yes" and vanish.
+  Check Cait Sith's status screen (level/stats, not Young Cloud's).
+- **Yuffie**: random fights in world map forests (from new game) can be the
+  Mystery Ninja; at Cloud level < 20 she is level 17. Beat her, pass the
+  original scene and she should join the party (not only the PHS).
+- **Vincent**: Shinra Mansion safe (Lost Number) -> basement key -> coffin,
+  answer "Who are you?", then on the way out he catches up. He should join
+  the party directly; the PHS should not open.
+- **Buggy**: at Costa del Sol's town exit, the salesman sells it for 1000
+  gil (try with less too). Buying puts you on the world map outside town,
+  in the buggy; get out, re-enter, save/load: it should stay.
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
   in the party should no longer play "everyone's waiting at the inn" or

@@ -62,9 +62,10 @@ def hide_if_recruited(char, pc_entity=False):
     return ops + hide() + [end]
 
 
-def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined):
+def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined, extra=()):
     """Build the talk script. `question` is the dialogue before the choices
-    (its own lines), `choices` = (yes text, no text)."""
+    (its own lines), `choices` = (yes text, no text). `extra` ops run after
+    joining (e.g. the name entry)."""
     text = question + "\n{CHOICE}" + choices[0] + "\n{CHOICE}" + choices[1]
     yes_line = len(question.split("\n"))
     tid = script.add_string(encode(text))
@@ -78,7 +79,7 @@ def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined):
     ops += [Op(bytes([0xCD, 0x01, char])),                   # MMBUD: available in PHS
             Op(bytes([0xC8, char])),                         # PRTYP: join active party
             asm.biton(RECRUITED, char)]
-    ops += count_recruit()
+    ops += count_recruit() + list(extra)
     ops += [sound(SOUND_RECRUIT)] + say(script, joined)
     ops += hide() + [Op(b"\x33\x00"), asm.ret()]
     return ops + decline + end_decline
