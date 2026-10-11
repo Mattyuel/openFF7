@@ -72,6 +72,9 @@ INITIAL_EVENT_FLAGS = [
     (3, 129, 7),   # tunnel_1: Sector 4 tunnel - Barret/Tifa scene seen
     (3, 128, 0),   # tunnel_2: tunnel - Cloud scene seen
     (3, 128, 1),   # elm: Kalm arrival ("everyone's waiting at the inn", party leaves) seen
+    (13, 133, 3),  # world map: "Saving on the World Map" tutorial seen (wm0.ev bit 0x1C2B)
+    (1, 122, 2),   # world map: submarine tutorial seen (wm0.ev bit 0x3D2)
+    (13, 134, 1),  # world map: submarine tutorial (second copy) seen (wm0.ev bit 0x1C31)
     (3, 220, 6),   # onna_4: Honey Bee Inn room scene seen
     (3, 163, 0),   # colne_5: Corneo's hall audition done (hall Corneo hidden)
     (3, 162, 3),   # colne_4: dungeon - Tifa/Aerith meeting done (lines off, Tifa gone)

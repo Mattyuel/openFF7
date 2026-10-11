@@ -76,13 +76,13 @@ def add_line(ctx, field, name, p1, p2, on_cross):
     return ent
 
 
-def add_npc(ctx, field, name, model, pos, direction, talk, init_extra=()):
+def add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=()):
     """Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk
-    script ops (must end with RET)."""
+    script ops (must end with RET); `main` ops run once after all inits."""
     sec = Script.parse(ctx.field(field).sections[0])
     init = [Op(bytes([0xA1, model])), xyzi(*pos), Op(bytes([0xB3, 0x00, direction])),
             Op(bytes([0xC5, 0x00, TALK_RADIUS]))]                # TALKR
-    init += list(init_extra) + [asm.ret(), asm.ret()]
+    init += list(init_extra) + [asm.ret()] + list(main) + [asm.ret()]
     ent = sec.add_entity(name, {0: init})
     body = talk(sec) if callable(talk) else talk
     sec.ops.extend(body)

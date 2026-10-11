@@ -305,6 +305,16 @@ class BuildContext:
             self._kernel2 = Kernel2(open(path, "rb").read())
         return self._kernel2
 
+    def wm_file(self, name):
+        """Mutable bytearray of a file in data/wm/world_us.lgp (e.g. "wm0.ev");
+        the build writes world_us.lgp when any is touched."""
+        if getattr(self, "_wm", None) is None:
+            self._wm_lgp = LGP.read(os.path.join(GAME, "wm", "world_us.lgp"))
+            self._wm = {}
+        if name not in self._wm:
+            self._wm[name] = bytearray(self._wm_lgp[name])
+        return self._wm[name]
+
     def exe(self):
         """ExeBuilder for ff7_en.exe (byte patches + the .openff7 section)."""
         if getattr(self, "_exe", None) is None:
@@ -319,6 +329,12 @@ class BuildContext:
             rel = "data/lang-en/kernel/kernel2.bin"
             with open(os.path.join(out_dir, rel), "wb") as fh:
                 fh.write(self._kernel2.build())
+            out.append(rel)
+        if getattr(self, "_wm", None):
+            for name, data in self._wm.items():
+                self._wm_lgp[name] = bytes(data)
+            rel = "data/wm/world_us.lgp"
+            self._wm_lgp.write(os.path.join(out_dir, rel))
             out.append(rel)
         if getattr(self, "_exe", None) is not None:
             rel = "ff7_en.exe"

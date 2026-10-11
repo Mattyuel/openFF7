@@ -35,8 +35,9 @@ python3 tools/ff7tool.py reach FIELD...     # walkmesh entrance->exit reachabili
 python3 tools/ff7tool.py quiet-flags        # search 'seen' flags (slow, >10 min; background)
 ```
 
-Shipped files: `data/field/flevel.lgp` and `data/lang-en/kernel/KERNEL.BIN`
-(plus `kernel2.bin`/`ff7_en.exe` only when a patch edits them; none does now).
+Shipped files: `data/field/flevel.lgp`, `data/lang-en/kernel/KERNEL.BIN`,
+`data/wm/world_us.lgp` (plus `kernel2.bin`/`ff7_en.exe` only when a patch edits
+them; none does now). The build prints the list.
 The user tests by copying them into the Steam install (see `TESTING.md`).
 
 ## Workflow rules
@@ -163,6 +164,17 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   stable chocobo, bits 2-6 = its colour (model 0x13); set the bits then
   MAPJUMP to a `wmN` field id with x = y = 0 (as frcyo's Choco Billy does).
   World map entries: mds5_5 -> wm0, psdun_1 -> wm4, psdun_2 -> wm3.
+  **The bit alone doesn't mount you**: wm0.ev function 1 dispatches on
+  `push_special 6` (= the wmN field id you arrived by) and only the farm branch
+  (== 3) checks the bits and runs `op_300 <model>; op_30C` (mount). 280 appends
+  a mount block for its own exits (`ff7.worldmap.EvPatcher`: wm*.ev are fixed
+  0x7000 bytes with zero padding; append + repoint a goto, nothing moves).
+  World map tutorials are messages in world_us.lgp `mes` (53 world map save,
+  57 buggy, 58 Tiny Bronco, 59 chocobo, 61 submarine) gated by bits; world map
+  bit address b = savemap 0x0BA4 + b//8, bit b%8 (e.g. 0x1C2B = bank 4 off 133
+  bit 3). Shown by `op_324` (window) + `op_325 <msg>`.
+- Chocobo field models (`AQGC.HRC`) aren't yellow by themselves: scripts tint
+  them with KAWAI 06 (fship_5/frcyo: yellow = `1e 00 0f 00 c4 ff`).
 - Cloud is locked as leader (MMBLK 00 at new game); leader swapping shelved.
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
