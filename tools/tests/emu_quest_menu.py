@@ -19,7 +19,7 @@ from ff7.text import decode
 
 EXE = open(os.path.join(ROOT, 'build', 'openFF7', 'ff7_en.exe'), 'rb').read()
 def rd(va, n): o = exepatch.va_to_file(EXE, va); return EXE[o:o + n]
-DATA, CODE = 0xFD5000, 0xFD8000
+DATA, CODE = 0xFD5000, 0xFDD000
 BANK3, INV = 0xDC0ADC, 0xDC0234
 STUBS = {0x6C98A6: 'MENU_DRAW', 0x6C9D07: 'MENU_DRAW_LR', 0x6C9808: 'MENU_STATE', 0x6C9812: 'MENU_GO',
          0x6C6AEE: 'MENU_SET', 0x6F5B03: 'TEXT', 0x6E7BA1: 'WIN_RECT', 0x6E7D20: 'WIN_DRAW',
@@ -32,9 +32,9 @@ class Emu:
         u.mem_map(0x400000, 0x400000)      # code stubs
         u.mem_map(0x900000, 0x100000)      # 0x9A....
         u.mem_map(0xDB0000, 0x40000)       # savemap
-        u.mem_map(0xFD5000, 0x6000)        # .openff7
+        u.mem_map(0xFD5000, 0xA000)        # .openff7
         u.mem_map(0x100000, 0x10000)       # stack
-        sec = rd(0xFD5000, 0x5000)
+        sec = rd(0xFD5000, 0x9000)
         u.mem_write(0xFD5000, sec)
         for a in STUBS: u.mem_write(a, b'\xc3')
         u.mem_write(STOP, b'\xf4')         # hlt

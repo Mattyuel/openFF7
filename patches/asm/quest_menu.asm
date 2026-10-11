@@ -19,7 +19,7 @@
 ;   start of the field variables (savemap bank 1, 0xDC08DC): (bank-1)*256+offset.
 
 bits 32
-CODE      equ 0xFD8000
+CODE      equ 0xFDD000
 DATA      equ 0xFD5000
 REC       equ 60
 PARTS     equ 28

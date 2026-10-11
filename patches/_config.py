@@ -119,6 +119,7 @@ INITIAL_EVENT_FLAGS = [
                    #   also makes Yuffie visible in yufy2)
     (1, 226, 6),   # junair: airport lift state; clear = Cloud drawn 624 units up on
                    #   arrival (OFST in his init) - spawned in the wrong spot
+    (1, 232, 5),   # nvdun1: Materia Keeper beaten (hides the original; it's a quest boss line)
 ]
 
 # Batteries for the Wall Market wire climb: item 85 x3, plus the three

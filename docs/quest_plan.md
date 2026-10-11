@@ -1,6 +1,7 @@
 # Quest system — plan
 
-Status: first version built (`patches/600_quests.py`, untested in game):
+Status: 37 givers / 66 quests built (Midgar, cargo ship, 21 regions outside
+Midgar; 10 repeatable boss lines; Sources in every reward). First version built (`patches/600_quests.py`, untested in game):
 Middle Manager (md8brdg, kill x2 chained), Betty (mds6_2, kill Hell House),
 Gwen (mds5_3, deliver Potions); orb markers; kills counted by an exe hook on
 the victory reward loop (not enemy AI). Not yet: courier kind, EXP/AP reward

@@ -31,7 +31,10 @@ def M(speaker, *lines):
     return text
 
 
-ITEMS = {0: "Potion", 1: "Hi-Potion", 2: "X-Potion", 3: "Ether", 5: "Elixir", 7: "Phoenix Down",
+ITEMS = {0: "Potion", 1: "Hi-Potion", 2: "X-Potion", 3: "Ether", 4: "Turbo Ether", 5: "Elixir",
+         6: "Megalixir", 7: "Phoenix Down", 9: "Soft", 13: "Hyper", 15: "Remedy", 30: "Fire Fang",
+         34: "Bolt Plume", 48: "Bird Wing", 52: "Eye drop", 57: "T/S Bomb", 59: "Dazers", 70: "Tent",
+         81: "Lasan Nut",
          14: "Tranquilizer", 20: "Grenade", 29: "Loco Weed", 56: "Graviball",
          71: "Power Source", 72: "Guard Source", 73: "Magic Source", 74: "Mind Source",
          75: "Speed Source", 76: "Luck Source"}
@@ -43,8 +46,11 @@ def source_count(level):
     (level <= 13), rising evenly to 8 for the highest quest areas (level 50,
     Jenova LIFE)."""
     return min(8, max(1, 1 + (level - 8) * 7 // 42))
-MATERIA = {0: "MP Plus", 1: "HP Plus", 3: "Magic Plus", 9: "Chocobo Lure", 10: "Pre-Emptive",
-           11: "Long Range", 13: "Counter Attack", 23: "All", 29: "Elemental", 36: "Steal"}
+MATERIA = {0: "MP Plus", 1: "HP Plus", 3: "Magic Plus", 4: "Luck Plus", 9: "Chocobo Lure",
+           10: "Pre-Emptive", 11: "Long Range", 13: "Counter Attack", 16: "Cover", 21: "W-Item",
+           23: "All", 24: "Counter", 27: "MP Absorb", 28: "HP Absorb", 29: "Elemental",
+           30: "Added Effect", 31: "Sneak Attack", 34: "Steal as well", 35: "Quadra Magic",
+           36: "Steal", 39: "Throw", 41: "Deathblow", 43: "Mime", 44: "Enemy Skill"}
 
 MGR, BETTY, GWEN = "Middle Manager", "Betty", "Gwen"
 
@@ -639,3 +645,8 @@ GIVERS = [
          all_done=M("Deckhand Moe", "Smooth sailing! Except for the",
                     "eyeballs. There are always eyeballs.")),
 ]
+
+# Quests outside Midgar (after the Midgar ones, so their save bytes stay put).
+from _quest_data_world import WORLD_GIVERS  # noqa: E402
+
+GIVERS += WORLD_GIVERS

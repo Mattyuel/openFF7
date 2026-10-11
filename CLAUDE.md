@@ -70,7 +70,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
 | `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open. |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
-| `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data (15 givers, 18 quests): `_quest_data.py`. Plan: `docs/quest_plan.md`. |
+| `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 37 givers, 66 quests, 10 repeatable boss lines. Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -244,7 +244,8 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   0x0B, so a row before Quit opening id 11 needs no title/cursor-return change:
   600_quests' `MENU_PATCHES` (row count 11->12, heights +0x1A, masks, labels,
   12-entry confirm table). `.openff7` layout: quest data block at 0xFD5000
-  (12 KB max), quest code at 0xFD8000, then the confirm table. Submenu API used by quest_menu.asm (text colours:
+  (32 KB max; 15.5 KB with 66 quests), quest code at 0xFDD000, then the
+  confirm table. Submenu API used by quest_menu.asm (text colours:
   0 grey, 4 green, 5 cyan, 6 yellow, 7 white; smaller z = in front).
 - exe patching: `ff7/exepatch.py` (expected-bytes checks + PE checksum, which
   reproduces the original's). `ff7tool.py exe-test` makes a harmless test exe;
@@ -301,8 +302,12 @@ Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 
 Quests (600): first 3 givers user-confirmed working (orbs, menu, kill counting);
 the 12 from the user's list tested (fixes applied: positions, Andrea standing,
-8 visible rows). Cargo ship giver + Jenova BIRTH boss line (untested). Every
-quest also gives Sources by level (untested). World quests: not yet.
+8 visible rows). Untested: cargo ship giver, 21 world givers (Kalm to Gaea's
+Cliff), 10 boss lines (Jenova BIRTH always on; Bottomswell, Dyne, Reno+Rude,
+Materia Keeper, Palmer, Rapps, Red Dragon, Demons Gate, Jenova LIFE once their
+quest is accepted; once per visit), Sources in every reward. Boss lines:
+`boss=dict(field, line|at, formation[, always])` on a kill quest; `at` uses
+`_travel.line_across` (narrowest crossing of the floor at that point).
 
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),

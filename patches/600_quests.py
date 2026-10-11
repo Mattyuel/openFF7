@@ -30,7 +30,7 @@ import struct
 
 from _recruit import SOUND_ITEM, SOUND_MATERIA, say, sound, xyzi
 from _config import OPEN_VAR_BANK8, QUEST_AREAS
-from _travel import CHOCOBO_YELLOW, add_line, add_npc, choice_menu, copy_model
+from _travel import CHOCOBO_YELLOW, add_line, add_npc, choice_menu, copy_model, line_across
 
 from ff7 import asm
 from ff7.script import Op, Script
@@ -246,7 +246,7 @@ def _add_marker(ctx, giver, pos):
 # so only counts, heights, masks, labels and the confirm jump table change.
 # The screen itself is patches/asm/quest_menu.asm (prebuilt .bin committed).
 SECTION_VA = 0xFD5000
-MENU_DATA_VA, MENU_CODE_VA = 0xFD5000, 0xFD8000   # = DATA / CODE in quest_menu.asm
+MENU_DATA_VA, MENU_CODE_VA = 0xFD5000, 0xFDD000   # = DATA / CODE in quest_menu.asm
 MENU_BIN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "asm", "quest_menu.bin")
 QUESTS_ID = 11
 LABELS, ROW_TO_ID = 0x91A8C0, 0x91AAF8
@@ -376,7 +376,8 @@ def _add_boss(ctx, q, slot):
                 asm.biton(fought, bit),
                 asm.battle(b["formation"]),
                 done]
-    add_line(ctx, b["field"], "boss%02d" % slot, *b["line"], fight,
+    line = b.get("line") or line_across(ctx, b["field"], *b["at"])
+    add_line(ctx, b["field"], "boss%02d" % slot, *line, fight,
              init_extra=[asm.bitoff(fought, bit)])
 
 

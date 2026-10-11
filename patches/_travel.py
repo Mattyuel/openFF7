@@ -68,6 +68,34 @@ def beside(ctx, field, x, y, triangle, dist=60):
     raise RuntimeError("no floor beside (%d, %d) in %s" % (x, y, field))
 
 
+def line_across(ctx, field, x, y, overhang=30, reach=800):
+    """A LINE ((x1, y1, z1), (x2, y2, z2)) through (x, y) across the floor at
+    its narrowest there, reaching a little past the walkable edge on both
+    sides so it can't be walked around (for boss trigger lines)."""
+    import math
+    mesh = Walkmesh(ctx.field(field).section("walkmesh"))
+    tri = mesh.find(x, y)
+    assert tri is not None, "%s: (%d, %d) is not on the walkmesh" % (field, x, y)
+    z = mesh.height(tri, x, y)
+
+    def run(dx, dy):
+        d = 0
+        while d < reach and mesh.find(round(x + dx * (d + 10)), round(y + dy * (d + 10))) is not None:
+            d += 10
+        return d
+    best = None
+    for deg in range(0, 180, 5):
+        a = math.radians(deg)
+        dx, dy = math.cos(a), math.sin(a)
+        span = (run(dx, dy), run(-dx, -dy))
+        if best is None or sum(span) < sum(best[0]):
+            best = (span, dx, dy)
+    (fwd, back), dx, dy = best
+    p1 = (round(x + dx * (fwd + overhang)), round(y + dy * (fwd + overhang)), z)
+    p2 = (round(x - dx * (back + overhang)), round(y - dy * (back + overhang)), z)
+    return p1, p2
+
+
 def add_line(ctx, field, name, p1, p2, on_cross, init_extra=()):
     """Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
     with RET) run when the player walks over it (script 2); `init_extra` ops

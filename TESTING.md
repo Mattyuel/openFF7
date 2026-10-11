@@ -65,6 +65,20 @@ Existing saves load, but they keep their own story progress; use a new game.
 - If you installed the Tame test files earlier: put back the original
   `data\lang-en\kernel\kernel2.bin` (the build no longer changes it).
   `ff7_en.exe` is built again (quest kill counting): copy the new one.
+- **World quests** (new game; untested): a quest giver with an orb in Kalm,
+  the Chocobo Farm, Mythril Mine (first screen), Fort Condor, the beach
+  under Junon, Costa del Sol, Mt. Corel (first screen), North Corel inn,
+  Gold Saucer gate, Corel Prison, Gongaga, Cosmo Canyon (house), Nibelheim,
+  Rocket Town, Wutai, Temple of the Ancients (entrance), Bone Village,
+  Forgotten City, Icicle Inn (inn), Mideel (disc 3) and the foot of Gaea's
+  Cliff. Quests use local enemies and drops; some chains end in a boss:
+  Bottomswell (Junon beach), Dyne (prison junkyard), Reno & Rude (Gongaga
+  jungle path), Materia Keeper (Mt. Nibel caves), Palmer (Rocket Town launch
+  pad), Rapps (Da-chao), Red Dragon and Demons Gate (temple), Jenova-LIFE
+  (Forgotten City altar). Once the boss quest is accepted, walking to the
+  boss's spot starts the fight; leaving and re-entering the screen allows
+  another fight. Report givers in awkward spots, boss lines that don't
+  trigger or trigger in the wrong place, and any crash on a boss fight.
 - **Fixes from the last test** (new game recommended):
   Andrea stands; Gwen (Potions) and Zhije (Hedgehog Pies) swapped places;
   Ms Folia is on the garden screen next to Aerith's house; the Old Man is on
