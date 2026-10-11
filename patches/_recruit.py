@@ -101,10 +101,11 @@ def xyzi(x, y, z, tri):
               + tri.to_bytes(2, "little"))
 
 
-def add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines):
+def add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines, main=()):
     """Add a new NPC for `char` to `field`, with the model copied from
     `donor_field` (model index `donor_model`), standing at pos (x, y, z,
-    triangle), whose talk script is the recruitment. Hidden once recruited."""
+    triangle), whose talk script is the recruitment. Hidden once recruited.
+    `main` ops run once after all inits (e.g. DFANM for a looping pose)."""
     from ff7.models import ModelLoader
     from ff7.script import Script
     donor = ModelLoader(ctx.field(donor_field).section("models"))
@@ -114,7 +115,7 @@ def add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direc
 
     sec = Script.parse(ctx.field(field).sections[0])
     init = [Op(bytes([0xA1, model])), xyzi(*pos), Op(bytes([0xB3, 0x00, direction]))]
-    init += hide_if_recruited(char) + [asm.ret(), asm.ret()]
+    init += hide_if_recruited(char) + [asm.ret()] + list(main) + [asm.ret()]
     ent = sec.add_entity(name, {0: init})
     talk = recruit_talk(sec, char, **lines)
     sec.ops.extend(talk)

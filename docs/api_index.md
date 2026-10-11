@@ -401,12 +401,12 @@ Recruit Aerith in the Sector 5 church, at the flower bed.
 - `apply(ctx)` 
 
 ## `patches/220_recruit_barret.py`
-Recruit Barret on Mt. Corel, on the railway screen just after the Corel
+Recruit Barret at the No.1 Reactor train platform (md1stin), above and a
 
 - `apply(ctx)` 
 
 ## `patches/230_recruit_more.py`
-Recruit Red XIII, Cid and Cait Sith as NPCs; make Yuffie's and Vincent's
+Recruit NPCs for Red XIII, Cid, Cait Sith, Yuffie and Vincent (Barret: 220).
 
 - `_join_ops(char)` 
 - `_find(sec, raw)` 
@@ -487,6 +487,13 @@ Buggy for sale at Costa del Sol's town exit (del2): 1000 gil, then you
 - `_check_worldmap(ctx)` 
 - `apply(ctx)` 
 
+## `patches/440_corel_prison.py`
+Corel Prison by buggy, there and back.
+
+- `_desert_exits(ctx)` 
+- `_exit_npc(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/600_quests.py`
 Quests: new NPCs ("givers") offer quests; talking to them again once the
 
@@ -546,7 +553,7 @@ Shared helpers for character recruitment scenes.
 - `recruit_talk(script, char, question, choices, yes_reply, no_reply, joined, extra=())` Build the talk script. `question` is the dialogue before the choices
 - `count_recruit()` Ops: one more character recruited; show the PHS once there are enough
 - `xyzi(x, y, z, tri)` 
-- `add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines)` Add a new NPC for `char` to `field`, with the model copied from
+- `add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines, main=())` Add a new NPC for `char` to `field`, with the model copied from
 
 ## `patches/_travel.py`
 Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.

@@ -8,11 +8,11 @@
   line only reacted to [OK] and only dropped you onward, so it looked like a
   dead end with no way back. It now offers a choice on [OK] or when walked
   over: drop down (onward to the No.5 Reactor) or climb back to the tunnel.
-- Below the duct (sbwy4_1) there was no way back up: a line across the
-  corridor just left (on screen) of where you land takes you back to the
-  tunnel, beside the duct.
+- Below the duct (sbwy4_1, the corridor with the Ether) there was no way back
+  up: a line across the corridor just left (on screen) of where you land
+  takes you back to the tunnel, beside the duct.
 """
-from _travel import add_line, choice_menu, line_across, mapjump
+from _travel import add_line, choice_menu, mapjump
 
 from ff7 import asm
 from ff7.script import Op, Script
@@ -21,8 +21,11 @@ TUNNEL = "tunnel_2"
 VENT = "sbwy4_4"
 BACK_TO_TUNNEL = ("tunnel_2", 0, 450, 21, 64)   # beside the duct, past its line
 BELOW_DUCT = "sbwy4_1"
-DUCT_LANDING = (22, -745)        # tunnel_2's jump arrival; the corridor runs to y -951, left on screen
-BACK_LINE_AT = (22, -860)
+DUCT_LANDING = (22, -745)        # tunnel_2's jump arrival
+# The walkable corridor ends at y -806 (init IDLCKs triangles 2 and 5 beyond it;
+# the first version of this line sat there and could not be reached). The line
+# is between that end and the landing, so running left from the landing crosses it.
+BACK_LINE = ((-100, -785, 0), (100, -785, 0))
 
 
 def _copy(op):
@@ -67,9 +70,11 @@ def _vent(ctx):
 
 
 def _below_duct(ctx):
-    p1, p2 = line_across(ctx, BELOW_DUCT, *BACK_LINE_AT)
-    assert abs(p1[1] - BACK_LINE_AT[1]) < 40 and abs(p2[1] - BACK_LINE_AT[1]) < 40, (p1, p2)  # across the corridor
-    add_line(ctx, BELOW_DUCT, "toduct", p1, p2,
+    from ff7.walkmesh import Walkmesh
+    mesh = Walkmesh(ctx.field(BELOW_DUCT).section("walkmesh"))
+    y = BACK_LINE[0][1]
+    assert mesh.find(0, y) == 3 and DUCT_LANDING[1] > y, "line must be on the open floor, left of the landing"
+    add_line(ctx, BELOW_DUCT, "toduct", *BACK_LINE,
              [Op(b"\x33\x00"), mapjump(ctx, *BACK_TO_TUNNEL), asm.ret()])   # UC 00 before leaving
 
 

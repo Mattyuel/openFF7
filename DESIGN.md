@@ -76,12 +76,12 @@ Everything else: `docs/world_plan.md` (automatic first pass, with overrides).
 |---|---|---|
 | Aerith | Sector 5 church | New recruitment dialogue |
 | Tifa | Seventh Heaven bar, Sector 7 | New recruitment dialogue |
-| Barret | Mt. Corel, railway screen just after the Corel Reactor | New recruitment dialogue |
+| Barret | No.1 Reactor train platform | New recruitment dialogue |
 | Red XIII | Shinra HQ 67F research lab, by the stairs from 66F | New recruitment dialogue |
-| Cait Sith | Gold Saucer, Wonder Square arcade (fortune reading) | Adapted from the original recruitment |
-| Cid | Rocket Town, near the rocket | New recruitment dialogue |
-| Vincent | Shinra Mansion basement | As in the original (Basement Key from the safe) |
-| Yuffie | Random forest encounters | As in the original (encounters on from new game; the Wutai materia theft is skipped) |
+| Cait Sith | Costa del Sol beach, far right | New recruitment dialogue |
+| Cid | Junon airstrip | New recruitment dialogue |
+| Vincent | Honey Bee Inn, the dancers' room (far left) | New (embarrassed) dialogue; the original coffin route also works |
+| Yuffie | Chocobo Ranch, by the left pen's fence | New dialogue; random ninja fights off |
 
 #### Buggy
 Sold for 1000 gil by a salesman at Costa del Sol's town exit; buying it

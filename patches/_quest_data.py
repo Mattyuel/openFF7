@@ -574,7 +574,7 @@ GIVERS = [
                     "Cake, though... cake is honest.")),
 
     # ---- Cargo ship (upper deck) --------------------------------------------
-    dict(field="ship_2", name="moe", level=16, model=("ship_1", 8), at=(-351, 167), dir=0,
+    dict(field="ship_1", name="moe", level=16, model=("ship_1", 8), at=(107, -272), dir=38,   # mid deck (ship_2 spot was behind a wall)
          who="Deckhand Moe", where="Cargo ship, upper deck",
          quests=[
              dict(id="moe_pests", kind="kill",

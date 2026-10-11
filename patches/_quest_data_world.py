@@ -82,8 +82,8 @@ WORLD_GIVERS = [
                     "means thanks. Probably.")),
 
     # ---- Mythril Mine -------------------------------------------------------
-    dict(field="psdun_1", name="dunn", level=16, model=("elm", 8), at=(187, -302), dir=0,
-         who="Prospector Dunn", where="Mythril Mine",
+    dict(field="psdun_4", name="dunn", level=16, model=("elm", 8), at=(178, -119), dir=0,   # room north of the entrance
+         who="Prospector Dunn", where="Mythril Mine, north room",
          quests=[
              dict(id="dunn_dragons", kind="kill",
                   targets=[("Crawlers", [83], 6), ("Ark Dragons", [84], 3)],
@@ -127,7 +127,7 @@ WORLD_GIVERS = [
                     "today. Tough little feller.")),
 
     # ---- Fort Condor --------------------------------------------------------
-    dict(field="condor1", name="watcher", level=17, model=("condor1", 9), at=(48, 991), dir=0,
+    dict(field="condor2", name="watcher", level=17, model=("condor1", 9), at=(113, -13), dir=15,   # 1/3 from right, 1/3 up
          who="Condor Watcher", where="Fort Condor",
          quests=[
              dict(id="condor_pests", kind="kill",
@@ -202,8 +202,8 @@ WORLD_GIVERS = [
 
     # ---- Costa del Sol ------------------------------------------------------
     # del1 (harbour): del2 is full once the buggy seller stands at the exit.
-    dict(field="del1", name="sal", level=16, model=("del2", 7), at=(-143, 675), dir=0,
-         who="Sunbather Sal", where="Costa del Sol, the harbour",
+    dict(field="del3", name="sal", level=16, model=("del2", 7), at=(-2, 29), dir=0,   # the beach, mid screen
+         who="Sunbather Sal", where="Costa del Sol, the beach",
          quests=[
              dict(id="sal_beachplug", kind="kill", enemies=[99], count=6, label="Beachplugs",
                   title="Beach Bodies",
@@ -506,7 +506,7 @@ WORLD_GIVERS = [
                     "quiet. I love it.")),
 
     # ---- Cosmo Canyon -------------------------------------------------------
-    dict(field="cosin1", name="ina", level=21, model=("cosin1", 3), at=(44, 45), dir=0,
+    dict(field="cosin1", name="ina", level=21, model=("cosin1", 3), at=(44, 260), dir=0,   # ~8 steps back from (44, 45), which blocked the path
          who="Stargazer Ina", where="Cosmo Canyon",
          quests=[
              dict(id="ina_griffins", kind="kill",

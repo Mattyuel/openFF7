@@ -62,8 +62,8 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `130_shinra_hq.py` | HQ after the infiltration: 2F boxes openable, access level 69 kept (var[1][224] lowering writes removed in blin59/61/62_1/65_1/67_1/68_1), flags (3,168,1) 59F guards, (3,172,3) 60F sneaking, (1,226,5) 68F scientist; blin67_3 pinned 285; roof (blin70_3) Rufus on the pad + line -> formation 464 once per visit. |
 | `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
 | `160_midgar_disc2.py` | Gateway md8_2 left end <-> md8_6 (disc 2 hatch screen); disc 2 route state via bank 5 offset 128/135 new-game flags; canon_2 pinned 1604. Turks/Proud Clod/Hojo = Shinra Deserter quest bosses (md8_2; md8_6 has 254 texts, no room). |
-| `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (Mt. Corel mtcrl_3). |
-| `230_recruit_more.py` | Red XIII (blin67_1, HQ 67F lab), Cid (rcktbas1, by the rocket), Cait Sith (games, his meeting spot; recruit runs his name entry) NPCs; Yuffie's (yougan2) and Vincent's (sininb1) original joins get PRTYP + recruit count (Vincent's PHS menu replaced). |
+| `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (No.1 Reactor platform md1stin). |
+| `230_recruit_more.py` | Recruit NPCs: Red XIII (blin67_1), Cid (junair airstrip), Cait Sith (del3 beach), Yuffie (frcyo by the left pen, yougan2 model anim 6), Vincent (onna_2 dancers' room); Cait/Vincent run their name entry (fills records 6/7). Original Yuffie/Vincent joins count only if not already recruited. |
 | `250_train_destinations.py` | Station conductor menu (Upper Midgar md8brdg, Shinra Tower sinbil_1, No.1 md1stin, No.5 tunnel_2 — not tunnel_1, which loops onto itself), conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
 | `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
 | `270_sector4_duct.py` | Tunnel duct = plain choice; line below the duct (sbwy4_1, left of the landing) back to tunnel_2; vent end offers drop / back to tunnel. |
@@ -72,6 +72,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
 | `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open. |
 | `430_buggy.py` | Buggy salesman (Dio model) at Costa del Sol's town exit (del2): 1000 gil, sets (1,127) bits 0+1 and MAPJUMPs to wm12; wm0's Costa del Sol branch already mounts the buggy (asserted). |
+| `440_corel_prison.py` | Buggy into the world map Gold Saucer -> desert2 (vanilla wm0 0xA964); desert2's bottom/left lines now go to jail1/jail3; convict in jail1 drives you out (buggy bits + MAPJUMP wm15). |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
 | `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 37 givers, 66 quests, 10 repeatable boss lines. Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
@@ -314,6 +315,8 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - Disc 2 Midgar tunnels (tunnel_4/5/6) are one looping maze positioned by the
   counter var[15][129] (sbwy4_22 sets 4 on entry); bank 5 offset 131 bits 4-6
   are transient 'arrived by ladder' markers, don't set them.
+- Check init IDLCKs before placing a line or NPC: locked triangles are in the
+  walkmesh but can't be walked on (sbwy4_1 locks tris 2 and 5; a line there was unreachable).
 - Some fields have script sections the parser rejects (unused fields); catch
   `ValueError` when iterating every field.
 

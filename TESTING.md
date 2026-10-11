@@ -212,6 +212,22 @@ Existing saves load, but they keep their own story progress; use a new game.
   doors open. Red XIII is no longer in the 67F tank (his recruit NPC is on
   67F). On the roof Rufus stands on the helipad: walking towards him starts
   the fight (once per visit; leave and come back to fight again).
+- **Moved NPCs**: Prospector Dunn (Mythril Mine, the room north of the
+  entrance), Choco Billy and his chocobo swapped (Mythril Mine), Condor
+  Watcher (Fort Condor entrance, 1/3 from right / 1/3 up), Deckhand Moe (cargo
+  ship deck with the save point, middle), Sunbather Sal (Costa del Sol beach,
+  middle), Stargazer Ina (Cosmo Canyon, ~8 steps back). Recruits: Barret on the
+  No.1 Reactor platform (up-left of the conductor), Cid on the Junon airstrip,
+  Yuffie at the Chocobo Ranch by the left pen, Vincent in the Honey Bee Inn
+  dancers' room (far left; name entry on joining), Cait Sith on the Costa del Sol
+  beach far right (name entry on joining). Yuffie's random ninja fights are off.
+- **Costa del Sol harbour**: walking into town plays no Rufus/helicopter scene.
+- **Mt. Corel**: the man by the tracks just says "It's dangerous up ahead".
+- **Corel Prison**: drive the buggy into the Gold Saucer on the world map: the
+  prison desert screen; its bottom/left edges lead into the prison. A convict
+  near where you arrive in the prison drives you back out (in the buggy).
+- **No.5 corridor (Ether)**: running left from where you land crosses a line
+  back to the tunnel.
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
   in the party should no longer play "everyone's waiting at the inn" or

@@ -121,10 +121,10 @@ INITIAL_EVENT_FLAGS = [
     (1, 226, 6),   # junair: airport lift state; clear = Cloud drawn 624 units up on
                    #   arrival (OFST in his init) - spawned in the wrong spot
     (1, 232, 5),   # nvdun1: Materia Keeper beaten (hides the original; it's a quest boss line)
-    (3, 133, 0),   # world map: Yuffie random encounters on (set by psdun_1's Rude scene at
-                   #   progress < 387, which the pin skips); the fight leads to yougan2
     (3, 207, 6),   # Wutai done (0xE7E): wm0 never starts the materia theft (yougan, Yuffie
                    #   leaves); only datiao_* read it (hide Da-chao's quest NPCs)
+    (3, 224, 0),   # del1: Rufus/helicopter scene (del12) seen; its line before the exit to town is off
+    (3, 222, 1),   # mtcrl_0: the man's 'black-caped guy' scene done (he just says 'dangerous up ahead')
     # Shinra HQ after the infiltration (130_shinra_hq):
     (3, 168, 1),   # blin59: guards gone (no forced battle 422), lobby lifts to the elevator work
     (3, 172, 3),   # blin60_1: sneaking minigame done (guards parked, battle-423 lines off)

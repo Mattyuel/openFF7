@@ -1,22 +1,18 @@
-"""Recruit Red XIII, Cid and Cait Sith as NPCs; make Yuffie's and Vincent's
-original joins count as recruits.
+"""Recruit NPCs for Red XIII, Cid, Cait Sith, Yuffie and Vincent (Barret: 220).
 
 - Red XIII: Shinra HQ 67F research lab (blin67_1), by the stairs from 66F.
-  His original join (blin68_2) needs progress 278-283; the field is pinned past it.
-- Cid: Rocket Town launch pad (rcktbas1), by the rocket. His original join
-  follows the Palmer fight at a story moment the pin (998) skips.
-- Cait Sith: Wonder Square (games), where he meets you (his entity's spot at
-  progress 440); that scene is gated on progress == 440, so with the field
-  pinned at 443 it never plays and his entity stays hidden.
+- Cid: Junon airport, the airstrip (junair).
+- Cait Sith: Costa del Sol beach (del3), far right.
+- Yuffie: Chocobo Ranch (frcyo), on the walkway by the left pen's fence,
+  looking at the chocobos in her scheming pose (yougan2 model, anim 6).
+- Vincent: Honey Bee Inn, the dancers' room (onna_2), far left. Embarrassed.
   Cait Sith and Vincent share character records 6/7 with Young Cloud and
   Sephiroth: the name entry (MENU 00 06 c) copies the real level-1 record
-  over the slot (exe 0x718ADA), so his recruit runs it, as the original does.
-- Yuffie: the world map encounter is on from new game ((3,133,0) in
-  INITIAL_EVENT_FLAGS); her join in yougan2 only makes her PHS-available
-  (MMBUD), so add PRTYP + the recruit count.
-- Vincent: his join in sininb1 opens the PHS (MENU 00 07 00), which can only
-  be left with exactly 3 in the party (a softlock with fewer); replaced by
-  PRTYP + the recruit count.
+  over the slot (exe 0x718ADA), so their recruits run it, as the originals do.
+- The original joins still work and count once: Yuffie's (yougan2, if her
+  world map encounter is ever on) and Vincent's (sininb1) get PRTYP + the
+  recruit count unless already recruited; Vincent's PHS menu (needs exactly
+  3 in the party to leave: a softlock) is replaced.
 """
 from _config import CAIT_SITH, CID, RECRUITED, RED_XIII, VINCENT, YUFFIE
 from _recruit import add_recruit_npc, count_recruit
@@ -34,17 +30,17 @@ RED = dict(
         no_reply="{RED XIII}\n“…I will wait. I have grown used to it.”",
         joined="{RED XIII} joined the party!"))
 CID_ = dict(
-    field="rcktbas1", donor=("rcktbas1", 2), name="cidnpc", char=CID,
-    pos=(-21, 1525, 0, 0), dir=151,                # by the rocket; facing down the screen
+    field="junair", donor=("rcktbas1", 2), name="cidnpc", char=CID,
+    pos=(13232, 14084, 5139, 80), dir=169,         # mid airstrip; facing down the screen
     lines=dict(
-        question="{CID}\n“Damn rocket ain't goin' nowhere.\n Might as well go somewhere myself.\n Need a pilot?”",
+        question="{CID}\n“Nice runway. Shame Shinra never lets\n a real pilot near it. Need one?”",
         choices=("Welcome aboard, Cid.", "Maybe later."),
         yes_reply="{CID}\n“Hah! Now we're talkin'.\n Let's get the hell outta here!”",
-        no_reply="{CID}\n“Suit yourself. I'll be here\n starin' at this hunk of junk.”",
+        no_reply="{CID}\n“Suit yourself. I'll be here\n watchin' the planes.”",
         joined="{CID} joined the party!"))
 CAIT = dict(
-    field="games", donor=("games", 6), name="caitnpc", char=CAIT_SITH,
-    pos=(435, -211, 0, 39), dir=218,               # his meeting spot; facing down the screen
+    field="del3", donor=("games", 6), name="caitnpc", char=CAIT_SITH,
+    pos=(758, -41, -35, 278), dir=233,             # the beach, far right; facing down the screen
     lines=dict(
         question="{CAIT SITH}\n“How about a fortune? …Ooh! It says\n I should come with you! Can I?”",
         choices=("Sure, why not.", "No thanks."),
@@ -52,13 +48,35 @@ CAIT = dict(
         no_reply="{CAIT SITH}\n“Aw, shucks. I'll be here if ye\n change yer mind!”",
         joined="{CAIT SITH} joined the party!",
         extra=[Op(bytes([0x49, 0x00, 0x06, CAIT_SITH]))]))   # MENU 00 06 06: name entry (fills his record)
+YUFFIE_ = dict(
+    field="frcyo", donor=("yougan2", 8), name="yufinpc", char=YUFFIE,
+    pos=(-175, -790, 0, 41), dir=0xC0,             # by the left pen's fence, facing the chocobos
+    main=[Op(b"\xA2\x06\x01")],                    # DFANM 06 01: her "just as I planned" pose
+    lines=dict(
+        question="{YUFFIE}\n“Wha-!? I wasn't gonna steal a chocobo!\n …Okay, maybe one. You need\n a ninja? The great {YUFFIE}?”",
+        choices=("Sure, come along.", "Not a chance."),
+        yes_reply="{YUFFIE}\n“Heh, heh… just as I planned.\n Lead the way!”",
+        no_reply="{YUFFIE}\n“Your loss! More chocobos for me.”",
+        joined="{YUFFIE} joined the party!"))
+VINCENT_ = dict(
+    field="onna_2", donor=("yougan2", 7), name="vincnpc", char=VINCENT,
+    pos=(-147, 242, 50, 9), dir=64,                # far left, facing into the room
+    lines=dict(
+        question="{VINCENT}\n“…This is not what it looks like.\n I was told this was a library.\n …Get me out of here.”",
+        choices=("Come with me.", "Enjoy the library."),
+        yes_reply="{VINCENT}\n“…We will never speak of this.”",
+        no_reply="{VINCENT}\n“…………”",
+        joined="{VINCENT} joined the party!",
+        extra=[Op(bytes([0x49, 0x00, 0x06, VINCENT]))]))     # MENU 00 06 07: name entry (fills his record)
 
 MMBUD = lambda c: bytes([0xCD, 0x01, c])
 PRTYP = lambda c: Op(bytes([0xC8, c]))
 
 
 def _join_ops(char):
-    return [PRTYP(char), asm.biton(RECRUITED, char)] + count_recruit()
+    done = asm.nop()
+    return [PRTYP(char), asm.if_byte(RECRUITED, "bit_off", char, done),   # already recruited: don't count twice
+            asm.biton(RECRUITED, char)] + count_recruit() + [done]
 
 
 def _find(sec, raw):
@@ -86,7 +104,8 @@ def _vincent(ctx):
 
 
 def apply(ctx):
-    for r in (RED, CID_, CAIT):
-        add_recruit_npc(ctx, r["field"], *r["donor"], r["name"], r["char"], r["pos"], r["dir"], r["lines"])
+    for r in (RED, CID_, CAIT, YUFFIE_, VINCENT_):
+        add_recruit_npc(ctx, r["field"], *r["donor"], r["name"], r["char"], r["pos"], r["dir"], r["lines"],
+                        main=r.get("main", ()))
     _yuffie(ctx)
     _vincent(ctx)
