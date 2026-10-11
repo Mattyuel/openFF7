@@ -21,14 +21,17 @@ World map bit b = savemap 0x0BA4 + b//8, bit b%8: 0xE78+n = bank 2 offset 207 bi
 = field.tbl entry N-1 (same numbering as `push_special 6`); e.g. 0xAA24 = wm3 psdun_2,
 0xAC54 = wm4 psdun_1, 0xAA23 = wm31 sichi.
 
+## Applied after review (user decisions)
+- Mideel: always the disc 3 version (wm0 cell 0xB7A4 picks itown1b; `410_world_fixes`).
+- Yuffie's house: flag (3,190,2) set (also shows Yuffie in yufy2).
+- Cargo ship: (3,185,1) set; shpin_3 ELINE (Jenova BIRTH) turned off in code.
+- Corel Prison: jail1 pinned 464 (exits need >= 454).
+- Junon: the `aho` line always takes you up the elevator (junin7).
+- Gate of Naught: always open (cosin2 opening runs on entry).
+
 ## Not applied (need a decision or more checking)
-- `ithos` (Mideel clinic, pinned 998): the disc-2 "Cloud found" scene plays on entry
-  (`if 998 < 1100`); a pin >= 1121 would skip it but shows disc-2 state.
-- `yufy1` (Wutai, Yuffie's house "Follow me"): gated by (13,80,6)/(3,190,2); the flag
-  also changes yufy2 (Wutai quest). Better a code guard on "Yuffie recruited".
-- Cargo ship: ship_1 LINE (3,185,1) and shpin_3 `ELINE` (Jenova BIRTH, always on) - for the ferry work.
-- Story barriers (design): jail1 (Corel Prison) exits refuse to leave without Barret;
-  ujunon1 `aho` LINE sends a guard to block the Junon elevator; cosin2 Gate of Naught closed.
+- `ithos` (Mideel clinic): still has its disc-2 scene but is no longer reached
+  (the world map sends you to the disc 3 Mideel, itown1b).
 - Optional world-map tutorials: buggy (13,133,5), Tiny Bronco (13,134,0), chocobo (13,134,2).
 - Not covered: talk-triggered scenes, triangle checks in loops, party other than Cloud,
   Highwind fields, fields only reachable via story jumps.

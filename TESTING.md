@@ -72,6 +72,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   (Mt. Nibel, reactor, mansion basement) should be the present day, not the
   flashback (no flashback battles, chests visible, Mt. Nibel leads to the
   real Nibelheim).
+- **Opened up**: Mideel is the disc 3 (ruined) version; the cargo ship has no
+  stowaway or Jenova scene; Corel Prison's exits let you out without Barret;
+  the Junon elevator line takes you up instead of a guard blocking it; the
+  Gate of Naught (Cosmo Canyon) is open. Yuffie's "Follow me" scene in Wutai
+  is skipped (she may be visible in the next house).
 - **Choco Billy** outside Midgar stands a little lower, faces down, and he and
   his chocobo turn to you when talked to.
 - **Sounds**: quest rewards play the item chime (materia rewards the materia

@@ -435,6 +435,15 @@ The rest of the world: every field with story checks that no specific patch
 - `moments()` 
 - `apply(ctx)` 
 
+## `patches/410_world_fixes.py`
+Open-world fixes outside Midgar that pinning and new-game flags can't do
+
+- `_mideel(ctx)` 
+- `_line_off(ctx, field, name)` 
+- `_junon_elevator(ctx)` 
+- `_gate_of_naught(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/600_quests.py`
 Quests: new NPCs ("givers") offer quests; talking to them again once the
 

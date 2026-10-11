@@ -110,6 +110,9 @@ INITIAL_EVENT_FLAGS = [
     (3, 129, 4),   # gnmk: Gongaga reactor line seen
     (1, 130, 0),   # snow: Icicle Inn Elena ambush (LINE snowbd) done ...
     (1, 130, 7),   #   ... and its aftermath (guards / locked triangles released)
+    (3, 185, 1),   # ship_1: cargo ship stowaway scene (LINE LINEEA) seen
+    (3, 190, 2),   # yufy1: Yuffie's "Follow me" scene in her house seen (user's call:
+                   #   also makes Yuffie visible in yufy2)
 ]
 
 # Batteries for the Wall Market wire climb: item 85 x3, plus the three

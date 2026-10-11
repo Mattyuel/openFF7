@@ -1,5 +1,5 @@
 {
- "_comment": "Per-field story moments that override world_moments.json. Temple of the Ancients stays intact (it shrinks at 638); Forgotten City stays before the altar scene. Nibelheim / Mt. Nibel / Shinra Mansion fields shared with the five-years-ago flashback were pinned to flashback moments (<= 384); they use the present-day visit (678), like nivl_3.",
+ "_comment": "Per-field story moments that override world_moments.json. Temple of the Ancients stays intact (it shrinks at 638); Forgotten City stays before the altar scene. Nibelheim / Mt. Nibel / Shinra Mansion fields shared with the five-years-ago flashback were pinned to flashback moments (<= 384); they use the present-day visit (678), like nivl_3. jail1 (Corel Prison) after the prison chapter (exits need progress >= 454).",
  "blue_2": 668,
  "jtempl": 631,
  "jtemplb": 631,
@@ -19,5 +19,6 @@
  "sinin2_1": 678,
  "sininb31": 678,
  "sininb41": 678,
- "sininb51": 678
+ "sininb51": 678,
+ "jail1": 464
 }

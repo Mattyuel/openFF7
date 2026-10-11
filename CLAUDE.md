@@ -67,6 +67,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
+| `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open. |
 | `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data (15 givers, 18 quests): `_quest_data.py`. Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
