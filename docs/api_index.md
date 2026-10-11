@@ -371,6 +371,13 @@ Shinra HQ extras.
 
 - `apply(ctx)` 
 
+## `patches/150_midgar_fixes.py`
+Small Midgar fixes from play-testing.
+
+- `_honey_bee(ctx)` 
+- `_ghost(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/200_recruit_sector7.py`
 Recruit Tifa in 7th Heaven.
 
@@ -444,6 +451,13 @@ Open-world fixes outside Midgar that pinning and new-game flags can't do
 - `_gate_of_naught(ctx)` 
 - `_writes_progress(o)` 
 - `_progress_writes(ctx)` Replace writes to the story progress var with NOPs.
+- `apply(ctx)` 
+
+## `patches/420_cargo_ship.py`
+Cargo ship as a place to explore (Junon <-> Costa del Sol).
+
+- `_hide_party_copies(ctx)` 
+- `_first_mate(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/600_quests.py`

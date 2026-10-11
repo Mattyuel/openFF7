@@ -117,6 +117,8 @@ INITIAL_EVENT_FLAGS = [
     (3, 185, 1),   # ship_1: cargo ship stowaway scene (LINE LINEEA) seen
     (3, 190, 2),   # yufy1: Yuffie's "Follow me" scene in her house seen (user's call:
                    #   also makes Yuffie visible in yufy2)
+    (1, 226, 6),   # junair: airport lift state; clear = Cloud drawn 624 units up on
+                   #   arrival (OFST in his init) - spawned in the wrong spot
 ]
 
 # Batteries for the Wall Market wire climb: item 85 x3, plus the three

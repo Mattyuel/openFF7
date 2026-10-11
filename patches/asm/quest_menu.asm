@@ -30,7 +30,7 @@ INVENTORY equ 0xDC0234        ; savemap 0x04FC: 320 x u16 (id 9 bits, qty 7 bits
 ACCEPTED  equ 2
 Z_TEXT    equ 0x3dcccccd      ; 0.1f
 Z_WIN     equ 0x3e4ccccd      ; 0.2f
-LIST_H    equ 0xD8            ; list window height = details top
+LIST_H    equ 0xE4            ; list window height = details top (fits VIEW rows)
 TEXT_X    equ 0x40
 
 ; exe functions (cdecl)

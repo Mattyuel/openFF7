@@ -65,6 +65,20 @@ Existing saves load, but they keep their own story progress; use a new game.
 - If you installed the Tame test files earlier: put back the original
   `data\lang-en\kernel\kernel2.bin` (the build no longer changes it).
   `ff7_en.exe` is built again (quest kill counting): copy the new one.
+- **Fixes from the last test** (new game recommended):
+  Andrea stands; Gwen (Potions) and Zhije (Hedgehog Pies) swapped places;
+  Ms Folia is on the garden screen next to Aerith's house; the Old Man is on
+  the church screen; Sam stands left of Bessie; the quest list shows 8 rows;
+  the Honey Bee Inn door is no longer blocked; a ghost stands left of where
+  you enter the playground from Sector 7; Cloud should arrive at the right
+  spot on the Junon airstrip.
+- **Cargo ship**: no party members to swap on the upper deck; the First
+  Mate (upper deck, second screen) offers to put you ashore at Costa del
+  Sol; Deckhand Moe's quests end with Jenova BIRTH, fought by walking to the
+  dead guard in the engine room (once per visit, also before/after the quest).
+- **Every quest reward** now includes Sources (1 in Midgar).
+- openFF7's own flags moved to new save bytes: start a new game (old saves
+  lose recruit/boss flags).
 - **Fewer story scenes** (new game): no Midgar Zolom scene approaching the
   Mythril Mine; the buggy never breaks down near Cosmo Canyon; no arrival
   scenes in Nibelheim, Mideel, the Gold Saucer ropeway (Barret flashback),

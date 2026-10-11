@@ -60,6 +60,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `110_corneo.py` | Corneo's mansion open, Corneo removed. |
 | `120_sector6_gate.py` | Sector 7<->6 gate both ways (guards moved, exit line widened, new gateway back). |
 | `130_shinra_hq.py` | HQ 2F boxes openable. |
+| `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (Mt. Corel mtcrl_3). |
 | `250_train_destinations.py` | Station conductor menu, conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
 | `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
@@ -68,6 +69,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
 | `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open. |
+| `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
 | `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data (15 givers, 18 quests): `_quest_data.py`. Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
@@ -85,15 +87,16 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   World-map scenes are in wm0.ev map-cell functions (e.g. the Zolom: cell 0xAA23
   -> field `sichi`; buggy breakdown: cell 0xADA0); wm bit 0xE78+n = (3,207,n).
   `docs/inventory/worldmap.md` "Called from" is off by one (enter_field N = entry N-1).
-- openFF7's own save vars: bank 4 offsets 224-255 (nibble 13 = 8-bit), unused
-  by the original scripts. `FLAGS` = (13,224) bits: 1 Guard Scorpion, 2 Air Buster, 3 in No.5 Reactor.
-  `RECRUITED` = (13,225) bit per character id, `RECRUIT_COUNT` (13,226).
-  **Bank 4 offsets 232-255 are NOT free**: the exe's world map zeroes 232-243
-  on entry and stores world map object data in 244-255; only 224-231 are safe.
-  Bank 3 offsets 192-255 (nibble 11, savemap 0x0E64, memory 0xDC0B9C) look
-  unused: quest bytes (`600_quests._allocate`: per quest a state byte + one
-  counter per kill target, in GIVERS order; 192-224 used). Append new quests at
-  the end of a giver or new givers at the end, or old saves' bytes shift.
+- openFF7's own save vars: bank 3 offsets 96-105 (nibble 11): `FLAGS` = (11,96)
+  bits: 1 Guard Scorpion, 2 Air Buster, 3 in No.5 Reactor; `RECRUITED` = (11,97)
+  bit per character id; `RECRUIT_COUNT` (11,98); boss "fought this visit" bits
+  (11,99-101). **Bank 4 224-255 is NOT free**: 184-231 is the exe's world map
+  object slot table (0x76609E writes, 0x76616A reads; slot 5 = 224-231), 232-243
+  zeroed on world map entry. Quest bytes: `_config.QUEST_AREAS` (bank 3 192-255,
+  160-183, bank 5 181-223, bank 2 27-63; all checked free in field/world map
+  scripts and exe absolute refs, zero at new game); `600_quests._allocate` hands
+  them out in GIVERS order (state byte + one counter per kill target), so append
+  new quests at the end of a giver or new givers at the end.
   Temp vars (5,232)-(5,234) used by quest givers/markers. Temp vars (5,240),(5,241) for menus.
 
 ## Verified facts: field scripts
@@ -296,9 +299,10 @@ field leader entities (untested),
 Guard Scorpion line (untested), Air Buster NPC (untested), PHS unlock
 (untested), Cloud level 1 (untested), Kalm arrival flag (untested).
 
-Quests (600): first 3 givers user-confirmed working (orbs, menu, kill counting).
-12 more givers / 15 quests added from the user's list (untested): multi-target
-kill quests, quest log scrolling (8 rows visible), Sam's chocobo companion.
+Quests (600): first 3 givers user-confirmed working (orbs, menu, kill counting);
+the 12 from the user's list tested (fixes applied: positions, Andrea standing,
+8 visible rows). Cargo ship giver + Jenova BIRTH boss line (untested). Every
+quest also gives Sources by level (untested). World quests: not yet.
 
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),

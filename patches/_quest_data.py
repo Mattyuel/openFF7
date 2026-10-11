@@ -137,8 +137,9 @@ GIVERS = [
                     "'Monsters', she says. Grown-ups",
                     "are so weird.")),
 
-    dict(field="mds5_3", name="gwen", level=8, model=("mds5_1", 5), at=(-280, -100), dir=0xC0,
-         who=GWEN, where="Sector 5 slums, by the tunnel",
+    # Swapped with Zhije (user).
+    dict(field="mds5_1", name="gwen", level=8, model=("mds5_1", 5), at=(-799, 165), dir=0xC0,
+         who=GWEN, where="Sector 5 slums, the town",
          quests=[
              dict(id="gwen", kind="deliver", item=0, count=3,
                   title="A Dare Too Far", label="Potions",
@@ -226,7 +227,7 @@ GIVERS = [
          all_done=M("Leslie", "The guards sleep like babies",
                     "now. On duty. Don't tell.")),
 
-    dict(field="mds6_3", name="sam", level=10, model=("mrkt2", 4), at=(233, 529), dir=0,
+    dict(field="mds6_3", name="sam", level=10, model=("mrkt2", 4), at=(63, 449), dir=0,  # left of Bessie
          who="Sam", where="Road from the park to Wall Market",
          companion=dict(name="bessie", model=("frcyo", 5), at=(253, 449), chocobo=True,
                         talk="Bessie\n“Wark. (She looks hungry.)”"),
@@ -287,7 +288,9 @@ GIVERS = [
          all_done=M("Ronnie", "I won the squat-off! Still",
                     "can't feel my legs, bro.")),
 
-    dict(field="mkt_s1", name="andrea", level=12, model=("onna_2", 1), at=(-99, 57), dir=0,
+    # Model: the Honey Bee dancer; blackbg2's copy has stand/walk/run animations
+    # (onna_2's copies dance or sit).
+    dict(field="mkt_s1", name="andrea", level=12, model=("blackbg2", 5), at=(-99, 57), dir=0,
          who="Andrea", where="Wall Market, the boutique",
          quests=[
              dict(id="andrea", kind="kill",
@@ -457,8 +460,8 @@ GIVERS = [
                     "cry. I'm crying.")),
 
     # ---- Sector 5 -----------------------------------------------------------
-    dict(field="mds5_5", name="oldman", level=8, model=("mds7_im", 1), at=(359, -75), dir=0,
-         who="Old Man", where="Sector 5, in front of the church",
+    dict(field="church", name="oldman", level=8, model=("mds7_im", 1), at=(53, -90), dir=0,
+         who="Old Man", where="Sector 5, outside the church",
          quests=[
              dict(id="oldman", kind="kill", enemies=[25], count=10, label="Whole Eaters",
                   title="Lunch Thief",
@@ -486,8 +489,8 @@ GIVERS = [
          all_done=M("Old Man", "Ate a whole lunch. A whole one!",
                     "Took me 3 hours.")),
 
-    dict(field="ealin_1", name="folia", level=9, model=("mds7", 8), at=(20, 471), dir=0,
-         who="Ms Folia", where="Near Aerith's house",
+    dict(field="eals_1", name="folia", level=9, model=("mds7", 8), at=(268, 11), dir=0,
+         who="Ms Folia", where="The garden by Aerith's house",
          quests=[
              dict(id="folia_vice", kind="kill", enemies=[34], count=3, label="Vices",
                   title="Seed Thieves",
@@ -535,9 +538,9 @@ GIVERS = [
          all_done=M("Ms Folia", "The garden's never looked better.",
                     "The roses send their regards.")),
 
-    # Location not given; the Sector 5 slum town (Hedgehog Pies live nearby).
-    dict(field="mds5_1", name="zhije", level=8, model=("mds5_1", 4), at=(-799, 165), dir=0,
-         who="Zhije", where="Sector 5 slums, the town",
+    # Location not given at first; swapped with Gwen (user): by the tunnel.
+    dict(field="mds5_3", name="zhije", level=8, model=("mds5_1", 4), at=(-280, -100), dir=0,
+         who="Zhije", where="Sector 5 slums, by the tunnel",
          quests=[
              dict(id="zhije", kind="kill", enemies=[28], count=10, label="Hedgehog Pies",
                   title="False Dessert",
@@ -563,4 +566,76 @@ GIVERS = [
          ],
          all_done=M("Zhije", "I've sworn off pie forever.",
                     "Cake, though... cake is honest.")),
+
+    # ---- Cargo ship (upper deck) --------------------------------------------
+    dict(field="ship_2", name="moe", level=16, model=("ship_1", 8), at=(-351, 167), dir=0,
+         who="Deckhand Moe", where="Cargo ship, upper deck",
+         quests=[
+             dict(id="moe_pests", kind="kill",
+                  targets=[("Scrutin Eyes", [93], 4), ("Marines", [94], 4)],
+                  title="Below Decks",
+                  desc=["Beat 4 Scrutin Eyes and 4 Marines on",
+                        "the lower decks. Moe won't go down",
+                        "there. Moe has a 'condition'."],
+                  offer=[M("Deckhand Moe", "Psst. Don't go below deck.",
+                           "...Unless you're gonna clean it."),
+                         M("Deckhand Moe", "Floating eyeballs and angry",
+                           "Marines. Beat 4 of each and I'll",
+                           "stop sleeping in the lifeboat.")],
+                  ask=M("Deckhand Moe", "Deal, matey?"),
+                  choices=["Aye aye.", "I get seasick."],
+                  accept=M("Deckhand Moe", "Brave! Or dumb. Same thing",
+                           "at sea."),
+                  decline=M("Deckhand Moe", "Lifeboat it is, then."),
+                  progress=M("Deckhand Moe", "4 Scrutin Eyes, 4 Marines.",
+                             "The eyes are still LOOKING."),
+                  done=[M("Deckhand Moe", "The hold's quiet! Here, take",
+                          "this. Fell off a crate. Twice.")],
+                  reward=dict(gil=900, items=[(1, 3)])),
+             dict(id="moe_eyedrops", kind="deliver", item=52, count=2, label="Eye drops",
+                  title="Sea Spray",
+                  desc=["Bring Moe 2 Eye drops. Marines drop",
+                        "them. Moe got salt in his eyes from",
+                        "crying about the eyeballs."],
+                  offer=[M("Deckhand Moe", "Salt spray, all day. My eyes",
+                           "are pickled. Got 2 Eye drops?",
+                           "The Marines carry 'em.")],
+                  ask=M("Deckhand Moe", "Help a sailor out?"),
+                  choices=["Here's looking at you.", "Blink harder."],
+                  accept=M("Deckhand Moe", "You're a pal. A blurry pal."),
+                  decline=M("Deckhand Moe", "I'll just squint forever."),
+                  progress=M("Deckhand Moe", "2 Eye drops, matey. Everything",
+                             "looks like a Scrutin Eye now."),
+                  done=[M("Deckhand Moe", "I can see! You're... spikier",
+                          "than I thought. Here.")],
+                  reward=dict(gil=700, items=[(3, 1)])),
+             dict(id="moe_jenova", kind="kill", enemies=[95], count=1, label="Jenova-BIRTH",
+                  level=25,
+                  title="Something in the Hold",
+                  desc=["Something's down in the engine room",
+                        "where the guard fell. Find it, beat",
+                        "it. Moe isn't coming."],
+                  # Repeatable boss: the original trigger line (ELINE, off in
+                  # 410) by the dead guard; always active, once per visit.
+                  boss=dict(field="shpin_3", line=((-75, -32, 1), (76, -35, 1)), formation=488,
+                            always=True),
+                  offer=[M("Deckhand Moe", "Bad news. Something BIG is in",
+                           "the engine room. A guard went",
+                           "down there. He's... still there."),
+                         M("Deckhand Moe", "Go to where he fell and deal",
+                           "with it. I'll guard the snacks.")],
+                  ask=M("Deckhand Moe", "Will you?"),
+                  choices=["Leave it to me.", "That's above my pay grade."],
+                  accept=M("Deckhand Moe", "If you see my lunch down",
+                           "there, it's mine."),
+                  decline=M("Deckhand Moe", "Smart. Very smart. Coward."),
+                  progress=M("Deckhand Moe", "It's still down there. I can",
+                             "hear it being gross."),
+                  done=[M("Deckhand Moe", "You beat it?! Then the noises",
+                          "were just the engine. Good.",
+                          "Take this, you've earned it.")],
+                  reward=dict(gil=2500, items=[(5, 1)])),
+         ],
+         all_done=M("Deckhand Moe", "Smooth sailing! Except for the",
+                    "eyeballs. There are always eyeballs.")),
 ]

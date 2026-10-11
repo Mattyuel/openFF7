@@ -361,7 +361,7 @@ def _add_companion(ctx, giver):
 def _add_boss(ctx, q, slot):
     """Repeatable boss fight (like the Guard Scorpion line): crossing the
     quest's boss line fights its formation once per visit, from when the
-    quest is accepted on (also after it's done). The "fought" bit is set by
+    quest is accepted on (also after it's done; always, with always=True). The "fought" bit is set by
     the fight and cleared when the field is entered."""
     b = q["boss"]
     assert slot < 8 * BOSS_FOUGHT_BYTES, "more bosses than BOSS_FOUGHT bits"
@@ -370,7 +370,8 @@ def _add_boss(ctx, q, slot):
 
     def fight(sec):
         done = asm.ret()
-        return [jump_if(state(q), "<", ACCEPTED, done),        # not offered/accepted yet
+        gate = [] if b.get("always") else [jump_if(state(q), "<", ACCEPTED, done)]  # not accepted yet
+        return gate + [
                 asm.if_byte(fought, "bit_off", bit, done),       # skip if fought this visit
                 asm.biton(fought, bit),
                 asm.battle(b["formation"]),
