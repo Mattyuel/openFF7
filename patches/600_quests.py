@@ -45,6 +45,11 @@ NIBBLE_OF = {b: n for n, b in BANK_OF.items()}
 # bit per boss, cleared when its field is entered.
 BOSS_FOUGHT_FIRST, BOSS_FOUGHT_BYTES = 99, 3
 NEW, ACCEPTED, DONE = 0, 2, 4
+# Kinds whose progress is counter bytes (shown and checked like kill counts):
+# kill (the battle hook counts), count (counted by other code: a field script
+# or an exe hook, see COUNTERS), visit (lines on the floor: `spots`), courier
+# (talk to a `target` NPC elsewhere).
+COUNTED = ("kill", "count", "visit", "courier")
 ITEM_COUNT = (5, 232)          # temp var: CKITM result
 MODE, SHOWN = (5, 233), (5, 234)   # temp vars: marker mode wanted / applied
 
@@ -54,6 +59,11 @@ ORB_TINT = {1: (120, 100, -120),   # yellow: quest to offer
             2: (-80, -20, 140)}    # blue: ready to hand in
 
 HOOK_VA, HOOK_OLD = 0x431536, bytes.fromhex("8b45fc83c004")
+# Minigame hooks (quest_menu.asm entries CODE+15/20/25): they count the
+# made-up enemy ids _quest_data.BIKE / BALLOON through the kill table.
+MINIGAME_HOOKS = [(0x6566B9, "8b159059d800", 15, "bike game: enemy bike destroyed -> quest count"),
+                  (0x737D95, "8b4d088b513c", 20, "snowboard: balloon popped (handler A) -> quest count"),
+                  (0x73C52A, "8b45088b483c", 25, "snowboard: balloon popped (handler B) -> quest count")]
 
 GIL_TEXT = "%d gil"
 
@@ -63,6 +73,12 @@ def parts(q):
     deliveries."""
     if q["kind"] == "kill":
         return q.get("targets") or [(q["label"], q["enemies"], q["count"])]
+    if q["kind"] == "count":
+        return q.get("targets") or [(q["label"], None, q["count"])]
+    if q["kind"] == "visit":
+        return [(s["label"], None, 1) for s in q["spots"]]
+    if q["kind"] == "courier":
+        return [(q["label"], None, 1)]
     return q.get("items") or [(q["label"], q["item"], q["count"])]
 
 
@@ -87,7 +103,7 @@ def _allocate():
             assert q["id"] not in q_off, q["id"]
             assert 1 <= len(parts(q)) <= 4, q["id"]
             q_off[q["id"]] = next(free)
-            if q["kind"] == "kill":
+            if q["kind"] in COUNTED:
                 ctr[q["id"]] = [next(free) for _ in parts(q)]
     except StopIteration:
         raise AssertionError("quest save bytes exhausted: add an area to _config.QUEST_AREAS")
@@ -131,7 +147,7 @@ def sources(giver, q):
 def _not_met(q, target):
     """Ops: goto target unless every target/item of the quest is complete."""
     ops = []
-    if q["kind"] == "kill":
+    if q["kind"] in COUNTED:
         for ctr, (_, _, count) in zip(counters(q), parts(q)):
             ops.append(jump_if(ctr, "<", count, target))
         return ops
@@ -315,8 +331,9 @@ def _quest_log_data(base):
         ptrs += [text(line) for line in q["desc"]]
         rec = struct.pack("<HBx6I", Q[q["id"]], len(parts(q)), *ptrs)
         for i, (label, src, count) in enumerate(parts(q)):
-            src = CTR[q["id"]][i] if q["kind"] == "kill" else src
-            rec += struct.pack("<IHBB", text(label), src, count, 0 if q["kind"] == "kill" else 1)
+            counted = q["kind"] in COUNTED
+            src = CTR[q["id"]][i] if counted else src
+            rec += struct.pack("<IHBB", text(label), src, count, 0 if counted else 1)
         recs += rec.ljust(REC_SIZE, b"\0")
     assert len(recs) == REC_SIZE * len(quests)
     return struct.pack("<4I", len(quests), none, ready, kills) + recs + bytes(pool)
@@ -334,6 +351,10 @@ def _quest_menu(ctx):
     assert code[0] == code[5] == code[KILL_ENTRY] == 0xE9
     hook = b"\xe9" + struct.pack("<i", MENU_CODE_VA + KILL_ENTRY - (HOOK_VA + 5)) + b"\x90"
     exe.patch(HOOK_VA, HOOK_OLD, hook, "reward loop -> quest kill counter")
+    for va, old, entry, what in MINIGAME_HOOKS:
+        assert code[entry] == 0xE9, entry
+        jmp = b"\xe9" + struct.pack("<i", MENU_CODE_VA + entry - (va + 5)) + b"\x90"
+        exe.patch(va, bytes.fromhex(old), jmp, what)
 
     for va, old, new, what in MENU_PATCHES:
         exe.patch(va, bytes.fromhex(old), bytes.fromhex(new), what)
@@ -384,9 +405,69 @@ def _add_boss(ctx, q, slot):
              init_extra=[asm.bitoff(fought, bit)])
 
 
+def quest_counter(qid, part=0):
+    """(field var, target count) of a count quest's counter, for patches that
+    count progress themselves (field scripts / exe hooks)."""
+    q = next(q for g in GIVERS for q in g["quests"] if q["id"] == qid)
+    assert q["kind"] == "count", qid
+    return counters(q)[part], parts(q)[part][2]
+
+
+def count_ops(qid, part=0, step=1):
+    """Field ops: add `step` to a count quest's counter while it is accepted,
+    capped at its target."""
+    ctr, count = quest_counter(qid, part)
+    q = next(q for g in GIVERS for q in g["quests"] if q["id"] == qid)
+    skip = asm.nop()
+    return [jump_if(state(q), "!=", ACCEPTED, skip), jump_if(ctr, ">=", count, skip),
+            _inc(ctr, step), skip]
+
+
+def _inc(v, step):
+    """var += step (PLUS!, 8-bit, saturating)."""
+    return Op(bytes([0x76, v[0] << 4, v[1], step]))
+
+
+def _add_spot(ctx, q, i, spot):
+    """visit quest: crossing the spot's line while the quest is accepted marks
+    it found (counter = 1) with the item chime and a note."""
+    ctr = counters(q)[i]
+
+    def found(sec):
+        done = asm.ret()
+        return [jump_if(state(q), "!=", ACCEPTED, done), jump_if(ctr, "!=", 0, done),
+                asm.setbyte(ctr, 1), sound(SOUND_ITEM)] + \
+               (say(sec, spot["note"]) if spot.get("note") else []) + [done]
+    line = spot.get("line") or line_across(ctx, spot["field"], *spot["at"])
+    add_line(ctx, spot["field"], "%s%d" % (q["id"][:6], i), *line, found)
+
+
+def _add_courier(ctx, q):
+    """courier quest: the target NPC takes the message while it's accepted."""
+    t = q["target"]
+    ctr = counters(q)[0]
+    model = copy_model(ctx, t["field"], *t["model"])
+
+    def talk(sec):
+        idle, end = asm.nop(), [Op(b"\x33\x00"), asm.ret()]
+        ops = [Op(b"\x33\x01"), Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00"),
+               jump_if(state(q), "!=", ACCEPTED, idle), jump_if(ctr, "!=", 0, idle),
+               asm.setbyte(ctr, 1), sound(SOUND_ITEM)]
+        ops += say(sec, t["thanks"]) + end + [idle] + say(sec, t["idle"]) + end
+        return ops
+    add_npc(ctx, t["field"], t["name"], model, _spot(ctx, t["field"], *t["at"]), t.get("dir", 0), talk)
+
+
 def apply(ctx):
     for slot, q in enumerate(q for g in GIVERS for q in g["quests"] if "boss" in q):
         _add_boss(ctx, q, slot)
+    for g in GIVERS:
+        for q in g["quests"]:
+            if q["kind"] == "visit":
+                for i, spot in enumerate(q["spots"]):
+                    _add_spot(ctx, q, i, spot)
+            elif q["kind"] == "courier":
+                _add_courier(ctx, q)
     for g in GIVERS:
         field = g["field"]
         assert len(g["name"]) <= 8, g["name"]

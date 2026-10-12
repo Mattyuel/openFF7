@@ -43,7 +43,10 @@ OPEN_VARS_FIRST = 96
 
 # Quest save bytes (600_quests allocates in this order; the first area keeps
 # the offsets quests shipped with): (8-bit nibble, first offset, last offset).
-QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63)]   # 7 bytes left (bank 2 57-63)
+QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63),
+               # bank 1 runs unused by every field/world map script and with no exe
+               # absolute reference (scan of 2026-10; bank 1 = plain field flags)
+               (1, 136, 159), (1, 236, 255)]
 
 # Regions that keep their own story line in a private 16-bit variable
 # (reads/writes of story progress in their fields are redirected to it).
@@ -67,6 +70,7 @@ FLAG_IN_REACTOR5 = 3      # last reactor room entered was No.5's (the elevator i
 FLAG_TAME_MATERIA = 4     # Tame materia picked up (Sector 6 playground)
 FLAG_RUFUS_FOUGHT = 5     # Rufus fought this visit (Shinra HQ roof; cleared on entering it)
 FLAG_ELEVATOR_FOUGHT = 6  # HQ elevator gunships fought this visit (69F; cleared on entering it)
+FLAG_MOTORBALL_FOUGHT = 7 # Motor Ball fought this visit (end of the highway, roadend)
 
 # Event flags set at new game so rooms behave as if their story scenes were
 # already seen (found with tools/ff7/simulate.py: find_quiet_flags, then

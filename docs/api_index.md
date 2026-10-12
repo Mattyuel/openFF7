@@ -397,6 +397,14 @@ Sector 7 pillar open both ways; a way back up from the sewer.
 - `_sewer_back(ctx)` 
 - `apply(ctx)` 
 
+## `patches/180_motorbike.py`
+The motorbike section on demand, from the front of Shinra HQ.
+
+- `minigame(field_id, x, y, tri, param, game)` 
+- `_biker(ctx)` 
+- `_road_end(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/200_recruit_sector7.py`
 Recruit Tifa in 7th Heaven.
 
@@ -535,6 +543,11 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_quest_menu(ctx)` 
 - `_add_companion(ctx, giver)` 
 - `_add_boss(ctx, q, slot)` Repeatable boss fight (like the Guard Scorpion line): crossing the
+- `quest_counter(qid, part=0)` (field var, target count) of a count quest's counter, for patches that
+- `count_ops(qid, part=0, step=1)` Field ops: add `step` to a count quest's counter while it is accepted,
+- `_inc(v, step)` var += step (PLUS!, 8-bit, saturating).
+- `_add_spot(ctx, q, i, spot)` visit quest: crossing the spot's line while the quest is accepted marks
+- `_add_courier(ctx, q)` courier quest: the target NPC takes the message while it's accepted.
 - `apply(ctx)` 
 
 ## `patches/900_phs.py`

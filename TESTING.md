@@ -251,6 +251,16 @@ Existing saves load, but they keep their own story progress; use a new game.
   on the stairs; Biggs, Jessie and Barret aren't there. Gwen (by the pillar)
   has 2 more quests: 8 Aero Combatants, then Reno, who appears when you walk
   towards the middle of the roof.
+- **Motorbike**: a Shinra Biker on the right in front of Shinra HQ offers the
+  bike ride; afterwards you're at the end of the highway, nobody there, no
+  scene. Walking up the road: Motor Ball (once per visit); down: back to the
+  front of HQ. The Middle Manager's last quest counts bikes you destroy (12).
+- **Snowboard**: the Instructor's 3rd quest counts balloons popped on the run
+  to the glacier (15, can take several runs). Needs the board + map from town.
+- **Great Glacier**: 6 new quest givers (snowboard landing, north landing,
+  Frostbite Cave, deep snowfield, wide slope, hot spring), incl. a survey-flag
+  quest (walk to 3 spots), a message to deliver to Holzoff's cabin, and the
+  Snow Woman as a boss by her cave. Watch the cold timer.
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
   in the party should no longer play "everyone's waiting at the inn" or

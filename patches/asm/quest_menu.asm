@@ -3,7 +3,11 @@
 ; Assembled with: nasm -f bin quest_menu.asm -o quest_menu.bin
 ; 600_quests.py places the binary at CODE and the data block at DATA (both
 ; asserted there). Entry points (5-byte jmp stubs): CODE+0 menu init(int),
-; CODE+5 menu update(frame), CODE+10 kill hook (jumped to from 0x431536).
+; CODE+5 menu update(frame), CODE+10 kill hook (jumped to from 0x431536), CODE+15 motorbike
+; destroyed (bike minigame, from 0x6566B9), CODE+20 / CODE+25 balloon popped
+; (snowboard minigame, from 0x737D95 / 0x73C52A). The bike and balloon hooks
+; count made-up enemy ids (BIKE_ID, BALLOON_ID) through the same kill table,
+; so those quests are ordinary kill quests in 600_quests.py.
 ;
 ; DATA (built by 600_quests.py):
 ;   +0  u32 quest count   +4 ptr "No quests" text   +8 ptr "ready" text
@@ -51,11 +55,23 @@ SOUND         equ 0x74580A    ; (id)
 ENEMY_IDS     equ 0x9A8748    ; u16 enemy id per enemy type (3)
 HOOK_BACK     equ 0x43153C
 
+; minigame hooks
+BIKE_ID       equ 0xFFFE          ; "Shinra motorbike" in the kill table
+BALLOON_ID    equ 0xFFFD          ; "balloon" (Icicle Inn snowboard run)
+BIKE_SCORE    equ 0xD85990        ; bike game score (the replaced load)
+BIKE_BACK     equ 0x6566BF
+SNOW_MODE     equ 0xDD865C        ; snowboard game: 1 = Icicle Inn run, 0 = Gold Saucer
+SNOW_A_BACK   equ 0x737D9B
+SNOW_B_BACK   equ 0x73C530
+
 org CODE
 
 entry_init:   jmp near q_init
 entry_update: jmp near q_update
 entry_kill:   jmp near q_kill
+entry_bike:   jmp near q_bike
+entry_snow_a: jmp near q_snow_a
+entry_snow_b: jmp near q_snow_b
 
 %macro TEXT 4                 ; x, y, text ptr, colour
     push Z_TEXT
@@ -87,6 +103,57 @@ q_kill:
     pushad
     mov eax, [ebp - 0x20]               ; enemy type
     movzx eax, word [ENEMY_IDS + eax*2]
+    call q_count
+    popad
+    mov eax, [ebp - 4]
+    add eax, 4
+    jmp HOOK_BACK
+
+; ---- motorbike destroyed (bike minigame hit routine, kill path) ----------
+; Replaces `mov edx,[BIKE_SCORE]` at 0x6566B9. [ebp-8] = the bike's state
+; block (+0 state: 2 = already destroyed; Cloud's attack doesn't check).
+q_bike:
+    pushad
+    mov eax, [ebp - 8]
+    cmp dword [eax], 2
+    je .skip
+    mov eax, BIKE_ID
+    call q_count
+.skip:
+    popad
+    mov edx, [BIKE_SCORE]
+    jmp BIKE_BACK
+
+; ---- balloon popped (snowboard minigame, two pop handlers) ---------------
+; Replace `mov ecx,[ebp+8]; mov edx,[ecx+0x3c]` at 0x737D95 and
+; `mov eax,[ebp+8]; mov ecx,[eax+0x3c]` at 0x73C52A. Icicle Inn run only.
+q_snow_a:
+    pushad
+    call q_balloon
+    popad
+    mov ecx, [ebp + 8]
+    mov edx, [ecx + 0x3c]
+    jmp SNOW_A_BACK
+
+q_snow_b:
+    pushad
+    call q_balloon
+    popad
+    mov eax, [ebp + 8]
+    mov ecx, [eax + 0x3c]
+    jmp SNOW_B_BACK
+
+q_balloon:
+    cmp dword [SNOW_MODE], 1
+    jne .no
+    mov eax, BALLOON_ID
+    call q_count
+.no:
+    ret
+
+; ---- count one kill of enemy id eax for every accepted quest that wants it
+; (clobbers eax, ecx, edx, esi, ebx; callers pushad)
+q_count:
     mov esi, [DATA + 12]
 .loop:
     movzx edx, word [esi]
@@ -106,10 +173,7 @@ q_kill:
     add esi, 8
     jmp .loop
 .done:
-    popad
-    mov eax, [ebp - 4]
-    add eax, 4
-    jmp HOOK_BACK
+    ret
 
 ; ---- init(int): list the accepted quests --------------------------------
 q_init:

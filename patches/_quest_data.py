@@ -35,11 +35,14 @@ def M(speaker, *lines):
 ITEMS = {0: "Potion", 1: "Hi-Potion", 2: "X-Potion", 3: "Ether", 4: "Turbo Ether", 5: "Elixir",
          6: "Megalixir", 7: "Phoenix Down", 9: "Soft", 13: "Hyper", 15: "Remedy", 30: "Fire Fang",
          34: "Bolt Plume", 48: "Bird Wing", 52: "Eye drop", 57: "T/S Bomb", 59: "Dazers", 70: "Tent",
-         81: "Lasan Nut", 38: "Deadly Waste",
+         81: "Lasan Nut", 38: "Deadly Waste", 33: "Ice Crystal",
          14: "Tranquilizer", 20: "Grenade", 29: "Loco Weed", 56: "Graviball",
          71: "Power Source", 72: "Guard Source", 73: "Magic Source", 74: "Mind Source",
          75: "Speed Source", 76: "Luck Source"}
 SOURCES = [71, 72, 73, 74, 75, 76]
+# Made-up "enemy ids" counted by exe hooks in minigames (quest_menu.asm):
+# use them in kill quests like real enemies.
+BIKE, BALLOON = 0xFFFE, 0xFFFD     # Shinra motorbike destroyed (bike game), balloon popped (Icicle Inn run)
 
 
 def source_count(level):
@@ -186,6 +189,28 @@ GIVERS = [
                   done=[M(MGR, "A vacancy at the top! Here,",
                           "consider it a signing bonus.")],
                   reward=dict(gil=6000, items=[(6, 1)])),
+             dict(id="manager_bikes", kind="kill", late=True, level=19, enemies=[BIKE], count=12,
+                  label="Shinra motorbikes",
+                  title="Traffic Control",
+                  desc=["Wreck 12 Shinra motorbikes on the",
+                        "highway (the biker in front of",
+                        "Shinra HQ lends you a ride)."],
+                  offer=[M(MGR, "Security's bike squad keeps",
+                           "racing on the expressway. The",
+                           "noise! My blood pressure!"),
+                         M(MGR, "Knock 12 of them off their",
+                           "bikes. There's a biker outside",
+                           "HQ who'll lend you a ride.")],
+                  ask=M(MGR, "Will you?"),
+                  choices=["Vroom.", "I get motion sick."],
+                  accept=M(MGR, "Swing that sword. Not at the",
+                           "truck. The truck is ours."),
+                  decline=M(MGR, "Take a pill. Then take a bike."),
+                  progress=M(MGR, "Still hearing engines. 12 bikes,",
+                             "on the highway, please."),
+                  done=[M(MGR, "Blessed silence! Here, your",
+                          "fuel allowance.")],
+                  reward=dict(gil=5000, items=[(4, 2)])),
          ],
          all_done=M(MGR, "I'm Upper Middle Manager now.",
                     "Same desk, but the chair spins.")),
