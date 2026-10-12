@@ -273,7 +273,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   jungle), Aurora (Cosmo Canyon observatory), Tifa (her house, upstairs in
   her room), Aerith (Temple of the Ancients, top of the steps by the door
   where the key goes), Scarlet (Shinra HQ 66F Conference Room: the corridor's
-  bottom door now leads into it), Velvet (Gold Saucer Building 2F).
+  bottom door now leads into it), Velvet (Gold Saucer Battle Square, first screen, near the bottom right of
+  the tube platform).
   Models where they stand: Bambi = Shinra secretary, Marisol = Costa del Sol
   bar girl, Lulu = Gold Saucer attendant (all Honey Bees in the scenes). Report girls standing off screen or in the way, and
   how the scenes look (animations were picked without seeing them).

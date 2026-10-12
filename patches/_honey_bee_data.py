@@ -2,7 +2,8 @@
 
 Each girl: name, stars (1-5 = number of questions, all must be right; the
 star rating is kept for later mechanics), tag (shown in the manager's list),
-where she stands (field, at, dir) and her model (donor field, model index),
+where she stands (field, at, dir) and her model (donor field, model index;
+`reuse`: in a field with 16 models, the entity she replaces, model and all),
 then her lines:
   stranger  before you took the manager's job
   intro     when you can recruit her (her pitch / personality)
@@ -288,8 +289,8 @@ GIRLS = [
          fail="Scarlet\n“WRONG!” *slap*\n“Come back when you've learned\n some respect.”",
          hired="Scarlet\n“Kyahaha! The Honey Bee Inn just\n became the most dangerous place\n in Midgar.”",
          idle="Scarlet\n“I'll be there when I please.”"),
-    dict(name="Velvet", stars=5, tag="superstar", field="games_2", at=(60, 10), dir=210,
-         model=("blackbg2", 7),
+    dict(name="Velvet", stars=5, tag="superstar", field="coloss", at=(120, -2550), dir=253,
+         model=("blackbg2", 7), reuse="man",   # coloss has 16 models: takes over the Shinra soldier (hidden at 599)
          stranger="Velvet\n“No autographs, sweetie.”",
          intro="Velvet\n“The Gold Saucer's brightest star.\n You've seen my show, right?”",
          reply="Velvet\n“The Honey Bee Inn wants ME?\n Of course they do. Five questions.”",
