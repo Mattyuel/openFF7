@@ -494,6 +494,13 @@ Corel Prison by buggy, there and back.
 - `_exit_npc(ctx)` 
 - `apply(ctx)` 
 
+## `patches/450_highwind.py`
+The Highwind (disc 2 version) from the Junon airstrip; no interior while flying.
+
+- `_takeoff(ctx)` 
+- `_no_interior(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/600_quests.py`
 Quests: new NPCs ("givers") offer quests; talking to them again once the
 

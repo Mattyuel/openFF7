@@ -73,6 +73,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open (cosin2: door opening on every entry, cave floor lock IDLCK 0x29 + "only Bugenhagen" line removed). |
 | `430_buggy.py` | Buggy salesman (Dio model) at Costa del Sol's town exit (del2): 1000 gil, sets (1,127) bits 0+1 and MAPJUMPs to wm12; wm0's Costa del Sol branch already mounts the buggy (asserted). |
 | `440_corel_prison.py` | Buggy into the world map Gold Saucer -> desert2 (vanilla wm0 0xA964); desert2's bottom/left lines now go to jail1/jail3; convict in jail1 drives you out (buggy bits + MAPJUMP wm15). |
+| `450_highwind.py` | junair2 runway line (y -2400) -> Highwind owned/aboard (bank 1 byte 127 bits 4/5 = wm 0x3FC/0x3FD) + MAPJUMP wm40 (wm0 mounts model 3 near Junon); wm0 system function 6 ([Menu] in the air -> fship interior, exe 0x74F676) starts with `return`. |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
 | `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 37 givers, 66 quests, 10 repeatable boss lines. Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
@@ -344,5 +345,5 @@ quest is accepted; once per visit), Sources in every reward. Boss lines:
 Not done: world map leader models + new models (needs .exe work), player
 leader-aware interactions (ladders etc.),
 battle speed default (needs .exe patch), remaining bosses as world NPCs + rare
-encounters, vehicles (Tiny Bronco, airship, submarine), world-map
+encounters, vehicles (Tiny Bronco, submarine), world-map
 models for other leaders, minigame NPCs, shop scaling, crater bosses.

@@ -228,6 +228,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   near where you arrive in the prison drives you back out (in the buggy).
 - **No.5 corridor (Ether)**: running left from where you land crosses a line
   back to the tunnel.
+- **Highwind**: Junon airport, press the button, ride the lift, run right to
+  the runway with the Highwind, then keep running up the screen (towards the
+  far end): you appear on the world map beside Junon flying the Highwind. It
+  stays yours (land and re-board). [Menu] while flying does nothing (no
+  interior; the main menu can't be opened in the air, land first).
+- **Gate of Naught** (Cosmo Canyon): the cave behind the open door can be entered.
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
   in the party should no longer play "everyone's waiting at the inn" or
