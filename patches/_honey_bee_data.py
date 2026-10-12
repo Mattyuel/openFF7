@@ -155,7 +155,7 @@ GIRLS = [
          fail="Ruby\n“Bust! House wins. Try again.”",
          hired="Ruby\n“Jackpot! I'll be there.\n Bet you can't wait.”",
          idle="Ruby\n“One more spin, then I'm off to work.”"),
-    dict(name="Holly", stars=3, tag="ice queen", field="holu_1", at=(110, 85), dir=38,
+    dict(name="Holly", stars=3, tag="ice queen", field="sninn_1", at=(-176, 266), dir=28,
          model=("blackbg7", 9),
          stranger="Holly\n“Brr. Move along.”",
          intro="Holly\n“You're letting the warm air out.\n …What do you want?”",

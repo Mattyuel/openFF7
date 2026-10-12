@@ -268,7 +268,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   (Sector 6), Peggy (Fort Condor base), Candy (Junon, Shinra Member's Bar),
   Rhonda (Nibelheim Inn), Lulu (Junon inn, 3 steps left of before), Raven
   (Ghost Hotel lobby), Elena (Shinra Mansion 1F), Marisol (Costa del Sol
-  harbour), Ruby (Gold Saucer Building 1F), Holly (base of Gaea's Cliff),
+  harbour), Ruby (Gold Saucer Building 1F), Holly (Icicle Inn, left of the Snowboard Instructor),
   Sakura (Wutai shop), Mags (Rocket Town weapon store), Celeste (Gongaga
   jungle), Aurora (Cosmo Canyon observatory), Tifa (her house, upstairs in
   her room), Aerith (Temple of the Ancients, top of the steps by the door
