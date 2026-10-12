@@ -207,8 +207,8 @@ def _ranked():
 
 def _manager(ctx, back):
     room = ctx.maplist.index(ROOM)
-    x, y, tri, d = ROOM_ARRIVE
-    assert Walkmesh(ctx.field(ROOM).section("walkmesh")).contains(tri, x, y)
+    rx, ry, rtri, rdir = ROOM_ARRIVE
+    assert Walkmesh(ctx.field(ROOM).section("walkmesh")).contains(rtri, rx, ry)
 
     def talk(sec):
         end, offer, visit, tips, done, cut = _uc(0), asm.nop(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
@@ -231,7 +231,7 @@ def _manager(ctx, back):
                               ["Visit her.", "Next girl.", "Never mind."])
             ops += [asm.if_byte(hv, "bit_on", bit, skip), asm.setbyte(SHOWN, 1)] + ask
             ops += [asm.if_byte(CHOICE, "==", first, go),
-                    asm.setbyte(HB_VISIT, i + 1), _uc(0), asm.mapjump(room, x, y, tri, d), asm.ret(),
+                    asm.setbyte(HB_VISIT, i + 1), _uc(0), asm.mapjump(room, rx, ry, rtri, rdir), asm.ret(),
                     go, asm.if_byte(CHOICE, "==", first + 2, stop), asm.goto(end), stop, skip]
         ops += [asm.if_byte(SHOWN, "==", 0, done)]
         ops += _say(sec, "Manager\n“You haven't hired anybody yet!\n Get out there and charm 'em.”")
