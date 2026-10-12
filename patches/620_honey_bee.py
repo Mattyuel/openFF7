@@ -21,7 +21,8 @@
   meeting room): 66F's bottom door (blin66_1 gateway 2, to the disc 1
   meeting room blin66_2) leads there instead (same room layout, same
   arrival); the room's own Scarlet, Heidegger and 'leave' entities
-  (unplaced but visible at its pinned moment 998) are hidden.
+  (unplaced but visible at its pinned moment 998) are hidden, and the
+  director no longer hides Cloud (REQ cloud script 3 = VISI 00).
 """
 import struct
 
@@ -244,6 +245,13 @@ def _conference(ctx):
         ret = next(o for o in init if o.op == 0x00)
         sec.insert_before(ret, [Op(b) for b in HIDE], retarget=True)
         sec.replace_script(ent, 1, [asm.ret()])
+    # the director's main hides Cloud (REQ cloud script 3 = VISI 00): the
+    # player was invisible in the room
+    cloud = sec.entity_index("cloud")
+    hide = [o for o in sec.script_ops(sec.entity_index("drctr"), 0)
+            if o.op == 0x01 and bytes(o.raw[1:]) == bytes([cloud, 0xC3])]
+    assert len(hide) == 1, hide
+    sec.remove(hide[0])
     ctx.field(CONFERENCE).sections[0] = sec.build()
 
 
