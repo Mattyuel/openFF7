@@ -172,7 +172,7 @@ def _reactor1_music(ctx):
     music = [o for o in init[:init.index(next(o for o in init if o.op == 0x00))] if bytes(o.raw) == b"\xf0\x00"]
     assert len(music) == 1, music                                   # MUSIC 00 (skipped by the exe here)
     play = Op(bytes([0xF2, 0, 0, 0, 0x10, REACTOR1_MUSIC_INDEX]) + bytes(8))   # AKAO 10: play music index
-    sec.insert_before(init[init.index(music[0]) + 1], [play], retarget=True)
+    sec.insert_after(music[0], [play])          # inside its "progress > 0" block: not on the new-game pass
     ctx.field(REACTOR1_STATION).sections[0] = sec.build()
 
 

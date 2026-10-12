@@ -34,7 +34,8 @@ from ff7.walkmesh import Walkmesh
 LOBBY, ROOM = "onna_4", "onna_52"
 MANAGER_MODEL = ("md8_2", 3)                 # midgal_man
 MANAGER_AT, MANAGER_DIR = (104, -48), 0
-ROOM_ARRIVE = (263, 163, 5, 220)             # onna_4's own jump into the "&" room
+ROOM_ARRIVE = (211, 102, 6, 220)             # at the bed, out of the girl's way (onna_4's own arrival,
+                                             # (263, 163), is on her path: she ran into Cloud)
 SHOWN = (5, 245)                             # temp: a hired girl was listed
 TOTAL, ELAPSED, EARN = (6, 246), (6, 248), (6, 250)   # temp words: stars, minutes, gil
 FINAL = "You spent the rest of the night together\nand had a good time..."
@@ -298,6 +299,13 @@ def _room(ctx, back):
     # room scene off in VISIT mode: produce's main, the exit line
     produce = sec.script_ops(sec.entity_index("produce"), 0)
     main = produce[produce.index(next(o for o in produce if o.op == 0)) + 1]
+    # music: the room plays the Honey Bee Inn theme (block 0, id 68 as the lobby)
+    # once (3,220) bit 0 is set, else the dream music (block 1); visits keep the theme
+    assert sec.akao_ids()[0] == 68, sec.akao_ids()
+    pick = next(o for o in produce if o.op == 0x14 and bytes(o.raw[1:5]) == bytes([0x30, 220, 0, 9]))
+    menu = next(o for o in produce if o.op == 0x4A)
+    sec.insert_before(pick, [asm.if_byte(HB_VISIT, "!=", 0, pick), Op(b"\xF0\x00"), asm.goto(menu)],
+                      retarget=False)
     sec.insert_before(main, [asm.if_byte(HB_VISIT, "!=", 0, main), asm.ret()], retarget=False)
     border = sec.entity_index("border1")
     first = sec.entry[border][0]
@@ -333,10 +341,11 @@ def _room(ctx, back):
         "blush": [_anim(c["blush1"]), _anim(c["blush2"]), _anim(c["blush3"])],
         "startle": [_canm(c["startle"], 0, 0x0E), _anim(c["stand"])],
         "look": [_anim(c["look"]), _anim(c["look2"])],
+        "ghost": [Op(b"\xC7\x01")],                                    # SOLID 01: the girl walks through
         "faint": [_canm(c["lie"], 0, 2)] * 3 + [_anim(c["lie"], hold=True)],
     }
     used = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("g", "g&")}
-    used_c = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("c", "c&")}
+    used_c = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("c", "c&")} | {"ghost"}
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
     for ent, beats, start in ((girl, girl_beats, 8), (cloud, cloud_beats, 24)):
@@ -353,7 +362,8 @@ def _room(ctx, back):
     lobby = ctx.maplist.index(LOBBY)
     bx, by, bz, btri = back
     finale, stop = asm.nop(), asm.ret()
-    ops = [asm.if_byte(HB_VISIT, "!=", 0, stop), _uc(1), _menu(1), _w(15)]         # no visit: nothing
+    ops = [asm.if_byte(HB_VISIT, "!=", 0, stop), _uc(1), _menu(1),                # no visit: nothing
+           _req(cloud, slots[(cloud, "ghost")]), _w(15)]
     for i, g in enumerate(GIRLS):
         nxt = asm.nop()
         ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt)]
