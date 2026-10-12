@@ -1016,10 +1016,10 @@ WORLD_GIVERS = [
          ],
          all_done=M("Holzoff's Apprentice", "Master says you climb like",
                     "a goat. That's his best praise.")),
-    # ---- Midgar, disc 2 route (md8_2, by the new exit to the hatch, 160) ------
-    # (md8_6 itself has 254 texts: no room for dialogue, MESSAGE ids are 8-bit)
-    dict(field="md8_2", name="deserter", level=50, model=("rckt", 4), at=(-4180, 21050), dir=3,   # facing down the screen
-         who="Shinra Deserter", where="Upper Midgar, Sector 8 street",
+    # ---- Midgar, disc 2 route (md8brdg, by the exit to 8th Street, 160) -------
+    # (the disc 2 fields have ~254 texts: no room for dialogue, MESSAGE ids are 8-bit)
+    dict(field="md8brdg", name="deserter", level=50, model=("rckt", 4), at=(820, 380), dir=246,   # facing down the screen
+         who="Shinra Deserter", where="Upper Midgar, the train stop (right end)",
          quests=[
              dict(id="deserter_turks", kind="kill",
                   targets=[("Reno", [297], 1), ("Rude", [298], 1), ("Elena", [296], 1)],

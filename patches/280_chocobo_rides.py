@@ -49,7 +49,7 @@ SPOTS = {
     "mds5_5": ((711, -2420, 16), "wm0", [(691, -2630), (771, -2640)], FACING_DOWN_MDS5_5),
     # Mythril Mine, first screen: the floor beside the arrival is narrow and the
     # first free spot was past the exit line, so place them below the arrival.
-    "psdun_1": ((175, 8, 23), "wm4", [(200, -180), (190, -90)], FACING_RIGHT),   # [Billy, chocobo]: swapped on request
+    "psdun_1": ((175, 8, 23), "wm4", [(231, -327), (221, -237)], FACING_RIGHT),   # [Billy, chocobo]: swapped, then ~5 steps down (blocked the path)
 }
 
 

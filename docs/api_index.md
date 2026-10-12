@@ -384,7 +384,7 @@ Small Midgar fixes from play-testing.
 ## `patches/160_midgar_disc2.py`
 Join disc 1 Upper Midgar to the disc 2 Midgar route.
 
-- `_arrival(ctx, field, x, y, line)` 
+- `_arrival(ctx, field, x, y, direction)` 
 - `_gateway(ctx, field, line, dest_field, dest, direction)` 
 - `apply(ctx)` 
 
@@ -412,6 +412,7 @@ Recruit NPCs for Red XIII, Cid, Cait Sith, Yuffie and Vincent (Barret: 220).
 - `_find(sec, raw)` 
 - `_yuffie(ctx)` 
 - `_vincent(ctx)` 
+- `_records(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/250_train_destinations.py`

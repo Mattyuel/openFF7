@@ -61,9 +61,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `120_sector6_gate.py` | Sector 7<->6 gate both ways (guards moved, exit line widened, new gateway back). |
 | `130_shinra_hq.py` | HQ after the infiltration: 2F boxes openable, access level 69 kept (var[1][224] lowering writes removed in blin59/61/62_1/65_1/67_1/68_1), flags (3,168,1) 59F guards, (3,172,3) 60F sneaking, (1,226,5) 68F scientist; blin67_3 pinned 285; roof (blin70_3) Rufus on the pad + line -> formation 464 once per visit. |
 | `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
-| `160_midgar_disc2.py` | Gateway md8_2 left end <-> md8_6 (disc 2 hatch screen); disc 2 route state via bank 5 offset 128/135 new-game flags; canon_2 pinned 1604. Turks/Proud Clod/Hojo = Shinra Deserter quest bosses (md8_2; md8_6 has 254 texts, no room). |
+| `160_midgar_disc2.py` | Gateway md8brdg right end <-> md8_5 left end (8th Street; its own exit leads to md8_6, the hatch); disc 2 route state via bank 5 offset 128/135 new-game flags; canon_2 pinned 1604. Turks/Proud Clod/Hojo = Shinra Deserter quest bosses (md8brdg; disc 2 fields have ~254 texts, no room). md8_5's camera doesn't fit ff7.camera (all points project to one band): placed by floor geometry. |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (No.1 Reactor platform md1stin). |
-| `230_recruit_more.py` | Recruit NPCs: Red XIII (blin67_1), Cid (junair airstrip), Cait Sith (del3 beach), Yuffie (frcyo by the left pen, yougan2 model anim 6), Vincent (onna_2 dancers' room); Cait/Vincent run their name entry (fills records 6/7). Original Yuffie/Vincent joins count only if not already recruited. |
+| `230_recruit_more.py` | Recruit NPCs: Red XIII (blin67_1), Cid (junair airstrip), Cait Sith (del3 beach), Yuffie (frcyo by the left pen, yougan2 model anim 6), Vincent (onna_2 dancers' room); KERNEL new-game records 6/7 = the exe's Cait Sith / Vincent templates with default names (no naming screen). Original Yuffie/Vincent joins count only if not already recruited. All recruit talks start with PTURA (face the player). |
 | `250_train_destinations.py` | Station conductor menu (Upper Midgar md8brdg, Shinra Tower sinbil_1, No.1 md1stin, No.5 tunnel_2 — not tunnel_1, which loops onto itself), conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
 | `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
 | `270_sector4_duct.py` | Tunnel duct = plain choice; line below the duct (sbwy4_1, left of the landing) back to tunnel_2; vent end offers drop / back to tunnel. |
@@ -272,7 +272,8 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   Young Cloud and 10 Sephiroth share records 6/7). New game: record 6 = id 9,
   record 7 = id 10. **Cait Sith / Vincent only get their record from the name
   entry** (MENU 00 06 6/7, exe 0x718ADA copies the exe template 0x921EF8 +
-  id*0x84 over it), so a recruit of either must run it.
+  id*0x84 over it). 230 instead copies those templates into KERNEL section 3
+  records 6/7 (Young Cloud / Sephiroth are never used), so no naming screen.
 - PRTYP (0x61BE95): no-op if already in the party, else first empty slot, else
   overwrites slot 2; also sets the PHS-available bit. A field-opened PHS
   (MENU 00 07 00) needs exactly 3 in the party to leave: never use it in joins.

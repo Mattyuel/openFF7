@@ -7,8 +7,10 @@
   looking at the chocobos in her scheming pose (yougan2 model, anim 6).
 - Vincent: Honey Bee Inn, the dancers' room (onna_2), far left. Embarrassed.
   Cait Sith and Vincent share character records 6/7 with Young Cloud and
-  Sephiroth: the name entry (MENU 00 06 c) copies the real level-1 record
-  over the slot (exe 0x718ADA), so their recruits run it, as the originals do.
+  Sephiroth; in the original the name entry (MENU 00 06 c) copies their
+  level-1 record from the exe (template 0x921EF8 + id*0x84, exe 0x718ADA) over
+  the slot. Here the new-game data (KERNEL section 3) gets those templates
+  directly, with the default names, so they join without a naming screen.
 - The original joins still work and count once: Yuffie's (yougan2, if her
   world map encounter is ever on) and Vincent's (sininb1) get PRTYP + the
   recruit count unless already recruited; Vincent's PHS menu (needs exactly
@@ -46,8 +48,7 @@ CAIT = dict(
         choices=("Sure, why not.", "No thanks."),
         yes_reply="{CAIT SITH}\n“Great! You won't regret it!\n …Probably.”",
         no_reply="{CAIT SITH}\n“Aw, shucks. I'll be here if ye\n change yer mind!”",
-        joined="{CAIT SITH} joined the party!",
-        extra=[Op(bytes([0x49, 0x00, 0x06, CAIT_SITH]))]))   # MENU 00 06 06: name entry (fills his record)
+        joined="{CAIT SITH} joined the party!"))
 YUFFIE_ = dict(
     field="frcyo", donor=("yougan2", 8), name="yufinpc", char=YUFFIE,
     pos=(-175, -790, 0, 41), dir=0xC0,             # by the left pen's fence, facing the chocobos
@@ -60,14 +61,16 @@ YUFFIE_ = dict(
         joined="{YUFFIE} joined the party!"))
 VINCENT_ = dict(
     field="onna_2", donor=("yougan2", 7), name="vincnpc", char=VINCENT,
-    pos=(-147, 242, 50, 9), dir=64,                # far left, facing into the room
+    pos=(-249, -147, 25, 29), dir=135,             # lower left, on the main floor (z 25, not the z 50 step)
     lines=dict(
         question="{VINCENT}\n“…This is not what it looks like.\n I was told this was a library.\n …Get me out of here.”",
         choices=("Come with me.", "Enjoy the library."),
         yes_reply="{VINCENT}\n“…We will never speak of this.”",
         no_reply="{VINCENT}\n“…………”",
-        joined="{VINCENT} joined the party!",
-        extra=[Op(bytes([0x49, 0x00, 0x06, VINCENT]))]))     # MENU 00 06 07: name entry (fills his record)
+        joined="{VINCENT} joined the party!"))
+
+TEMPLATES_VA = 0x921EF8          # exe: level-1 character records, 0x84 each, by id
+DEFAULT_NAMES = {CAIT_SITH: "Cait Sith", VINCENT: "Vincent"}   # exe 0x921CB8 (the template says "Cait Seith")
 
 MMBUD = lambda c: bytes([0xCD, 0x01, c])
 PRTYP = lambda c: Op(bytes([0xC8, c]))
@@ -103,7 +106,22 @@ def _vincent(ctx):
     ctx.field("sininb1").sections[0] = sec.build()
 
 
+def _records(ctx):
+    import os
+    import ff7tool
+    from ff7 import exepatch
+    exe = open(os.path.join(os.path.dirname(ff7tool.GAME), "ff7_en.exe"), "rb").read()
+    init = ctx.kernel_init()
+    for char, name in DEFAULT_NAMES.items():
+        o = exepatch.va_to_file(exe, TEMPLATES_VA + char * init.CHAR)
+        record = exe[o:o + init.CHAR]
+        assert record[0] == char and record[1] == 1, (char, record[:2])
+        init.data[char * init.CHAR:(char + 1) * init.CHAR] = record
+        init.set_name(char, name)
+
+
 def apply(ctx):
+    _records(ctx)
     for r in (RED, CID_, CAIT, YUFFIE_, VINCENT_):
         add_recruit_npc(ctx, r["field"], *r["donor"], r["name"], r["char"], r["pos"], r["dir"], r["lines"],
                         main=r.get("main", ()))

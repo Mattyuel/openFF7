@@ -72,6 +72,7 @@ def recruit_talk(script, char, question, choices, yes_reply, no_reply, joined, e
     decline = say(script, no_reply)
     end_decline = [Op(b"\x33\x00"), asm.ret()]
     ops = [Op(b"\x33\x01"),                                  # UC 01
+           Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00"),        # PTURA (face the player), WAIT
            window(text),
            asm.ask(0, tid, yes_line, yes_line + 1, ANSWER),
            asm.if_byte(ANSWER, "==", yes_line, decline[0])]

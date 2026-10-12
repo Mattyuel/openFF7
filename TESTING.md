@@ -200,12 +200,13 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Buggy**: at Costa del Sol's town exit, the salesman sells it for 1000
   gil (try with less too). Buying puts you on the world map outside town,
   in the buggy; get out, re-enter, save/load: it should stay.
-- **Disc 2 Midgar**: on the Sector 8 street (where Aerith sells flowers),
-  run left: you arrive on the disc 2 screen with the hatch, already open and
-  nobody else there. Walking left there brings you back. Down the ladder:
+- **Disc 2 Midgar**: at the Upper Midgar train stop (Sector 8 walkway, the
+  conductor's screen) run right: 8th Street (where the party lands in disc 2),
+  arriving on its left. Its left end leads back. Its exit on the right leads
+  to the hatch screen (hatch open, nobody there). Down the ladder:
   underground, tunnels, Sector 8 bridge, Mako Cannon, Shinra HQ front (md0),
-  with no scenes; enemies are disc 2 level. The Shinra Deserter at the left end
-  of the street gives Turks (tunnel below), Proud Clod (Sector 8 bridge) and
+  with no scenes; enemies are disc 2 level. The Shinra Deserter near that right-hand
+  exit gives Turks (tunnel below), Proud Clod (Sector 8 bridge) and
   Hojo (top of the cannon) quests; each fight starts by walking over its spot.
 - **Shinra HQ**: no forced battles or scenes anywhere; the lobby lifts and
   the elevator work, every elevator floor (incl. 69) is selectable, all
@@ -234,6 +235,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   stays yours (land and re-board). [Menu] while flying does nothing (no
   interior; the main menu can't be opened in the air, land first).
 - **Gate of Naught** (Cosmo Canyon): the cave behind the open door can be entered.
+- **Recruits**: every recruit turns to face you when talked to. Cait Sith
+  and Vincent join without a naming screen (default names, level 1).
+- **Start point**: a new game starts on the Sector 7 station's upper platform,
+  just below the conductor.
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
   in the party should no longer play "everyone's waiting at the inn" or

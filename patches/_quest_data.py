@@ -111,7 +111,7 @@ GIVERS = [
     # Model std_girl3 (Chole at the chocobo farm). At (440, -860) she blocked
     # the path; moved straight up the screen by ~4x her on-screen height
     # (ff7.camera: screen (-47, 173) -> (-47, -5)).
-    dict(field="mds6_2", name="betty", level=11, model=("frcyo", 3), at=(-120, -280), dir=0x40,
+    dict(field="mds6_2", name="betty", level=11, model=("frcyo", 3), at=(-165, -320), dir=0x40,   # 2 steps left of (-120, -280)
          who=BETTY, where="Sector 6 playground",
          quests=[
              dict(id="betty", kind="kill", enemies=[44, 45], count=2,
@@ -233,9 +233,9 @@ GIVERS = [
          all_done=M("Leslie", "The guards sleep like babies",
                     "now. On duty. Don't tell.")),
 
-    dict(field="mds6_3", name="sam", level=10, model=("mrkt2", 4), at=(63, 449), dir=0,  # left of Bessie
+    dict(field="mds6_3", name="sam", level=10, model=("mrkt2", 4), at=(153, 449), dir=0,  # left of Bessie (3 steps right of 63)
          who="Sam", where="Road from the park to Wall Market",
-         companion=dict(name="bessie", model=("frcyo", 5), at=(253, 449), chocobo=True,
+         companion=dict(name="bessie", model=("frcyo", 5), at=(283, 449), chocobo=True,   # 1 step right of 253
                         talk="Bessie\n“Wark. (She looks hungry.)”"),
          quests=[
              dict(id="sam", kind="deliver", item=29, count=3, label="Loco Weed",

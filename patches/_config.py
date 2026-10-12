@@ -29,7 +29,7 @@ CLOUD, BARRET, TIFA, AERITH, RED_XIII, YUFFIE, CAIT_SITH, VINCENT, CID = range(9
 # (walkmesh triangle 23). The original train arrival spot (triangle 26) is on
 # the train-door trigger line and made Cloud board the train.
 START_FIELD = "mds7st3"
-START_X, START_Y, START_TRIANGLE, START_DIR = -2940, 2562, 23, 0
+START_X, START_Y, START_TRIANGLE, START_DIR = -2749, 3074, 9, 0   # ~2 steps below the conductor (-2777, 3160), upper platform
 
 # ---------------------------------------------------------------------------
 # openFF7 save variables. Bank 3 (opcode nibbles 11 = 8-bit, 12 = 16-bit),
