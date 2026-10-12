@@ -24,7 +24,7 @@ All the girls are adults (Yuffie, 16 in the story, is not one of them).
 
 GIRLS = [
     # ---- 1 star ------------------------------------------------------------
-    dict(name="Bambi", stars=1, tag="sleepy", field="mds5_2", at=(165, 4), dir=22,
+    dict(name="Bambi", stars=1, tag="sleepy", field="md8_3", at=(-3332, 18438), dir=250,
          model=("blackbg8", 7),
          stranger="Bambi\n“…zzz… Five more minutes…”",
          intro="Bambi\n“Mmh? Oh, hi. I was resting my eyes.\n Standing up. It's a skill.”",

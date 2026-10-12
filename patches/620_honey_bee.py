@@ -5,8 +5,8 @@
   first (stars, then the order in _honey_bee_data.GIRLS): pick one to visit.
 - 20 girls stand around the world (_honey_bee_data.py). Before the job they
   only say a line. With the job, talking to one starts her pitch, then her
-  questions (as many as her stars); every answer right = hired (HB_HIRED bit),
-  one wrong = talk again later.
+  questions (as many as her stars), all asked whatever you answer; at the end
+  every answer right = hired (HB_HIRED bit), any wrong = she says so, talk again later.
 - Earnings: the manager pays HB_RATE gil per star of every hired girl per
   minute of play since the last collection (at most HB_CAP minutes). The
   exe's play clock keeps the minutes in HB_MINUTES (quest_menu.asm q_clock).
@@ -37,6 +37,7 @@ MANAGER_AT, MANAGER_DIR = (104, -48), 0
 ROOM_ARRIVE = (211, 102, 6, 220)             # at the bed, out of the girl's way (onna_4's own arrival,
                                              # (263, 163), is on her path: she ran into Cloud)
 SHOWN = (5, 245)                             # temp: a hired girl was listed
+WRONG = (5, 246)                             # temp: a question was answered wrong (girl fields)
 TOTAL, ELAPSED, EARN = (6, 246), (6, 248), (6, 250)   # temp words: stars, minutes, gil
 FINAL = "You spent the rest of the night together\nand had a good time..."
 OFFER = "{CLOUD}\n“There's a job going at the Honey Bee Inn.\n Interested?”"
@@ -179,10 +180,13 @@ def _girl_talk(sec, i, g):
     ops += offer + [asm.if_byte(CHOICE, "==", first, end)]
     ops += _say(sec, g["reply"])
     assert len(g["questions"]) == g["stars"], g["name"]
-    for text, choices, right in g["questions"]:
+    ops.append(asm.setbyte(WRONG, 0))
+    for text, choices, right in g["questions"]:      # every question is asked; the verdict comes at the end
         q, first = _ask(sec, text, choices)
-        ops += q + [asm.if_byte(CHOICE, "==", first + right, fail)]
-    ops += [sound(SOUND_RECRUIT), asm.biton(hv, bit)] + _say(sec, g["hired"]) + [asm.goto(end)]
+        ok = asm.nop()
+        ops += q + [asm.if_byte(CHOICE, "!=", first + right, ok), asm.setbyte(WRONG, 1), ok]
+    ops += [asm.if_byte(WRONG, "==", 0, fail),
+            sound(SOUND_RECRUIT), asm.biton(hv, bit)] + _say(sec, g["hired"]) + [asm.goto(end)]
     ops += [fail] + _say(sec, g["fail"]) + [asm.goto(end)]
     ops += [stranger] + _say(sec, g["stranger"]) + [asm.goto(end)]
     ops += [idle] + _say(sec, g["idle"])
@@ -237,8 +241,8 @@ def _manager(ctx, back):
         ops += [asm.if_byte(SHOWN, "==", 0, done)]
         ops += _say(sec, "Manager\n“You haven't hired anybody yet!\n Get out there and charm 'em.”")
         ops += [asm.goto(end), done] + _say(sec, "Manager\n“That's the whole roster.”") + [asm.goto(end)]
-        ops += [tips] + _say(sec, "Manager\n“Word is there are fine ladies in\n the slums, Wall Market, Fort Condor,\n"
-                                  " Junon, Nibelheim, the Gold Saucer…”{NEW}\n"
+        ops += [tips] + _say(sec, "Manager\n“Word is there are fine ladies in\n Upper Midgar, the slums, Wall Market,\n"
+                                  " Fort Condor, Junon, Nibelheim,\n the Gold Saucer…”{NEW}\n"
                                   "“…Icicle country, Costa del Sol,\n Wutai, Rocket Town, Gongaga,\n"
                                   " Cosmo Canyon and Mideel.\n The more stars, the pickier they are.”") + [asm.goto(end)]
         # first talk: the job offer

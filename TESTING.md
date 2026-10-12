@@ -256,10 +256,10 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Honey Bee Girls** (new game; untested in-game): a Manager stands in the
   Honey Bee Inn lobby. Accept his job; then 20 women around the world talk
   to you (before the job they only say a line). Offer the job and answer her
-  questions (1-5 by her stars; one wrong = try again later). Hired girls show
+  questions (1-5 by her stars; all are asked, and only at the end does she say whether any were wrong = try again later). Hired girls show
   in the Manager's "Visit" list, best first; visiting plays her scene in the
   "&" room, then the fade line, then you're back beside the Manager.
-  Where: Bambi (Sector 5 slums), Gloria (Wall Market materia store), Dot
+  Where: Bambi (Upper Midgar, one screen up from the train stop), Gloria (Wall Market materia store), Dot
   (Sector 6), Peggy (Fort Condor base), Candy (Lower Junon), Rhonda
   (Nibelheim square), Lulu (Junon inn), Raven (Ghost Hotel lobby), Elena
   (Mideel), Marisol (Costa del Sol harbour), Ruby (Gold Saucer Building 1F),

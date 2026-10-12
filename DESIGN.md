@@ -115,6 +115,8 @@ yours (instead of the original Gold Saucer gift).
   a job: recruit girls for the Inn. Then 20 women around the world (Tifa,
   Aerith, Elena, Scarlet and 16 new ones; all adults) can be recruited by
   answering their questions: 1 question per star (1-5), all must be right.
+  Every question is asked even after a wrong answer; the girl only says at
+  the end whether you got any wrong.
   The star rating reflects the girl's quality/personality and will drive
   later mechanics. Hired girls are listed by the manager, best first; visiting
   one plays a comic scene in the "&" room (Cloud + the Honey Bee dancer model
