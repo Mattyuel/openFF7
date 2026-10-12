@@ -543,12 +543,11 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_ride(ctx, giver)` A giver's `ride` (after all their quests): a choice to MAPJUMP to
 - `_talk(giver, ride=None)` 
 - `_marker_branch(giver, offer, accepted, none)` Ops jumping to `offer` / `accepted` (the giver's first quest that isn't
-- `_marker_main(giver, show_mode)` Main loop: every 10 frames show this marker only in `show_mode`
 - `_tint(rgb)` 
-- `_orb_main(giver)` QUEST_MARKERS = "orbs": every 10 frames show the orb tinted for the
+- `_marker_loop(entries, offer, accepted)` Main loop of a field's marker entity: every 10 frames the first of
 - `_spot(ctx, field, x, y)` 
-- `_marker_model(ctx, field, hrc)` Index of marker model `hrc` in `field`, added once per field.
-- `_add_marker(ctx, giver, pos)` 
+- `_marker_model(ctx, field, hrc)` Add marker model `hrc` to `field`; its index.
+- `_add_markers(ctx, field, givers)` The quest markers of every giver in `field` ([(giver, pos)]): one star
 - `_kill_table()` {u16 enemy id, u16 state var, u16 counter var, u8 count, pad}..., 0xFFFF.
 - `_quest_log_data(base)` DATA block for quest_menu.asm (layout documented there).
 - `_quest_menu(ctx)` 

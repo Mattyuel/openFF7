@@ -238,19 +238,6 @@ def _marker_branch(giver, offer, accepted, none):
     return ops + [asm.goto(none)]
 
 
-def _marker_main(giver, show_mode):
-    """Main loop: every 10 frames show this marker only in `show_mode`
-    (1 offer, 2 accepted, 0 either). (The field isn't re-initialised after a
-    battle.)"""
-    top, show, hide, wait = asm.nop(), asm.nop(), asm.nop(), asm.nop()
-    offer = show if show_mode in (0, 1) else hide
-    accepted = show if show_mode in (0, 2) else hide
-    return ([top] + _marker_branch(giver, offer, accepted, hide)
-            + [show, Op(b"\xA4\x01"), asm.goto(wait),                               # VISI 01
-               hide, Op(b"\xA4\x00"),                                               # VISI 00
-               wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)])                       # WAIT 10
-
-
 def _tint(rgb):
     col = struct.pack("<3h", *rgb) * 2
     return [Op(bytes([0x28, 0x18, 0x06, 0x00, 0x00]) + col + bytes.fromhex("01000100010001")),  # KAWAI 06 colour
@@ -259,14 +246,25 @@ def _tint(rgb):
             Op(b"\x29")]                                                           # KAWIW
 
 
-def _orb_main(giver):
-    """QUEST_MARKERS = "orbs": every 10 frames show the orb tinted for the
-    giver's mode (hidden when all are done)."""
-    top, offer, accepted, hide, wait = asm.nop(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
-    ops = [top] + _marker_branch(giver, offer, accepted, hide)
-    ops += [offer, Op(b"\xA4\x01")] + _tint(ORB_TINT[1]) + [asm.goto(wait)]
-    ops += [accepted, Op(b"\xA4\x01")] + _tint(ORB_TINT[2]) + [asm.goto(wait)]
-    return ops + [hide, Op(b"\xA4\x00"), wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]
+def _marker_loop(entries, offer, accepted):
+    """Main loop of a field's marker entity: every 10 frames the first of
+    `entries` [(giver, place ops)] whose next quest is offered (if `offer` ops
+    are given) or accepted (if `accepted` ops are given) gets the marker:
+    place ops + those ops; none: hidden. (The field isn't re-initialised
+    after a battle, hence the loop.)"""
+    top, hide, wait = asm.nop(), asm.nop(), asm.nop()
+    ops = [top]
+    for giver, place in entries:
+        nxt, off, acc = asm.nop(), asm.nop(), asm.nop()
+        ops += _marker_branch(giver, off if offer is not None else nxt,
+                              acc if accepted is not None else nxt, nxt)
+        if offer is not None:
+            ops += [off] + place + offer + [asm.goto(wait)]
+        if accepted is not None:
+            ops += [acc] + place + accepted + [asm.goto(wait)]
+        ops.append(nxt)
+    return ops + [hide, Op(b"\xA4\x00"),                                           # VISI 00
+                  wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]                  # WAIT 10
 
 
 def _spot(ctx, field, x, y):
@@ -279,53 +277,60 @@ def _spot(ctx, field, x, y):
 MAX_MODELS = 16
 NO_HEART = []                   # fields where only the star fits (shown for offer and accepted)
 _MARKER_ENTRIES = {}            # hrc -> model loader entry (from _marker_models.install)
-_FIELD_MARKERS = {}             # field -> {hrc: model index}
 
 
 def _marker_model(ctx, field, hrc):
-    """Index of marker model `hrc` in `field`, added once per field."""
+    """Add marker model `hrc` to `field`; its index."""
     from ff7.models import ModelLoader
-    have = _FIELD_MARKERS.setdefault(field, {})
-    if hrc not in have:
-        donor = ModelLoader(ctx.field("snmin2").section("models"))
-        loader = ModelLoader(ctx.field(field).section("models"))
-        entry = _MARKER_ENTRIES[hrc]
-        scale = round(loader.entry_scale(entry) * loader.scale / donor.scale)
-        have[hrc] = loader.add(loader.with_scale(entry, scale))
-        ctx.field(field).set_section("models", loader.build())
-    return have[hrc]
+    donor = ModelLoader(ctx.field("snmin2").section("models"))
+    loader = ModelLoader(ctx.field(field).section("models"))
+    entry = _MARKER_ENTRIES[hrc]
+    scale = round(loader.entry_scale(entry) * loader.scale / donor.scale)
+    index = loader.add(loader.with_scale(entry, scale))
+    ctx.field(field).set_section("models", loader.build())
+    return index
 
 
-def _add_marker(ctx, giver, pos):
+def _add_markers(ctx, field, givers):
+    """The quest markers of every giver in `field` ([(giver, pos)]): one star
+    and one heart entity (or one orb) per field, each with its own model, that
+    moves to the giver it applies to. Two givers' marker entities used to
+    share the star/heart models: md8brdg (Station Manager + Shinra Deserter)
+    had 18 CHARs for 16 models and crashed on arrival with some quest states
+    (the 16-model table is a static array, see CLAUDE.md)."""
     from ff7.models import ModelLoader
     from ff7.camera import Camera, facing_screen
-    field = giver["field"]
-    x, y, z, tri = pos
-    init_hidden = [Op(b"\x7E\x01"), Op(b"\xC7\x01"), Op(b"\xA4\x00")]           # TLKON 01, SOLID 01, VISI 00
-    if QUEST_MARKERS == "orbs":
-        model = copy_model(ctx, field, *ORB_MODEL)
-        sec = Script.parse(ctx.field(field).sections[0])
-        init = [Op(bytes([0xA1, model]))] + init_hidden + [xyzi(x, y, z + ORB_HEIGHT, tri), asm.ret()]
-        sec.add_entity(giver["name"][:6] + "_q", {0: init + _orb_main(giver) + [asm.ret()]})
-        ctx.field(field).sections[0] = sec.build()
-        return
-    # the quads turn with DIR: face the camera
-    face = facing_screen(Camera(ctx.field(field).sections[1]), x, y, z + ORB_HEIGHT, (0, 1))
-    have = _FIELD_MARKERS.get(field, {})
-    count = len(ModelLoader(ctx.field(field).section("models")).models)
-    markers = ((STAR, 1, "_s"), (HEART, 2, "_h"))
-    if count + (STAR not in have) + (HEART not in have) > MAX_MODELS:
-        markers = ((STAR, 0, "_s"),)          # no room for both: the star in either mode
-        NO_HEART.append(field)
-    for hrc, mode, suffix in markers:
-        model = _marker_model(ctx, field, hrc)
+    cam = Camera(ctx.field(field).sections[1])
+    init_hidden = [Op(b"\x7E\x01"), Op(b"\xC7\x01"), Op(b"\xA4\x00")]         # TLKON 01, SOLID 01, VISI 00
+    entries = []
+    for giver, (x, y, z, tri) in givers:
+        face = facing_screen(cam, x, y, z + ORB_HEIGHT, (0, 1))      # the quads turn with DIR
+        entries.append((giver, [xyzi(x, y, z + ORB_HEIGHT, tri), Op(bytes([0xB3, 0, face]))]))
+    first = entries[0][1]
+    if len(entries) == 1:
+        entries = [(entries[0][0], [])]       # placed once by init
+    name = givers[0][0]["name"][:6]
+
+    def add(model, suffix, offer, accepted):
         sec = Script.parse(ctx.field(field).sections[0])
         # hidden first: placed visible, the marker that doesn't apply showed for a
         # moment on entry (a star flashing over a giver whose quest is accepted)
-        init = [Op(bytes([0xA1, model]))] + init_hidden + [xyzi(x, y, z + ORB_HEIGHT, tri),
-                                                         Op(bytes([0xB3, 0, face])), asm.ret()]
-        sec.add_entity(giver["name"][:6] + suffix, {0: init + _marker_main(giver, mode) + [asm.ret()]})
+        init = [Op(bytes([0xA1, model]))] + init_hidden + first + [asm.ret()]
+        sec.add_entity(name + suffix, {0: init + _marker_loop(entries, offer, accepted) + [asm.ret()]})
         ctx.field(field).sections[0] = sec.build()
+
+    show = [Op(b"\xA4\x01")]                                                    # VISI 01
+    if QUEST_MARKERS == "orbs":
+        add(copy_model(ctx, field, *ORB_MODEL), "_q",
+            show + _tint(ORB_TINT[1]), show + _tint(ORB_TINT[2]))
+        return
+    count = len(ModelLoader(ctx.field(field).section("models")).models)
+    if count + 2 > MAX_MODELS:                # no room for both: the star in either mode
+        NO_HEART.append(field)
+        add(_marker_model(ctx, field, STAR), "_s", show, show)
+        return
+    add(_marker_model(ctx, field, STAR), "_s", show, None)
+    add(_marker_model(ctx, field, HEART), "_h", None, show)
 
 
 # ---- Quests main-menu entry ------------------------------------------------
@@ -543,13 +548,16 @@ def apply(ctx):
                     _add_spot(ctx, q, i, spot)
             elif q["kind"] == "courier":
                 _add_courier(ctx, q)
+    by_field = {}
     for g in GIVERS:
         field = g["field"]
         assert len(g["name"]) <= 8, g["name"]
         pos = _spot(ctx, field, *g["at"])
         model = copy_model(ctx, field, *g["model"])
         add_npc(ctx, field, g["name"], model, pos, g["dir"], _talk(g, _ride(ctx, g)))
-        _add_marker(ctx, g, pos)
+        by_field.setdefault(field, []).append((g, pos))
         if "companion" in g:
             _add_companion(ctx, g)
+    for field, givers in by_field.items():
+        _add_markers(ctx, field, givers)
     _quest_menu(ctx)
