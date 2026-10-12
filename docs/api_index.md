@@ -540,8 +540,8 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_not_met(q, target)` Ops: goto target unless every target/item of the quest is complete.
 - `_reward(sec, giver, q)` 
 - `_talk(giver)` 
-- `_marker_mode(giver)` Ops: MODE = 1 (offer), 2 (ready to hand in) or 0 for the giver's
-- `_marker_main(giver, show_mode)` Main loop: every 10 frames recompute the giver's mode and show this
+- `_marker_branch(giver, offer, accepted, none)` Ops jumping to `offer` / `accepted` (the giver's first quest that isn't
+- `_marker_main(giver, show_mode)` Main loop: every 10 frames show this marker only in `show_mode`
 - `_tint(rgb)` 
 - `_orb_main(giver)` QUEST_MARKERS = "orbs": every 10 frames show the orb tinted for the
 - `_spot(ctx, field, x, y)` 

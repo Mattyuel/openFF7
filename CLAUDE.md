@@ -115,7 +115,7 @@ delete `build/cache` (~350 MB) any time.
   new quests at the end of a giver or new givers at the end (or mark them
   late=True). 17 quest bytes left (bank 1 136-159 / 236-255 added: unused by every script, no exe absolute refs). Quest data block 20691 of 32768 bytes. Bank 3 128-159 is used by
   original scripts (not free).
-  Temp vars (5,232)-(5,234) used by quest givers/markers ((5,233) = marker mode, recomputed per giver every 10 frames). Temp vars (5,240),(5,241) for menus.
+  Temp var (5,232) used by quest giver talk (CKITM count); markers use no temp vars. Temp vars (5,240),(5,241) for menus.
 
 ## Verified facts: field scripts
 
@@ -123,6 +123,12 @@ delete `build/cache` (~350 MB) any time.
   7/15 = bank 5, 5/6 = temp. 16-bit nibbles: 2,4,6,12,14,15. 16-bit vars use
   **byte** addressing (var[2][28] = savemap 0x0BC0). Bank 1 starts at savemap 0x0BA4;
   field vars can't reach past 0x10A4 (so not the config block / battle speed).
+- **The engine runs each entity for at most 8 opcodes per turn** (0x60CD77,
+  `[ebp-0x1c] = 8`), then moves to the next entity: scripts interleave mid
+  computation. Never share a temp var between entities' *concurrent* scripts
+  (mains/loops): quest markers kept their mode in one temp var and the star /
+  heart scripts overwrote it between computing and testing (stars vanished;
+  two givers' markers fought). Branch directly instead.
 - Entity script 0 = init up to the first RET, then main. The engine runs all
   inits before any main. Script 1 = talk. LINE entities: script 2 runs when the
   player crosses the line.

@@ -51,7 +51,6 @@ NEW, ACCEPTED, DONE = 0, 2, 4
 # (talk to a `target` NPC elsewhere).
 COUNTED = ("kill", "count", "visit", "courier")
 ITEM_COUNT = (5, 232)          # temp var: CKITM result
-MODE = (5, 233)                 # temp var: marker mode (1 offer, 2 accepted, 0 none)
 
 ORB_HEIGHT = 160               # marker height above the giver's feet (200 was too high in game)
 # Markers (_marker_models.py): the S-Guard star while the giver's next quest is
@@ -208,31 +207,31 @@ def _talk(giver):
     return build
 
 
-def _marker_mode(giver):
-    """Ops: MODE = 1 (offer), 2 (ready to hand in) or 0 for the giver's
-    first quest that isn't done."""
-    out = asm.nop()
-    ops = [asm.setbyte(MODE, 0)]
+def _marker_branch(giver, offer, accepted, none):
+    """Ops jumping to `offer` / `accepted` (the giver's first quest that isn't
+    done) or `none` (all done). No shared variable: the engine runs each entity
+    for at most 8 opcodes per turn (0x60CD77) and then switches, so a mode
+    kept in a temp var shared by several markers was overwritten between
+    computing and testing it (stars vanished; two givers' orbs fought)."""
+    ops = []
     for q in giver["quests"]:
-        nxt, offer = asm.nop(), asm.nop()
+        nxt = asm.nop()
         ops += [jump_if(state(q), "==", DONE, nxt),
-                jump_if(state(q), "==", NEW, offer)]
-        ops += [asm.setbyte(MODE, 2), asm.goto(out),                       # accepted
-                offer, asm.setbyte(MODE, 1), asm.goto(out), nxt]
-    return ops + [out]
+                jump_if(state(q), "==", NEW, offer), asm.goto(accepted), nxt]
+    return ops + [asm.goto(none)]
 
 
 def _marker_main(giver, show_mode):
-    """Main loop: every 10 frames recompute the giver's mode and show this
-    marker only in `show_mode` (0 = in either mode). (The field isn't
-    re-initialised after a battle.)"""
-    top, hide, wait = asm.nop(), asm.nop(), asm.nop()
-    ops = [top] + _marker_mode(giver)
-    test = (jump_if(MODE, "==", 0, hide) if show_mode == 0 else jump_if(MODE, "!=", show_mode, hide))
-    ops += [test, Op(b"\xA4\x01"), asm.goto(wait),                                  # VISI 01
-            hide, Op(b"\xA4\x00"),                                                  # VISI 00
-            wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]                          # WAIT 10
-    return ops
+    """Main loop: every 10 frames show this marker only in `show_mode`
+    (1 offer, 2 accepted, 0 either). (The field isn't re-initialised after a
+    battle.)"""
+    top, show, hide, wait = asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    offer = show if show_mode in (0, 1) else hide
+    accepted = show if show_mode in (0, 2) else hide
+    return ([top] + _marker_branch(giver, offer, accepted, hide)
+            + [show, Op(b"\xA4\x01"), asm.goto(wait),                               # VISI 01
+               hide, Op(b"\xA4\x00"),                                               # VISI 00
+               wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)])                       # WAIT 10
 
 
 def _tint(rgb):
@@ -245,13 +244,12 @@ def _tint(rgb):
 
 def _orb_main(giver):
     """QUEST_MARKERS = "orbs": every 10 frames show the orb tinted for the
-    giver's mode (hidden at 0)."""
-    top, hide, wait = asm.nop(), asm.nop(), asm.nop()
-    ops = [top] + _marker_mode(giver) + [jump_if(MODE, "==", 0, hide), Op(b"\xA4\x01")]
-    for mode, rgb in ORB_TINT.items():
-        skip = asm.nop()
-        ops += [jump_if(MODE, "!=", mode, skip)] + _tint(rgb) + [skip]
-    return ops + [asm.goto(wait), hide, Op(b"\xA4\x00"), wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]
+    giver's mode (hidden when all are done)."""
+    top, offer, accepted, hide, wait = asm.nop(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    ops = [top] + _marker_branch(giver, offer, accepted, hide)
+    ops += [offer, Op(b"\xA4\x01")] + _tint(ORB_TINT[1]) + [asm.goto(wait)]
+    ops += [accepted, Op(b"\xA4\x01")] + _tint(ORB_TINT[2]) + [asm.goto(wait)]
+    return ops + [hide, Op(b"\xA4\x00"), wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]
 
 
 def _spot(ctx, field, x, y):
