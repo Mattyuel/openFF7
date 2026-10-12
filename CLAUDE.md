@@ -309,6 +309,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - tunnel_2 duct = entity `cloud` script 4 (Barret/Tifa scene); sbwy4_1 ladder ->
   sbwy4_4 vent; vent end line1 drops to sbwy4_5 (onward to No.5).
 - md8brdg: md8_3's arrival (-422,1387) is at the top of the screen; train uses (-420,100,tri 33).
+  Its walkmesh runs past the background on the right (user: "you can run out of
+  bounds"; floor to screen x ~300, view ends ~160): things placed there are
+  invisible. Keep NPCs/lines at screen |x| <= ~150 (projected with ff7.camera).
 - nmkin_5 (No.1 Reactor core): bomb scene fires when entity `cl` is on
   triangle var[6][7] (init sets 2); we set 255. Shared with the No.5 visit (progress 120).
 - elm (Kalm): arrival line checks (3,128,1) only — no progress check.

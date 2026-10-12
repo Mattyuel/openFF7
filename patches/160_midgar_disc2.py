@@ -22,10 +22,11 @@ from ff7 import triggers
 from ff7.walkmesh import Walkmesh
 
 WALKWAY, STREET = "md8brdg", "md8_5"
-# md8brdg's walkway narrows to its right end at x ~1215; the floor spans
-# y -80..120 at x 1100.
-WALKWAY_LINE = ((1100, -120, 518), (1100, 160, 518))
-WALKWAY_ARRIVE = (950, 100, 0xC0)            # just left of the line, facing left (-x)
+# md8brdg's floor runs on past the edge of its background (you can walk out
+# of view to the right, up to screen x ~300); the line sits at the visible
+# right edge (screen x ~155) across the arrival plaza, both ends off the floor.
+WALKWAY_LINE = ((775, 750, 518), (600, -130, 518))
+WALKWAY_ARRIVE = (470, 170, 0xC0)            # just left of the line (screen 120, 35), facing left
 # md8_5's street floor (z 0) spans y 240..2090 at its -x end (x -1960).
 STREET_LINE = ((-1880, 200, 0), (-1880, 2130, 0))
 STREET_ARRIVE = (-1750, 1000, 0x40)          # just right of the line, facing +x
@@ -48,6 +49,6 @@ def _gateway(ctx, field, line, dest_field, dest, direction):
 def apply(ctx):
     at_street, dir_street = _arrival(ctx, STREET, *STREET_ARRIVE)
     at_walkway, dir_walkway = _arrival(ctx, WALKWAY, *WALKWAY_ARRIVE)
-    assert at_street[0] > STREET_LINE[0][0] and at_walkway[0] < WALKWAY_LINE[0][0]
+    assert at_street[0] > STREET_LINE[0][0]
     _gateway(ctx, WALKWAY, WALKWAY_LINE, STREET, at_street, dir_street)
     _gateway(ctx, STREET, STREET_LINE, WALKWAY, at_walkway, dir_walkway)
