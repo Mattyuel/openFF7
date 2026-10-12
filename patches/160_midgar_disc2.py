@@ -4,9 +4,9 @@ Route: Upper Midgar train stop (md8brdg, the Sector 8 walkway where the
 conductor is) -> run right -> 8th Street (md8_5, where the party lands in
 disc 2), arriving at its left end -> its own exit on the right -> the hatch
 screen (md8_6). md8_5's left end leads back to md8brdg.
-md8_5's camera doesn't fit ff7.camera's model (every floor point projects to
-one thin band), so "left" there is placed from the floor itself: its exit to
-md8_6 (screen right) is at the +x end, the street's -x end is the left.
+md8_5's camera projects every floor point to one thin band in screen y, but
+screen x is usable: its exit to md8_6 (screen x 63..158) is at the +x end;
+the street runs out of view on the left (x < -1100).
 
 - The rest is flags (_config.INITIAL_EVENT_FLAGS, bank 5 offset 128/135): hatch
   already open, party copies hidden, Turks / Proud Clod / Hojo scenes done.
@@ -27,9 +27,12 @@ WALKWAY, STREET = "md8brdg", "md8_5"
 # right edge (screen x ~155) across the arrival plaza, both ends off the floor.
 WALKWAY_LINE = ((775, 750, 518), (600, -130, 518))
 WALKWAY_ARRIVE = (470, 170, 0xC0)            # just left of the line (screen 120, 35), facing left
-# md8_5's street floor (z 0) spans y 240..2090 at its -x end (x -1960).
-STREET_LINE = ((-1880, 200, 0), (-1880, 2130, 0))
-STREET_ARRIVE = (-1750, 1000, 0x40)          # just right of the line, facing +x
+# md8_5: the floor's -x end (x -1960, screen x ~-330) is out of view (the
+# screen is +-160 and doesn't scroll); x -1100 (y -940..2100) is screen x
+# ~-150, the left edge. Only screen x is usable here (the floor projects to
+# one band in y).
+STREET_LINE = ((-1100, -1000, 0), (-1100, 2160, 0))
+STREET_ARRIVE = (-850, 700, 0x40)            # right of the line (screen x ~-118), facing +x
 
 
 def _arrival(ctx, field, x, y, direction):

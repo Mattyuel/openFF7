@@ -10,7 +10,8 @@
   and Barret (pillar_2 `bal`: gunfire loop; talking to him changed the party
   and jumped to pillar_3, the Reno/bomb cutscene field, now unreachable).
   The pillar fields' text table is full: never add dialogue there.
-  Reno is a quest boss line on the roof (Gwen's quests, _quest_data.py).
+  Reno: a boss line a few steps right of the top of the stairs (always on,
+  once per visit; Gwen's quest counts it, _quest_data.py).
 - Sewer: you only ever jumped down from colne_b1 (the landing room, Aps) into
   colne_b3. A line at colne_b3's west dead end, below the drop, leads back up
   into colne_b1's corridor. colne_b1 is pinned at 209 (100_midgar) so the fall
@@ -26,6 +27,7 @@ from ff7.walkmesh import Walkmesh
 GATE_FIELD = "mds7plr1"
 GATE_CLOSED, GATE_OPEN = bytes.fromhex("e0000100"), bytes.fromhex("e0000101")   # BGON 00 01 00 / 01
 GATE_LOCK = bytes.fromhex("6d040101")                                         # IDLCK 0x104 on
+GATE_SHUT, GATE_SHOW_OPEN = bytes.fromhex("0200c2"), bytes.fromhex("0200c1")  # REQSW tobira script 2 / 1
 HIDE = [b"\x7E\x01", b"\xC7\x01", b"\xA4\x00"]                                 # TLKON 01, SOLID 01, VISI 00
 STORY_COPIES = {"pillar_1": ["big"], "pillar_2": ["je", "bal"]}
 SEWER_BACK = ((-620, -150, -211), (-620, -335, -211))
@@ -40,6 +42,9 @@ def _gate(ctx):
     locks = [o for o in sec.script_ops(sec.entity_index("stagedr"), 0) if bytes(o.raw) == GATE_LOCK]
     assert len(locks) == 1, locks
     sec.remove(locks[0])
+    shuts = [o for o in sec.script_ops(sec.entity_index("BGanim"), 0) if bytes(o.raw) == GATE_SHUT]
+    assert len(shuts) == 1, shuts
+    shuts[0].raw[:] = GATE_SHOW_OPEN
     ctx.field(GATE_FIELD).sections[0] = sec.build()
 
 

@@ -18,15 +18,17 @@ CHOCOBO_YELLOW = [bytes.fromhex("28180600001e000f00c4ff1e000f00c4ff0100010001000
                   bytes.fromhex("29")]                                               # KAWIW
 
 
-def choice_menu(sec, prompt, options, jumps):
+def choice_menu(sec, prompt, options, jumps, face=False):
     """ASK with `options`; for each option index i, jumps[i] is a list of ops
-    (or None = do nothing). Returns the ops (ending with UC 00 + RET)."""
+    (or None = do nothing). Returns the ops (ending with UC 00 + RET).
+    face: the talking entity turns to the player first (PTURA + WAIT)."""
     lines = prompt.split("\n")
     text = prompt + "".join("\n{CHOICE}" + o for o in options)
     first = len(lines)
     tid = sec.add_string(encode(text))
     end = [Op(b"\x33\x00"), asm.ret()]
-    ops = [Op(b"\x33\x01"), window(text), asm.ask(0, tid, first, first + len(options) - 1, CHOICE)]
+    ops = [Op(b"\x33\x01")] + ([Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00")] if face else [])
+    ops += [window(text), asm.ask(0, tid, first, first + len(options) - 1, CHOICE)]
     for i, act in enumerate(jumps):
         if not act:
             continue

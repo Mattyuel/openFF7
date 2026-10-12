@@ -597,7 +597,7 @@ Shared helpers for character recruitment scenes.
 ## `patches/_travel.py`
 Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 
-- `choice_menu(sec, prompt, options, jumps)` ASK with `options`; for each option index i, jumps[i] is a list of ops
+- `choice_menu(sec, prompt, options, jumps, face=False)` ASK with `options`; for each option index i, jumps[i] is a list of ops
 - `mapjump(ctx, field, x, y, tri, direction=0)` 
 - `copy_model(ctx, field, donor_field, donor_index)` 
 - `near(ctx, field, triangle)` Centre (x, y, z, tri) of a walkmesh triangle next to `triangle`.

@@ -69,7 +69,7 @@ def _train_menu(ctx):
     ent = sec.entity_index("guard")
     names = list(DESTINATIONS)
     jumps = [_depart(sec, mapjump(ctx, *DESTINATIONS[n]), ALL_ABOARD_TEXT) for n in names] + [None]
-    menu = choice_menu(sec, "Conductor\n“Where are you headed?”", names + ["Nowhere, thanks."], jumps)
+    menu = choice_menu(sec, "Conductor\n“Where are you headed?”", names + ["Nowhere, thanks."], jumps, face=True)
     sec.insert_before(sec.entry[ent][1], menu, retarget=False)
     sec.entry[ent][1] = menu[0]
     # The line at the train door ('border1') boarded the story train; switch it off.
@@ -89,7 +89,7 @@ def _conductors(ctx):
         def talk(sec):
             back = _depart(sec, mapjump(ctx, START_FIELD, START_X, START_Y, START_TRIANGLE))
             return choice_menu(sec, "Conductor\n“Heading back to Sector 7?”",
-                               ["Yes, take me back to Sector 7.", "Not yet."], [back, None])
+                               ["Yes, take me back to Sector 7.", "Not yet."], [back, None], face=True)
         add_npc(ctx, field, "conduct", model, pos, 0x80, talk)
 
 

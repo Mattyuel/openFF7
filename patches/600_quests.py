@@ -63,7 +63,7 @@ HOOK_VA, HOOK_OLD = 0x431536, bytes.fromhex("8b45fc83c004")
 # Minigame hooks (quest_menu.asm entries CODE+15/20/25): they count the
 # made-up enemy ids _quest_data.BIKE / BALLOON through the kill table.
 MINIGAME_HOOKS = [(0x6566B9, "8b159059d800", 15, "bike game: enemy bike destroyed -> quest count"),
-                  (0x737D95, "8b4d088b513c", 20, "snowboard: balloon popped (handler A) -> quest count"),
+                  (0x737D45, "8b45088b483c", 20, "snowboard: balloon popped (handler A, every balloon type) -> quest count"),
                   (0x73C52A, "8b45088b483c", 25, "snowboard: balloon popped (handler B) -> quest count")]
 
 GIL_TEXT = "%d gil"

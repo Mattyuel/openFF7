@@ -5,7 +5,7 @@
 ; asserted there). Entry points (5-byte jmp stubs): CODE+0 menu init(int),
 ; CODE+5 menu update(frame), CODE+10 kill hook (jumped to from 0x431536), CODE+15 motorbike
 ; destroyed (bike minigame, from 0x6566B9), CODE+20 / CODE+25 balloon popped
-; (snowboard minigame, from 0x737D95 / 0x73C52A). The bike and balloon hooks
+; (snowboard minigame, from 0x737D45 / 0x73C52A). The bike and balloon hooks
 ; count made-up enemy ids (BIKE_ID, BALLOON_ID) through the same kill table,
 ; so those quests are ordinary kill quests in 600_quests.py.
 ;
@@ -28,10 +28,11 @@ DATA      equ 0xFD5000
 REC       equ 60
 PARTS     equ 28
 VIEW      equ 8               ; rows visible in the list window
-MAXLIST   equ 32
+MAXLIST   equ 128             ; every quest fits (record index is a byte)
 VARS      equ 0xDC08DC        ; field var bank 1, offset 0 (banks 1-5 follow)
 INVENTORY equ 0xDC0234        ; savemap 0x04FC: 320 x u16 (id 9 bits, qty 7 bits)
 ACCEPTED  equ 2
+DONE      equ 4
 Z_TEXT    equ 0x3dcccccd      ; 0.1f
 Z_WIN     equ 0x3e4ccccd      ; 0.2f
 LIST_H    equ 0xE4            ; list window height = details top (fits VIEW rows)
@@ -61,7 +62,7 @@ BALLOON_ID    equ 0xFFFD          ; "balloon" (Icicle Inn snowboard run)
 BIKE_SCORE    equ 0xD85990        ; bike game score (the replaced load)
 BIKE_BACK     equ 0x6566BF
 SNOW_MODE     equ 0xDD865C        ; snowboard game: 1 = Icicle Inn run, 0 = Gold Saucer
-SNOW_A_BACK   equ 0x737D9B
+SNOW_A_BACK   equ 0x737D4B
 SNOW_B_BACK   equ 0x73C530
 
 org CODE
@@ -125,14 +126,15 @@ q_bike:
     jmp BIKE_BACK
 
 ; ---- balloon popped (snowboard minigame, two pop handlers) ---------------
-; Replace `mov ecx,[ebp+8]; mov edx,[ecx+0x3c]` at 0x737D95 and
-; `mov eax,[ebp+8]; mov ecx,[eax+0x3c]` at 0x73C52A. Icicle Inn run only.
+; Replace `mov eax,[ebp+8]; mov ecx,[eax+0x3c]` at 0x737D45 (handler A, before
+; its switch on the balloon type: 0-2 = the coloured balloons worth 1/3/5
+; points, 3/4 = the special ones) and at 0x73C52A (handler B). Icicle Inn run only.
 q_snow_a:
     pushad
     call q_balloon
     popad
-    mov ecx, [ebp + 8]
-    mov edx, [ecx + 0x3c]
+    mov eax, [ebp + 8]
+    mov ecx, [eax + 0x3c]
     jmp SNOW_A_BACK
 
 q_snow_b:
@@ -175,26 +177,14 @@ q_count:
 .done:
     ret
 
-; ---- init(int): list the accepted quests --------------------------------
+; ---- init(int): list the accepted quests, then the handed-in ones ---------
 q_init:
     push ebx
     xor ecx, ecx                    ; list length
-    xor ebx, ebx                    ; record index
-.loop:
-    cmp ebx, [DATA]
-    jge .done
-    imul eax, ebx, REC
-    movzx eax, word [DATA + 16 + eax]
-    cmp byte [VARS + eax], ACCEPTED
-    jne .next
-    mov [q_list + ecx], bl
-    inc ecx
-    cmp ecx, MAXLIST
-    jge .done
-.next:
-    inc ebx
-    jmp .loop
-.done:
+    mov dl, ACCEPTED
+    call q_collect
+    mov dl, DONE
+    call q_collect
     mov [q_n], ecx
     xor eax, eax
     mov [q_row], eax
@@ -202,9 +192,38 @@ q_init:
     pop ebx
     ret
 
+; append to q_list every record whose state is dl (ecx = list length)
+q_collect:
+    xor ebx, ebx                    ; record index
+.loop:
+    cmp ebx, [DATA]
+    jge .done
+    cmp ecx, MAXLIST
+    jge .done
+    imul eax, ebx, REC
+    movzx eax, word [DATA + 16 + eax]
+    cmp byte [VARS + eax], dl
+    jne .next
+    mov [q_list + ecx], bl
+    inc ecx
+.next:
+    inc ebx
+    jmp .loop
+.done:
+    ret
+
+; esi = record; ZF set if it was handed in
+q_isdone:
+    movzx eax, word [esi]
+    cmp byte [VARS + eax], DONE
+    ret
+
 ; ---- helpers --------------------------------------------------------------
-; edi = part; eax = progress, capped at its count
+; edi = part; eax = progress, capped at its count (the full count once the
+; quest was handed in: [q_done])
 q_have:
+    cmp byte [q_done], 0
+    jne .full
     movzx edx, word [edi + 4]
     cmp byte [edi + 7], 0
     jne .items
@@ -236,7 +255,8 @@ q_have:
     movzx edx, byte [edi + 6]
     cmp eax, edx
     jbe .ret
-    mov eax, edx
+.full:
+    movzx eax, byte [edi + 6]
 .ret:
     ret
 
@@ -351,12 +371,16 @@ q_update:
     cmp ebx, eax
     jge .rows_done
     RECORD ebx
-    call q_ready                    ; green when ready to hand in
+    mov edi, 4                      ; green: handed in
+    call q_isdone
+    je .coloured
+    mov byte [q_done], 0
+    call q_ready                    ; yellow: ready to hand in, else white
     mov edi, 7
     test eax, eax
-    jz .white
-    mov edi, 4
-.white:
+    jz .coloured
+    mov edi, 6
+.coloured:
     mov eax, ebx
     sub eax, [q_top]
     imul eax, eax, 26
@@ -377,6 +401,8 @@ q_update:
 
     mov eax, [q_row]
     RECORD eax
+    call q_isdone
+    sete [q_done]
     TEXT 24, LIST_H + 13, dword [esi + 4], 6
     TEXT 24, LIST_H + 39, dword [esi + 8], 7
     TEXT 24, LIST_H + 65, dword [esi + 12], 7
@@ -410,10 +436,14 @@ q_update:
     inc ecx
     jmp .part
 .parts_done:
+    cmp byte [q_done], 0
+    jne .handed_in
     call q_ready
     test eax, eax
     jz .windows
-    TEXT 24, LIST_H + 225, dword [DATA + 8], 4
+    TEXT 24, LIST_H + 225, dword [DATA + 8], 6
+.handed_in:
+    mov byte [q_done], 0
 
 .windows:
     WINDOW q_rect1, 0, 0, 0x1DC, LIST_H
@@ -491,6 +521,7 @@ q_update:
 ; ---- variables -----------------------------------------------------------
 align 4
 q_n:     dd 0
+q_done:  db 0, 0, 0, 0
 q_row:   dd 0
 q_top:   dd 0
 q_rect1: dw 0, 0, 0, 0

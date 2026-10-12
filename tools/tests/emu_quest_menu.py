@@ -137,3 +137,15 @@ print([c for c in e.calls if c[0] in ('SOUND', 'MENU_GO', 'MENU_SET')])
 # no quests
 for off in range(192, 230): e.b3(off, 0)
 e.call(CODE + 0); t, h = frame(); print(t, h)
+# handed-in quests stay listed after the accepted ones, green, with full counts
+for off in range(192, 230): e.b3(off, 0)
+e.b3(208, 2); e.b3(209, 0); e.b3(210, 0)  # billybob accepted, nothing done
+e.b3(203, 4); e.b3(204, 0)                # andrea handed in (counters irrelevant)
+e.call(CODE + 0); t, h = frame()
+rows = [x for x in t if x[0] == 64]
+print('done listed last:', rows)
+assert [r[3] for r in rows] == [7, 4], rows
+t, h = frame([0x4000]); t, h = frame()
+parts = [x[2] for x in t if x[1] > 380]
+print('  done details', parts)
+assert 'Ceasar: 2/2' in parts and not any('Report back' in p for p in parts), parts
