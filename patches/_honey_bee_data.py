@@ -87,7 +87,7 @@ GIRLS = [
          fail="Rhonda\n“Too cheerful. Goodbye.”",
          hired="Rhonda\n“Fine. I'll do it. It won't help,\n but I'll do it.”",
          idle="Rhonda\n“Yes, I'm going. No, I'm not happy.”"),
-    dict(name="Lulu", stars=2, tag="drama queen", field="juninn", at=(-226, 305), dir=17,
+    dict(name="Lulu", stars=2, tag="drama queen", field="juninn", at=(-353, 438), dir=17,
          model=("crcin_1", 4),
          stranger="Lulu\n“Oh, the TRAGEDY of it all!\n …I lost a sock.”",
          intro="Lulu\n“Darling! You look like a man with a\n BROKEN heart. Tell me EVERYTHING!”",
