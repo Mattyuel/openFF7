@@ -4,10 +4,10 @@
   front of it) brought Barret and Tifa in for the "tiny hole" conversation.
   Now Cloud just gets a choice; "Go down" runs only his own descent (walk to
   the duct, ladder animation, jump to sbwy4_1).
-- The vent (sbwy4_4, reached by the ladder in sbwy4_1): at its far end the
-  line only reacted to [OK] and only dropped you onward, so it looked like a
-  dead end with no way back. It now offers a choice on [OK] or when walked
-  over: drop down (onward to the No.5 Reactor) or climb back to the tunnel.
+- The vent (sbwy4_4, reached by the ladder in sbwy4_1) is the original: its
+  far-end ladder climbs down onward to the No.5 Reactor. (A drop / back /
+  stay menu there reopened while you stood on the line and could get you
+  stuck; the way back is the first ladder, then the line below the duct.)
 - Below the duct (sbwy4_1, the corridor with the Ether) there was no way back
   up: a line across the corridor just left (on screen) of where you land
   takes you back to the tunnel, beside the duct.
@@ -18,7 +18,6 @@ from ff7 import asm
 from ff7.script import Op, Script
 
 TUNNEL = "tunnel_2"
-VENT = "sbwy4_4"
 BACK_TO_TUNNEL = ("tunnel_2", 0, 450, 21, 64)   # beside the duct, past its line
 BELOW_DUCT = "sbwy4_1"
 DUCT_LANDING = (22, -745)        # tunnel_2's jump arrival
@@ -54,21 +53,6 @@ def _duct(ctx):
     ctx.field(TUNNEL).sections[0] = sec.build()
 
 
-def _vent(ctx):
-    sec = Script.parse(ctx.field(VENT).sections[0])
-    ent = sec.entity_index("line1")
-    drop = sec.script_ops(ent, 1)
-    assert drop[0].op == 0x01 and drop[0].raw[1] == sec.entity_index("cloud"), drop[0].raw.hex()
-    back = [Op(b"\x33\x00"), mapjump(ctx, *BACK_TO_TUNNEL)]   # UC 00 before leaving
-    menu = choice_menu(sec, "{CLOUD}\n“The vent ends here.”",
-                       ["Drop down.", "Climb back to the train tunnel.", "Stay."],
-                       [[_copy(drop[0])], back, None])
-    slots = sec.replace_script(ent, 1, menu)        # [OK] on the line (+ slots sharing it)
-    if 2 not in slots:                              # and walking over it
-        sec.entry[ent][2] = menu[0]
-    ctx.field(VENT).sections[0] = sec.build()
-
-
 def _below_duct(ctx):
     from ff7.walkmesh import Walkmesh
     mesh = Walkmesh(ctx.field(BELOW_DUCT).section("walkmesh"))
@@ -80,5 +64,4 @@ def _below_duct(ctx):
 
 def apply(ctx):
     _duct(ctx)
-    _vent(ctx)
     _below_duct(ctx)

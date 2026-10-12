@@ -48,9 +48,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   let you leave the PHS with fewer than 3 in the party.) Needs a new game.
 - **Sector 4 duct** (end of the train tunnel to No.5): pressing [OK] at the
   duct gives "Go down." / "Not now." with no Barret/Tifa. In the next room,
-  climb the ladder into the vent; at its far end (or walking onto that spot)
-  choose "Drop down." (onward) or "Climb back to the train tunnel." Note if
-  the vent menu pops up repeatedly while you stand there.
+  climb the ladder into the vent; its second ladder (far end) now climbs
+  down straight away as in the original, no menu. Way back: the first
+  ladder, then run left in the corridor.
 - **Chocobo rides**: on the Midgar slum outskirts screen (where you enter
   from the world map) Choco Billy and a chocobo stand next to you; same on the
   first Mythril Mine screen (entrance from the marsh side, psdun_1). Talk to

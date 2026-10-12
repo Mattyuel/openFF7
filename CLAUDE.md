@@ -69,7 +69,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `230_recruit_more.py` | Recruit NPCs: Red XIII (blin67_1), Cid (junair airstrip), Cait Sith (del3 beach), Yuffie (frcyo by the left pen, yougan2 model anim 6), Vincent (onna_2 dancers' room); KERNEL new-game records 6/7 = the exe's Cait Sith / Vincent templates with default names (no naming screen). Original Yuffie/Vincent joins count only if not already recruited. All recruit talks start with PTURA (face the player). |
 | `250_train_destinations.py` | Station conductor menu (Upper Midgar md8brdg, Shinra Tower sinbil_1, No.1 md1stin, No.5 tunnel_2 — not tunnel_1, which loops onto itself), conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
 | `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
-| `270_sector4_duct.py` | Tunnel duct = plain choice; line below the duct (sbwy4_1, left of the landing) back to tunnel_2; vent end offers drop / back to tunnel. |
+| `270_sector4_duct.py` | Tunnel duct = plain choice; line below the duct (sbwy4_1, left of the landing) back to tunnel_2; vent (sbwy4_4) left original (a menu on its far ladder line reopened while standing on it). |
 | `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
