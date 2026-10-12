@@ -11,7 +11,8 @@ pins in world_overrides.json):
   elevator unless progress == 406; now it always goes up (junin7, as at 406).
 - Gate of Naught (cosin2) is always open: the opening Bugenhagen does at
   progress 502-513 with (3,170) bit 2 (door BG + hide both door models) runs
-  on every entry, without its fade.
+  on every entry, without its fade. The cave mouth's floor lock (AD,
+  IDLCK 0x29) and the "only Bugenhagen can open it" line are removed.
 - Story progress stays at 100: fields that still write var[2][0] after
   pinning (unpinned ones such as gidun_3 after Gi Nattak, trnad_1, ancnt3,
   jtmpin2, corel1-3, the blackbg cutscene rooms) get those writes removed.
@@ -75,6 +76,15 @@ def _gate_of_naught(ctx):
     assert any(o.op == 0xE1 for o in body), "no BGOFF in the opening"
     for o in ifs + fades:
         sec.remove(o)
+    # 'AD' locks the cave mouth's floor (triangle 0x29) unless progress is
+    # 502-513 with the door bit: an invisible wall at the pin (515). Drop the lock.
+    locks = [o for o in sec.script_ops(sec.entity_index("AD"), 0) if bytes(o.raw) == bytes.fromhex("6d290001")]
+    assert len(locks) == 1, locks
+    sec.remove(locks[0])
+    # 'LINES1' ([OK] by the door): "only Bugenhagen can open it". Off.
+    ent = sec.entity_index("LINES1")
+    ret = next(o for o in sec.script_ops(ent, 0) if o.op == 0x00)
+    sec.insert_before(ret, [Op(b"\xD1\x00")])                       # LINON 00
     ctx.field(field).sections[0] = sec.build()
 
 

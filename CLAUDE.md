@@ -70,7 +70,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
-| `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open. |
+| `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open (cosin2: door opening on every entry, cave floor lock IDLCK 0x29 + "only Bugenhagen" line removed). |
 | `430_buggy.py` | Buggy salesman (Dio model) at Costa del Sol's town exit (del2): 1000 gil, sets (1,127) bits 0+1 and MAPJUMPs to wm12; wm0's Costa del Sol branch already mounts the buggy (asserted). |
 | `440_corel_prison.py` | Buggy into the world map Gold Saucer -> desert2 (vanilla wm0 0xA964); desert2's bottom/left lines now go to jail1/jail3; convict in jail1 drives you out (buggy bits + MAPJUMP wm15). |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
