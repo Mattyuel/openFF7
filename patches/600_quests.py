@@ -67,7 +67,9 @@ HOOK_VA, HOOK_OLD = 0x431536, bytes.fromhex("8b45fc83c004")
 # made-up enemy ids _quest_data.BIKE / BALLOON through the kill table.
 MINIGAME_HOOKS = [(0x6566B9, "8b159059d800", 15, "bike game: enemy bike destroyed -> quest count"),
                   (0x737D45, "8b45088b483c", 20, "snowboard: balloon popped (handler A, every balloon type) -> quest count"),
-                  (0x73C52A, "8b45088b483c", 25, "snowboard: balloon popped (handler B) -> quest count")]
+                  (0x73C52A, "8b45088b483c", 25, "snowboard: balloon popped (handler B) -> quest count"),
+                  # play time + minutes for the Honey Bee Inn income (620_honey_bee.py)
+                  (0x40ABF0, "a1b808dc0083c001a3b808dc00", 30, "play clock tick -> minutes in var[2][247]")]
 
 GIL_TEXT = "%d gil"
 
@@ -404,7 +406,8 @@ def _quest_menu(ctx):
     exe.patch(HOOK_VA, HOOK_OLD, hook, "reward loop -> quest kill counter")
     for va, old, entry, what in MINIGAME_HOOKS:
         assert code[entry] == 0xE9, entry
-        jmp = b"\xe9" + struct.pack("<i", MENU_CODE_VA + entry - (va + 5)) + b"\x90"
+        jmp = b"\xe9" + struct.pack("<i", MENU_CODE_VA + entry - (va + 5))
+        jmp += b"\x90" * (len(bytes.fromhex(old)) - 5)
         exe.patch(va, bytes.fromhex(old), jmp, what)
 
     for va, old, new, what in MENU_PATCHES:

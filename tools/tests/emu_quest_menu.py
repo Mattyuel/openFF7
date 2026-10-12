@@ -149,3 +149,15 @@ t, h = frame([0x4000]); t, h = frame()
 parts = [x[2] for x in t if x[1] > 380]
 print('  done details', parts)
 assert 'Ceasar: 2/2' in parts and not any('Report back' in p for p in parts), parts
+
+# play clock tick (CODE+30, from 0x40ABF0): seconds + 1, minutes -> var[2][247]
+SECONDS, MINUTES = 0xDC08B8, 0xDC08DC + 247
+e.u.mem_write(0x40ABF0, rd(0x40ABF0, 13))
+e.u.mem_write(0x40ABFD, b'\xf4')
+for secs, mins in ((3599, 60), (59, 1), (0xFFFFFFF0, 0xFFFF)):
+    e.u.mem_write(SECONDS, struct.pack('<I', secs))
+    e.u.reg_write(UC_X86_REG_ESP, 0x10F000)
+    e.u.emu_start(0x40ABF0, 0x40ABFD)
+    got = struct.unpack('<IH', bytes(e.u.mem_read(SECONDS, 4)) + bytes(e.u.mem_read(MINUTES, 2)))
+    assert got == (secs + 1, mins), (secs, got)
+print('play clock ok')

@@ -572,6 +572,8 @@ Honey Bee Girl recruitment.
 - `_uc(on)` 
 - `_menu(off)` 
 - `_req(ent, slot, wait=True)` 
+- `_arith(op, dst, src)` PLUS2 0x86 / MINUS2 0x88 / MUL2 0x8A [banks][dst][u16 src]: dst word op= src
+- `_collect(sec, end)` Income since the last collection: total stars of the hired girls x
 - `_hired(i)` 
 - `_window(text, win=0, x=8, y=8)` 
 - `_say(sec, text, win=0, x=8, y=8)` 

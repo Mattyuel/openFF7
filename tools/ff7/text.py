@@ -37,7 +37,9 @@ def decode(raw):
             elif c == 0xDD:
                 out.append("{WAIT %d}" % (raw[i] | raw[i + 1] << 8))
                 i += 2
-            elif c in (0xDE, 0xDF, 0xE1):
+            elif c == 0xE1:
+                out.append("{VAR}")          # the window's number (MPRA2 slot 0); no operand
+            elif c in (0xDE, 0xDF):
                 out.append("{VAR}")
                 i += 4
             elif c == 0xE2:
@@ -77,6 +79,8 @@ def encode(text):
                 out.append(_TOKENS[tok])
                 if tok == "{NEW}" and text[j + 1:j + 2] == "\n":
                     j += 1                      # 0xE8 is a new page *and* line (decode: "{NEW}\n")
+            elif tok == "{VAR}":
+                out += b"\xFE\xE1"               # the window's number, set by MPRA2
             elif tok in _COLOR_TOKENS:
                 out += bytes([0xFE, _COLOR_TOKENS[tok]])
             else:

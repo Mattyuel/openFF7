@@ -46,7 +46,7 @@ OPEN_VARS_FIRST = 96
 QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63),
                # bank 1 runs unused by every field/world map script and with no exe
                # absolute reference (scan of 2026-10; bank 1 = plain field flags)
-               (1, 136, 159), (1, 236, 250)]
+               (1, 136, 159), (1, 236, 246)]
 
 # Quest giver markers (600_quests): "sprites" = the S-Guard star (offer) and
 # heart (accepted) models built into char.lgp; "orbs" = the old tinted materia
@@ -59,6 +59,12 @@ QUEST_MARKERS = "sprites"
 HB_JOB = ((1, 251), 0)            # bit: the Honey Bee Inn manager's job accepted
 HB_HIRED = (1, 252)               # bits 0-19 over bytes 252-254: girl i hired
 HB_VISIT = (1, 255)               # girl index + 1 being visited (0 = none)
+# Honey Bee Inn income (bank 1 247-250, 16-bit nibble 2): the exe's play clock
+# writes the play time in minutes to HB_MINUTES every second (quest_menu.asm
+# q_clock); HB_LAST = HB_MINUTES at the last collection.
+HB_MINUTES, HB_LAST = (2, 247), (2, 249)
+HB_RATE = 2                       # gil per star per minute
+HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 
 # Regions that keep their own story line in a private 16-bit variable
 # (reads/writes of story progress in their fields are redirected to it).

@@ -7,6 +7,9 @@
   only say a line. With the job, talking to one starts her pitch, then her
   questions (as many as her stars); every answer right = hired (HB_HIRED bit),
   one wrong = talk again later.
+- Earnings: the manager pays HB_RATE gil per star of every hired girl per
+  minute of play since the last collection (at most HB_CAP minutes). The
+  exe's play clock keeps the minutes in HB_MINUTES (quest_menu.asm q_clock).
 - A visit jumps to the "&" room (onna_52) with HB_VISIT = girl + 1. There the
   room's own scene (produce main) and its exit line are off, and a new
   director entity plays her scene: the Honey Bee dancer (girl2, with all 22
@@ -17,7 +20,7 @@
 """
 import struct
 
-from _config import HB_HIRED, HB_JOB, HB_VISIT
+from _config import HB_CAP, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
 from _honey_bee_data import GIRLS, STARS
 from _recruit import SOUND_RECRUIT, sound
 from _travel import CHOICE, add_npc, beside, copy_model
@@ -33,6 +36,7 @@ MANAGER_MODEL = ("md8_2", 3)                 # midgal_man
 MANAGER_AT, MANAGER_DIR = (104, -48), 0
 ROOM_ARRIVE = (263, 163, 5, 220)             # onna_4's own jump into the "&" room
 SHOWN = (5, 245)                             # temp: a hired girl was listed
+TOTAL, ELAPSED, EARN = (6, 246), (6, 248), (6, 250)   # temp words: stars, minutes, gil
 FINAL = "You spent the rest of the night together\nand had a good time..."
 OFFER = "{CLOUD}\n“There's a job going at the Honey Bee Inn.\n Interested?”"
 
@@ -98,6 +102,39 @@ def _menu(off):
 
 def _req(ent, slot, wait=True):
     return Op(bytes([0x03 if wait else 0x02, ent, 0xC0 | slot]))
+
+
+def _arith(op, dst, src):
+    """PLUS2 0x86 / MINUS2 0x88 / MUL2 0x8A [banks][dst][u16 src]: dst word op= src
+    (a (nibble, offset) var or a literal)."""
+    sb, sv = (src if isinstance(src, tuple) else (0, src))
+    return Op(bytes([op, dst[0] << 4 | sb, dst[1]]) + struct.pack("<H", sv))
+
+
+def _collect(sec, end):
+    """Income since the last collection: total stars of the hired girls x
+    HB_RATE gil x minutes (at most HB_CAP), paid with GOLDU and shown with
+    MPRA2 + {VAR}; HB_LAST = now."""
+    none, idle = asm.nop(), asm.nop()
+    ops = [asm.setword(TOTAL, 0)]
+    for i, g in enumerate(GIRLS):
+        hv, bit = _hired(i)
+        skip = asm.nop()
+        ops += [asm.if_byte(hv, "bit_on", bit, skip), _arith(0x86, TOTAL, g["stars"]), skip]
+    ops += [asm.if_word(TOTAL, "!=", 0, none),
+            asm.setword(ELAPSED, HB_MINUTES), _arith(0x88, ELAPSED, HB_LAST)]   # minutes since the last cut
+    capped = asm.nop()
+    ops += [asm.if_word(ELAPSED, ">", HB_CAP, capped), asm.setword(ELAPSED, HB_CAP), capped,
+            asm.setword(EARN, ELAPSED), _arith(0x8A, EARN, TOTAL), _arith(0x8A, EARN, HB_RATE),
+            asm.if_word(EARN, "!=", 0, idle),
+            Op(bytes([0x39, EARN[0] << 4]) + struct.pack("<I", EARN[1])),           # GOLDU var
+            asm.setword(HB_LAST, HB_MINUTES), sound(0x168)]                         # the item chime
+    paid = _say(sec, "Manager\n“Your girls have been busy!\n Here's your cut: {VAR} gil.”")
+    paid.insert(1, Op(bytes([0x42, EARN[0], 0, 0]) + struct.pack("<H", EARN[1])))  # MPRA2 after WINDOW: the number
+    ops += paid + [asm.goto(end)]
+    ops += [idle] + _say(sec, "Manager\n“Nothing yet, partner. Give the\n girls some time to earn.”") + [asm.goto(end)]
+    ops += [none] + _say(sec, "Manager\n“No girls, no money. Go hire some!”") + [asm.goto(end)]
+    return ops
 
 
 def _hired(i):
@@ -174,13 +211,16 @@ def _manager(ctx, back):
     assert Walkmesh(ctx.field(ROOM).section("walkmesh")).contains(tri, x, y)
 
     def talk(sec):
-        end, offer, visit, tips, done = _uc(0), asm.nop(), asm.nop(), asm.nop(), asm.nop()
+        end, offer, visit, tips, done, cut = _uc(0), asm.nop(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
         ops = [_uc(1), Op(b"\x35\x00\x08\x02"), _w(8),
                asm.if_byte(HB_JOB[0], "bit_on", HB_JOB[1], offer)]
         menu, first = _ask(sec, "Manager\n“Back again, partner? What'll it be?”",
-                           ["Visit one of the girls.", "Where do I find girls?", "Nothing."])
+                           ["Visit one of the girls.", "Collect the girls' earnings.",
+                            "Where do I find girls?", "Nothing."])
         ops += menu + [asm.if_byte(CHOICE, "!=", first, visit),
-                       asm.if_byte(CHOICE, "!=", first + 1, tips), asm.goto(end)]
+                       asm.if_byte(CHOICE, "!=", first + 1, cut),
+                       asm.if_byte(CHOICE, "!=", first + 2, tips), asm.goto(end)]
+        ops += [cut] + _collect(sec, end)
         # visit: every hired girl, best first
         ops += [visit, asm.setbyte(SHOWN, 0)]
         for i in _ranked():
@@ -205,7 +245,8 @@ def _manager(ctx, back):
         ask, first = _ask(sec, "Manager\n“Find me girls for the Inn? I'll let\n you visit any you hire. On the house.”",
                           ["You've got a deal.", "Not interested."])
         no = asm.nop()
-        ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.biton(*HB_JOB)]
+        ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.biton(*HB_JOB),
+                      asm.setword(HB_LAST, HB_MINUTES)]                         # earnings count from now
         ops += _say(sec, "Manager\n“Great! Talk to the ladies you meet.\n The classier the girl, the more\n questions she'll ask. Get 'em all right!”")
         ops += [asm.goto(end), no] + _say(sec, "Manager\n“Your loss, partner.”")
         return ops + [end, asm.ret()]

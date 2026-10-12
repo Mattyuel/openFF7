@@ -79,7 +79,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `450_highwind.py` | junair2 runway line (y -2400) -> Highwind owned/aboard (bank 1 byte 127 bits 4/5 = wm 0x3FC/0x3FD) + MAPJUMP wm40 (wm0 mounts model 3 near Junon); wm0 system function 6 ([Menu] in the air -> fship interior, exe 0x74F676) starts with `return`. |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
 | `600_quests.py` | Quest framework: givers + sprite markers (star = offer, heart = accepted until hand-in; models QSTA/QHTA built into char.lgp by `_marker_models.py` from magic.lgp s_guard.tex / heart01.tex on the gujc.hrc skeleton; one entity each per giver, star only where 16 models don't allow both), kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 44 givers, 87 quests, 16 boss lines; follow-ups on early givers use late=True (allocated after every other quest). Kinds: kill, deliver, count (counter bumped by `count_ops`/exe), visit (`spots`: lines that tick when crossed), courier (`target` NPC elsewhere); kill-table fake ids BIKE 0xFFFE / BALLOON 0xFFFD are counted by exe hooks in the bike game (0x6566B9) and snowboard (0x737D45 before the balloon-type switch, so all colours and the special types 3/4 count, and 0x73C52A; Icicle mode only). Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
-| `620_honey_bee.py` | Honey Bee Girl recruitment (data `_honey_bee_data.py`, 20 adult girls, stars 1-5 = questions): manager NPC in onna_4 (job bit HB_JOB, list of hired girls best first -> visit); girls `hbNN` in 20 fields (talk: stranger / pitch + questions / idle); visit = MAPJUMP onna_52 with HB_VISIT = i+1: produce main + border1 LINE guarded off, director entity `hbscene` REQEWs beats added in free script slots of girl2 (8+) and cloud (24+), fade, final line, back beside the manager. girl2's model gets all 22 Honey Bee dancer anims (`ModelLoader.with_anims`). Save: bank 1 251-255 (`_config.HB_*`). |
+| `620_honey_bee.py` | Honey Bee Girl recruitment (data `_honey_bee_data.py`, 20 adult girls, stars 1-5 = questions): manager NPC in onna_4 (job bit HB_JOB, list of hired girls best first -> visit); girls `hbNN` in 20 fields (talk: stranger / pitch + questions / idle); visit = MAPJUMP onna_52 with HB_VISIT = i+1: produce main + border1 LINE guarded off, director entity `hbscene` REQEWs beats added in free script slots of girl2 (8+) and cloud (24+), fade, final line, back beside the manager. girl2's model gets all 22 Honey Bee dancer anims (`ModelLoader.with_anims`). Income: manager "Collect" pays HB_RATE (2) gil x total stars x minutes since the last collection (cap HB_CAP 270) via GOLDU var + MPRA2/{VAR}; minutes come from the exe play clock hook (0x40ABF0 -> quest_menu.asm q_clock writes var[2][247]). Save: bank 1 247-255 (`_config.HB_*`). |
 | `650_world_vehicles.py` | World map variant 0 (progress < 1000) model table + highwind/sbmrn (Highwind was invisible: row 0x96DF10 had 0xFF for models 3/13); submarine slot 4 parked by Junon at new game (`_config.SUBMARINE_SLOT`). |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
@@ -107,7 +107,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   scripts and exe absolute refs, zero at new game); `600_quests._allocate` hands
   them out in GIVERS order (state byte + one counter per kill target), so append
   new quests at the end of a giver or new givers at the end (or mark them
-  late=True). 26 quest bytes left (bank 1 136-159 / 236-255 added: unused by every script, no exe absolute refs). Quest data block 20691 of 32768 bytes. Bank 3 128-159 is used by
+  late=True). 17 quest bytes left (bank 1 136-159 / 236-255 added: unused by every script, no exe absolute refs). Quest data block 20691 of 32768 bytes. Bank 3 128-159 is used by
   original scripts (not free).
   Temp vars (5,232)-(5,234) used by quest givers/markers ((5,233) = marker mode, recomputed per giver every 10 frames). Temp vars (5,240),(5,241) for menus.
 
@@ -226,6 +226,12 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
   via `ModelLoader.add` works.
+- **Play time** = savemap 0x0B80 (0xDC08B8) u32 seconds, incremented at
+  0x40ABF0 (frame accumulator 0xDC08C0 += 0x444). Field scripts can't reach
+  it (bank 1 starts at 0x0BA4); q_clock copies minutes to var[2][247].
+- Numbers in dialogue: `MPRA2 [src bank][window][slot][u16 var]` after the
+  WINDOW op, text `{VAR}` (FE E1, no operand) shows it. GOLDU/GOLDD
+  `[bank<<4][u32]`: bank 6 + offset = add/remove a temp word var of gil.
 - Text: `{NEW}` (0xE8) is a new page *and* line; `encode` swallows a "\n"
   right after it (decode writes "{NEW}\n").
 - Model loader animation lists: `ModelLoader.anims` / `with_anims` (append

@@ -120,6 +120,9 @@ yours (instead of the original Gold Saucer gift).
   one plays a comic scene in the "&" room (Cloud + the Honey Bee dancer model
   under her name) ending in a fade and "You spent the rest of the night
   together and had a good time...".
+- **Honey Bee Inn income.** The manager pays out the girls' earnings: total
+  stars of the hired girls x 2 gil x minutes of play since the last
+  collection (at most 4.5 hours' worth).
 - **The Shinra HQ infiltration is removed.** The building can be explored freely,
   with the infiltration random encounters. A new game holds all keycards.
 

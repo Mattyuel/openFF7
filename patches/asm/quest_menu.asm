@@ -5,7 +5,9 @@
 ; asserted there). Entry points (5-byte jmp stubs): CODE+0 menu init(int),
 ; CODE+5 menu update(frame), CODE+10 kill hook (jumped to from 0x431536), CODE+15 motorbike
 ; destroyed (bike minigame, from 0x6566B9), CODE+20 / CODE+25 balloon popped
-; (snowboard minigame, from 0x737D45 / 0x73C52A). The bike and balloon hooks
+; (snowboard minigame, from 0x737D45 / 0x73C52A), CODE+30 play clock tick
+; (from 0x40ABF0: keeps the play time in minutes in field var bank 1 247-248,
+; for the Honey Bee Inn income, 620_honey_bee.py). The bike and balloon hooks
 ; count made-up enemy ids (BIKE_ID, BALLOON_ID) through the same kill table,
 ; so those quests are ordinary kill quests in 600_quests.py.
 ;
@@ -64,6 +66,9 @@ BIKE_BACK     equ 0x6566BF
 SNOW_MODE     equ 0xDD865C        ; snowboard game: 1 = Icicle Inn run, 0 = Gold Saucer
 SNOW_A_BACK   equ 0x737D4B
 SNOW_B_BACK   equ 0x73C530
+PLAY_SECONDS  equ 0xDC08B8        ; savemap 0x0B80: play time in seconds
+CLOCK_BACK    equ 0x40ABFD
+CLOCK_MINUTES equ VARS + 247      ; field var[2][247] (bank 1, u16)
 
 org CODE
 
@@ -73,6 +78,7 @@ entry_kill:   jmp near q_kill
 entry_bike:   jmp near q_bike
 entry_snow_a: jmp near q_snow_a
 entry_snow_b: jmp near q_snow_b
+entry_clock:  jmp near q_clock
 
 %macro TEXT 4                 ; x, y, text ptr, colour
     push Z_TEXT
@@ -144,6 +150,21 @@ q_snow_b:
     mov eax, [ebp + 8]
     mov ecx, [eax + 0x3c]
     jmp SNOW_B_BACK
+
+; ---- play clock: one more second (replaces the 13-byte increment at 0x40ABF0)
+q_clock:
+    mov eax, [PLAY_SECONDS]
+    add eax, 1
+    mov [PLAY_SECONDS], eax
+    xor edx, edx
+    mov ecx, 60
+    div ecx
+    cmp eax, 0xFFFF
+    jbe .store
+    mov eax, 0xFFFF
+.store:
+    mov [CLOCK_MINUTES], ax
+    jmp CLOCK_BACK
 
 q_balloon:
     cmp dword [SNOW_MODE], 1

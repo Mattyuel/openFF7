@@ -110,7 +110,10 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Sounds**: quest rewards play the item chime (materia rewards the materia
   chime); recruiting Tifa/Aerith/Barret plays the materia chime.
 - **Quests** (new game needed for clean quest state; **copy the new
-  `data/field/char.lgp` too**, 49 MB). A star sprite (S-Guard's) floats above
+  `data/field/char.lgp` too**, 49 MB). The first sprite build crashed on
+  every giver screen; the model files were rebuilt in the exact layout of
+  existing field models. If it still crashes, set `QUEST_MARKERS = "orbs"`
+  in `patches/_config.py` and rebuild (the old orbs, no char.lgp needed). A star sprite (S-Guard's) floats above
   each giver with a quest to offer; once accepted it becomes a heart until you
   hand the quest in; nothing otherwise. Report the size/height, whether black
   edges show, and whether several givers on one screen (Upper Midgar) all show
@@ -265,6 +268,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   house), Aerith (her house), Scarlet (Junon materia store), Velvet (Gold
   Saucer Building 2F). Report girls standing off screen or in the way, and
   how the scenes look (animations were picked without seeing them).
+  **Earnings**: the Manager's "Collect the girls' earnings." pays 2 gil per
+  star of every hired girl per minute of play since you last collected (or
+  took the job), counting at most 4.5 hours; the amount shows in his line.
+  Check the number matches the gil you get.
 - **Round of fixes (new game; untested in-game):**
   - Pillar: the gate at the bottom should now *look* open. At the top of the
     stairs, a few steps right starts Reno (every visit, no quest needed).
