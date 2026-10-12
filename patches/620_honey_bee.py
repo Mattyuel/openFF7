@@ -88,7 +88,9 @@ CLOUD_EXTRA = {"shrug": "AQCB.chi", "take": "FYGC.chi", "nudge": "FYFC.chi", "no
                "stretch": "HOCF.tak", "warmup": "FJCB.yos", "leanin": "CDDE.tor", "cheer": "FDIF.hei",
                "drink": "FJCE.aki"}
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
-BED, BEDSIDE = (136, -199), (120, -95)       # the bed (raised floor, z 76: Cloud lies there after the
+BED, BEDSIDE = (136, -199), (120, -95)
+BED_DIR = 0x40                               # lying girl: turned 90 degrees (user)
+BED_LEVEL = (220, 161)                       # on Cloud's way in, at the bed's screen x (146): he stops here       # the bed (raised floor, z 76: Cloud lies there after the
                                              # room's dream); the floor just above it
 JUMP_SOUND = bytes.fromhex("f20000002840e9000000000000000000")[:14]
 
@@ -376,7 +378,7 @@ def _room(ctx, back):
         return all(mesh.find(a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n) is not None
                    for i in range(n + 1))
     stops = [MID, NEAR, FAR, INSIDE]
-    legs = ([(ROOM_ARRIVE[:2], STAGE), (STAGE, BEDSIDE)]
+    legs = ([(ROOM_ARRIVE[:2], STAGE), (STAGE, BEDSIDE), (ROOM_ARRIVE[:2], BED_LEVEL)]
             + [(a, b) for a in stops for b in stops if a != b])
     bad = [leg for leg in legs if not on_floor(*leg)]
     assert not bad, bad
@@ -423,7 +425,6 @@ def _room(ctx, back):
         "point": d("BYAD.aki"),                   # point / poke
         "checksides": d("DXIF.tor"),
         "shocked": d("AVJE.aki"),
-        "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, 0])), _visi(1), _anim(da["DZBA.tor"], hold=True)],
     }
     one = lambda name: [_anim(ca[name])]
     cloud_beats = {
@@ -435,10 +436,15 @@ def _room(ctx, back):
         "hips": [_anim(c["hips"])],                                  # hands on hips
         "fallstay": [_anim(c["fall"], hold=True)],                   # BICA, staying down
         "bedside": [_msped(WALK), gx(BEDSIDE), _tura(girl)],
+        # the girl is already on the bed: stop level with her (the bed is in
+        # the way of walking further down) and face her
+        "intobed": [Op(b"\xC7\x01"), _msped(WALK), gx(BED_LEVEL), _tura(girl)],
     }
     cloud_beats.update({name: one(name) for name in CLOUD_EXTRA})
     used = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("g", "g&")}
+    on_bed = [i for i, g in enumerate(GIRLS) if g["scene"][0] == ("start", "bed")]
     used_c = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("c", "c&")} | {"into"}
+    used_c |= {"intobed"} if on_bed else set()
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
     cloud_names = sorted(used_c)
@@ -461,17 +467,29 @@ def _room(ctx, back):
             sec.entry[ent][k] = ops[0]
             slots[(ent, name)] = k
 
+    # girls starting on the bed: placed by girl2's init, before the room appears
+    init = sec.script_ops(girl, 0)
+    ret = next(o for o in init if o.op == 0x00)
+    for i in on_bed:
+        nxt = asm.nop()
+        sec.insert_before(ret, [asm.if_byte(HB_VISIT, "==", i + 1, nxt), _xyzi(*spot(BED)),
+                                Op(bytes([0xB3, 0, BED_DIR])), _visi(1),
+                                _anim(da["DZBA.tor"], hold=True), nxt], retarget=False)
+
     # the director
     lobby = ctx.maplist.index(LOBBY)
     bx, by, bz, btri = back
     finale, stop = asm.nop(), asm.ret()
-    ops = [asm.if_byte(HB_VISIT, "!=", 0, stop), _uc(1), _menu(1),                # no visit: nothing
-           asm.setbyte(ACT, cloud_act["into"]), _req(cloud, cslot), _w(15)]
+    ops = [asm.if_byte(HB_VISIT, "!=", 0, stop), _uc(1), _menu(1)]               # no visit: nothing
     for i, g in enumerate(GIRLS):
         nxt = asm.nop()
-        ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt)]
+        into = "intobed" if i in on_bed else "into"
+        ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt),
+                asm.setbyte(ACT, cloud_act[into]), _req(cloud, cslot), _w(15)]
         for step in g["scene"]:
             kind = step[0]
+            if kind == "start":
+                continue
             if kind in ("g", "g&"):
                 ops += [_req(girl, slots[(girl, step[1])], wait=kind == "g"), _w(PACE)]
             elif kind == "c":                          # the dispatcher reads ACT: always waited for

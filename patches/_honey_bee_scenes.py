@@ -13,15 +13,16 @@ Cloud beats (one dispatcher script in 620): into sit stand shocked hips
 fallstay bedside + 620's CLOUD_EXTRA (shrug take nudge nod shakehead laugh
 impatient lookaround lookup turnaway formal coy point cleanpants stretch
 warmup leanin cheer drink). Not BICA (falls down) / EACF (arms up). Bambi's
-"lie" starts her already lying on the bed.
+("start", "bed") as a scene's first step: she is already lying on the bed when
+the room appears (set in her init) and Cloud's walk in stops level with her
+("intobed"), then he turns to her.
 """
 
 C = "{CLOUD}\n"
 
 SCENES = {
     'Bambi': [
-        ('g', 'lie'),
-        ('c', 'bedside'),
+        ('start', 'bed'),
         ('G', "“Mmh… hi. I'm Bambi. I already got\n the bed warm for you.”{NEW}\n“See? Teamwork.”"),
         ('c', 'lookaround'),
         ('C', "{CLOUD}\n“…Aren't you supposed to get up?”"),
