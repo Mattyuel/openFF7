@@ -260,13 +260,17 @@ Existing saves load, but they keep their own story progress; use a new game.
   in the Manager's "Visit" list, best first; visiting plays her scene in the
   "&" room, then the fade line, then you're back beside the Manager.
   Where: Bambi (Upper Midgar, one screen up from the train stop), Gloria (Wall Market materia store), Dot
-  (Sector 6), Peggy (Fort Condor base), Candy (Lower Junon), Rhonda
-  (Nibelheim square), Lulu (Junon inn), Raven (Ghost Hotel lobby), Elena
-  (Mideel), Marisol (Costa del Sol harbour), Ruby (Gold Saucer Building 1F),
-  Holly (base of Gaea's Cliff), Sakura (Wutai shop), Mags (Rocket Town),
-  Celeste (Gongaga jungle), Aurora (Cosmo Canyon observatory), Tifa (her
-  house), Aerith (her house), Scarlet (Junon materia store), Velvet (Gold
-  Saucer Building 2F). Report girls standing off screen or in the way, and
+  (Sector 6), Peggy (Fort Condor base), Candy (Junon, Shinra Member's Bar),
+  Rhonda (Nibelheim Inn), Lulu (Junon inn, 3 steps left of before), Raven
+  (Ghost Hotel lobby), Elena (Shinra Mansion 1F), Marisol (Costa del Sol
+  harbour), Ruby (Gold Saucer Building 1F), Holly (base of Gaea's Cliff),
+  Sakura (Wutai shop), Mags (Rocket Town weapon store), Celeste (Gongaga
+  jungle), Aurora (Cosmo Canyon observatory), Tifa (her house, upstairs in
+  her room), Aerith (Temple of the Ancients, top of the steps by the door
+  where the key goes), Scarlet (Shinra HQ 66F Conference Room: the corridor's
+  bottom door now leads into it), Velvet (Gold Saucer Building 2F).
+  Models where they stand: Bambi = Shinra secretary, Marisol = Costa del Sol
+  bar girl, Lulu = Gold Saucer attendant (all Honey Bees in the scenes). Report girls standing off screen or in the way, and
   how the scenes look (animations were picked without seeing them).
   **Earnings**: the Manager's "Collect the girls' earnings." pays 2 gil per
   star of every hired girl per minute of play since you last collected (or

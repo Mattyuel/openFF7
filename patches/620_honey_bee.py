@@ -17,6 +17,11 @@
   out beats (entity scripts added in their free slots), then the screen fades
   and "You spent the rest of the night together and had a good time..." and
   you're back in the lobby, mid-room near the entrance (BACK_AT).
+- Scarlet waits in the Shinra 66F Conference Room (blin66_6, the disc 2
+  meeting room): 66F's bottom door (blin66_1 gateway 2, to the disc 1
+  meeting room blin66_2) leads there instead (same room layout, same
+  arrival); the room's own Scarlet, Heidegger and 'leave' entities
+  (unplaced but visible at its pinned moment 998) are hidden.
 """
 import struct
 
@@ -25,7 +30,7 @@ from _honey_bee_data import GIRLS, STARS
 from _recruit import SOUND_RECRUIT, sound
 from _travel import CHOICE, add_npc, beside, copy_model
 
-from ff7 import asm
+from ff7 import asm, triggers
 from ff7.models import ModelLoader
 from ff7.script import Op, Script
 from ff7.text import encode
@@ -57,7 +62,11 @@ MID, NEAR, FAR = (90, 180), (50, 165), (-150, 200)
 PACE = 20                                    # frames after each action
 GIRL, CLOUD = "girl2", "cloud"
 WALK = 0x0400                                # 0x0800 ran (MOVE runs above ~0x600)
-DOOR_OPEN, DOOR_CLOSE = 0x7A, 0x11D          # the room's own entrance scene's door sounds
+DOOR_OPEN, DOOR_CLOSE = 0x7A, 0x11D
+CORRIDOR, CONFERENCE = "blin66_1", "blin66_6"
+CONFERENCE_DOOR = (2, "blin66_2")           # blin66_1 gateway slot, its original destination
+CONFERENCE_COPIES = ["scarlet", "hyde", "leave"]   # visible (unplaced) at the pinned moment 998
+HIDE = [b"\x7E\x01", b"\xC7\x01", b"\xA4\x00"]  # TLKON 01, SOLID 01, VISI 00          # the room's own entrance scene's door sounds
 # girl2's model (market_dancer): its 5 animations, then every other Honey Bee
 # dancer animation in the game (same skeleton BADD.HRC). Meanings (user):
 # BAJC walk, AAGA run, BAJD spin + shake behind, BAJE shake behind, BAJF squat
@@ -68,8 +77,18 @@ DANCER_ANIMS = ["BAJB.tor", "BCCC.tor", "BCCD.tor", "AVJE.aki", "BYAD.aki"]
 DANCER_EXTRA = ["DXHE.tor", "DXIB.tor", "DXIF.tor", "DXJA.tor", "DXJB.tor", "BAJF.tor", "BBAA.tor",
                 "BAJD.tor", "BAJC.tor", "DXJC.tor", "DXJD.tor", "DXIC.tor", "DZBA.tor", "DIEF.chi",
                 "DXIE.tor", "BAJE.tor", "AAGA.aki"]
-CLOUD_ANIMS = {"stand": 0, "sit": 3, "startle": 4, "look": 8, "look2": 9, "jump1": 10, "jump2": 11,
-               "hesitate": 12, "scratch": 13, "blush1": 16, "blush2": 17, "blush3": 18, "lie": 20}
+CLOUD_ANIMS = {"stand": 0, "sit": 3, "shocked": 9, "hips": 15, "fall": 16, "lie": 20}
+# Cloud's model in the room gets these (all Cloud animations, AAAA.HRC; meanings
+# from the user). Avoid BICA (falls down) and EACF (arms up): overused.
+CLOUD_EXTRA = {"shrug": "AQCB.chi", "take": "FYGC.chi", "nudge": "FYFC.chi", "nod": "AJDC.aki",
+               "shakehead": "BUAA.chi", "laugh": "BTCD.aki", "impatient": "BDCC.aki",
+               "lookaround": "AUEE.yos", "lookup": "AQFA.yos", "turnaway": "CAFB.aki",
+               "formal": "EGGD.yos", "coy": "EGIC.yos", "point": "ALGB.yos", "cleanpants": "CCJF.tor",
+               "stretch": "HOCF.tak", "warmup": "FJCB.yos", "leanin": "CDDE.tor", "cheer": "FDIF.hei",
+               "drink": "FJCE.aki"}
+ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
+BED, BEDSIDE = (136, -199), (120, -95)       # the bed (raised floor, z 76: Cloud lies there after the
+                                             # room's dream); the floor just above it
 JUMP_SOUND = bytes.fromhex("f20000002840e9000000000000000000")[:14]
 
 
@@ -209,6 +228,25 @@ def _girl_talk(sec, i, g):
     return ops + [end, asm.ret()]
 
 
+def _conference(ctx):
+    f = ctx.field(CORRIDOR)
+    trig = f.section("triggers")
+    slot, old = CONFERENCE_DOOR
+    gate = next(g for g in triggers.gateways(trig) if g["slot"] == slot)
+    assert ctx.maplist[gate["field"]] == old, gate
+    mesh = Walkmesh(ctx.field(CONFERENCE).section("walkmesh"))
+    assert mesh.contains(gate["dest_triangle"], gate["dest_x"], gate["dest_y"])
+    f.set_section("triggers", triggers.set_gateway_field(trig, slot, ctx.maplist.index(CONFERENCE)))
+    sec = Script.parse(ctx.field(CONFERENCE).sections[0])
+    for name in CONFERENCE_COPIES:
+        ent = sec.entity_index(name)
+        init = sec.script_ops(ent, 0)
+        ret = next(o for o in init if o.op == 0x00)
+        sec.insert_before(ret, [Op(b) for b in HIDE], retarget=True)
+        sec.replace_script(ent, 1, [asm.ret()])
+    ctx.field(CONFERENCE).sections[0] = sec.build()
+
+
 def _add_girls(ctx):
     for i, g in enumerate(GIRLS):
         f = g["field"]
@@ -318,15 +356,19 @@ def _room(ctx, back):
     loader.models[1] = ModelLoader.with_anims(loader.models[1], DANCER_EXTRA)
     f.set_section("models", loader.build())
     da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA)}
-    assert ModelLoader.anims(loader.models[0])[CLOUD_ANIMS["sit"]] == "AQAA.tor"
-    assert ModelLoader.anims(loader.models[0])[CLOUD_ANIMS["lie"]] == "EADD.tor"
+    cloud_anims = ModelLoader.anims(loader.models[0])
+    assert [cloud_anims[i] for i in (3, 9, 15, 16, 20)] == ["AQAA.tor", "AVJE.aki", "AQAB.tor", "BICA.yos",
+                                                             "EADD.tor"], cloud_anims
+    ca = {n: len(cloud_anims) + i for i, n in enumerate(CLOUD_EXTRA)}
+    loader.models[0] = ModelLoader.with_anims(loader.models[0], list(CLOUD_EXTRA.values()))
+    f.set_section("models", loader.build())
 
     def on_floor(a, b):
         n = max(1, int(((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5 / 8))
         return all(mesh.find(a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n) is not None
                    for i in range(n + 1))
     stops = [MID, NEAR, FAR, INSIDE]
-    legs = ([(ROOM_ARRIVE[:2], STAGE)]
+    legs = ([(ROOM_ARRIVE[:2], STAGE), (STAGE, BEDSIDE)]
             + [(a, b) for a in stops for b in stops if a != b])
     bad = [leg for leg in legs if not on_floor(*leg)]
     assert not bad, bad
@@ -373,25 +415,35 @@ def _room(ctx, back):
         "point": d("BYAD.aki"),                   # point / poke
         "checksides": d("DXIF.tor"),
         "shocked": d("AVJE.aki"),
+        "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, 0])), _visi(1), _anim(da["DZBA.tor"], hold=True)],
     }
+    one = lambda name: [_anim(ca[name])]
     cloud_beats = {
-        "sit": [_tura(girl), _canm(c["sit"], 0, 0x1D)],
-        "stand": [_canm(c["sit"], 0x1D, 0x2C), _anim(c["stand"])],
-        "jump": [_anim(c["jump1"]), Op(JUMP_SOUND), _anim(c["jump2"]), _anim(c["stand"])],
-        "hesitate": [_anim(c["look2"]), _canm(c["hesitate"], 0, 0x0E), _canm(c["hesitate"], 0x0F, 0x1D),
-                     _anim(c["scratch"])],
-        "blush": [_anim(c["blush1"]), _anim(c["blush2"]), _anim(c["blush3"])],
-        "startle": [_canm(c["startle"], 0, 0x0E), _anim(c["stand"])],
-        "look": [_anim(c["look"]), _anim(c["look2"])],
         # before the girl comes in: SOLID 01 (she walks through), into the room
         "into": [Op(b"\xC7\x01"), _msped(WALK), gx(STAGE), Op(bytes([0xB3, 0, 0x40]))],
-        "faint": [_canm(c["lie"], 0, 2)] * 3 + [_anim(c["lie"], hold=True)],
+        "sit": [_tura(girl), _canm(c["sit"], 0, 0x1D)],              # AQAA: kneels / sits down
+        "stand": [_canm(c["sit"], 0x1D, 0x2C), _anim(c["stand"])],
+        "shocked": [_anim(c["shocked"])],
+        "hips": [_anim(c["hips"])],                                  # hands on hips
+        "fallstay": [_anim(c["fall"], hold=True)],                   # BICA, staying down
+        "bedside": [_msped(WALK), gx(BEDSIDE), _tura(girl)],
     }
+    cloud_beats.update({name: one(name) for name in CLOUD_EXTRA})
     used = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("g", "g&")}
     used_c = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("c", "c&")} | {"into"}
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
-    for ent, beats, start in ((girl, girl_beats, 8), (cloud, cloud_beats, 24)):
+    cloud_names = sorted(used_c)
+    disp = []
+    for k, name in enumerate(cloud_names, 1):
+        nxt = asm.nop()
+        disp += [asm.if_byte(ACT, "==", k, nxt)] + [Op(bytes(o.raw)) for o in cloud_beats[name]] + [asm.ret(), nxt]
+    disp.append(asm.ret())
+    cslot = _free_slots(sec, cloud, 24)[0]
+    sec.ops.extend(disp)
+    sec.entry[cloud][cslot] = disp[0]
+    cloud_act = {name: k for k, name in enumerate(cloud_names, 1)}
+    for ent, beats, start in ((girl, girl_beats, 8),):
         free = _free_slots(sec, ent, start)
         names = [n for n in beats if n in (used if ent == girl else used_c)]
         assert len(names) <= len(free), (ent, len(names), free)
@@ -406,15 +458,16 @@ def _room(ctx, back):
     bx, by, bz, btri = back
     finale, stop = asm.nop(), asm.ret()
     ops = [asm.if_byte(HB_VISIT, "!=", 0, stop), _uc(1), _menu(1),                # no visit: nothing
-           _req(cloud, slots[(cloud, "into")]), _w(15)]
+           asm.setbyte(ACT, cloud_act["into"]), _req(cloud, cslot), _w(15)]
     for i, g in enumerate(GIRLS):
         nxt = asm.nop()
         ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt)]
         for step in g["scene"]:
             kind = step[0]
-            if kind in ("g", "g&", "c", "c&"):
-                ent = girl if kind[0] == "g" else cloud
-                ops += [_req(ent, slots[(ent, step[1])], wait=not kind.endswith("&")), _w(PACE)]
+            if kind in ("g", "g&"):
+                ops += [_req(girl, slots[(girl, step[1])], wait=kind == "g"), _w(PACE)]
+            elif kind == "c":                          # the dispatcher reads ACT: always waited for
+                ops += [asm.setbyte(ACT, cloud_act[step[1]]), _req(cloud, cslot), _w(PACE)]
             elif kind == "G":
                 ops += _say(sec, g["name"] + "\n" + step[1])
             elif kind == "C":
@@ -442,6 +495,7 @@ def apply(ctx):
     tri = mesh.find(*BACK_AT)
     assert tri is not None
     back = (*BACK_AT, mesh.height(tri, *BACK_AT), tri)
+    _conference(ctx)
     _add_girls(ctx)
     _manager(ctx, back)
     _room(ctx, back)

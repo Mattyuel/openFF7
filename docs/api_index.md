@@ -581,6 +581,7 @@ Honey Bee Girl recruitment.
 - `_say(sec, text, win=0, x=8, y=8)` 
 - `_ask(sec, text, choices, win=0)` (ops, first): ASK with `choices`; CHOICE = first + index picked.
 - `_girl_talk(sec, i, g)` 
+- `_conference(ctx)` 
 - `_add_girls(ctx)` 
 - `_ranked()` 
 - `_manager(ctx, back)` 
