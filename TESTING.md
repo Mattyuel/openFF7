@@ -239,6 +239,18 @@ Existing saves load, but they keep their own story progress; use a new game.
   and Vincent join without a naming screen (default names, level 1).
 - **Start point**: a new game starts on the Sector 7 station's upper platform,
   just below the conductor.
+- **Shinra HQ 69F elevator**: [OK] at an elevator door: ride / fight / leave.
+  Fight = Hundred Gunner then Heli Gunner (once per visit).
+- **Middle Manager** (Upper Midgar walkway) has 4 more quests after his No.5
+  one: HQ SOLDIERs/Moth Slashers, 2 Deadly Waste, the elevator boss, Rufus.
+- **Sewer**: Train Graveyard -> ladder -> sewer -> at the west dead end (below
+  the drop) walk on to go back up into the landing room. No fall scene there;
+  its ladder out works. Scared Man's 3rd quest: Aps, by walking into the
+  landing room.
+- **Sector 7 pillar**: the gate is open both ways; no scenes, random battles
+  on the stairs; Biggs, Jessie and Barret aren't there. Gwen (by the pillar)
+  has 2 more quests: 8 Aero Combatants, then Reno, who appears when you walk
+  towards the middle of the roof.
 - **Kalm**: entering the town, the inn and the houses should play no
   arrival scene, flashback or story dialogue. Walking in with Tifa / Aerith
   in the party should no longer play "everyone's waiting at the inn" or

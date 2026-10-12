@@ -59,9 +59,10 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `100_midgar.py` | Pins Midgar fields to moments (`PINNED`), slums music, Train Graveyard trains moved. |
 | `110_corneo.py` | Corneo's mansion open, Corneo removed. |
 | `120_sector6_gate.py` | Sector 7<->6 gate both ways (guards moved, exit line widened, new gateway back). |
-| `130_shinra_hq.py` | HQ after the infiltration: 2F boxes openable, access level 69 kept (var[1][224] lowering writes removed in blin59/61/62_1/65_1/67_1/68_1), flags (3,168,1) 59F guards, (3,172,3) 60F sneaking, (1,226,5) 68F scientist; blin67_3 pinned 285; roof (blin70_3) Rufus on the pad + line -> formation 464 once per visit. |
+| `130_shinra_hq.py` | HQ after the infiltration: 2F boxes openable, access level 69 kept (var[1][224] lowering writes removed in blin59/61/62_1/65_1/67_1/68_1), flags (3,168,1) 59F guards, (3,172,3) 60F sneaking, (1,226,5) 68F scientist; blin67_3 pinned 285; roof (blin70_3) Rufus on the pad + line -> formation 464 once per visit; 69F (blin69_1) elevator doors: ride / fight (formation 460 -> 461 Hundred/Heli Gunner, FLAG_ELEVATOR_FOUGHT). |
 | `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
 | `160_midgar_disc2.py` | Gateway md8brdg right end <-> md8_5 left end (8th Street; its own exit leads to md8_6, the hatch); disc 2 route state via bank 5 offset 128/135 new-game flags; canon_2 pinned 1604. Turks/Proud Clod/Hojo = Shinra Deserter quest bosses (md8brdg; disc 2 fields have ~254 texts, no room). md8_5's camera doesn't fit ff7.camera (all points project to one band): placed by floor geometry. |
+| `170_pillar_sewer.py` | Sector 7 pillar gate open both ways (mds7plr1 tobira BG state 1, stagedr IDLCK 0x104 removed); Biggs/Jessie/Barret story copies on pillar_1/2 hidden (pillar_3 cutscene field unreachable; pillar text tables are FULL); colne_b3 west dead end line back up to colne_b1 (pinned 209). |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (No.1 Reactor platform md1stin). |
 | `230_recruit_more.py` | Recruit NPCs: Red XIII (blin67_1), Cid (junair airstrip), Cait Sith (del3 beach), Yuffie (frcyo by the left pen, yougan2 model anim 6), Vincent (onna_2 dancers' room); KERNEL new-game records 6/7 = the exe's Cait Sith / Vincent templates with default names (no naming screen). Original Yuffie/Vincent joins count only if not already recruited. All recruit talks start with PTURA (face the player). |
 | `250_train_destinations.py` | Station conductor menu (Upper Midgar md8brdg, Shinra Tower sinbil_1, No.1 md1stin, No.5 tunnel_2 — not tunnel_1, which loops onto itself), conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
@@ -75,7 +76,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `440_corel_prison.py` | Buggy into the world map Gold Saucer -> desert2 (vanilla wm0 0xA964); desert2's bottom/left lines now go to jail1/jail3; convict in jail1 drives you out (buggy bits + MAPJUMP wm15). |
 | `450_highwind.py` | junair2 runway line (y -2400) -> Highwind owned/aboard (bank 1 byte 127 bits 4/5 = wm 0x3FC/0x3FD) + MAPJUMP wm40 (wm0 mounts model 3 near Junon); wm0 system function 6 ([Menu] in the air -> fship interior, exe 0x74F676) starts with `return`. |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
-| `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 37 givers, 66 quests, 10 repeatable boss lines. Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
+| `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 38 givers, 76 quests, 15 boss lines; follow-ups on early givers use late=True (allocated after every other quest). Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -101,7 +102,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   160-183, bank 5 181-223, bank 2 27-63; all checked free in field/world map
   scripts and exe absolute refs, zero at new game); `600_quests._allocate` hands
   them out in GIVERS order (state byte + one counter per kill target), so append
-  new quests at the end of a giver or new givers at the end.
+  new quests at the end of a giver or new givers at the end (or mark them
+  late=True). 7 quest bytes left (bank 2 57-63). Bank 3 128-159 is used by
+  original scripts (not free).
   Temp vars (5,232)-(5,234) used by quest givers/markers. Temp vars (5,240),(5,241) for menus.
 
 ## Verified facts: field scripts

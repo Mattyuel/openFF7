@@ -45,7 +45,10 @@ PINNED = {
     193: ["mrkt1", "mrkt2", "mrkt3", "mkt_w", "mkt_mens", "mkt_ia", "mktinn",
           "mkt_m", "mkt_s1", "mkt_s2", "mkt_s3", "mktpb", "onna_2", "onna_4", "onna_5",
           "onna_52", "colne_1", "colne_2", "colne_3", "colne_4", "colne_5", "colne_6",
-          "colne_b1", "colne_b3"],
+          "colne_b3"],
+    # Sewer landing room (Aps): at 193 the fall scene plays and Tifa/Aerith
+    # appear; its only checks are <= 206 (scene) and >= 209 (the way out).
+    209: ["colne_b1"],
     # Wall Market, back street with the wire up to the plate: the climb line
     # and the cable only exist from 257 (after the plate falls).
     258: ["mrkt4"],

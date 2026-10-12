@@ -9,12 +9,16 @@
   those writes removed, so every elevator stop and door stays open.
 - New-game flags (_config): 59F guards gone, 60F sneaking done, 68F scientist
   done. 67F (blin67_3) is pinned past Red XIII's specimen tank (100_midgar).
+- 69F (blin69_1): [OK] at either elevator door asks "ride / fight": the fight
+  is the original elevator boss (formation 460 Hundred Gunner, chaining to
+  461 Heli Gunner; the story ran it from eleout at progress 311), once per
+  visit (FLAG_ELEVATOR_FOUGHT).
 - Roof (blin70_3): Rufus stands on the helipad (his original spot at the
   fight, progress 314); walking towards him (a line across the way onto the
   pad) starts formation 464, once per visit (FLAG_RUFUS_FOUGHT).
 """
-from _config import FLAG_RUFUS_FOUGHT, FLAGS
-from _travel import add_line
+from _config import FLAG_ELEVATOR_FOUGHT, FLAG_RUFUS_FOUGHT, FLAGS
+from _travel import add_line, choice_menu
 
 from ff7 import asm
 from ff7.script import Op, Script
@@ -26,6 +30,9 @@ ROOF = "blin70_3"
 RUFUS_FORMATION = 464
 RUFUS_LINE = ((-244, 1560, 182), (790, 1850, 182))   # across the only way onto the pad
 RUFUS_FIGHT_MOMENT = 314
+TOP_FLOOR, ELEVATOR_DOORS = "blin69_1", ("elel", "eler")
+ELEVATOR_FORMATION = 460                # Hundred Gunner -> 461 Heli Gunner
+ACCESS_69 = bytes.fromhex("1410e0450426")   # IFUB var[1][224] >= 69 (the door's card check)
 
 
 def _shop_boxes(ctx):
@@ -80,7 +87,31 @@ def _rufus(ctx):
              init_extra=[asm.bitoff(FLAGS, FLAG_RUFUS_FOUGHT)])
 
 
+def _elevator_boss(ctx):
+    sec = Script.parse(ctx.field(TOP_FLOOR).sections[0])
+    for name in ELEVATOR_DOORS:
+        ent = sec.entity_index(name)
+        ops = sec.script_ops(ent, 4)
+        i = next(k for k, o in enumerate(ops) if bytes(o.raw[:6]) == ACCESS_69)
+        ride = ops[i + 1]
+        assert bytes(ride.raw) == b"\x33\x01", ride.raw.hex()       # UC 01: the original ride
+        assert sum(1 for o in ops if o.op == 0x60 and o.raw[1:3] == b"\xe9\x00") == 1  # MAPJUMP eleout
+        done = asm.nop()
+        fight = [asm.if_byte(FLAGS, "bit_off", FLAG_ELEVATOR_FOUGHT, done),
+                 asm.biton(FLAGS, FLAG_ELEVATOR_FOUGHT),
+                 asm.battle(ELEVATOR_FORMATION), done]
+        menu = choice_menu(sec, "Elevator\n(Something heavy is grinding\n up the shaft...)",
+                           ["Ride the elevator.", "Wait for it and fight.", "Leave it."],
+                           [[asm.goto(ride)], fight, None])
+        sec.insert_before(ride, menu, retarget=False)
+    init = sec.script_ops(sec.entity_index(ELEVATOR_DOORS[0]), 0)
+    ret = next(o for o in init if o.op == 0x00)
+    sec.insert_before(ret, [asm.bitoff(FLAGS, FLAG_ELEVATOR_FOUGHT)])
+    ctx.field(TOP_FLOOR).sections[0] = sec.build()
+
+
 def apply(ctx):
     _shop_boxes(ctx)
+    _elevator_boss(ctx)
     _keep_access(ctx)
     _rufus(ctx)

@@ -372,6 +372,7 @@ Shinra HQ in its after-the-infiltration state, plus the Rufus fight.
 - `_shop_boxes(ctx)` 
 - `_keep_access(ctx)` 
 - `_rufus(ctx)` 
+- `_elevator_boss(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/150_midgar_fixes.py`
@@ -386,6 +387,14 @@ Join disc 1 Upper Midgar to the disc 2 Midgar route.
 
 - `_arrival(ctx, field, x, y, direction)` 
 - `_gateway(ctx, field, line, dest_field, dest, direction)` 
+- `apply(ctx)` 
+
+## `patches/170_pillar_sewer.py`
+Sector 7 pillar open both ways; a way back up from the sewer.
+
+- `_gate(ctx)` 
+- `_hide_story_copies(ctx)` 
+- `_sewer_back(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/200_recruit_sector7.py`
