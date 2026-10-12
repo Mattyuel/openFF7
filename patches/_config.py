@@ -48,6 +48,12 @@ QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63),
                # absolute reference (scan of 2026-10; bank 1 = plain field flags)
                (1, 136, 159), (1, 236, 250)]
 
+# Quest giver markers (600_quests): "sprites" = the S-Guard star (offer) and
+# heart (accepted) models built into char.lgp; "orbs" = the old tinted materia
+# orb (yellow offer, blue accepted), no char.lgp needed. Fallback if the
+# sprites misbehave in game.
+QUEST_MARKERS = "sprites"
+
 # Honey Bee Girl recruitment (620_honey_bee.py): bank 1 251-255, taken off the
 # end of the last quest area (free, zero at new game).
 HB_JOB = ((1, 251), 0)            # bit: the Honey Bee Inn manager's job accepted

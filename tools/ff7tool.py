@@ -348,6 +348,8 @@ class BuildContext:
             out.append(rel)
         if getattr(self, "_char", None):
             for name, data in self._char.items():
+                if name not in self._char_lgp and name.endswith(".hrc"):
+                    self._char_lgp.check[name] = 11      # every .hrc in char.lgp has TOC check 11 (others 14)
                 self._char_lgp[name] = data
             rel = "data/field/char.lgp"
             self._char_lgp.write(os.path.join(out_dir, rel))

@@ -540,6 +540,8 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_talk(giver)` 
 - `_marker_mode(giver)` Ops: MODE = 1 (offer), 2 (ready to hand in) or 0 for the giver's
 - `_marker_main(giver, show_mode)` Main loop: every 10 frames recompute the giver's mode and show this
+- `_tint(rgb)` 
+- `_orb_main(giver)` QUEST_MARKERS = "orbs": every 10 frames show the orb tinted for the
 - `_spot(ctx, field, x, y)` 
 - `_marker_model(ctx, field, hrc)` Index of marker model `hrc` in `field`, added once per field.
 - `_add_marker(ctx, giver, pos)` 
@@ -607,8 +609,8 @@ Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
 Quest marker models: battle-effect sprites shown in the field.
 
 - `magic_file(game_dir, name)` A file from battle/magic.lgp (it has directory entries, which ff7.lgp
-- `keyed(tex)` The texture with its colour key on (black = transparent), as s_guard's,
-- `mesh(donor, crop)` Two crossed, double-sided quads (planes x-y and z-y), using the donor
+- `keyed(sprite, template)` The sprite as a field texture: header copied from a char.lgp field
+- `mesh(donor, crop)` The donor quad (4 vertices, 5 edges, 2 triangles: same layout as every
 - `install(ctx, game_dir)` Add both marker models to char.lgp. Returns {hrc: model loader entry}
 
 ## `patches/_quest_data.py`

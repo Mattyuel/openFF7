@@ -29,7 +29,7 @@ import os
 import struct
 
 from _recruit import SOUND_ITEM, SOUND_MATERIA, say, sound, xyzi
-from _config import OPEN_VAR_BANK8, QUEST_AREAS
+from _config import OPEN_VAR_BANK8, QUEST_AREAS, QUEST_MARKERS
 from _travel import CHOCOBO_YELLOW, add_line, add_npc, choice_menu, copy_model, line_across
 
 from ff7 import asm
@@ -58,6 +58,9 @@ ORB_HEIGHT = 160               # marker height above the giver's feet (200 was t
 # on offer (MODE 1), Lucky Girl's heart while it's accepted and not handed in
 # (MODE 2), nothing once all are done. One model of each per field.
 STAR, HEART = "QSTA", "QHTA"
+ORB_MODEL = ("nmkin_5", 3)     # QUEST_MARKERS = "orbs": fieldbg_mtra3, the materia orb
+ORB_TINT = {1: (120, 100, -120),   # yellow: quest to offer
+            2: (-80, -20, 140)}    # blue: accepted
 
 HOOK_VA, HOOK_OLD = 0x431536, bytes.fromhex("8b45fc83c004")
 # Minigame hooks (quest_menu.asm entries CODE+15/20/25): they count the
@@ -230,6 +233,25 @@ def _marker_main(giver, show_mode):
     return ops
 
 
+def _tint(rgb):
+    col = struct.pack("<3h", *rgb) * 2
+    return [Op(bytes([0x28, 0x18, 0x06, 0x00, 0x00]) + col + bytes.fromhex("01000100010001")),  # KAWAI 06 colour
+            Op(b"\x24\x01\x00"),                                                   # WAIT 1
+            Op(b"\x28\x04\x06\x01"),                                               # KAWAI 06 apply
+            Op(b"\x29")]                                                           # KAWIW
+
+
+def _orb_main(giver):
+    """QUEST_MARKERS = "orbs": every 10 frames show the orb tinted for the
+    giver's mode (hidden at 0)."""
+    top, hide, wait = asm.nop(), asm.nop(), asm.nop()
+    ops = [top] + _marker_mode(giver) + [jump_if(MODE, "==", 0, hide), Op(b"\xA4\x01")]
+    for mode, rgb in ORB_TINT.items():
+        skip = asm.nop()
+        ops += [jump_if(MODE, "!=", mode, skip)] + _tint(rgb) + [skip]
+    return ops + [asm.goto(wait), hide, Op(b"\xA4\x00"), wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]
+
+
 def _spot(ctx, field, x, y):
     mesh = Walkmesh(ctx.field(field).section("walkmesh"))
     tri = mesh.find(x, y)
@@ -259,8 +281,19 @@ def _marker_model(ctx, field, hrc):
 
 def _add_marker(ctx, giver, pos):
     from ff7.models import ModelLoader
+    from ff7.camera import Camera, facing_screen
     field = giver["field"]
     x, y, z, tri = pos
+    init_hidden = [Op(b"\x7E\x01"), Op(b"\xC7\x01"), Op(b"\xA4\x00")]           # TLKON 01, SOLID 01, VISI 00
+    if QUEST_MARKERS == "orbs":
+        model = copy_model(ctx, field, *ORB_MODEL)
+        sec = Script.parse(ctx.field(field).sections[0])
+        init = [Op(bytes([0xA1, model])), xyzi(x, y, z + ORB_HEIGHT, tri)] + init_hidden + [asm.ret()]
+        sec.add_entity(giver["name"][:6] + "_q", {0: init + _orb_main(giver) + [asm.ret()]})
+        ctx.field(field).sections[0] = sec.build()
+        return
+    # the quads turn with DIR: face the camera
+    face = facing_screen(Camera(ctx.field(field).sections[1]), x, y, z + ORB_HEIGHT, (0, 1))
     have = _FIELD_MARKERS.get(field, {})
     count = len(ModelLoader(ctx.field(field).section("models")).models)
     markers = ((STAR, 1, "_s"), (HEART, 2, "_h"))
@@ -271,8 +304,7 @@ def _add_marker(ctx, giver, pos):
         model = _marker_model(ctx, field, hrc)
         sec = Script.parse(ctx.field(field).sections[0])
         init = [Op(bytes([0xA1, model])), xyzi(x, y, z + ORB_HEIGHT, tri),
-                Op(b"\x7E\x01"), Op(b"\xC7\x01"), Op(b"\xA4\x00"),               # TLKON 01, SOLID 01, VISI 00
-                asm.ret()]
+                Op(bytes([0xB3, 0, face]))] + init_hidden + [asm.ret()]
         sec.add_entity(giver["name"][:6] + suffix, {0: init + _marker_main(giver, mode) + [asm.ret()]})
         ctx.field(field).sections[0] = sec.build()
 
@@ -480,7 +512,8 @@ def _add_courier(ctx, q):
 def apply(ctx):
     import ff7tool
     import _marker_models
-    _MARKER_ENTRIES.update(_marker_models.install(ctx, ff7tool.GAME))
+    if QUEST_MARKERS == "sprites":
+        _MARKER_ENTRIES.update(_marker_models.install(ctx, ff7tool.GAME))
     for slot, q in enumerate(q for g in GIVERS for q in g["quests"] if "boss" in q):
         _add_boss(ctx, q, slot)
     for g in GIVERS:
