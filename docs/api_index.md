@@ -29,6 +29,8 @@ openFF7 command-line tool.
   - `save_extra(out_dir)` Write kernel2.bin and ff7_en.exe if patches touched them; returns paths.
   - `save_kernel(out_dir)` 
   - `save()` 
+- `cached_decompress(packed)` lzss.decompress of an original game file, cached on disk by content
+- `compress_all(raws)` {name: raw} -> {name: LZSS bytes}. Compression is the slow part of a
 - `exe_test(args)` Write build/exe_test/ff7_en.exe: the Steam exe with a new code section
 - `api_index(args)` Regenerate docs/api_index.md (signatures + docstring summaries).
 - `_verify_build(flevel_path)` Re-read the written flevel.lgp and check the new game is patched.

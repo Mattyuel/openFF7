@@ -26,7 +26,7 @@ something new, hit a trap, or a feature's status changes.
 ## Commands
 
 ```
-python3 tools/ff7tool.py build              # -> build/openFF7/, prints changed files (~2-4 min, run in background)
+python3 tools/ff7tool.py build              # -> build/openFF7/, prints changed files (~2 min first time, ~12 s after: build/cache)
 python3 tools/tests/test_formats.py         # all tests (~2 min), includes test_api_index_current
 python3 tools/ff7tool.py api-index          # regenerate docs/api_index.md after code changes
 python3 tools/ff7tool.py dump FIELD         # original script -> work/scripts/
@@ -41,6 +41,12 @@ Shipped files: `data/field/flevel.lgp`, `data/lang-en/kernel/KERNEL.BIN`,
 `data/field/char.lgp` (quest marker models, `_marker_models.py`) (plus
 `kernel2.bin` only when a patch edits it; none does now). The build prints the list.
 The user tests by copying them into the Steam install (see `TESTING.md`).
+
+Build speed: LZSS (pure Python) was ~95% of a build. Original fields are
+decompressed once into `build/cache/raw` and changed fields' compressed form is
+cached by content in `build/cache/lzss` (compressed on all cores when missing),
+so later builds only recompress fields that changed. Output is byte-identical;
+delete `build/cache` (~350 MB) any time.
 
 ## Workflow rules
 

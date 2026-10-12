@@ -258,12 +258,15 @@ class BuildContext:
         self.flevel = LGP.read(os.path.join(GAME, "field", "flevel.lgp"))
         self.maplist = maplist()
         self._fields = {}
+        self._orig_raw = {}
         self._kernel = None
 
     def field(self, name):
         """Return a mutable FieldFile for `name` (cached; saved at the end of the build)."""
         if name not in self._fields:
-            self._fields[name] = FieldFile(lzss.decompress(self.flevel[name]))
+            raw = cached_decompress(self.flevel[name])
+            self._orig_raw[name] = raw          # to tell changed fields apart at save time
+            self._fields[name] = FieldFile(raw)
         return self._fields[name]
 
     def script(self, name):
@@ -387,6 +390,7 @@ class BuildContext:
 
     def save(self):
         from ff7.models import ModelLoader
+        changed = {}
         for name, ff in self._fields.items():
             # The script header's model count (byte 3) must match the model
             # loader, or added NPCs get no proper actor (can't be talked to).
@@ -398,9 +402,66 @@ class BuildContext:
                 head[3] = n
                 ff.sections[0] = bytes(head)
             raw = ff.build()
-            if raw != lzss.decompress(self.flevel[name]):
-                self.flevel[name] = lzss.compress(raw)
+            if raw != self._orig_raw[name]:
+                changed[name] = raw
+        for name, packed in compress_all(changed).items():
+            self.flevel[name] = packed
         return [n for n in self._fields]
+
+
+LZSS_CACHE = os.path.join(ROOT, "build", "cache", "lzss")
+RAW_CACHE = os.path.join(ROOT, "build", "cache", "raw")
+
+
+def cached_decompress(packed):
+    """lzss.decompress of an original game file, cached on disk by content
+    (the originals never change: every build after the first reads them back)."""
+    import hashlib
+    path = os.path.join(RAW_CACHE, hashlib.sha1(packed).hexdigest())
+    try:
+        with open(path, "rb") as fh:
+            return fh.read()
+    except OSError:
+        raw = lzss.decompress(packed)
+        os.makedirs(RAW_CACHE, exist_ok=True)
+        with open(path + ".tmp", "wb") as fh:
+            fh.write(raw)
+        os.replace(path + ".tmp", path)
+        return raw
+
+
+def compress_all(raws):
+    """{name: raw} -> {name: LZSS bytes}. Compression is the slow part of a
+    build (pure Python), so results are cached by content in build/cache/lzss
+    (a field that didn't change since the last build costs nothing) and the
+    rest are compressed on all CPU cores. Output is identical either way."""
+    import hashlib
+    os.makedirs(LZSS_CACHE, exist_ok=True)
+    out, todo = {}, {}
+    for name, raw in raws.items():
+        path = os.path.join(LZSS_CACHE, hashlib.sha1(raw).hexdigest())
+        if os.path.exists(path):
+            with open(path, "rb") as fh:
+                out[name] = fh.read()
+        else:
+            todo[name] = (raw, path)
+    if todo:
+        names = list(todo)
+        jobs = [todo[n][0] for n in names]
+        workers = min(len(jobs), os.cpu_count() or 1)
+        if workers > 1:
+            import multiprocessing
+            with multiprocessing.Pool(workers) as pool:
+                packed = pool.map(lzss.compress, jobs, chunksize=1)
+        else:
+            packed = [lzss.compress(j) for j in jobs]
+        for name, data in zip(names, packed):
+            with open(todo[name][1] + ".tmp", "wb") as fh:
+                fh.write(data)
+            os.replace(todo[name][1] + ".tmp", todo[name][1])
+            out[name] = data
+        print("compressed %d fields (%d from cache)" % (len(todo), len(raws) - len(todo)))
+    return out
 
 
 def exe_test(args):
