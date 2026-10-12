@@ -11,7 +11,8 @@ it): every quest gives source_count(level) of a Source on top of its reward.
 
 Each quest: id (unique; save bytes are allocated in GIVERS order, so append
 new quests at the end of a giver's list or add new givers at the end, to keep
-existing saves' quest bytes in place), kind "kill" or "deliver",
+existing saves' quest bytes in place; a follow-up appended to an early giver
+sets late=True, which allocates it after every other quest), kind "kill" or "deliver",
   kill:    enemies + count + label, or targets=[(label, [enemy ids], count)...]
   deliver: item + count + label, or items=[(label, item id, count)...]
 (up to 4 targets/items), title + desc (3 lines <= 46 chars) + labels for the

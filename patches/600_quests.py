@@ -75,17 +75,20 @@ def _save_bytes():
 
 def _allocate():
     """Q[id] = state var; CTR[id] = [counter var per kill target]. Handed out
-    in GIVERS order from QUEST_AREAS (the first quests keep the bytes they
+    in GIVERS order from QUEST_AREAS, quests marked late=True last (the first quests keep the bytes they
     shipped with: manager_n1 bank 3 192/193, betty 196/197, gwen 198)."""
     q_off, ctr, free = {}, {}, _save_bytes()
+    every = [q for g in GIVERS for q in g["quests"]]
+    # Quests marked late=True (follow-ups added to existing givers) take their
+    # bytes after all the others, so older quests keep theirs.
+    ordered = [q for q in every if not q.get("late")] + [q for q in every if q.get("late")]
     try:
-        for g in GIVERS:
-            for q in g["quests"]:
-                assert q["id"] not in q_off, q["id"]
-                assert 1 <= len(parts(q)) <= 4, q["id"]
-                q_off[q["id"]] = next(free)
-                if q["kind"] == "kill":
-                    ctr[q["id"]] = [next(free) for _ in parts(q)]
+        for q in ordered:
+            assert q["id"] not in q_off, q["id"]
+            assert 1 <= len(parts(q)) <= 4, q["id"]
+            q_off[q["id"]] = next(free)
+            if q["kind"] == "kill":
+                ctr[q["id"]] = [next(free) for _ in parts(q)]
     except StopIteration:
         raise AssertionError("quest save bytes exhausted: add an area to _config.QUEST_AREAS")
     b3 = 2 * 256
