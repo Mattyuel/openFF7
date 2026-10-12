@@ -315,6 +315,16 @@ class BuildContext:
             self._wm[name] = bytearray(self._wm_lgp[name])
         return self._wm[name]
 
+    def char_file(self, name, data=None):
+        """data/field/char.lgp (field models): returns the file `name`; with
+        `data`, adds or replaces it. The build writes char.lgp when any is set."""
+        if getattr(self, "_char", None) is None:
+            self._char_lgp = LGP.read(os.path.join(GAME, "field", "char.lgp"))
+            self._char = {}
+        if data is not None:
+            self._char[name] = bytes(data)
+        return self._char.get(name) or self._char_lgp[name]
+
     def exe(self):
         """ExeBuilder for ff7_en.exe (byte patches + the .openff7 section)."""
         if getattr(self, "_exe", None) is None:
@@ -335,6 +345,12 @@ class BuildContext:
                 self._wm_lgp[name] = bytes(data)
             rel = "data/wm/world_us.lgp"
             self._wm_lgp.write(os.path.join(out_dir, rel))
+            out.append(rel)
+        if getattr(self, "_char", None):
+            for name, data in self._char.items():
+                self._char_lgp[name] = data
+            rel = "data/field/char.lgp"
+            self._char_lgp.write(os.path.join(out_dir, rel))
             out.append(rel)
         if getattr(self, "_exe", None) is not None:
             rel = "ff7_en.exe"

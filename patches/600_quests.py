@@ -51,12 +51,13 @@ NEW, ACCEPTED, DONE = 0, 2, 4
 # (talk to a `target` NPC elsewhere).
 COUNTED = ("kill", "count", "visit", "courier")
 ITEM_COUNT = (5, 232)          # temp var: CKITM result
-MODE, SHOWN = (5, 233), (5, 234)   # temp vars: marker mode wanted / applied
+MODE = (5, 233)                 # temp var: marker mode (1 offer, 2 accepted, 0 none)
 
-ORB_MODEL = ("nmkin_5", 3)     # fieldbg_mtra3: the materia orb
-ORB_HEIGHT = 160               # above the giver's feet (200 was too high in game)
-ORB_TINT = {1: (120, 100, -120),   # yellow: quest to offer
-            2: (-80, -20, 140)}    # blue: ready to hand in
+ORB_HEIGHT = 160               # marker height above the giver's feet (200 was too high in game)
+# Markers (_marker_models.py): the S-Guard star while the giver's next quest is
+# on offer (MODE 1), Lucky Girl's heart while it's accepted and not handed in
+# (MODE 2), nothing once all are done. One model of each per field.
+STAR, HEART = "QSTA", "QHTA"
 
 HOOK_VA, HOOK_OLD = 0x431536, bytes.fromhex("8b45fc83c004")
 # Minigame hooks (quest_menu.asm entries CODE+15/20/25): they count the
@@ -211,32 +212,22 @@ def _marker_mode(giver):
         nxt, offer = asm.nop(), asm.nop()
         ops += [jump_if(state(q), "==", DONE, nxt),
                 jump_if(state(q), "==", NEW, offer)]
-        ops += _not_met(q, out)
-        ops += [asm.setbyte(MODE, 2), asm.goto(out),
+        ops += [asm.setbyte(MODE, 2), asm.goto(out),                       # accepted
                 offer, asm.setbyte(MODE, 1), asm.goto(out), nxt]
     return ops + [out]
 
 
-def _tint(rgb):
-    col = struct.pack("<3h", *rgb) * 2
-    return [Op(bytes([0x28, 0x18, 0x06, 0x00, 0x00]) + col + bytes.fromhex("01000100010001")),  # KAWAI 06 colour
-            Op(b"\x24\x01\x00"),                                                   # WAIT 1
-            Op(b"\x28\x04\x06\x01"),                                               # KAWAI 06 apply
-            Op(b"\x29")]                                                           # KAWIW
-
-
-def _marker_main(giver):
-    """Main loop: every 10 frames recompute the mode; on a change show/hide
-    and retint. (The field isn't re-initialised after a battle.)"""
-    top, wait, shown = asm.nop(), asm.nop(), asm.nop()
+def _marker_main(giver, show_mode):
+    """Main loop: every 10 frames recompute the giver's mode and show this
+    marker only in `show_mode` (0 = in either mode). (The field isn't
+    re-initialised after a battle.)"""
+    top, hide, wait = asm.nop(), asm.nop(), asm.nop()
     ops = [top] + _marker_mode(giver)
-    ops += [jump_if(MODE, "==", SHOWN, wait), asm.setbyte(SHOWN, MODE),
-            jump_if(MODE, "!=", 0, shown), Op(b"\xA4\x00"), asm.goto(wait),        # VISI 00
-            shown, Op(b"\xA4\x01")]                                                # VISI 01
-    for mode, rgb in ORB_TINT.items():
-        skip = asm.nop()
-        ops += [jump_if(MODE, "!=", mode, skip)] + _tint(rgb) + [skip]
-    return ops + [wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]                  # WAIT 10
+    test = (jump_if(MODE, "==", 0, hide) if show_mode == 0 else jump_if(MODE, "!=", show_mode, hide))
+    ops += [test, Op(b"\xA4\x01"), asm.goto(wait),                                  # VISI 01
+            hide, Op(b"\xA4\x00"),                                                  # VISI 00
+            wait, Op(b"\x24\x0A\x00"), asm.goto_back(top)]                          # WAIT 10
+    return ops
 
 
 def _spot(ctx, field, x, y):
@@ -246,16 +237,44 @@ def _spot(ctx, field, x, y):
     return x, y, mesh.height(tri, x, y), tri
 
 
+MAX_MODELS = 16
+NO_HEART = []                   # fields where only the star fits (shown for offer and accepted)
+_MARKER_ENTRIES = {}            # hrc -> model loader entry (from _marker_models.install)
+_FIELD_MARKERS = {}             # field -> {hrc: model index}
+
+
+def _marker_model(ctx, field, hrc):
+    """Index of marker model `hrc` in `field`, added once per field."""
+    from ff7.models import ModelLoader
+    have = _FIELD_MARKERS.setdefault(field, {})
+    if hrc not in have:
+        donor = ModelLoader(ctx.field("snmin2").section("models"))
+        loader = ModelLoader(ctx.field(field).section("models"))
+        entry = _MARKER_ENTRIES[hrc]
+        scale = round(loader.entry_scale(entry) * loader.scale / donor.scale)
+        have[hrc] = loader.add(loader.with_scale(entry, scale))
+        ctx.field(field).set_section("models", loader.build())
+    return have[hrc]
+
+
 def _add_marker(ctx, giver, pos):
+    from ff7.models import ModelLoader
     field = giver["field"]
-    model = copy_model(ctx, field, *ORB_MODEL)
     x, y, z, tri = pos
-    sec = Script.parse(ctx.field(field).sections[0])
-    init = [Op(bytes([0xA1, model])), xyzi(x, y, z + ORB_HEIGHT, tri),
-            Op(b"\x7E\x01"), Op(b"\xC7\x01"), Op(b"\xA4\x00"),                   # TLKON 01, SOLID 01, VISI 00
-            asm.setbyte(SHOWN, 0), asm.ret()]
-    sec.add_entity(giver["name"][:6] + "_q", {0: init + _marker_main(giver) + [asm.ret()]})
-    ctx.field(field).sections[0] = sec.build()
+    have = _FIELD_MARKERS.get(field, {})
+    count = len(ModelLoader(ctx.field(field).section("models")).models)
+    markers = ((STAR, 1, "_s"), (HEART, 2, "_h"))
+    if count + (STAR not in have) + (HEART not in have) > MAX_MODELS:
+        markers = ((STAR, 0, "_s"),)          # no room for both: the star in either mode
+        NO_HEART.append(field)
+    for hrc, mode, suffix in markers:
+        model = _marker_model(ctx, field, hrc)
+        sec = Script.parse(ctx.field(field).sections[0])
+        init = [Op(bytes([0xA1, model])), xyzi(x, y, z + ORB_HEIGHT, tri),
+                Op(b"\x7E\x01"), Op(b"\xC7\x01"), Op(b"\xA4\x00"),               # TLKON 01, SOLID 01, VISI 00
+                asm.ret()]
+        sec.add_entity(giver["name"][:6] + suffix, {0: init + _marker_main(giver, mode) + [asm.ret()]})
+        ctx.field(field).sections[0] = sec.build()
 
 
 # ---- Quests main-menu entry ------------------------------------------------
@@ -459,6 +478,9 @@ def _add_courier(ctx, q):
 
 
 def apply(ctx):
+    import ff7tool
+    import _marker_models
+    _MARKER_ENTRIES.update(_marker_models.install(ctx, ff7tool.GAME))
     for slot, q in enumerate(q for g in GIVERS for q in g["quests"] if "boss" in q):
         _add_boss(ctx, q, slot)
     for g in GIVERS:

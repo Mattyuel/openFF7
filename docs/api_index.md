@@ -24,6 +24,7 @@ openFF7 command-line tool.
   - `kernel_section(index)` Mutable bytearray of KERNEL.BIN section `index` (0 commands,
   - `kernel2()` Editable kernel2.bin (the text the game shows); written by the build.
   - `wm_file(name)` Mutable bytearray of a file in data/wm/world_us.lgp (e.g. "wm0.ev");
+  - `char_file(name, data=None)` data/field/char.lgp (field models): returns the file `name`; with
   - `exe()` ExeBuilder for ff7_en.exe (byte patches + the .openff7 section).
   - `save_extra(out_dir)` Write kernel2.bin and ff7_en.exe if patches touched them; returns paths.
   - `save_kernel(out_dir)` 
@@ -534,9 +535,9 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_reward(sec, giver, q)` 
 - `_talk(giver)` 
 - `_marker_mode(giver)` Ops: MODE = 1 (offer), 2 (ready to hand in) or 0 for the giver's
-- `_tint(rgb)` 
-- `_marker_main(giver)` Main loop: every 10 frames recompute the mode; on a change show/hide
+- `_marker_main(giver, show_mode)` Main loop: every 10 frames recompute the giver's mode and show this
 - `_spot(ctx, field, x, y)` 
+- `_marker_model(ctx, field, hrc)` Index of marker model `hrc` in `field`, added once per field.
 - `_add_marker(ctx, giver, pos)` 
 - `_kill_table()` {u16 enemy id, u16 state var, u16 counter var, u8 count, pad}..., 0xFFFF.
 - `_quest_log_data(base)` DATA block for quest_menu.asm (layout documented there).
@@ -560,6 +561,14 @@ PHS usable from the start: the save points in early Midgar (and a few story
 ## `patches/_config.py`
 Shared openFF7 settings used by the patch modules.
 
+
+## `patches/_marker_models.py`
+Quest marker models: battle-effect sprites shown in the field.
+
+- `magic_file(game_dir, name)` A file from battle/magic.lgp (it has directory entries, which ff7.lgp
+- `keyed(tex)` The texture with its colour key on (black = transparent), as s_guard's,
+- `mesh(donor, crop)` Two crossed, double-sided quads (planes x-y and z-y), using the donor
+- `install(ctx, game_dir)` Add both marker models to char.lgp. Returns {hrc: model loader entry}
 
 ## `patches/_quest_data.py`
 Quest data for 600_quests.py: who gives which quests, where, and what they say.

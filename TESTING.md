@@ -65,7 +65,7 @@ Existing saves load, but they keep their own story progress; use a new game.
 - If you installed the Tame test files earlier: put back the original
   `data\lang-en\kernel\kernel2.bin` (the build no longer changes it).
   `ff7_en.exe` is built again (quest kill counting): copy the new one.
-- **World quests** (new game; untested): a quest giver with an orb in Kalm,
+- **World quests** (new game; untested): a quest giver with a marker in Kalm,
   the Chocobo Farm, Mythril Mine (first screen), Fort Condor, the beach
   under Junon, Costa del Sol, Mt. Corel (first screen), North Corel inn,
   Gold Saucer gate, Corel Prison, Gongaga, Cosmo Canyon (house), Nibelheim,
@@ -109,14 +109,17 @@ Existing saves load, but they keep their own story progress; use a new game.
   his chocobo turn to you when talked to.
 - **Sounds**: quest rewards play the item chime (materia rewards the materia
   chime); recruiting Tifa/Aerith/Barret plays the materia chime.
-- **Quests** (new game needed for clean quest state). A spinning materia orb
-  should float above each quest giver: yellow = a quest to offer, blue =
-  ready to hand in, none otherwise. Givers turn to face you when talked to.
-  Orbs were lowered (too high before): report if they now sit in the head.
+- **Quests** (new game needed for clean quest state; **copy the new
+  `data/field/char.lgp` too**, 49 MB). A star sprite (S-Guard's) floats above
+  each giver with a quest to offer; once accepted it becomes a heart until you
+  hand the quest in; nothing otherwise. Report the size/height, whether black
+  edges show, and whether several givers on one screen (Upper Midgar) all show
+  their markers. Cait Sith's beach (del3) has room for the star only.
+  Givers turn to face you when talked to.
   - *Middle Manager* (Upper Midgar, a few steps from the train
     arrival): accept, then win battles in No.1 Reactor against Grunts,
     Sweepers, 1st Rays or Mono Drives (8 in total; enemies that escape or
-    battles you flee don't count). His orb turns blue at 8; hand in for
+    battles you flee don't count). Hand in at 8 for
     500 gil + 3 Hi-Potions. Then he offers the No.5 Reactor job (Smoggers,
     Blood Tastes, Proto Machineguns, 8): 1000 gil, 2 Ethers, Steal materia.
     Kills before accepting don't count.
@@ -125,9 +128,9 @@ Existing saves load, but they keep their own story progress; use a new game.
     towards Sector 5): 37 gil + an Elixir.
   - *Gwen* (Sector 5 slums, near the tunnel to Sector 6): bring 3 Potions
     (they're taken): HP Plus materia. Talking to her with fewer gives a
-    reminder; her orb turns blue while you carry 3 or more.
+    reminder; hand in while you carry 3 or more.
   - After all quests each giver has a closing line.
-  - **New quest givers** (each with an orb; dialogue is meant to be silly):
+  - **New quest givers** (each with a marker; dialogue is meant to be silly):
     | Who | Where | Quest |
     |---|---|---|
     | Madam M | Wall Market, Honey Bee Inn street | bring 2 Ethers |

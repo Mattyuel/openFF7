@@ -37,7 +37,8 @@ python3 tools/ff7tool.py quiet-flags        # search 'seen' flags (slow, >10 min
 ```
 
 Shipped files: `data/field/flevel.lgp`, `data/lang-en/kernel/KERNEL.BIN`,
-`data/wm/world_us.lgp`, `ff7_en.exe` (600_quests' kill hook) (plus
+`data/wm/world_us.lgp`, `ff7_en.exe` (600_quests' kill hook),
+`data/field/char.lgp` (quest marker models, `_marker_models.py`) (plus
 `kernel2.bin` only when a patch edits it; none does now). The build prints the list.
 The user tests by copying them into the Steam install (see `TESTING.md`).
 
@@ -77,7 +78,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `440_corel_prison.py` | Buggy into the world map Gold Saucer -> desert2 (vanilla wm0 0xA964); desert2's bottom/left lines now go to jail1/jail3; convict in jail1 drives you out (buggy bits + MAPJUMP wm15). |
 | `450_highwind.py` | junair2 runway line (y -2400) -> Highwind owned/aboard (bank 1 byte 127 bits 4/5 = wm 0x3FC/0x3FD) + MAPJUMP wm40 (wm0 mounts model 3 near Junon); wm0 system function 6 ([Menu] in the air -> fship interior, exe 0x74F676) starts with `return`. |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
-| `600_quests.py` | Quest framework: givers + orb markers, kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 44 givers, 87 quests, 16 boss lines; follow-ups on early givers use late=True (allocated after every other quest). Kinds: kill, deliver, count (counter bumped by `count_ops`/exe), visit (`spots`: lines that tick when crossed), courier (`target` NPC elsewhere); kill-table fake ids BIKE 0xFFFE / BALLOON 0xFFFD are counted by exe hooks in the bike game (0x6566B9) and snowboard (0x737D95, 0x73C52A; Icicle mode only). Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
+| `600_quests.py` | Quest framework: givers + sprite markers (star = offer, heart = accepted until hand-in; models QSTA/QHTA built into char.lgp by `_marker_models.py` from magic.lgp s_guard.tex / heart01.tex on the gujc.hrc skeleton; one entity each per giver, star only where 16 models don't allow both), kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 44 givers, 87 quests, 16 boss lines; follow-ups on early givers use late=True (allocated after every other quest). Kinds: kill, deliver, count (counter bumped by `count_ops`/exe), visit (`spots`: lines that tick when crossed), courier (`target` NPC elsewhere); kill-table fake ids BIKE 0xFFFE / BALLOON 0xFFFD are counted by exe hooks in the bike game (0x6566B9) and snowboard (0x737D95, 0x73C52A; Icicle mode only). Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -106,7 +107,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   new quests at the end of a giver or new givers at the end (or mark them
   late=True). 26 quest bytes left (bank 1 136-159 / 236-255 added: unused by every script, no exe absolute refs). Quest data block 20691 of 32768 bytes. Bank 3 128-159 is used by
   original scripts (not free).
-  Temp vars (5,232)-(5,234) used by quest givers/markers. Temp vars (5,240),(5,241) for menus.
+  Temp vars (5,232)-(5,234) used by quest givers/markers ((5,233) = marker mode, recomputed per giver every 10 frames). Temp vars (5,240),(5,241) for menus.
 
 ## Verified facts: field scripts
 
@@ -213,6 +214,9 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
   via `ModelLoader.add` works.
+- New field models can be added to char.lgp (`ctx.char_file(name, data)`;
+  .hrc/.rsd text, .p, .tex). magic.lgp has directory entries `ff7.lgp`
+  can't parse: `_marker_models.magic_file` scans its TOC by hand.
 
 ## Verified facts: ff7_en.exe (static reading, capstone)
 
