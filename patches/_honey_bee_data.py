@@ -185,7 +185,7 @@ GIRLS = [
          fail="Sakura\n“Hmm. Perhaps another day.”",
          hired="Sakura\n“I accept. I will dance with honour.\n Thank you, traveller.”",
          idle="Sakura\n“I am preparing my fan.”"),
-    dict(name="Mags", stars=4, tag="mechanic", field="rkt_w", at=(22, 532), dir=35,
+    dict(name="Mags", stars=4, tag="mechanic", field="rkt_w", at=(-180, 497), dir=35,
          model=("rcktbas1", 11),
          stranger="Mags\n“Hand me that wrench. …No? Rude.”",
          intro="Mags\n“You've got grease on your… no wait,\n that's me. Hey! What's up?”",
