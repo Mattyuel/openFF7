@@ -1,7 +1,7 @@
 """Chocobo rides: Choco Billy and a chocobo stand just inside some world map
 exits. Talk to either and choose "Giddyap!": you leave for the world map
 riding a chocobo exactly like one caught after a battle (dismount and it runs
-away).
+away). Midgar's Billy also offers a ride into town, to Sam (TOWN_RIDES).
 
 How it works: the world map script (wm0.ev function 1) picks the player model
 from savemap bank 1 byte 126: bit 0 = riding a wild chocobo (model 4, "Wild
@@ -52,23 +52,42 @@ SPOTS = {
     "psdun_1": ((175, 8, 23), "wm4", [(231, -327), (221, -237)], FACING_RIGHT),   # [Billy, chocobo]: swapped, then ~5 steps down (blocked the path)
 }
 
+# Midgar's Billy also rides you into town: to Sam and Bessie (mds6_3, the road
+# from the park to Wall Market), just below them, facing up the screen. Sam
+# rides you back here once his quest is done (_quest_data "ride").
+TOWN_RIDES = {"mds5_5": ("To Wall Market.", ("mds6_3", 218, 330, 125))}
 
-def _ride(ctx, wm_entry):
+
+def _town_jump(ctx, field, x, y, d):
+    mesh = Walkmesh(ctx.field(field).section("walkmesh"))
+    tri = mesh.find(x, y)
+    assert tri is not None, (field, x, y)
+    return asm.mapjump(ctx.maplist.index(field), x, y, tri, d)
+
+
+def _ride(ctx, wm_entry, town=None):
+    def pay(sec, then):
+        """Ops: take PRICE gil and run `then`, or say you can't afford it."""
+        ok, done = asm.nop(), asm.nop()
+        ops = [Op(bytes([0x3B, 0x66, GIL_LO[1], GIL_HI[1]])),                # CHGLD lo, hi
+               asm.if_word(GIL_HI, "==", 0, ok),
+               asm.if_word(GIL_LO, "<", PRICE, ok)]
+        ops += say(sec, "Choco Billy\n\u201cThat's %d gil. Come back\n when you've got it.\u201d" % PRICE)
+        return ops + [asm.goto(done), ok,
+                      Op(bytes([0x3A, 0x00]) + PRICE.to_bytes(4, "little"))] + then + [done]   # GOLDD
+
     def talk(sec):
         face = [Op(b"\x33\x01"), Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00")]  # UC 01, PTURA leader, WAIT 8
-        ok, done = asm.nop(), asm.nop()
-        go = [Op(bytes([0x3B, 0x66, GIL_LO[1], GIL_HI[1]])),                 # CHGLD lo, hi
-              asm.if_word(GIL_HI, "==", 0, ok),
-              asm.if_word(GIL_LO, "<", PRICE, ok)]
-        go += say(sec, "Choco Billy\n\u201cThat's %d gil. Come back\n when you've got it.\u201d" % PRICE)
-        go += [asm.goto(done), ok,
-               Op(bytes([0x3A, 0x00]) + PRICE.to_bytes(4, "little")),           # GOLDD
-               asm.biton(RIDING, WILD_CHOCOBO_BIT),
-               Op(b"\x33\x00"),                                              # UC 00 before leaving
-               asm.mapjump(ctx.maplist.index(wm_entry), 0, 0, 0, 0),
-               done]
+        go = pay(sec, [asm.biton(RIDING, WILD_CHOCOBO_BIT),
+                       Op(b"\x33\x00"),                                     # UC 00 before leaving
+                       asm.mapjump(ctx.maplist.index(wm_entry), 0, 0, 0, 0)])
+        options, jumps = ["Giddyap!" if not town else "Giddyap! (world map)"], [go]
+        if town:
+            label, dest = town
+            options.append(label)
+            jumps.append(pay(sec, [Op(b"\x33\x00"), _town_jump(ctx, *dest)]))
         return face + choice_menu(sec, "Choco Billy\n\u201cRide a chocobo? %d gil.\u201d" % PRICE,
-                                  ["Giddyap!", "Not now."], [go, None])
+                                  options + ["Not now."], jumps + [None])
     return talk
 
 
@@ -107,7 +126,8 @@ def apply(ctx):
         pos_billy, pos_bird = (_at(ctx, field, sx, sy, tri) for sx, sy in spots)
         billy = copy_model(ctx, field, *BILLY_MODEL)
         bird = copy_model(ctx, field, *CHOCOBO_MODEL)
-        add_npc(ctx, field, "billy", billy, pos_billy, facing, _ride(ctx, wm_entry))
-        add_npc(ctx, field, "ridechoc", bird, pos_bird, facing, _ride(ctx, wm_entry),
+        town = TOWN_RIDES.get(field)
+        add_npc(ctx, field, "billy", billy, pos_billy, facing, _ride(ctx, wm_entry, town))
+        add_npc(ctx, field, "ridechoc", bird, pos_bird, facing, _ride(ctx, wm_entry, town),
                 main=[Op(b) for b in CHOCOBO_YELLOW])
         _mount_on_arrival(ctx, wm_entry)

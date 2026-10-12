@@ -471,7 +471,8 @@ Sector 4 train tunnel (tunnel_2) and the plate interior below it.
 ## `patches/280_chocobo_rides.py`
 Chocobo rides: Choco Billy and a chocobo stand just inside some world map
 
-- `_ride(ctx, wm_entry)` 
+- `_town_jump(ctx, field, x, y, d)` 
+- `_ride(ctx, wm_entry, town=None)` 
 - `_mount_on_arrival(ctx, wm_entry)` wm0.ev: in the branch for arriving by `wm_entry`, mount the wild chocobo
 - `_at(ctx, field, x, y, near_tri)` (x, y, z, tri) on the floor connected to `near_tri`; fails if not walkable.
 - `apply(ctx)` 
@@ -539,7 +540,8 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `sources(giver, q)` (item, count): every quest also gives Sources, by area level.
 - `_not_met(q, target)` Ops: goto target unless every target/item of the quest is complete.
 - `_reward(sec, giver, q)` 
-- `_talk(giver)` 
+- `_ride(ctx, giver)` A giver's `ride` (after all their quests): a choice to MAPJUMP to
+- `_talk(giver, ride=None)` 
 - `_marker_branch(giver, offer, accepted, none)` Ops jumping to `offer` / `accepted` (the giver's first quest that isn't
 - `_marker_main(giver, show_mode)` Main loop: every 10 frames show this marker only in `show_mode`
 - `_tint(rgb)` 

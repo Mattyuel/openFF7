@@ -76,7 +76,7 @@ delete `build/cache` (~350 MB) any time.
 | `250_train_destinations.py` | Station conductor menu (Upper Midgar md8brdg, Shinra Tower sinbil_1, No.1 md1stin, No.5 tunnel_2 — not tunnel_1, which loops onto itself), conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
 | `260_reactor_elevator.py` | Shared reactor elevator goes to the reactor you came from. |
 | `270_sector4_duct.py` | Tunnel duct = plain choice; line below the duct (sbwy4_1, left of the landing) back to tunnel_2; vent (sbwy4_4) left original (a menu on its far ladder line reopened while standing on it). |
-| `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. |
+| `280_chocobo_rides.py` | Choco Billy + chocobo by the world map exits of mds5_5 and psdun_1: ride out on a wild chocobo. mds5_5's Billy also rides to mds6_3 (Sam, `TOWN_RIDES`); Sam rides back after his quest (giver `ride=` in `_quest_data`, handled by 600 `_ride`). |
 | `300_kalm.py` | Kalm fields pinned at 400. |
 | `400_world.py` | Everything else pinned via `world_moments.json` + `world_overrides.json`. |
 | `410_world_fixes.py` | Mideel always disc 3 (wm0), shpin_3 Jenova line off, Junon elevator line open, Gate of Naught open (cosin2: door opening on every entry, cave floor lock IDLCK 0x29 + "only Bugenhagen" line removed). |

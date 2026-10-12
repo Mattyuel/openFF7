@@ -370,7 +370,11 @@ GIVERS = [
                   reward=dict(gil=500, materia=[9])),
          ],
          all_done=M("Sam", "Bessie's back on the job. She",
-                    "still glares at me, though.")),
+                    "still glares at me, though."),
+         # after the quest: a ride to Choco Billy in the slum outskirts (mds5_5,
+         # where you arrive from the world map), facing up the screen
+         ride=dict(ask=M("Sam", "Need a lift to the outskirts?", "Bessie runs it free for you."),
+                   choices=["Giddy-up!", "Not now."], to=("mds5_5", 711, -2420, 113))),
 
     dict(field="mkt_mens", name="ronnie", level=10, model=("mkt_mens", 5), at=(-111, 322), dir=0,
          who="Ronnie", where="Wall Market gym",

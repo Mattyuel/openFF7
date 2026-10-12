@@ -179,7 +179,20 @@ def _reward(sec, giver, q):
     return ops + [sound(chime)] + say(sec, "Received " + ",\n".join(got) + "!")
 
 
-def _talk(giver):
+def _ride(ctx, giver):
+    """A giver's `ride` (after all their quests): a choice to MAPJUMP to
+    ride["to"] = (field, x, y, dir); the point must be on that field's floor."""
+    r = giver.get("ride")
+    if not r:
+        return None
+    field, x, y, d = r["to"]
+    mesh = Walkmesh(ctx.field(field).section("walkmesh"))
+    tri = mesh.find(x, y)
+    assert tri is not None, r
+    return dict(r, jump=asm.mapjump(ctx.maplist.index(field), x, y, tri, d))
+
+
+def _talk(giver, ride=None):
     def build(sec):
         end = [Op(b"\x33\x00"), asm.ret()]                                         # UC 00
         ops = [Op(b"\x33\x01"),                                                    # UC 01
@@ -203,7 +216,11 @@ def _talk(giver):
             ops += _reward(sec, giver, q) + [asm.setbyte(state(q), DONE)] + end
             ops += [progress] + say(sec, q["progress"]) + end
             ops.append(nxt)
-        return ops + say(sec, giver["all_done"]) + end
+        ops += say(sec, giver["all_done"])
+        if ride:
+            go = [Op(b"\x33\x00"), ride["jump"]]                                     # UC 00 before leaving
+            ops += choice_menu(sec, ride["ask"], ride["choices"], [go, None])
+        return ops + end
     return build
 
 
@@ -531,7 +548,7 @@ def apply(ctx):
         assert len(g["name"]) <= 8, g["name"]
         pos = _spot(ctx, field, *g["at"])
         model = copy_model(ctx, field, *g["model"])
-        add_npc(ctx, field, g["name"], model, pos, g["dir"], _talk(g))
+        add_npc(ctx, field, g["name"], model, pos, g["dir"], _talk(g, _ride(ctx, g)))
         _add_marker(ctx, g, pos)
         if "companion" in g:
             _add_companion(ctx, g)

@@ -59,6 +59,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   (yellow) chocobo, as after catching one in battle. Dismount: it should run
   away. You should now appear outside Midgar / the Mythril Mine on the
   chocobo (before, you appeared in the sea at the top-left corner).
+  Midgar's Billy also has "To Wall Market." (100 gil): you should arrive
+  just below Sam and Bessie on the road to Wall Market, facing up. Once
+  Sam's Loco Weed quest is done, talking to Sam ends with "Need a lift to
+  the outskirts?": "Giddy-up!" (free) puts you back on the outskirts screen
+  where you arrive from the world map. (Untested in-game.)
 - No "Saving on the World Map" window on first entering the world map, and no
   submarine tutorial window (new game).
 - Cloud always leads (he can't be moved in the PHS; needs a new game).
