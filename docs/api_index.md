@@ -607,6 +607,10 @@ Shared openFF7 settings used by the patch modules.
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
 
 
+## `patches/_honey_bee_scenes.py`
+Honey Bee Inn visit scenes, one per girl (see _honey_bee_data.py for the
+
+
 ## `patches/_marker_models.py`
 Quest marker models: battle-effect sprites shown in the field.
 

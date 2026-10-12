@@ -290,7 +290,7 @@ def _add_marker(ctx, giver, pos):
     if QUEST_MARKERS == "orbs":
         model = copy_model(ctx, field, *ORB_MODEL)
         sec = Script.parse(ctx.field(field).sections[0])
-        init = [Op(bytes([0xA1, model])), xyzi(x, y, z + ORB_HEIGHT, tri)] + init_hidden + [asm.ret()]
+        init = [Op(bytes([0xA1, model]))] + init_hidden + [xyzi(x, y, z + ORB_HEIGHT, tri), asm.ret()]
         sec.add_entity(giver["name"][:6] + "_q", {0: init + _orb_main(giver) + [asm.ret()]})
         ctx.field(field).sections[0] = sec.build()
         return
@@ -305,8 +305,10 @@ def _add_marker(ctx, giver, pos):
     for hrc, mode, suffix in markers:
         model = _marker_model(ctx, field, hrc)
         sec = Script.parse(ctx.field(field).sections[0])
-        init = [Op(bytes([0xA1, model])), xyzi(x, y, z + ORB_HEIGHT, tri),
-                Op(bytes([0xB3, 0, face]))] + init_hidden + [asm.ret()]
+        # hidden first: placed visible, the marker that doesn't apply showed for a
+        # moment on entry (a star flashing over a giver whose quest is accepted)
+        init = [Op(bytes([0xA1, model]))] + init_hidden + [xyzi(x, y, z + ORB_HEIGHT, tri),
+                                                         Op(bytes([0xB3, 0, face])), asm.ret()]
         sec.add_entity(giver["name"][:6] + suffix, {0: init + _marker_main(giver, mode) + [asm.ret()]})
         ctx.field(field).sections[0] = sec.build()
 

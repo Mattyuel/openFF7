@@ -34,8 +34,8 @@ from ff7.walkmesh import Walkmesh
 LOBBY, ROOM = "onna_4", "onna_52"
 MANAGER_MODEL = ("md8_2", 3)                 # midgal_man
 MANAGER_AT, MANAGER_DIR = (104, -48), 0
-ROOM_ARRIVE = (211, 102, 6, 220)             # at the bed, out of the girl's way (onna_4's own arrival,
-                                             # (263, 163), is on her path: she ran into Cloud)
+ROOM_ARRIVE = (263, 163, 5, 220)             # onna_4's own jump into the "&" room; Cloud then walks to
+                                             # the middle (STAGE) before the girl comes in
 SHOWN = (5, 245)                             # temp: a hired girl was listed
 WRONG = (5, 246)                             # temp: a question was answered wrong (girl fields)
 TOTAL, ELAPSED, EARN = (6, 246), (6, 248), (6, 250)   # temp words: stars, minutes, gil
@@ -43,11 +43,23 @@ FINAL = "You spent the rest of the night together\nand had a good time..."
 OFFER = "{CLOUD}\n“There's a job going at the Honey Bee Inn.\n Interested?”"
 
 # onna_52 spots (x, y): from the room's own scene
-DOOR, NEAR_BED, MID, FAR, BED = (347, 230), (275, 107), (248, 150), (117, 250), (211, 102)
+# Spots, by screen x (this camera's y projection is useless): the room spans
+# screen x -300..270; the action is kept in the middle. MOVE walks straight
+# (no pathfinding): every leg below is checked to stay on the floor (the door
+# needs the INSIDE waypoint; Aerith's lap straight to the door got stuck).
+DOOR, INSIDE = (347, 230), (263, 163)
+STAGE = (0, 150)                             # Cloud (screen x 0)
+MID, NEAR, FAR = (90, 180), (50, 165), (-150, 200)
+PACE = 20                                    # frames after each action
 GIRL, CLOUD = "girl2", "cloud"
-WALK, RUN = 0x0800, 0x1400
+WALK = 0x0400                                # 0x0800 ran (MOVE runs above ~0x600)
+DOOR_OPEN, DOOR_CLOSE = 0x7A, 0x11D          # the room's own entrance scene's door sounds
 # girl2's model (market_dancer): its 5 animations, then every other Honey Bee
-# dancer animation in the game (same skeleton BADD.HRC)
+# dancer animation in the game (same skeleton BADD.HRC). Meanings (user):
+# BAJC walk, AAGA run, BAJD spin + shake behind, BAJE shake behind, BAJF squat
+# and twirl hips, BBAA bend down + poke with stinger, DXHF strut, DXIA silly
+# run, DXJD present with arm, DIEF bow, DXJC sexy dance, DXIF check sides,
+# BYAD point/poke, AVJE shocked; DXHE/DXIB/DXIC sitting, DZBA lying down.
 DANCER_ANIMS = ["BAJB.tor", "BCCC.tor", "BCCD.tor", "AVJE.aki", "BYAD.aki"]
 DANCER_EXTRA = ["DXHE.tor", "DXIB.tor", "DXIF.tor", "DXJA.tor", "DXJB.tor", "BAJF.tor", "BBAA.tor",
                 "BAJD.tor", "BAJC.tor", "DXJC.tor", "DXJD.tor", "DXIC.tor", "DZBA.tor", "DIEF.chi",
@@ -298,8 +310,18 @@ def _room(ctx, back):
     assert ModelLoader.anims(loader.models[0])[CLOUD_ANIMS["sit"]] == "AQAA.tor"
     assert ModelLoader.anims(loader.models[0])[CLOUD_ANIMS["lie"]] == "EADD.tor"
 
+    def on_floor(a, b):
+        n = max(1, int(((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5 / 8))
+        return all(mesh.find(a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n) is not None
+                   for i in range(n + 1))
+    stops = [MID, NEAR, FAR, INSIDE]
+    legs = ([(ROOM_ARRIVE[:2], STAGE)]
+            + [(a, b) for a in stops for b in stops if a != b])
+    bad = [leg for leg in legs if not on_floor(*leg)]
+    assert not bad, bad
+
     sec = Script.parse(f.sections[0])
-    girl, cloud = sec.entity_index(GIRL), sec.entity_index(CLOUD)
+    girl, cloud, door = sec.entity_index(GIRL), sec.entity_index(CLOUD), sec.entity_index("door")
     # room scene off in VISIT mode: produce's main, the exit line
     produce = sec.script_ops(sec.entity_index("produce"), 0)
     main = produce[produce.index(next(o for o in produce if o.op == 0)) + 1]
@@ -320,24 +342,29 @@ def _room(ctx, back):
     c = CLOUD_ANIMS
     gx = lambda p: _move(*p)
     girl_beats = {
-        "enter": [_xyzi(*spot(DOOR)), _visi(1), _msped(WALK), gx(MID), _tura(cloud)],
-        "approach": [_msped(WALK), gx(NEAR_BED), _tura(cloud)],
+        # the door opens (door script 1: BGOFF, as the room's own scene), she
+        # appears just inside it and walks in, the door closes (script 2)
+        "enter": [sound(DOOR_OPEN), _req(door, 1), _xyzi(*spot(INSIDE)), _visi(1), _msped(WALK),
+                  gx(MID), _req(door, 2), sound(DOOR_CLOSE), _tura(cloud)],
+        "approach": [_msped(WALK), gx(NEAR), _tura(cloud)],
         "mid": [_msped(WALK), gx(MID), _tura(cloud)],
         "far": [_msped(WALK), gx(FAR), _tura(cloud)],
-        "leave": [_msped(WALK), gx(DOOR), _visi(0)],
-        "back": [_visi(1), _msped(WALK), gx(MID), _tura(cloud)],
-        "lap": [_msped(RUN), gx(FAR), gx(DOOR), gx(MID), _msped(WALK), _tura(cloud)],
+        "pace": [_msped(WALK), gx(FAR), _tura(cloud), _w(20), gx(MID), _tura(cloud)],
         "spin": [_turn(2), _tura(cloud)],
-        "dance1": d("DXHE.tor", 2), "dance2": d("DXIB.tor", 2), "dance3": d("DXIF.tor"),
-        "dance4": d("DXJA.tor"), "dance5": d("DXJB.tor"), "dance6": d("BAJF.tor"),
-        "dance7": d("BBAA.tor"), "dance8": d("BAJD.tor"), "wiggle": d("BAJC.tor", 2),
-        "flourish": d("DXJC.tor"), "greet": d("DXJD.tor"), "beckon": d("BYAD.aki"),
-        "look": d("AVJE.aki"), "chat": d("DXIC.tor", 2), "sulk": d("DIEF.chi"),
-        "sway": d("DXIE.tor"),
-        "pose": [_anim(da["DZBA.tor"], hold=True), _w(45), _anim(0)],
+        # animations as described by the user (DXHE/DXIB/DXIC sit, DZBA lies: unused)
+        "sexy": d("DXJC.tor"),                    # sexy dance
+        "shimmy": d("BAJE.tor", 2),               # shake behind
+        "spinshake": d("BAJD.tor"),               # spin, then shake behind
+        "twirl": d("BAJF.tor"),                   # squat and twirl hips
+        "stinger": d("BBAA.tor"),                 # bend down and poke with the stinger
+        "present": d("DXJD.tor"),                 # present something with an arm
+        "bow": d("DIEF.chi"),
+        "point": d("BYAD.aki"),                   # point / poke
+        "checksides": d("DXIF.tor"),
+        "shocked": d("AVJE.aki"),
     }
     cloud_beats = {
-        "sit": [_msped(WALK), gx(BED), _tura(girl), _canm(c["sit"], 0, 0x1D)],
+        "sit": [_tura(girl), _canm(c["sit"], 0, 0x1D)],
         "stand": [_canm(c["sit"], 0x1D, 0x2C), _anim(c["stand"])],
         "jump": [_anim(c["jump1"]), Op(JUMP_SOUND), _anim(c["jump2"]), _anim(c["stand"])],
         "hesitate": [_anim(c["look2"]), _canm(c["hesitate"], 0, 0x0E), _canm(c["hesitate"], 0x0F, 0x1D),
@@ -345,11 +372,12 @@ def _room(ctx, back):
         "blush": [_anim(c["blush1"]), _anim(c["blush2"]), _anim(c["blush3"])],
         "startle": [_canm(c["startle"], 0, 0x0E), _anim(c["stand"])],
         "look": [_anim(c["look"]), _anim(c["look2"])],
-        "ghost": [Op(b"\xC7\x01")],                                    # SOLID 01: the girl walks through
+        # before the girl comes in: SOLID 01 (she walks through), into the room
+        "into": [Op(b"\xC7\x01"), _msped(WALK), gx(STAGE), Op(bytes([0xB3, 0, 0x40]))],
         "faint": [_canm(c["lie"], 0, 2)] * 3 + [_anim(c["lie"], hold=True)],
     }
     used = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("g", "g&")}
-    used_c = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("c", "c&")} | {"ghost"}
+    used_c = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("c", "c&")} | {"into"}
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
     for ent, beats, start in ((girl, girl_beats, 8), (cloud, cloud_beats, 24)):
@@ -367,7 +395,7 @@ def _room(ctx, back):
     bx, by, bz, btri = back
     finale, stop = asm.nop(), asm.ret()
     ops = [asm.if_byte(HB_VISIT, "!=", 0, stop), _uc(1), _menu(1),                # no visit: nothing
-           _req(cloud, slots[(cloud, "ghost")]), _w(15)]
+           _req(cloud, slots[(cloud, "into")]), _w(15)]
     for i, g in enumerate(GIRLS):
         nxt = asm.nop()
         ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt)]
@@ -375,7 +403,7 @@ def _room(ctx, back):
             kind = step[0]
             if kind in ("g", "g&", "c", "c&"):
                 ent = girl if kind[0] == "g" else cloud
-                ops.append(_req(ent, slots[(ent, step[1])], wait=not kind.endswith("&")))
+                ops += [_req(ent, slots[(ent, step[1])], wait=not kind.endswith("&")), _w(PACE)]
             elif kind == "G":
                 ops += _say(sec, g["name"] + "\n" + step[1])
             elif kind == "C":
