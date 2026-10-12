@@ -140,7 +140,7 @@ GIRLS = [
          fail="Marisol\n“Buzzkill! Go get a tan first.”",
          hired="Marisol\n“Party in Midgar! I'll bring the\n beach. Not literally. Maybe literally.”",
          idle="Marisol\n“Packing my bikini. And my other bikini.”"),
-    dict(name="Ruby", stars=3, tag="gambler", field="games_1", at=(-21, 1195), dir=145,
+    dict(name="Ruby", stars=3, tag="gambler", field="games_1", at=(-130, 1307), dir=145,
          model=("astage_b", 8),
          stranger="Ruby\n“Red or black? Never mind,\n I already lost.”",
          intro="Ruby\n“Feeling lucky, stranger?\n I always am. It never helps.”",
