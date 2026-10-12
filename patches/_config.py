@@ -55,6 +55,10 @@ REGION_VARS = {}
 
 # Shinra HQ keycards, all given at new game so the building can be explored
 # freely. Elevator access level is var[1][224]; the cards are key-item bits.
+# World map object slot 4 (submarine; bank 4 offsets 216-223, 16-bit var
+# nibble 14): x | model 13 << 19 | direction << 24, then z | height << 18.
+# wm0's own sub arrival spot by Junon (650_world_vehicles.py).
+SUBMARINE_SLOT = [((14, 216), 0x8FE1), ((14, 218), 0xC06A), ((14, 220), 0x3880), ((14, 222), 0x0002)]
 HQ_ACCESS_LEVEL = ((1, 224), 69)   # 69: every elevator stop and the 69F doors (130 removes lowering writes)
 HQ_KEYCARD_BITS = [((1, 67), 6),   # Keycard 60
                    ((1, 67), 7),   # Keycard 62
@@ -78,6 +82,8 @@ FLAG_MOTORBALL_FOUGHT = 7 # Motor Ball fought this visit (end of the highway, ro
 INITIAL_EVENT_FLAGS = [
     (3, 208, 0),   # mds7plr1: Sector 7 slums entrance - AVALANCHE run-in seen
     (3, 214, 5),   # mds7pb_2: AVALANCHE hideout entry scene seen
+    (3, 214, 6),   # mds7pb_2: morning wake-up scene done (entry = plain lift ride down)
+    (3, 214, 0), (3, 214, 1), (3, 214, 2),   # mds7pb_2: border2 line scenes (Barret's SOLDIER talk, Tifa's "Wait") done
     (3, 211, 2),   # mds7pb_1: 7th Heaven - Marlene greeting seen
     (3, 129, 7),   # tunnel_1: Sector 4 tunnel - Barret/Tifa scene seen
     (3, 128, 0),   # tunnel_2: tunnel - Cloud scene seen

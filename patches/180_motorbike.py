@@ -10,6 +10,8 @@
   Its camera has +x up the screen: a line up the road (x 700) fights Motor
   Ball (formation 468, once per visit), a line down the road (x -2150, below
   the walkmesh hole at x -1900..-1700) leads back to the front of HQ.
+  Its init resets the sound volumes the bike game left at 0 and restarts
+  its music (as the story's blackbgb did).
 - Destroyed enemy bikes are counted by an exe hook (quest_menu.asm q_bike)
   as kill-table id _quest_data.BIKE, for the Middle Manager's quest.
 """
@@ -32,6 +34,19 @@ UP_LINE = ((700, -380, 175), (700, 350, 175))
 DOWN_LINE = ((-2150, -380, 175), (-2150, 350, 175))
 HQ_ARRIVE = (-5, -3041, 45, 128)                  # the train's arrival in front of HQ
 PARTY_COPIES = ["ba", "ti", "ea", "re"]
+# The story went bike -> blackbgb (which reset the sound: volumes back to
+# 0x7F) -> roadend; the bike game's exit leaves channels 1-5 at volume 0
+# (AKAO cmd 0xB8). roadend's init redoes blackbgb's reset before its MUSIC 00
+# (id 34) and also plays that track with AKAO cmd 0x10 (music index = id - 1),
+# which doesn't go through the MUSIC handler's checks.
+
+
+def _akao(cmd, p1=0, p2=0):
+    return Op(bytes([0xF2, 0, 0, 0, cmd, p1]) + struct.pack("<H", p2) + bytes(6))
+
+
+SOUND_RESET = [_akao(0xB8, 0x7F), _akao(0xC1, 0, 0x7F)] + [_akao(0xA0 + i, 0x7F) for i in range(4)]
+ROAD_MUSIC_INDEX = 33                             # id 34 ("TM"), roadend's music block
 HIDE = [b"\x7E\x01", b"\xC7\x01", b"\xA4\x00"]    # TLKON 01, SOLID 01, VISI 00
 
 
@@ -57,6 +72,11 @@ def _biker(ctx):
 def _road_end(ctx):
     sec = Script.parse(ctx.field(ROAD_END).sections[0])
     # dir: keep the init (menu, music, name), drop the scene.
+    init = sec.script_ops(sec.entity_index("dir"), 0)
+    music = [o for o in init if bytes(o.raw) == b"\xf0\x00"]          # MUSIC 00
+    assert len(music) == 1, music
+    sec.insert_before(music[0], SOUND_RESET, retarget=True)
+    sec.insert_before(init[init.index(music[0]) + 1], [_akao(0x10, ROAD_MUSIC_INDEX)], retarget=True)
     init = sec.script_ops(sec.entity_index("dir"), 0)
     ret = next(o for o in init if o.op == 0x00)
     sec.insert_before(init[init.index(ret) + 1], [asm.ret()], retarget=True)

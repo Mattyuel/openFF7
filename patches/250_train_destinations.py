@@ -14,7 +14,12 @@
   the bridge outside, the Barret scene line is off and Air Buster stands on
   the bridge instead: talk to it to fight.
 Air Buster uses a stand-in robot model (there is no field model for it).
+- md1stin plays its music (id 3, "Bombing Mission", as md1_1/md1_2 go on
+  with) when you arrive: the exe's MUSIC handler skips field 116 = md1stin
+  (0x613BA3: the opening FMV syncs it), so the init also plays it with AKAO
+  cmd 0x10 (music index = id - 1), which has no such check.
 """
+
 from _config import (FLAG_AIR_BUSTER, FLAG_GUARD_SCORPION, FLAGS, START_FIELD, START_TRIANGLE,
                      START_X, START_Y)
 from _recruit import hide, say
@@ -158,7 +163,21 @@ def _reactor5_bridge(ctx):
     ctx.field("southmk1").sections[0] = sec.build()
 
 
+REACTOR1_STATION, REACTOR1_MUSIC_INDEX = "md1stin", 2
+
+
+def _reactor1_music(ctx):
+    sec = Script.parse(ctx.field(REACTOR1_STATION).sections[0])
+    init = sec.script_ops(sec.entity_index("dir"), 0)
+    music = [o for o in init[:init.index(next(o for o in init if o.op == 0x00))] if bytes(o.raw) == b"\xf0\x00"]
+    assert len(music) == 1, music                                   # MUSIC 00 (skipped by the exe here)
+    play = Op(bytes([0xF2, 0, 0, 0, 0x10, REACTOR1_MUSIC_INDEX]) + bytes(8))   # AKAO 10: play music index
+    sec.insert_before(init[init.index(music[0]) + 1], [play], retarget=True)
+    ctx.field(REACTOR1_STATION).sections[0] = sec.build()
+
+
 def apply(ctx):
+    _reactor1_music(ctx)
     _train_menu(ctx)
     _conductors(ctx)
     _reactor1_doors(ctx)

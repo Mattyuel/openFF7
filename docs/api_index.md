@@ -381,6 +381,7 @@ Small Midgar fixes from play-testing.
 
 - `_honey_bee(ctx)` 
 - `_ghost(ctx)` 
+- `_item_store(ctx)` Sector 7 item store (mds7 -> mds7_im): the doorway (triangle 17) is
 - `apply(ctx)` 
 
 ## `patches/160_midgar_disc2.py`
@@ -401,6 +402,7 @@ Sector 7 pillar open both ways; a way back up from the sewer.
 ## `patches/180_motorbike.py`
 The motorbike section on demand, from the front of Shinra HQ.
 
+- `_akao(cmd, p1=0, p2=0)` 
 - `minigame(field_id, x, y, tri, param, game)` 
 - `_biker(ctx)` 
 - `_road_end(ctx)` 
@@ -444,6 +446,7 @@ Train travel from the Sector 7 station, the reactors, and their bosses.
 - `_guard_scorpion(ctx)` 
 - `_reactor1_doors(ctx)` 
 - `_reactor5_bridge(ctx)` 
+- `_reactor1_music(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/260_reactor_elevator.py`
@@ -548,6 +551,11 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_inc(v, step)` var += step (PLUS!, 8-bit, saturating).
 - `_add_spot(ctx, q, i, spot)` visit quest: crossing the spot's line while the quest is accepted marks
 - `_add_courier(ctx, q)` courier quest: the target NPC takes the message while it's accepted.
+- `apply(ctx)` 
+
+## `patches/650_world_vehicles.py`
+World map vehicles that the early-game world map can't show.
+
 - `apply(ctx)` 
 
 ## `patches/900_phs.py`

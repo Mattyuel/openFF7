@@ -250,6 +250,28 @@ Existing saves load, but they keep their own story progress; use a new game.
   the drop) walk on to go back up into the landing room. No fall scene there;
   its ladder out works. Scared Man's 3rd quest: Aps, by walking into the
   landing room.
+- **Round of fixes (new game; untested in-game):**
+  - Pillar: the gate at the bottom should now *look* open. At the top of the
+    stairs, a few steps right starts Reno (every visit, no quest needed).
+  - 7th Heaven arcade lift: the basement plays no wake-up scene and no talk
+    when you walk in.
+  - Sector 7 item store (the "closed today" door) is open.
+  - Music starts again at the end of the motorbike ride; the No.1 Reactor
+    station plays the Bombing Mission theme when the train drops you off.
+  - 8th Street: you arrive on screen near the left; the way back is at the
+    visible left edge.
+  - Conductors turn to you. Quest list: finished quests stay at the bottom,
+    yellow = ready to hand in, green = handed in.
+  - Several givers on one screen (Upper Midgar): each shows its own marker.
+  - Sector 5 vent: the far ladder just climbs down (no menu).
+  - Junon beach (dolphin area): running down towards the water starts
+    Bottomswell, every visit. Rocket Town: out the back of Cid's house,
+    running right starts Palmer, every visit.
+  - Highwind (Junon airstrip take-off) should now be visible. The submarine
+    should sit by Junon (new game only); report if it floats/sinks oddly
+    (its height is a guess).
+  - Icicle Inn snowboard giver: at the foot of the stairs. Balloon quest:
+    30, every colour counts.
 - **Sector 7 pillar**: the gate is open both ways; no scenes, random battles
   on the stairs; Biggs, Jessie and Barret aren't there. Gwen (by the pillar)
   has 2 more quests: 8 Aero Combatants, then Reno, who appears when you walk

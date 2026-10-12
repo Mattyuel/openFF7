@@ -11,7 +11,7 @@ script has `if (progress == 0) { opening movie; menu mask; party; ...;
 progress = 1 }`. That block is replaced with the openFF7 setup, ending in a
 jump to the Sector 7 station.
 """
-from _config import (CLOUD_START_LEVEL, MENU_LOCK, MENU_START, RECRUIT_COUNT, BATTERIES_ITEM, BATTERIES_QTY, BATTERY_BITS, CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, OPEN_WORLD_PROGRESS, REGION_VARS, START_DIR, START_FIELD,
+from _config import (CLOUD_START_LEVEL, MENU_LOCK, MENU_START, RECRUIT_COUNT, BATTERIES_ITEM, BATTERIES_QTY, BATTERY_BITS, CLOUD, HQ_ACCESS_LEVEL, HQ_KEYCARD_BITS, INITIAL_EVENT_FLAGS, OPEN_WORLD_PROGRESS, REGION_VARS, SUBMARINE_SLOT, START_DIR, START_FIELD,
                      START_TRIANGLE, START_X, START_Y)
 
 from ff7 import asm
@@ -73,6 +73,8 @@ def apply(ctx):
         new.append(asm.Op(bytes([0xCD, 0x00, char])))  # everyone else unavailable until recruited
     for var, initial in REGION_VARS.values():
         new.append(asm.setword(var, initial))
+    for var, word in SUBMARINE_SLOT:                  # submarine parked by Junon (650)
+        new.append(asm.setword(var, word))
     new.append(asm.setbyte(*HQ_ACCESS_LEVEL))
     for var, bit in HQ_KEYCARD_BITS:
         new.append(asm.biton(var, bit))

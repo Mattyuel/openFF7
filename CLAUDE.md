@@ -61,10 +61,10 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `110_corneo.py` | Corneo's mansion open, Corneo removed. |
 | `120_sector6_gate.py` | Sector 7<->6 gate both ways (guards moved, exit line widened, new gateway back). |
 | `130_shinra_hq.py` | HQ after the infiltration: 2F boxes openable, access level 69 kept (var[1][224] lowering writes removed in blin59/61/62_1/65_1/67_1/68_1), flags (3,168,1) 59F guards, (3,172,3) 60F sneaking, (1,226,5) 68F scientist; blin67_3 pinned 285; roof (blin70_3) Rufus on the pad + line -> formation 464 once per visit; 69F (blin69_1) elevator doors: ride / fight (formation 460 -> 461 Hundred/Heli Gunner, FLAG_ELEVATOR_FOUGHT). |
-| `150_midgar_fixes.py` | Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
+| `150_midgar_fixes.py` | Sector 7 item store open (mds7 doorway IDLCK 0x11 + closed-sign gate removed; flag (3,213,6) can't be used: hides Barret/Tifa); Honey Bee Inn door unblocked (mrkt3 lackey/passer-by moves removed); ghost NPC on the playground (mds6_2). |
 | `160_midgar_disc2.py` | Gateway md8brdg right end <-> md8_5 left end (8th Street; its own exit leads to md8_6, the hatch); disc 2 route state via bank 5 offset 128/135 new-game flags; canon_2 pinned 1604. Turks/Proud Clod/Hojo = Shinra Deserter quest bosses (md8brdg; disc 2 fields have ~254 texts, no room). md8_5: ff7.camera's screen x is right but every floor point projects to one band in y; the floor's -x end is off screen (x < -1100), so the line back is at x -1100. |
 | `170_pillar_sewer.py` | Sector 7 pillar gate open both ways (mds7plr1 tobira BG state 1, BGanim main REQSW tobira 2 -> 1 (it re-closed the picture on load), stagedr IDLCK 0x104 removed); Reno boss line right of the stairs' top (pillar_2 x -100, always); Biggs/Jessie/Barret story copies on pillar_1/2 hidden (pillar_3 cutscene field unreachable; pillar text tables are FULL); colne_b3 west dead end line back up to colne_b1 (pinned 209). |
-| `180_motorbike.py` | Biker NPC in front of HQ (sinbil_1): MINIGAME 0x20 game 0 (story mode var[3][115]=0) returning to roadend; roadend scene/party copies off, line up (x 700) = Motor Ball 468 once per visit, line down (x -2150) -> sinbil_1. MINIGAME op = 20 [field u16][x][y][tri u16][param][game]; games: 0 bike, 1 chocobo, 2 snowboard (Icicle), 3 Condor, 4 sub, 5 Speed Square, 6 snowboard (GS). |
+| `180_motorbike.py` | Biker NPC in front of HQ (sinbil_1): MINIGAME 0x20 game 0 (story mode var[3][115]=0) returning to roadend; roadend scene/party copies off, line up (x 700) = Motor Ball 468 once per visit, line down (x -2150) -> sinbil_1; roadend init redoes blackbgb's sound reset (AKAO b8/c1/a0-a3 7f; the bike exit leaves channel volume 0) + AKAO 10 21 (play id 34). MINIGAME op = 20 [field u16][x][y][tri u16][param][game]; games: 0 bike, 1 chocobo, 2 snowboard (Icicle), 3 Condor, 4 sub, 5 Speed Square, 6 snowboard (GS). |
 | `200`/`210`/`220_recruit_*.py` | Tifa (7th Heaven), Aerith (church), Barret (No.1 Reactor platform md1stin). |
 | `230_recruit_more.py` | Recruit NPCs: Red XIII (blin67_1), Cid (junair airstrip), Cait Sith (del3 beach), Yuffie (frcyo by the left pen, yougan2 model anim 6), Vincent (onna_2 dancers' room); KERNEL new-game records 6/7 = the exe's Cait Sith / Vincent templates with default names (no naming screen). Original Yuffie/Vincent joins count only if not already recruited. All recruit talks start with PTURA (face the player). |
 | `250_train_destinations.py` | Station conductor menu (Upper Midgar md8brdg, Shinra Tower sinbil_1, No.1 md1stin, No.5 tunnel_2 — not tunnel_1, which loops onto itself), conductors at destinations, reactor doors, Guard Scorpion line, Air Buster NPC. |
@@ -79,6 +79,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `450_highwind.py` | junair2 runway line (y -2400) -> Highwind owned/aboard (bank 1 byte 127 bits 4/5 = wm 0x3FC/0x3FD) + MAPJUMP wm40 (wm0 mounts model 3 near Junon); wm0 system function 6 ([Menu] in the air -> fship interior, exe 0x74F676) starts with `return`. |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
 | `600_quests.py` | Quest framework: givers + sprite markers (star = offer, heart = accepted until hand-in; models QSTA/QHTA built into char.lgp by `_marker_models.py` from magic.lgp s_guard.tex / heart01.tex on the gujc.hrc skeleton; one entity each per giver, star only where 16 models don't allow both), kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 44 givers, 87 quests, 16 boss lines; follow-ups on early givers use late=True (allocated after every other quest). Kinds: kill, deliver, count (counter bumped by `count_ops`/exe), visit (`spots`: lines that tick when crossed), courier (`target` NPC elsewhere); kill-table fake ids BIKE 0xFFFE / BALLOON 0xFFFD are counted by exe hooks in the bike game (0x6566B9) and snowboard (0x737D45 before the balloon-type switch, so all colours and the special types 3/4 count, and 0x73C52A; Icicle mode only). Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
+| `650_world_vehicles.py` | World map variant 0 (progress < 1000) model table + highwind/sbmrn (Highwind was invisible: row 0x96DF10 had 0xFF for models 3/13); submarine slot 4 parked by Junon at new game (`_config.SUBMARINE_SLOT`). |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
@@ -150,6 +151,16 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   lock mask, 0x10A6 = PHS available mask (MMBUD). Party = savemap 0x04F8 (0xDC0230).
 - SPCNM (0F FD char text) sets a name. The .exe forces "Ex-SOLDIER" at new
   game, so the name is set in the script, not KERNEL.BIN.
+- **Music:** MUSIC n plays the field's music block entry n (id); the exe
+  plays name-table index id-1 (0x9684C8). The MUSIC handler (0x613AC8) skips
+  field 116 = md1stin and anything while MULCK is set; `AKAO 10 <index>`
+  (F2 00 00 00 10 idx + 8 zero bytes) plays a track without those checks
+  (250 md1stin, 180 roadend; untested in-game). Sound dispatcher 0x740D80.
+  7th Heaven basement (mds7pb_2) scenes: (3,214) bits 6 (wake-up on entry)
+  and 0-2 (border2 line talk), set at new game.
+- **World map models / object slots:** see `650_world_vehicles.py` (model set
+  per progress variant; 6 save slots at bank 4 184-231 by model, Highwind and
+  buggy share slot 3).
 - **Do not use SPECIAL GMSPD (0F F7)**: never used by the game; adding it to
   the new game caused a black screen. SMSPD is `0F F8 00 speed`.
 - **The PC opcode reads the field party copy** var[3][9..11] (savemap
