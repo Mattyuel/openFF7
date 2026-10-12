@@ -404,9 +404,24 @@ class BuildContext:
             raw = ff.build()
             if raw != self._orig_raw[name]:
                 changed[name] = raw
+                _check_chars(name, ff.sections[0], n)
         for name, packed in compress_all(changed).items():
             self.flevel[name] = packed
         return [n for n in self._fields]
+
+
+def _check_chars(name, script, models):
+    """Every model is used by exactly one CHAR (true for all original fields):
+    two entities sharing one (md8brdg's quest markers, 18 CHARs for 16
+    models) crashed the game on arrival."""
+    from ff7.script import Script
+    try:
+        sec = Script.parse(script)
+    except ValueError:
+        return
+    chars = sorted(o.raw[1] for o in sec.ops if o.op == 0xA1)
+    if chars != list(range(models)):
+        raise SystemExit("BUILD CHECK FAILED: %s: CHAR models %s, %d models" % (name, chars, models))
 
 
 LZSS_CACHE = os.path.join(ROOT, "build", "cache", "lzss")

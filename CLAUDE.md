@@ -204,8 +204,8 @@ delete `build/cache` (~350 MB) any time.
   invisible player, so `950` guards each such VISI 00 with `var[3][9] != char`.
 - `CHAR` indices always follow entity order and the CHAR count equals the
   model count in every field: append models and CHAR entities together. The
-  build output is checked for this by hand (`CHAR` count == model count,
-  no index used twice); a mismatch crashed md8brdg.
+  build refuses a changed field whose CHAR indices aren't exactly 0..models-1
+  (`_check_chars`); a shared model crashed md8brdg.
 - GETPC `[0x74][dst bank][party slot][var]`: slot 0 = leader (`_recruit.get_leader`).
 - **Riding a chocobo onto the world map:** savemap bank 1 byte 126 (var[1][126]):
   bit 0 = wild chocobo (world map model 4, runs off when dismounted), bit 1 =
