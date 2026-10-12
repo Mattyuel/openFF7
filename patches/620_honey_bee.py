@@ -16,7 +16,7 @@
   Honey Bee dancer animations of the game added to her model) and Cloud act
   out beats (entity scripts added in their free slots), then the screen fades
   and "You spent the rest of the night together and had a good time..." and
-  you're back in the lobby beside the manager.
+  you're back in the lobby, mid-room near the entrance (BACK_AT).
 """
 import struct
 
@@ -32,7 +32,11 @@ from ff7.text import encode
 from ff7.walkmesh import Walkmesh
 
 LOBBY, ROOM = "onna_4", "onna_52"
-MANAGER_MODEL = ("md8_2", 3)                 # midgal_man
+MANAGER_MODEL = ("colne_3", 4)               # market_youjin_r: Scotch (Corneo's man, colne_3 SOTCH)
+# a Honey Bee girl either side of him (screen x = field x * 0.46 here)
+ESCORTS = [("hbbee_l", (44, -48), "Honey Bee\n“Ooh, a new face! The boss says\n you've got an eye for talent.”"),
+           ("hbbee_r", (164, -48), "Honey Bee\n“Bring us some cute new co-workers,\n okay? We'll be SO nice to them.”")]
+BACK_AT = (0, -250)                          # after a visit: mid-lobby, near the entrance (screen 0, 116)
 MANAGER_AT, MANAGER_DIR = (104, -48), 0
 ROOM_ARRIVE = (263, 163, 5, 220)             # onna_4's own jump into the "&" room; Cloud then walks to
                                              # the middle (STAGE) before the girl comes in
@@ -274,6 +278,13 @@ def _manager(ctx, back):
     tri = mesh.find(mx, my)
     assert tri is not None
     add_npc(ctx, LOBBY, "hbboss", model, (mx, my, mesh.height(tri, mx, my), tri), MANAGER_DIR, talk)
+    for name, (ex, ey), line in ESCORTS:
+        etri = mesh.find(ex, ey)
+        assert etri is not None, (ex, ey)
+        dancer = copy_model(ctx, LOBBY, LOBBY, 1)                  # the lobby's own Honey Bee girl
+        add_npc(ctx, LOBBY, name, dancer, (ex, ey, mesh.height(etri, ex, ey), etri), MANAGER_DIR,
+                lambda sec, line=line: [_uc(1), Op(b"\x35\x00\x08\x02"), _w(8)] + _say(sec, line)
+                + [_uc(0), asm.ret()])
 
 
 # ---- the room ----------------------------------------------------------------
@@ -428,8 +439,9 @@ def _room(ctx, back):
 
 def apply(ctx):
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
-    tri = mesh.find(*MANAGER_AT)
-    back = beside(ctx, LOBBY, *MANAGER_AT, tri)
+    tri = mesh.find(*BACK_AT)
+    assert tri is not None
+    back = (*BACK_AT, mesh.height(tri, *BACK_AT), tri)
     _add_girls(ctx)
     _manager(ctx, back)
     _room(ctx, back)
