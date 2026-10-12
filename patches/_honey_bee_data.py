@@ -75,8 +75,8 @@ GIRLS = [
          fail="Candy\n“Boring! I'm telling everyone\n you're boring.”",
          hired="Candy\n“I'm IN! Oh, the things I'll hear…\n Your secrets are safe. Mostly.”",
          idle="Candy\n“Did you hear? I got a new job!”"),
-    dict(name="Rhonda", stars=2, tag="cynic", field="nivinn_1", at=(-14, -355), dir=233,
-         model=("niv_cl", 5),
+    dict(name="Rhonda", stars=2, tag="cynic", field="nivinn_1", at=(37, -419), dir=233,
+         model=("itmin1", 11),   # std_woman9: the maid (white apron, headwear)
          stranger="Rhonda\n“Another tourist. Great.”",
          intro="Rhonda\n“Let me guess. You want something.\n Everybody wants something.”",
          reply="Rhonda\n“Honey Bee Inn. Sure. Why not.\n Two questions. Don't get excited.”",
