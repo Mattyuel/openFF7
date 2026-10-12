@@ -240,8 +240,11 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
   DXHE DXIB DXIF DXJA DXJB BAJF BBAA BAJD BAJC, DXJC/DXJD (receptionist), BYAD,
   AVJE, DXIC, DZBA (1-frame pose), DIEF, DXIE/BAJE. Cloud in onna_52: AQAA
   frames 0-1D sit on the bed / 1D-2C stand up.
-- **Field model files (crash on every quest-giver screen with the first
-  marker build, cause not pinned down):** new files now copy known-good
+- **Texture palette alpha 0xFE** = PSX semi-transparency: the star sprite
+  (s_guard) had it on every colour and showed for a moment, then vanished;
+  marker palettes are forced to 0xFF. The "crash on every quest-giver screen"
+  was most likely char.lgp not copied (user), not the files.
+- **Field model files:** new files now copy known-good
   layouts exactly: `.p` = the donor's structure (4 vertices, 5 edges; only
   positions/UVs/extra reversed triangles changed), `.tex` = a field texture's
   0xEC-byte header (aabb.tex: 4-bit, 16 colours, colour key) with our size,

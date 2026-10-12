@@ -62,6 +62,8 @@ def keyed(sprite, template):
     struct.pack_into("<II", head, 0x3C, w, h)
     pal = bytearray(sprite[0xEC:0xEC + 4 * ncol])
     pal[0:4] = b"\0\0\0\0"
+    for i in range(1, ncol):        # opaque: s_guard's colours have alpha 0xFE (the PSX semi-transparency
+        pal[4 * i + 3] = 0xFF       # bit), which showed the star for a moment and then blended it away
     return bytes(head) + bytes(pal) + sprite[0xEC + 4 * ncol:]
 
 
