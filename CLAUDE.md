@@ -79,6 +79,7 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 | `450_highwind.py` | junair2 runway line (y -2400) -> Highwind owned/aboard (bank 1 byte 127 bits 4/5 = wm 0x3FC/0x3FD) + MAPJUMP wm40 (wm0 mounts model 3 near Junon); wm0 system function 6 ([Menu] in the air -> fship interior, exe 0x74F676) starts with `return`. |
 | `420_cargo_ship.py` | Upper deck party-change copies hidden (ship_1); First Mate (ship_2) takes you ashore at Costa del Sol. Jenova BIRTH = quest boss line (600). |
 | `600_quests.py` | Quest framework: givers + sprite markers (star = offer, heart = accepted until hand-in; models QSTA/QHTA built into char.lgp by `_marker_models.py` from magic.lgp s_guard.tex / heart01.tex on the gujc.hrc skeleton; one entity each per giver, star only where 16 models don't allow both), kill/deliver quests (multi-target), "Quests" main-menu row + screen and the battle kill hook (both in `patches/asm/quest_menu.asm`, prebuilt `.bin` committed; reassemble with nasm after editing, `test_asm_bins_current` checks; `tools/tests/emu_quest_menu.py` runs it in unicorn if installed). Quest data: `_quest_data.py` (Midgar + cargo ship) and `_quest_data_world.py` (21 givers outside Midgar); 44 givers, 87 quests, 16 boss lines; follow-ups on early givers use late=True (allocated after every other quest). Kinds: kill, deliver, count (counter bumped by `count_ops`/exe), visit (`spots`: lines that tick when crossed), courier (`target` NPC elsewhere); kill-table fake ids BIKE 0xFFFE / BALLOON 0xFFFD are counted by exe hooks in the bike game (0x6566B9) and snowboard (0x737D45 before the balloon-type switch, so all colours and the special types 3/4 count, and 0x73C52A; Icicle mode only). Every reward adds Sources (`source_count(level)`: 1 at Midgar levels, 8 at level 50). Plan: `docs/quest_plan.md`. |
+| `620_honey_bee.py` | Honey Bee Girl recruitment (data `_honey_bee_data.py`, 20 adult girls, stars 1-5 = questions): manager NPC in onna_4 (job bit HB_JOB, list of hired girls best first -> visit); girls `hbNN` in 20 fields (talk: stranger / pitch + questions / idle); visit = MAPJUMP onna_52 with HB_VISIT = i+1: produce main + border1 LINE guarded off, director entity `hbscene` REQEWs beats added in free script slots of girl2 (8+) and cloud (24+), fade, final line, back beside the manager. girl2's model gets all 22 Honey Bee dancer anims (`ModelLoader.with_anims`). Save: bank 1 251-255 (`_config.HB_*`). |
 | `650_world_vehicles.py` | World map variant 0 (progress < 1000) model table + highwind/sbmrn (Highwind was invisible: row 0x96DF10 had 0xFF for models 3/13); submarine slot 4 parked by Junon at new game (`_config.SUBMARINE_SLOT`). |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
@@ -225,6 +226,14 @@ The user tests by copying them into the Steam install (see `TESTING.md`).
 - Triggers section: gateways at 0x38, 12 x 24 bytes, unused field id 0x7FFF.
 - Model names include the source field prefix; copying a model between fields
   via `ModelLoader.add` works.
+- Text: `{NEW}` (0xE8) is a new page *and* line; `encode` swallows a "\n"
+  right after it (decode writes "{NEW}\n").
+- Model loader animation lists: `ModelLoader.anims` / `with_anims` (append
+  same-skeleton anims; e.g. onna_52's dancer has 22). Honey Bee dancer
+  (BADD.HRC) anims: stand BAJB/DXID, walk BCCC/DXHF, run BCCD/DXIA, dances
+  DXHE DXIB DXIF DXJA DXJB BAJF BBAA BAJD BAJC, DXJC/DXJD (receptionist), BYAD,
+  AVJE, DXIC, DZBA (1-frame pose), DIEF, DXIE/BAJE. Cloud in onna_52: AQAA
+  frames 0-1D sit on the bed / 1D-2C stand up.
 - New field models can be added to char.lgp (`ctx.char_file(name, data)`;
   .hrc/.rsd text, .p, .tex). magic.lgp has directory entries `ff7.lgp`
   can't parse: `_marker_models.magic_file` scans its TOC by hand.

@@ -49,6 +49,33 @@ class ModelLoader:
         assert len(text) <= 4, scale
         return entry[:2 + nl + 10] + text.ljust(4, b"\0") + entry[2 + nl + 14:]
 
+    @staticmethod
+    def anims(entry):
+        """Animation file names of a model entry."""
+        nl, = struct.unpack_from("<H", entry, 0)
+        o = 2 + nl + 2 + 8 + 4
+        na, = struct.unpack_from("<H", entry, o)
+        o += 2 + 30
+        out = []
+        for _ in range(na):
+            al, = struct.unpack_from("<H", entry, o)
+            out.append(entry[o + 2:o + 2 + al].decode("latin-1"))
+            o += 2 + al + 2
+        return out
+
+    @staticmethod
+    def with_anims(entry, names):
+        """The entry with animations `names` appended (each with the unknown
+        u16 of its first animation)."""
+        nl, = struct.unpack_from("<H", entry, 0)
+        o = 2 + nl + 2 + 8 + 4
+        na, = struct.unpack_from("<H", entry, o)
+        first = o + 2 + 30
+        al, = struct.unpack_from("<H", entry, first)
+        tail = entry[first + 2 + al:first + 4 + al]
+        extra = b"".join(struct.pack("<H", len(n)) + n.encode("latin-1") + tail for n in names)
+        return entry[:o] + struct.pack("<H", na + len(names)) + entry[o + 2:] + extra
+
     def add_from(self, donor, index):
         """Copy model `index` from loader `donor`, rescaled from the donor
         field's scale to this one's (e.g. 650 -> 512), so it is the same size

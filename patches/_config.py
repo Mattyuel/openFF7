@@ -46,7 +46,13 @@ OPEN_VARS_FIRST = 96
 QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63),
                # bank 1 runs unused by every field/world map script and with no exe
                # absolute reference (scan of 2026-10; bank 1 = plain field flags)
-               (1, 136, 159), (1, 236, 255)]
+               (1, 136, 159), (1, 236, 250)]
+
+# Honey Bee Girl recruitment (620_honey_bee.py): bank 1 251-255, taken off the
+# end of the last quest area (free, zero at new game).
+HB_JOB = ((1, 251), 0)            # bit: the Honey Bee Inn manager's job accepted
+HB_HIRED = (1, 252)               # bits 0-19 over bytes 252-254: girl i hired
+HB_VISIT = (1, 255)               # girl index + 1 being visited (0 = none)
 
 # Regions that keep their own story line in a private 16-bit variable
 # (reads/writes of story progress in their fields are redirected to it).

@@ -111,6 +111,15 @@ yours (instead of the original Gold Saucer gift).
 ### Wall Market and Shinra HQ
 - **The dress-up sequence is removed.** Wall Market (including the Honey Bee Inn
   and Corneo's mansion) is a fully walkable area with no cutscenes.
+- **Honey Bee Girl recruitment.** The Honey Bee Inn's manager (lobby) offers
+  a job: recruit girls for the Inn. Then 20 women around the world (Tifa,
+  Aerith, Elena, Scarlet and 16 new ones; all adults) can be recruited by
+  answering their questions: 1 question per star (1-5), all must be right.
+  The star rating reflects the girl's quality/personality and will drive
+  later mechanics. Hired girls are listed by the manager, best first; visiting
+  one plays a comic scene in the "&" room (Cloud + the Honey Bee dancer model
+  under her name) ending in a fade and "You spent the rest of the night
+  together and had a good time...".
 - **The Shinra HQ infiltration is removed.** The building can be explored freely,
   with the infiltration random encounters. A new game holds all keycards.
 

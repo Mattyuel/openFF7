@@ -204,6 +204,8 @@ Field model loader section (section 2): which character models a field
   - `hrc(entry)` 
   - `entry_scale(entry)` The model's scale (ASCII digits, e.g. b"512 ").
   - `with_scale(entry, scale)` 
+  - `anims(entry)` Animation file names of a model entry.
+  - `with_anims(entry, names)` The entry with animations `names` appended (each with the unknown
   - `add_from(donor, index)` Copy model `index` from loader `donor`, rescaled from the donor
   - `add(entry)` 
   - `build()` 
@@ -553,6 +555,34 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_add_courier(ctx, q)` courier quest: the target NPC takes the message while it's accepted.
 - `apply(ctx)` 
 
+## `patches/620_honey_bee.py`
+Honey Bee Girl recruitment.
+
+- `_w(n)` 
+- `_anim(i, hold=False)` 
+- `_canm(i, a, b)` 
+- `_move(x, y)` 
+- `_msped(v)` 
+- `_tura(ent)` 
+- `_turn(turns)` 
+- `_visi(on)` 
+- `_xyzi(x, y, z, tri)` 
+- `_uc(on)` 
+- `_menu(off)` 
+- `_req(ent, slot, wait=True)` 
+- `_hired(i)` 
+- `_window(text, win=0, x=8, y=8)` 
+- `_say(sec, text, win=0, x=8, y=8)` 
+- `_ask(sec, text, choices, win=0)` (ops, first): ASK with `choices`; CHOICE = first + index picked.
+- `_girl_talk(sec, i, g)` 
+- `_add_girls(ctx)` 
+- `_ranked()` 
+- `_manager(ctx, back)` 
+- `_free_slots(sec, ent, start)` 
+- `_guard(sec, ent, first, ops_after)` In VISIT mode, `first` (an op of entity `ent`'s script 0) is skipped:
+- `_room(ctx, back)` 
+- `apply(ctx)` 
+
 ## `patches/650_world_vehicles.py`
 World map vehicles that the early-game world map can't show.
 
@@ -567,6 +597,10 @@ PHS usable from the start: the save points in early Midgar (and a few story
 
 ## `patches/_config.py`
 Shared openFF7 settings used by the patch modules.
+
+
+## `patches/_honey_bee_data.py`
+Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
 
 
 ## `patches/_marker_models.py`

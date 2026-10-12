@@ -250,6 +250,21 @@ Existing saves load, but they keep their own story progress; use a new game.
   the drop) walk on to go back up into the landing room. No fall scene there;
   its ladder out works. Scared Man's 3rd quest: Aps, by walking into the
   landing room.
+- **Honey Bee Girls** (new game; untested in-game): a Manager stands in the
+  Honey Bee Inn lobby. Accept his job; then 20 women around the world talk
+  to you (before the job they only say a line). Offer the job and answer her
+  questions (1-5 by her stars; one wrong = try again later). Hired girls show
+  in the Manager's "Visit" list, best first; visiting plays her scene in the
+  "&" room, then the fade line, then you're back beside the Manager.
+  Where: Bambi (Sector 5 slums), Gloria (Wall Market materia store), Dot
+  (Sector 6), Peggy (Fort Condor base), Candy (Lower Junon), Rhonda
+  (Nibelheim square), Lulu (Junon inn), Raven (Ghost Hotel lobby), Elena
+  (Mideel), Marisol (Costa del Sol harbour), Ruby (Gold Saucer Building 1F),
+  Holly (base of Gaea's Cliff), Sakura (Wutai shop), Mags (Rocket Town),
+  Celeste (Gongaga jungle), Aurora (Cosmo Canyon observatory), Tifa (her
+  house), Aerith (her house), Scarlet (Junon materia store), Velvet (Gold
+  Saucer Building 2F). Report girls standing off screen or in the way, and
+  how the scenes look (animations were picked without seeing them).
 - **Round of fixes (new game; untested in-game):**
   - Pillar: the gate at the bottom should now *look* open. At the top of the
     stairs, a few steps right starts Reno (every visit, no quest needed).

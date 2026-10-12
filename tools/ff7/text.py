@@ -75,6 +75,8 @@ def encode(text):
             tok = text[i:j + 1]
             if tok in _TOKENS:
                 out.append(_TOKENS[tok])
+                if tok == "{NEW}" and text[j + 1:j + 2] == "\n":
+                    j += 1                      # 0xE8 is a new page *and* line (decode: "{NEW}\n")
             elif tok in _COLOR_TOKENS:
                 out += bytes([0xFE, _COLOR_TOKENS[tok]])
             else:
