@@ -99,7 +99,7 @@ GIRLS = [
          fail="Lulu\n“How DARE you! I'm devastated!\n …Talk to me again later.”",
          hired="Lulu\n“The Honey Bee Inn shall know\n my NAME! LULU! *swoons*”",
          idle="Lulu\n“Rehearsing my entrance, darling!”"),
-    dict(name="Raven", stars=2, tag="goth", field="ghotin_1", at=(623, 271), dir=92,
+    dict(name="Raven", stars=2, tag="goth", field="ghotin_1", at=(185, -150), dir=200,
          model=("astage_a", 7),
          stranger="Raven\n“The ghosts here are my friends.\n You are not my friend.”",
          intro="Raven\n“You have the eyes of a man\n who's seen darkness. Neat.”",
