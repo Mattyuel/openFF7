@@ -73,9 +73,10 @@ LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # skin colour (167,190,248): new zfta.hrc -> ztfb.rsd -> ztgb.p
 BARE_GIRL = {"Tifa": ("ZTFA.HRC", "ZDKT.tor")}
 TIFA_TOP, TIFA_SKIN = (204, 204, 204), (167, 190, 248)
-# koala (user's test scene): she clings to standing Cloud (ZCTE), legs and arms wrapped
-# round him, bouncing with his thrusts
-KOALA_LEAN, KOALA_THIGH, KOALA_SPREAD, KOALA_WRAP, KOALA_ARMS, KOALA_ARMS_IN, KOALA_ELBOW = 25, 80, 35, 100, 100, 30, 70
+# koala (user's test scene): she clings to standing Cloud (620's ZCTH: ZCTE leaning back,
+# arms bent in round her), legs spread wide and wrapped round him, arms round his neck,
+# bouncing with his thrusts; leaning a little forward onto him (he leans back)
+KOALA_LEAN, KOALA_THIGH, KOALA_SPREAD, KOALA_WRAP, KOALA_ARMS, KOALA_ARMS_IN, KOALA_ELBOW = -10, 80, 60, 100, 100, 30, 70
 KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 2.0, 1.0, 1.5    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
 GIRL_MODEL = {"Tifa": "main_n_tifa.char"}   # her model entry in both base fields (name suffix)
 RETURN_GAP = 40                        # back beside her: this far from her spot
@@ -237,7 +238,7 @@ def _field(ctx, place, group, names):
     bare = len(loader.models)
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[0], hb.CLOUD_BARE_HRC,
                                                                      model_names[0][:-5] + "_b.char"),
-                                                [hb.CLOUD_BED["stand"]]))
+                                                [hb.CLOUD_BED["standk"]]))
     stand = len(ModelLoader.anims(loader.models[bare])) - 1
     cb = len(sec.entity_names)
     sec.entity_names.append(b"cloudb\0\0")
@@ -418,21 +419,24 @@ def _koala(ctx, name, hrc, stand):
         raise AssertionError((name, sorted(bones), angle))
     legs = {s + n for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
     upper = set(names) - legs
-    W = turned(W, upper, side, KOALA_LEAN, lambda a, b: b["head"][2] > a["head"][2] + 0.5)          # lean back
-    W = turned(W, {"head"}, side, KOALA_LEAN, lambda a, b: b["head"][2] < a["head"][2] - 0.1)       # head upright
+    sense = 1 if KOALA_LEAN > 0 else -1              # > 0: she leans back; < 0: forward (onto him)
+    W = turned(W, upper, side, abs(KOALA_LEAN), lambda a, b: sense * b["head"][2] > sense * a["head"][2] + 0.5)
+    W = turned(W, {"head"}, side, abs(KOALA_LEAN),
+               lambda a, b: sense * b["head"][2] < sense * a["head"][2] - 0.1)                       # head upright
     for s, out in (("l", 1), ("r", -1)):
         leg = {s + "_femur", s + "_tibia", s + "_foot"}
         W = turned(W, leg, side, KOALA_THIGH, lambda a, b: b[s + "_femur"][2] < a[s + "_femur"][2] - 1)
         W = turned(W, leg, up, KOALA_SPREAD, lambda a, b: out * b[s + "_femur"][0] > out * a[s + "_femur"][0] + 0.5)
         W = turned(W, {s + "_tibia", s + "_foot"}, up, KOALA_WRAP,
-                   lambda a, b: abs(b[s + "_tibia"][0]) < abs(a[s + "_tibia"][0]) - 0.5)
+                   lambda a, b: abs(b[s + "_tibia"][0]) < abs(a[s + "_tibia"][0]) - 0.5
+                   and b[s + "_tibia"][2] < a[s + "_tibia"][2])                     # in, round him (not back)
         arm = {s + "_uparm", s + "_foarm", s + "_hand"}
         W = turned(W, arm, side, KOALA_ARMS, lambda a, b: b[s + "_hand"][2] < a[s + "_hand"][2] - 1)  # forward-up
         W = turned(W, arm, up, KOALA_ARMS_IN, lambda a, b: out * b[s + "_hand"][0] < out * a[s + "_hand"][0] - 0.3)
         W = turned(W, {s + "_foarm", s + "_hand"}, up, KOALA_ELBOW,
                    lambda a, b: out * b[s + "_hand"][0] < out * a[s + "_hand"][0] - 0.3)
     local = fa.local_rotations(sk, rr, W)
-    his = fa.Anim(ctx.char_file(_hb().CLOUD_BED["stand"].split(".")[0].lower() + ".a"))
+    his = fa.Anim(ctx.char_file(_hb().CLOUD_BED["standk"].split(".")[0].lower() + ".a"))
     frames = []
     n = len(his.frames)
     for t, (_, hp, _) in enumerate(his.frames):

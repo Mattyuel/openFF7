@@ -265,7 +265,8 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "buck": "ZCTD.tor",    # ours (_cloud_buck): on his back (GREA), quick upward thrusts
              "stand": "ZCTE.tor",   # ours (_cloud_stand): standing (ACFE), knees bent, leaning, thrusting
              "standl": "ZCTF.tor",  # ours (edge): as stand, arms further forward, left leg raised
-             "standlf": "ZCTG.tor"}  # ours: standl at twice the speed
+             "standlf": "ZCTG.tor",  # ours: standl at twice the speed
+             "standk": "ZCTH.tor"}   # ours (dates' koala hug): stand leaning back, arms bent in round her
 # Cloud's own pose (user): AVDD (on his belly, propped on his forearms) with each
 # knee straightened until the shin lies level with the ground, the feet pointed so
 # they're level too, the knees brought within THRUST_KNEE_GAP of the midline (both
@@ -299,6 +300,9 @@ CLOUD_STAND, STAND_KNEE, STAND_LEAN, STAND_ARMS, STAND_ARMS_IN, STAND_THRUST, ST
 STAND_ARMS_LR, STAND_ELBOW_IN = {"l": 30, "r": 70}, 20
 CLOUD_EDGE, EDGE_CLOUD_ARMS, EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE = "ZCTF.tor", 60, 100, 10
 CLOUD_EDGE_FAST = "ZCTG.tor"                   # the same in EDGE_FRAMES_FAST frames (after "Faster!")
+# the dates' koala hug (user): ZCTE leaning back KOALA_CLOUD_LEAN instead of forward, the arms
+# KOALA_CLOUD_ARMS forward with the forearms turned KOALA_CLOUD_ELBOW in, round her
+CLOUD_KOALA, KOALA_CLOUD_LEAN, KOALA_CLOUD_ARMS, KOALA_CLOUD_ELBOW = "ZCTH.tor", -15, 55, 75
 LOOPED_C = {"thrust", "pound", "buck", "stand", "standl", "standlf"}
 # Devoted part two plays a fanfare from the fade to the bed (user): the victory fanfare,
 # the chocobo fanfare for dog. AKAO cmd 0x10 = play by music table index (exe 0x9684C8:
@@ -1423,7 +1427,8 @@ def _cloud_buck(ctx):
     ctx.char_file(CLOUD_BUCK.split(".")[0].lower() + ".a", base.build())
 
 
-def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0):
+def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
+                 lean=STAND_LEAN):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
     the left thigh raised to `hip` degrees forward of vertical, the left knee bent
     only `knee` (EDGE_CLOUD_*: zctf.a)."""
@@ -1470,7 +1475,8 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     upper = {"hip", "chest", "head", "l_chest", "l_collar", "l_uparm", "l_foarm", "l_hand",
              "r_chest", "r_collar", "r_uparm", "r_foarm", "r_hand"}
     head0 = end(fk(W), "head")
-    W = signed(W, upper, STAND_LEAN, lambda F: dot(end(F, "head"), fwd) > dot(head0, fwd) + 1)        # torso forward
+    sense = 1 if lean > 0 else -1                    # lean < 0: torso back
+    W = signed(W, upper, abs(lean), lambda F: sense * dot(end(F, "head"), fwd) > sense * dot(head0, fwd) + 1)
     for s, out in (("l", 1), ("r", -1)):
         arm = (s + "_uparm", s + "_foarm", s + "_hand")
         hand0 = end(fk(W), s + "_hand")
@@ -2048,6 +2054,7 @@ def apply(ctx):
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE))
     _cloud_stand(ctx, CLOUD_EDGE_FAST, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE), EDGE_FRAMES_FAST)
+    _cloud_stand(ctx, CLOUD_KOALA, KOALA_CLOUD_ARMS, elbow_in=KOALA_CLOUD_ELBOW, lean=KOALA_CLOUD_LEAN)
     _bare_cloud(ctx)
     _ride(ctx)
     _bend(ctx)
