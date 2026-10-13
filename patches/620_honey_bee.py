@@ -665,9 +665,12 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     used_c = ({s[1] for sc in scenes for s in sc if s[0] in ("c", "c&")} | {"into"}
               | {BED_LAYOUTS[s[1]][1] for sc in scenes for s in sc if s[0] == "bed"})
     used_c |= {"intobed"} if on_bed else set()
-    if bare is not None:
-        cloud_beats["hide"] = [_visi(0)]
-        used_c |= {"hide"}
+    if bare is not None:                             # hidden Cloud moved to the bare one's spot: the camera follows him
+        for layout in {s[1] for sc in scenes for s in sc if s[0] == "bed"}:
+            cb = BED_LAYOUTS[layout][1]
+            at = next(o for o in cloud_beats[cb] if o.op == 0xA5)
+            cloud_beats["hide_" + cb] = [_visi(0), Op(bytes(at.raw))]
+            used_c |= {"hide_" + cb}
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
     cloud_names = sorted(used_c)
@@ -743,7 +746,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                 gb, cb = BED_LAYOUTS[step[1]]
                 ops += [_w(20), Op(FADE_OUT), Op(b"\x6C"), _req(girl, slots[(girl, gb)])]
                 if cloud2 is not None:
-                    ops += [asm.setbyte(ACT, cloud_act["hide"]), _req(cloud, cslot)]
+                    ops += [asm.setbyte(ACT, cloud_act["hide_" + cb]), _req(cloud, cslot)]
                     who = cloud2
                 ops += [asm.setbyte(ACT, cloud_act[cb]), _req(who, cslot if who == cloud else 2), _w(20),
                         Op(FADE_IN), Op(b"\x6C"), _w(PACE)]
@@ -1141,18 +1144,29 @@ def _bare_cloud(ctx):
         if old != "AAAB":                                           # thigh / shin: the knee ring
             thigh = old in ("AADE", "AAEE")
             ring = lambda zz: [i for i, v in enumerate(V) if abs(v[2] - zz) < 0.2]
+            # each knee is a ring of 4 plus a cone to one tip vertex (the knee point); the
+            # tip sits off the ring's centre, to the front: the ring is shrunk around the
+            # line through the tip (as the hip ring is centred on it) and the cone shortened
+            # by the same factor, else the knee became a forward spike (user)
+            kz = -5.08 if thigh else 0.0
+            knee = ring(kz)
+            tip = [i for i, v in enumerate(V) if (v[2] < -7 if thigh else v[2] > 1.5)]
+            assert len(knee) == 4 and len(tip) == 1, (old, knee, tip)
+            tip = tip[0]
+            kx, ky = V[tip][0], V[tip][1]
             if thigh:
-                hip, knee = ring(0.0), ring(-5.08)
-                cx, cy = sum(V[i][0] for i in hip) / len(hip), sum(V[i][1] for i in hip) / len(hip)
-                target = sum(math.hypot(V[i][0] - cx, V[i][1] - cy) for i in hip) / len(hip)
-                _bare_cloud.target = target
-            else:
-                knee, target = ring(0.0), _bare_cloud.target
-            assert len(knee) == 4 and (not thigh or len(hip) == 4), (old, knee)
-            kx, ky = sum(V[i][0] for i in knee) / 4, sum(V[i][1] for i in knee) / 4
+                hip = ring(0.0)
+                assert len(hip) == 4, (old, hip)
+                cx, cy = sum(V[i][0] for i in hip) / 4, sum(V[i][1] for i in hip) / 4
+                _bare_cloud.target = sum(math.hypot(V[i][0] - cx, V[i][1] - cy) for i in hip) / 4
+            target = _bare_cloud.target
+            old_r = sum(math.hypot(V[i][0] - kx, V[i][1] - ky) for i in knee) / 4
             for i in knee:
                 r = math.hypot(V[i][0] - kx, V[i][1] - ky)
                 V[i][0], V[i][1] = kx + (V[i][0] - kx) * target / r, ky + (V[i][1] - ky) * target / r
+                V[i][2] = kz
+            V[tip][2] = kz + (V[tip][2] - kz) * target / old_r
+            for i in knee + [tip]:
                 struct.pack_into("<3f", d, o_v + 12 * i, *V[i])
         ctx.char_file(newp.lower() + ".p", bytes(d))
     ctx.char_file(CLOUD_BARE_HRC.lower(), hrc.encode("latin-1"))
