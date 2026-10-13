@@ -1018,14 +1018,20 @@ def _save_frames(ctx, fa, name, frames):
 # (user). Each 16 x 16 tile now gets the depth of what it shows: rays through its
 # corners, edges and centre hit the bed (a box on the raised walkmesh piece, TOP,
 # from the floor; EDGE wider) or the headboard (upright at its far edge, up to
-# HEAD_TOP); the tile takes the farthest hit + BED_MARGIN, so someone on the
-# mattress (nearer than the mattress under them) shows and someone behind the bed
-# (farther than its far edge + margin) stays hidden. Depth: tile id = view z / 4
+# HEAD_TOP); the tile takes the farthest hit + BED_MARGIN (mattress: see
+# BED_TOP_MARGIN), so someone on the bed shows and someone behind the bed (farther
+# than its far edge + margin) stays hidden. Depth: tile id = view z / 4
 # (the GTE's SZ / 4: the bed's parts sit at 140-175 where the bed is 560-700 deep),
 # PC depth +38 = 1e7 - K / (id + d), fitted on the room's own tiles. Tiles stacked
 # at one spot keep their order (+1 per step). Tiles no ray hits (right of the bed)
 # are left alone.
 BED_TILE_IDS, BED_TOP, BED_FLOOR, BED_EDGE, BED_HEAD_TOP, BED_MARGIN = (140, 175), 76, 25, 8, 220, 16
+# The engine seems to sort a character by one depth (where it stands), not per pixel: with
+# the mattress at its true depth, the tile row just nearer than a lying girl's hips covered
+# her lower half in the mission scene (user). Mattress tiles now sit at the depth of the
+# mattress's far edge (+ BED_TOP_MARGIN): behind anyone on the bed, in front of anyone
+# behind the headboard (floor there is ~30 deeper). Front / side faces keep their depth.
+BED_TOP_MARGIN = 8
 
 
 def _bed_depth(ctx):
@@ -1054,6 +1060,8 @@ def _bed_depth(ctx):
         for s in range(0, 4000, 2):
             p = [eye[i] + d[i] * s for i in range(3)]
             if BED_FLOOR <= p[2] <= BED_TOP and on_bed(p[0], p[1]):
+                if p[2] > BED_TOP - 3:                           # the mattress: as deep as its far edge
+                    return view_z([p[0], y_far, BED_TOP]) + BED_TOP_MARGIN - BED_MARGIN
                 return view_z(p)
         if d[1] > 0:                                             # the headboard
             p = [eye[i] + d[i] * (y_far - eye[1]) / d[1] for i in range(3)]
