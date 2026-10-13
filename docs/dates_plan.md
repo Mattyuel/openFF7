@@ -1,6 +1,6 @@
 # Dates with the girls: plan
 
-Status: plan only, nothing built. The design decisions are the user's. The game facts
+Status: milestone 1 built for Tifa (untested in-game): `patches/660_dates.py`. Third place added by the user: the Nibelheim water tower (nivl_e1, the promise scene). Conversations are the same in every place (user). The design decisions are the user's. The game facts
 come from reading the field scripts and the exe offline; none of it has been tested in-game.
 
 ## What the user asked for

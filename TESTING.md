@@ -309,6 +309,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   all 20 kids, Hunter points +50. Not available in ~40 fields whose text tables are full
   (Kalm bar, disc 2 Midgar, a few dungeons). Opening it during a cutscene
   can leave the scene without player control; use it while walking around.
+- **Dates with Tifa** (new; untested in-game): talk to Tifa in her house in Nibelheim ->
+  "Ask her on a date." -> Gold Saucer gondola / space capsule / water tower. The date depends on
+  her affection (0-9 / 10-19 / 20: debug Honey Bee -> All affection 0/10/20); questions (right =
+  +1 affection, chime); third date with every answer right -> "Give into your desires." / "Leave
+  it be." (part 2 not made yet: a closing line). Afterwards you're back beside her. Check: the
+  view (gondola: Gold Saucer at night with no cabin; capsule: stars in the round window; tower:
+  starry sky), where the two sit and face, sitting poses (tower: legs over the rim), text, music.
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens
   One Star Girls (Next page / Never mind), then Two .. Five Star Girls (Next /
   Previous / Never mind; no Next on Five). Girls not hired show as ???? and

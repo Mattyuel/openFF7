@@ -75,6 +75,7 @@ HB_AFFECTION = [(1, b) for b in list(range(188, 197)) + list(range(200, 208)) + 
 # bit per girl: her devoted (affection 20) scene was seen -> a kid stands next
 # to her (622_hb_kids). Bank 1 214-216.
 HB_KID = [((1, 214 + i // 8), i % 8) for i in range(20)]
+DATE_GIRL = (1, 217)               # girl index + 1 on a date (660_dates; 0 = none)
 HB_RATE = 2                     # gil per star per minute
 HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 

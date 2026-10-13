@@ -162,3 +162,13 @@ standing root sits 13.5 up, the floor at y 0 once the stored root height is nega
 Fields that use them in the original game (for the exact spelling): GREA/GREB/GREC
 gninn, AVDD/AVEA rckt32, ENJE/ENJF sinin2_1, HBGB/HBGC/HBFE rcktin6, EIAB nivgate2,
 FTIB coloin2.
+
+## Dates (660): sitting poses
+
+| Anim | File | Pose | Built by |
+|---|---|---|---|
+| ZDLC | zdlc.a | Cloud (AAAA) sitting on a ledge: from ACFE, each thigh swung forward to level (about the body's side axis; models face -z, the toes splay out so they don't give "forward"), the knee bent back 90 so the shin hangs straight down, arms 25 forward; hip joints 1.5 above the root's floor (the water tower rim). One frame. | `660_dates._ledge` |
+| ZDLT | zdlt.a | Tifa (AAGB) the same, from ABCD. | `660_dates._ledge` |
+
+The gondola and capsule seats use the gondola models' own sitting anims (bwhlin: Cloud GDAB, Tifa GDEE).
+

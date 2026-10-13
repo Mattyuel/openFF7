@@ -704,6 +704,20 @@ World map vehicles that the early-game world map can't show.
 
 - `apply(ctx)` 
 
+## `patches/660_dates.py`
+Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
+
+- `_dir_to(dx, dy)` DIR facing field vector (dx, dy): direction d faces (sin a, -cos a), a = d*2pi/256.
+- `_clear_texts(sec)` Drop every text (before adding the new ones: ids start at 0 again).
+- `_blank(sec, scripts)` Drop every op; entity e gets scripts[e] ({slot: ops}, each ending in RET),
+- `_hb()` 
+- `_return_spot(ctx, g)` (x, y, tri, dir) beside her in her world field, facing her.
+- `_date(sec, ctx, place, i, g, d)` The date's ops for girl i (in the director's main), ending in the MAPJUMP back.
+- `_field(ctx, place, group, names)` 
+- `_offer(ctx, i, g, arrive, group)` Her world talk: "Just chat." / "Ask her on a date." first.
+- `_ledge(ctx, name, hrc, stand)` Sitting on a ledge (`name`.a): from the standing pose, each thigh swung forward to
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -713,6 +727,10 @@ PHS usable from the start: the save points in early Midgar (and a few story
 
 ## `patches/_config.py`
 Shared openFF7 settings used by the patch modules.
+
+
+## `patches/_dates_data.py`
+Dates with the Honey Bee girls (docs/dates_plan.md): data.
 
 
 ## `patches/_honey_bee_data.py`
