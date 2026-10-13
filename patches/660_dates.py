@@ -60,6 +60,9 @@ SEATS = {
 # koala-hugging him (same XYZI, turned round; her height is in the anim): his DIR there
 STAND_DIR = {"gondola": 0x80, "capsule": None, "tower": "screen-right"}
 SCALE = {"tower": 0.85}               # the water tower: both a little big (user)
+# places whose near background tiles (draw depth < 4093: the capsule's benches and rails, ids
+# 52-87) drew over the characters (user): pushed back just in front of the base layer
+TILES_BACK = {"capsule"}
 # sitting: "bench" = the gondola models' own sitting anims (feet on the floor);
 # "ledge" = ours (_ledge): hips on the floor, thighs level, shins hanging over the edge
 SIT_KIND = {"gondola": "bench", "capsule": "bench", "tower": "ledge"}
@@ -81,7 +84,8 @@ CLOUD_PART2 = ["standk", "stand", "standf", "standa", "standaf"]   # 620's CLOUD
 PART2 = {
     "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
     # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
-    "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf"},
+    "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKC.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf",
+               "acts": {"look": "ZDKC.tor"}},     # (user) she looks up at him when he tells her to
     # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
     "Scarlet": {"bare": "ZSCA.HRC", "anims": ["ZDSW.tor", "ZDSX.tor"], "cloud": "stand", "cloud_fast": "standf",
                 "same_way": True},
@@ -354,6 +358,7 @@ def _field(ctx, place, group, names):
         scripts[ge][8] = [Op(bytes([0xA2, ka[0], 1])), hb._canm(ka[0], 0, 0), asm.ret()]
         acts = {"stop": [hb._req(cb, 12 + cpose), hb._req(ge, 8)],
                 "go": [hb._req(cb, 4 + cpose), hb._req(ge, 5)],           # carry on at the first pace
+                **{k: [hb._req(ge, 5 + p2["anims"].index(a_))] for k, a_ in p2.get("acts", {}).items()},
                 "fast": [hb._req(cb, 4 + CLOUD_PART2.index(p2.get("cloud_fast", p2["cloud"]))),
                          hb._req(ge, 5 + len(ka) - 1)]}
         part2[i] = (tier_acts, [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(model_ent[0], 3)] + hide_her
@@ -381,6 +386,19 @@ def _field(ctx, place, group, names):
     main += [hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(g0["field"]), rx, ry, rt, rd), asm.ret()]
     scripts[0] = {0: init + main}
     _blank(sec, scripts)
+    if place in TILES_BACK:
+        from ff7.background import Background
+        bg = Background(f.section("background"))
+        tiles = list(bg.tiles())
+        far = next(t for t in tiles if t._get("<H", 24) == 4094)._get("<I", 38)
+        moved = 0
+        for t in tiles:
+            if t._get("<H", 24) < 4093:
+                t._set("<H", 24, 4093)
+                t._set("<I", 38, far - 1)
+                moved += 1
+        assert moved == 47, moved
+        f.set_section("background", bg.build())
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()
     return cs, cdir
@@ -537,10 +555,11 @@ def _bare_tifa(ctx):
 KNEEL_ARMS, KNEEL_TILT, KNEEL_ROCK, KNEEL_FRAMES, KNEEL_FRAMES_FAST = 40, 10, 10, 15, 8
 # sitting back on her heels: thighs KNEEL_SIT forward of straight down (kneeling upright her head
 # was at his chest); placed so her face is KNEEL_FACE in front of his pelvis
-KNEEL_SIT, KNEEL_FACE = 75, 9.0     # (FACE 3 -> 9: about a head width further away, user)
+KNEEL_SIT, KNEEL_FACE = 75, 7.5     # (FACE 3 -> 9: a head width further away, then 7.5: a little closer, user)
+KNEEL_LOOK = 35                       # her "look up" poses (zdkc, zdkb): chin up this much (user)
 
 
-def _kneel(ctx, name, hrc, stand, nframes):
+def _kneel(ctx, name, hrc, stand, nframes, look=0):
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
     names = [b[0] for b in sk]
@@ -573,6 +592,10 @@ def _kneel(ctx, name, hrc, stand, nframes):
     knee = [(F[I("l_femur")][2][k] + F[I("r_femur")][2][k]) / 2 for k in range(3)]
     keep = {I(s + n) for s in "lr" for n in ("_tibia", "_foot")}
     head = W[I("head")]
+    if look:                                          # chin up: the head end moves up (y down)
+        up_ = [fa._mul(fa.axis_angle(side, sg * look), head) for sg in (1, -1)]
+        test = lambda M: fk([M if i == I("head") else m for i, m in enumerate(W)], root)[I("head")][2][1]
+        head = min(up_, key=test)
     tip = 1 if fk([fa._mul(fa.axis_angle(side, 5), m) if i not in keep else m for i, m in enumerate(W)],
                   root)[I("head")][2][2] < F[I("head")][2][2] else -1               # + tip: head forward
     E0 = fk([fa._mul(fa.axis_angle(side, tip * KNEEL_TILT), m) if i not in keep else m for i, m in enumerate(W)],
@@ -782,8 +805,9 @@ def apply(ctx):
     _scarlet_bare(ctx)
     _wall(ctx, "ZDSW.tor", "zsca.hrc", "anae.a")
     _wall(ctx, "ZDSX.tor", "zsca.hrc", "anae.a", "standf")      # with his double speed
-    for anim, frames in (("ZDKA.tor", KNEEL_FRAMES), ("ZDKB.tor", KNEEL_FRAMES_FAST)):
-        _kneel(ctx, anim, "auff.hrc", "avbf.a", frames)
+    for anim, frames, look in (("ZDKA.tor", KNEEL_FRAMES, 0), ("ZDKC.tor", KNEEL_FRAMES, KNEEL_LOOK),
+                               ("ZDKB.tor", KNEEL_FRAMES_FAST, KNEEL_LOOK)):    # fast: still looking up
+        _kneel(ctx, anim, "auff.hrc", "avbf.a", frames, look)
     for group, names in enumerate(GROUPS):
         arrive = {p: _field(ctx, p, group, names) for p in PLACES}
         for gname in names:

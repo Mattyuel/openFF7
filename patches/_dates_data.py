@@ -152,6 +152,7 @@ DATES = {
         # okay, she demands more, he goes twice as fast
         "part2": [("G", "“Mmmh… mmf…\n (Yes, sir… whatever you want…)”"),
                   ("C", "“…Look at me, Aerith.”"),
+                  ("act", "look"),                            # (user) she looks up
                   ("G", "“Mmh… mmmh-mmh…\n (Eyes up, hands on me… like this?)”"),
                   ("act", "stop"),
                   ("C", "“…Aerith? Are you okay?”"),

@@ -717,7 +717,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_offer(ctx, i, g, arrive, group)` Her world talk: "Just chat." / "Ask her on a date." first.
 - `_ledge(ctx, name, hrc, stand, bench=False)` Sitting on a ledge (`name`.a): from the standing pose, each thigh swung forward to
 - `_bare_tifa(ctx)` 
-- `_kneel(ctx, name, hrc, stand, nframes)` 
+- `_kneel(ctx, name, hrc, stand, nframes, look=0)` 
 - `_scarlet_bare(ctx)` 
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
