@@ -539,6 +539,7 @@ Open-world fixes outside Midgar that pinning and new-game flags can't do
 ## `patches/415_temple.py`
 Temple of the Ancients, open as if explored up to the Demon Wall (pins in
 
+- `_guide(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/420_cargo_ship.py`

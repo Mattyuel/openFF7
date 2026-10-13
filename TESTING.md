@@ -322,6 +322,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   zcta animation; dog = she starts on all fours, Cloud starts knelt (HBGC),
   10 left / 15 nearer the camera than the old 'beside' spot. Report what's
   off per position (field units: a body is ~90, a head ~14).
+- **Temple of the Ancients way out** (new; untested in-game): inside (after
+  the altar warp) a Temple Guide stands right beside where you arrive; talk
+  to him -> "Take me outside." puts you in front of the temple door. The
+  quest giver outside now stands just right of the path to the exit.
 - **Dim visit rooms** (new; untested in-game): the three Honey Bee visit
   rooms (all scenes, not the lounges) are drawn at half brightness: the room
   picture and the characters' lighting. Say if it's too dark / too light.
