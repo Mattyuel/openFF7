@@ -309,6 +309,19 @@ Existing saves load, but they keep their own story progress; use a new game.
   all 20 kids, Hunter points +50. Not available in ~40 fields whose text tables are full
   (Kalm bar, disc 2 Midgar, a few dungeons). Opening it during a cutscene
   can leave the scene without player control; use it while walking around.
+- **Honey Bee positions** (new; untested in-game): every affection-20
+  scene now has the girl walk in behind Cloud in part one (none start on the
+  bed any more; the affection-10 Bambi scene too), and part two starts in one
+  of five positions: mission (Tifa, Marisol, Bambi), cowgirl (Velvet, Ruby,
+  Peggy), ontop = cowgirl facing the other way (Aerith, Celeste, Holly, Lulu,
+  Gloria), dog (Scarlet, Mags, Elena, Rhonda, Dot), head (Sakura, Aurora,
+  Candy, Raven). Starting points, to tweak: head = Cloud sitting on the bed
+  edge 15 right / 15 nearer the camera than before, she at his x, 35 nearer
+  the camera, 60 lower than the bed sitter, turned round; cowgirl/ontop = she
+  is 14 higher than in Velvet's old scene; mission = Tifa's with Cloud's new
+  zcta animation; dog = she starts on all fours, Cloud starts knelt (HBGC),
+  10 left / 15 nearer the camera than the old 'beside' spot. Report what's
+  off per position (field units: a body is ~90, a head ~14).
 - **Honey Bee kids** (new; untested in-game): after a girl's affection-20
   scene (onna_6), go to where you hired her: a kid stands beside her (Rhonda's
   outside the Nibelheim inn door, Velvet's next to her in the Battle Square

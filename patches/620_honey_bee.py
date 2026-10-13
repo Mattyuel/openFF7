@@ -144,8 +144,24 @@ MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (no
 # The bed part of a scene: ("bed", layout) fades out, places both on the bed
 # (the raised walkmesh piece, z 76) and fades back in. Layout -> (girl beat,
 # Cloud beat). Afterwards only in-place beats: girl sit1-3, Cloud CLOUD_BED.
-BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "sit": ("bedsit", "bedsitc"),
-               "ride": ("rideon", "bedback")}       # Cloud on his back, she kneels astride him
+BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "sit": ("bedsit", "bedsitc"),       # the close scenes
+               # the devoted scenes' positions (user's names and starting points)
+               "mission": ("lie", "bedmission"),      # Tifa's: she lies, Cloud on top of her (zcta)
+               "cowgirl": ("rideon", "bedback"),      # Velvet's: Cloud on his back, she kneels astride
+               "ontop": ("rideonr", "bedback"),       # as cowgirl, she faces the other way
+               "dog": ("fourson", "bedknee"),         # Scarlet's: she's on all fours, Cloud knelt behind
+               "head": ("headsit", "bedsith")}        # Sakura's: Cloud sits on the edge, she kneels before him
+# Beats allowed after each layout's fade (girl, Cloud); beside/sit: any sit / bed pose.
+LAYOUT_BEATS = {"mission": (set(), {"thrust"}), "cowgirl": ({"ride"}, {"grea", "greb"}),
+                "ontop": ({"ride"}, {"grea", "greb"}), "dog": ({"fours"}, {"hbgb", "hbgc"}),
+                "head": ({"sit1", "sit2", "sit3"}, {"eiab", "enjf"})}
+LAYOUT_ANIM = {"beside": "grea", "sit": "eiab", "mission": "thrust", "cowgirl": "grea", "ontop": "grea",
+               "dog": "hbgc", "head": "eiab"}       # Cloud's pose each layout starts in
+RIDE_RAISE = 14                              # cowgirl / ontop: she sits a head higher (user)
+HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # head: Cloud right and down a bit from CLOUD_SIT
+HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 60      # she: at his x, this much nearer the camera (-y), 2/3 of
+                                              # a body (~90) lower than the bed sitter, turned round
+DOG_CLOUD = (126, -150)                       # dog: Cloud a little nearer the camera and left of CLOUD_BESIDE
 CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
 CLOUD_ONTOP = (136, -179)                    # on top of her, half a body nearer the door (user)
 ONTOP_RAISE = 4                              # Cloud on top of her: drawn this much higher (12 was too high)
@@ -509,7 +525,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     assert [cloud_anims[i] for i in (3, 9, 15, 16, 20)] == ["AQAA.tor", "AVJE.aki", "AQAB.tor", "BICA.yos",
                                                              "EADD.tor"], cloud_anims
     # bed animations only where this room's scenes use them (layouts start with GREA / AVDD / EIAB)
-    layout_anim = {"beside": "grea", "ontop": "avdd", "sit": "eiab", "ride": "grea"}
+    layout_anim = LAYOUT_ANIM
     bed_used = sorted({st[1] for sc in scenes for st in sc if st[0] == "c" and st[1] in CLOUD_BED}
                       | {layout_anim[st[1]] for sc in scenes for st in sc if st[0] == "bed"})
     extra = dict(CLOUD_EXTRA, **{n: CLOUD_BED[n] for n in bed_used})
@@ -590,6 +606,10 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     gs, cs = spot(GIRL_SIT), spot(CLOUD_SIT)
     gdir, cdir = facing_screen(cam, *gs[:3], (0, 1)), facing_screen(cam, *cs[:3], (0, 1))
     bx_, by_, bz_, bt_ = spot(CLOUD_ONTOP)
+    rx_, ry_, rz_, rt_ = spot(CLOUD_ONTOP)
+    hc = spot(HEAD_CLOUD)
+    hgx, hgy = HEAD_CLOUD[0], HEAD_CLOUD[1] - HEAD_GIRL_FRONT
+    hgt = spot((hgx, hgy))[3]
     hold = lambda name: [_anim(ca[name], hold=True)]
     girl_beats.update({
         "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1)] + _loop(da[LIE_ANIM_SCENE]),
@@ -597,20 +617,29 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                    _anim(da["DXHE.tor"], hold=True)],
         "fours": _loop(da[FOURS_ANIM]),                              # on all fours, where she lies (rocking)
         # astride Cloud (layout "ride"): on him at CLOUD_ONTOP, facing as he lies; "ride" rocks
-        "rideon": [_xyzi(*spot(CLOUD_ONTOP)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR])), _visi(1),
+        "rideon": [_xyzi(rx_, ry_, rz_ + RIDE_RAISE, rt_), Op(bytes([0xB3, 0, CLOUD_BACK_DIR])), _visi(1),
                    ] + _loop(da[RIDE_ANIM]),
+        "rideonr": [_xyzi(rx_, ry_, rz_ + RIDE_RAISE, rt_), Op(bytes([0xB3, 0, (CLOUD_BACK_DIR + 128) % 256])),
+                    _visi(1)] + _loop(da[RIDE_ANIM]),
+        "fourson": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1)] + _loop(da[FOURS_ANIM]),
+        "headsit": [_xyzi(hgx, hgy, gs[2] - SIT_DROP - HEAD_GIRL_DROP, hgt), Op(bytes([0xB3, 0, (gdir + 128) % 256])),
+                    _visi(1), _anim(da["DXHE.tor"], hold=True)],
         "ride": _loop(da[RIDE_ANIM]),                                # (already rocking from "rideon")
         "sit1": [_anim(da["DXHE.tor"], hold=True)], "sit2": [_anim(da["DXIB.tor"], hold=True)],
         "sit3": [_anim(da["DXIC.tor"], hold=True)],
     })
     if "grea" in ca:
         cloud_beats["bedbeside"] = [_xyzi(*spot(CLOUD_BESIDE)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
-    if "avdd" in ca:
-        cloud_beats["bedontop"] = [_xyzi(bx_, by_, bz_ + ONTOP_RAISE, bt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + hold("avdd")
+    if "thrust" in ca:
+        cloud_beats["bedmission"] = [_xyzi(bx_, by_, bz_ + ONTOP_RAISE, bt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + _loop(ca["thrust"])
+    if "hbgc" in ca:                                 # knelt behind her (layout "dog")
+        cloud_beats["bedknee"] = [_xyzi(*spot(DOG_CLOUD)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("hbgc")
     if "grea" in ca:                                 # on his back under her (layout "ride")
         cloud_beats["bedback"] = [_xyzi(*spot(CLOUD_ONTOP)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
     if "eiab" in ca:
         cloud_beats["bedsitc"] = [_xyzi(cs[0], cs[1], cs[2] - SIT_DROP, cs[3]), Op(bytes([0xB3, 0, cdir]))] + hold("eiab")
+        cloud_beats["bedsith"] = [_xyzi(hc[0], hc[1], hc[2] - SIT_DROP - HEAD_CLOUD_DOWN, hc[3]),
+                                  Op(bytes([0xB3, 0, cdir]))] + hold("eiab")
     pose_dir = lambda name: ([Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] if name in BACK_POSES else
                              [Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] if name in BELLY_POSES else [])   # knelt / sitting: as he is
     cloud_beats.update({name: pose_dir(name) + (_loop(ca[name]) if name in LOOPED_C else hold(name))
@@ -620,8 +649,10 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         if "bed" in kinds:
             after = sc[kinds.index("bed") + 1:]
             assert kinds.count("bed") == 1 and sc[kinds.index("bed")][1] in BED_LAYOUTS, (field, GIRLS[i]["name"])
-            assert all(st[1] in ("sit1", "sit2", "sit3", "fours", "ride") for st in after if st[0] in ("g", "g&")), (field, GIRLS[i]["name"])
-            assert all(st[1] in CLOUD_BED for st in after if st[0] in ("c", "c&")), (field, GIRLS[i]["name"])
+            layout = sc[kinds.index("bed")][1]
+            gok, cok = LAYOUT_BEATS.get(layout, ({"sit1", "sit2", "sit3"}, set(CLOUD_BED)))
+            assert all(st[1] in gok for st in after if st[0] in ("g", "g&")), (field, GIRLS[i]["name"], layout)
+            assert all(st[1] in cok for st in after if st[0] in ("c", "c&")), (field, GIRLS[i]["name"], layout)
     used = ({s[1] for sc in scenes for s in sc if s[0] in ("g", "g&")}
             | {BED_LAYOUTS[s[1]][0] for sc in scenes for s in sc if s[0] == "bed"})
     on_bed = [i for i, sc in enumerate(scenes) if sc[:1] == [("start", "bed")]]
