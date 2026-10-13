@@ -7,13 +7,14 @@ DATES[name] = {
   tiers    [first (affection 0-9), second (10-19), third (20)], each:
     open     her first line (the same in every place: user)
     steps    in order: ("G", her line) / ("C", Cloud's line) /
-             ("Q", question, [answers], right index, line if right, line if wrong)
+             ("Q", question, [answers], right index, line if right, line if wrong) /
+             ("A", action): one of hers (660 GIRL_EXTRA: "stand", "slap")
              A right answer: +1 affection (capped at 20). Any wrong one this date
              is noted (the third date's choice needs none).
     close    her last line (first and second dates; the third date when a
              question went wrong)
   lead     third date, every answer right: her line before the choice
-  part2    "Give into your desires.": part two's lines (("G"|"C", line)), after the switch to
+  part2    "Give into your desires.": part two's lines (("G"|"C", line); ("act", "stop"|"go"|"fast")), after the switch to
            the undressed models; part2_music = its track
   desire   then the closing narration
   leave    "Leave it be.": her line
@@ -158,5 +159,76 @@ DATES = {
                   ("G", "“Hands in my hair. Harder.\n …That's not a request.”"),
                   ("act", "fast"),
                   ("G", "“Mmmf!! Mmh… mmmh!\n (Yes… yes, sir…!)”")],
+    },
+    "Scarlet": {
+        "greet": "“Well, well. Spiky.\n You want something?”",
+        "where": "“A date? With ME? Kyahaha!\n Fine. Impress me.”",
+        "music": {"gondola": 49, "capsule": 16, "tower": 16},   # DATE, PARADE (Rufus' Welcoming Ceremony)
+        "tiers": [
+            {   # first date: the executive
+                "open": "“Don't get the wrong idea. I only\n came for the view.”",
+                "steps": [
+                    ("G", "“So. What do you know about me,\n besides the fabulous dress?”"),
+                    ("Q", "“What do I run at Shinra?”",
+                     ["Weapons Development.", "Public Safety.", "Urban Development."], 0,
+                     "“Correct. I build the big guns.\n The BIGGEST.”",
+                     "“Ugh. Weapons, darling. WEAPONS.”"),
+                    ("G", "“Heidegger shouts. I get things\n done. Remember that.”"),
+                    ("Q", "“And my favourite toy?”", ["The Proud Clod.", "A teddy bear.", "A chocobo."], 0,
+                     "“My beautiful robot. Kyahaha!”",
+                     "“Please. The Proud Clod.\n Do keep up.”"),
+                ],
+                "close": "“Not entirely boring. Don't let it\n go to your head.”",
+            },
+            {   # second date: what she wants
+                "open": "“Back again? You must like being\n bossed around.”",
+                "steps": [
+                    ("G", "“People call me cruel. I'm just\n honest about what I want.”"),
+                    ("C", "“…And what do you want?”"),
+                    ("G", "“Everything. Starting with you\n doing as you're told.”"),
+                    ("Q", "“What do I say when I'm pleased?”", ["Kyahaha!", "Hmph.", "Wahaha!"], 0,
+                     "“Kyahaha! See? You're learning.”",
+                     "“Wrong! Kyahaha. Practise it.”"),
+                    ("Q", "“Who did I slap silly in Junon?”", ["Tifa.", "Rufus.", "Reno."], 0,
+                     "“She had it coming. …She hit back,\n too. Hmph.”",
+                     "“Tifa, darling. Pay attention.”"),
+                ],
+                "close": "“Same time next week.\n That's an order.”",
+            },
+            {   # third date (user): the dominatrix comes out; a slap before each question
+                "open": "“Tonight, puppy, you speak when\n I say so. Not before.”",
+                "steps": [
+                    ("A", "stand"),
+                    ("G", "“Eyes on me. Good.\n Now… let's test you.”"),
+                    ("A", "slap"),
+                    ("Q", "“Who's in charge here?”", ["You are, Scarlet.", "I am.", "Barret."], 0,
+                     "“Kyahaha! Good boy.”",
+                     "“Wrong answer, puppy.”"),
+                    ("A", "slap"),
+                    ("Q", "“And what do you call me?”", ["Mistress.", "Scarlet.", "Ma'am."], 0,
+                     "“Mmm… say it again. Slowly.”",
+                     "“Try that again. With respect.”"),
+                    ("A", "slap"),
+                    ("Q", "“What do good boys do?”", ["Whatever you say.", "Ask nicely.", "Go home."], 0,
+                     "“Exactly. Now… come here.”",
+                     "“Hmph. You'll learn. Eventually.”"),
+                ],
+                "close": "“You need more training.\n Much more.”",
+            },
+        ],
+        "lead": "“You've earned a reward, puppy.\n Don't make me regret it.”",
+        "desire": "Somewhere below, the lights burned on,\nand Scarlet's laughter carried on the wind...",
+        "leave": "“Teasing me? Clever boy.\n …I'll allow it. Tonight.”",
+        "part2_music": 16,                                    # PARADE, as her Honey Bee part two
+        # (user) she stands in front of him, against the wall, making demands
+        "part2": [("G", "“Kyahaha! Harder, puppy!\n Did I say you could slow down?”"),
+                  ("C", "“…Yes, ma'am.”"),
+                  ("G", "“MISTRESS! And don't you dare\n stop until I say so.”"),
+                  ("act", "stop"),                            # (user) she stops him
+                  ("G", "“…Wait. Did I say you could\n put it THERE?”"),
+                  ("C", "“…Uh.”"),
+                  ("G", "“…Hmph. Fine. I'll allow it.\n This time.”"),
+                  ("act", "fast"),                            # (user) and he carries on faster
+                  ("G", "“Mmh…! That's… better.\n Good boy. Kyahaha…!”")],
     },
 }

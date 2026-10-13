@@ -38,7 +38,7 @@ MAX = 20
 WRONG = (5, 246)                       # temp: an answer this date was wrong
 TIERS = (10, 20)                       # affection where the second / third dates start
 # date fields: (place, group) -> new field name (free maplist names, docs/dates_plan.md)
-GROUPS = [["Tifa", "Aerith"]]
+GROUPS = [["Tifa", "Aerith", "Scarlet"]]
 FIELDS = {("gondola", 0): "blackbga", ("capsule", 0): "blackbgf", ("tower", 0): "blackbgg"}
 BASE = {"gondola": "bwhlin", "capsule": "rcktin7", "tower": "nivl_e1"}
 PLACES = ("gondola", "capsule", "tower")
@@ -65,9 +65,12 @@ SCALE = {"tower": 0.85}               # the water tower: both a little big (user
 SIT_KIND = {"gondola": "bench", "capsule": "bench", "tower": "ledge"}
 CLOUD_SIT = {"bench": "GDAB.chi", "ledge": "ZDLC.tor"}       # bwhlin cloud DFANM 03 / ours
 GIRL_SIT = {"Tifa": {"bench": "GDEE.chi", "ledge": "ZDLT.tor"},     # bwhlin tifa DFANM 03 / ours
-            "Aerith": {"bench": "GDBE.chi", "ledge": "ZDLA.tor"}}   # bwhlin earith DFANM 03 / ours
+            "Aerith": {"bench": "GDBE.chi", "ledge": "ZDLA.tor"},   # bwhlin earith DFANM 03 / ours
+            "Scarlet": {"bench": "ZDBS.tor", "ledge": "ZDLS.tor"}}  # ours
 # ledge poses to build: anim -> (skeleton .hrc, standing anim it starts from)
-LEDGE = {"ZDLC.tor": ("aaaa.hrc", "acfe.a"), "ZDLT.tor": ("aagb.hrc", "abcd.a"), "ZDLA.tor": ("auff.hrc", "avbf.a")}
+LEDGE = {"ZDLC.tor": ("aaaa.hrc", "acfe.a"), "ZDLT.tor": ("aagb.hrc", "abcd.a"), "ZDLA.tor": ("auff.hrc", "avbf.a"),
+         "ZDLS.tor": ("amcc.hrc", "anae.a")}
+BENCH = {"ZDBS.tor": ("amcc.hrc", "anae.a")}     # Scarlet has no sitting anim: ours, feet on the floor
 LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # part two: each girl's undressed copy (a NEW skeleton file; her own model is untouched)
 # and her pose; Tifa: AAGB with the chest part's white top (vertex colour B,G,R 204) in her
@@ -79,6 +82,9 @@ PART2 = {
     "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
     # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
     "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf"},
+    # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
+    "Scarlet": {"bare": "ZSCA.HRC", "anims": ["ZDSW.tor", "ZDSX.tor"], "cloud": "stand", "cloud_fast": "standf",
+                "same_way": True},
 }
 TIFA_TOP, TIFA_SKIN = (204, 204, 204), (167, 190, 248)
 # her skirt (user: skin colour, contoured to her body): the hip part AAGC (aagd.p: skirt
@@ -100,8 +106,13 @@ KOALA_LEAN, KOALA_ARMS, KOALA_THIGH, KOALA_SPREAD, KOALA_KNEE = -10, 95, 85, 45,
 KOALA_PELVIS = 10                     # then the pelvis tipped up 10 more (user)
 KOALA_ARMS_IN, KOALA_NOD = 10, 12     # (user) arms turned in a little; the head nods with her bounce
 KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 1.4, 1.0, 1.5   # (BACK 2.0 -> 1.4: closer, user)    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
-GIRL_MODEL = {"Tifa": "main_n_tifa.char", "Aerith": "main_n_earith.char"}   # her model entry (name suffix)
-GIRL_DONOR = {"Aerith": ("bwhlin", 1)}      # where a base field lacks her model: copied from here
+GIRL_MODEL = {"Tifa": "main_n_tifa.char", "Aerith": "main_n_earith.char",   # her model entry (name suffix)
+              "Scarlet": "sub_scarlet.char"}
+GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5)}   # where a base field lacks her model
+# extra anims on her model for the dates (the third date's "stand" and "slap" steps):
+# Scarlet's slap = junone7's (sca script 7: CANM!2 FDID 0-0x1D, SOUND 0x76, CANM!2 0x1D-0x31)
+GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"}}
+SLAP_HIT, SLAP_END, SLAP_SOUND = 0x1D, 0x31, 0x76
 RETURN_GAP = 40                        # back beside her: this far from her spot
 
 
@@ -147,7 +158,7 @@ def _return_spot(ctx, g):
 
 
 def _date(sec, ctx, place, i, g, d, part2):
-    part2, acts = part2
+    tier_acts, part2, acts = part2
     """The date's ops for girl i (in the director's main), ending in the MAPJUMP back;
     part2 = the ops switching to part two's models."""
     hb = _hb()
@@ -168,6 +179,8 @@ def _date(sec, ctx, place, i, g, d, part2):
                 block += hb._say(sec, her(st[1]))
             elif st[0] == "C":
                 block += hb._say(sec, "{CLOUD}\n" + st[1])
+            elif st[0] == "A":                           # an action of hers ("stand", "slap")
+                block += tier_acts[st[1]]
             else:
                 _, q, answers, right, yes, no = st
                 ask, first = hb._ask(sec, her(q), answers)
@@ -299,6 +312,20 @@ def _field(ctx, place, group, names):
                                      Op(bytes([0xAE, ga, 1])), hb._visi(1), asm.goto(end), hide, hb._visi(0),
                                      end, asm.ret(), asm.ret()],
                                  3: [hb._visi(0), asm.ret()]}
+        tier_acts = {}
+        extra = GIRL_EXTRA.get(gname, {})
+        if extra:
+            loader.models[m] = ModelLoader.with_anims(loader.models[m],
+                                                      [a for a in extra.values() if a not in ModelLoader.anims(loader.models[m])])
+            an = ModelLoader.anims(loader.models[m])
+            st, sl = an.index(extra["stand"]), an.index(extra["slap"])
+            me = model_ent[m]
+            scripts[me][9] = [Op(bytes([0xA2, st, 1])), Op(bytes([0xAE, st, 1])), asm.ret()]          # stands up
+            scripts[me][10] = [Op(bytes([0xBC, sl, 0, SLAP_HIT, 1])), Op(b"\xAC"),                    # the slap
+                               Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
+                               Op(bytes([0xBC, sl, SLAP_HIT, SLAP_END, 1])), Op(b"\xAC"),
+                               Op(bytes([0xA2, st, 1])), Op(bytes([0xAE, st, 1])), asm.ret()]
+            tier_acts = {"stand": [hb._req(me, 9)], "slap": [hb._req(me, 10), hb._w(10)]}
         p2 = PART2[gname]
         cpose = CLOUD_PART2.index(p2["cloud"])
         if p2.get("bare"):                       # her undressed copy: a second model and entity
@@ -319,15 +346,17 @@ def _field(ctx, place, group, names):
         ka = [anims.index(n) for n in p2["anims"]]
         # her slot 4: placed at Cloud's spot (turned round; her place in the anim), first pose;
         # 5.. each pose looped; 8: hold (the first pose's frame 0)
-        scripts[ge][4] = [hb._xyzi(*floor), Op(bytes([0xB3, 0, (bdir + 128) % 256])), hb._visi(1),
+        gface = bdir if p2.get("same_way") else (bdir + 128) % 256
+        scripts[ge][4] = [hb._xyzi(*floor), Op(bytes([0xB3, 0, gface])), hb._visi(1),
                           Op(bytes([0xA2, ka[0], 1])), Op(bytes([0xAE, ka[0], 1])), asm.ret()]
         for k, a_ in enumerate(ka):
             scripts[ge][5 + k] = [Op(bytes([0xA2, a_, 1])), Op(bytes([0xAE, a_, 1])), asm.ret()]
         scripts[ge][8] = [Op(bytes([0xA2, ka[0], 1])), hb._canm(ka[0], 0, 0), asm.ret()]
         acts = {"stop": [hb._req(cb, 12 + cpose), hb._req(ge, 8)],
+                "go": [hb._req(cb, 4 + cpose), hb._req(ge, 5)],           # carry on at the first pace
                 "fast": [hb._req(cb, 4 + CLOUD_PART2.index(p2.get("cloud_fast", p2["cloud"]))),
                          hb._req(ge, 5 + len(ka) - 1)]}
-        part2[i] = ([hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(model_ent[0], 3)] + hide_her
+        part2[i] = (tier_acts, [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(model_ent[0], 3)] + hide_her
                     + [hb._req(cb, 3), hb._req(cb, 4 + cpose), hb._req(ge, 4),
                        Op(bytes([0xF2, 0, 0, 0, 0x10, DATES[gname]["part2_music"]]) + bytes(8)),
                        Op(hb.FADE_IN), Op(b"\x6C"), hb._w(30)], acts)
@@ -384,7 +413,7 @@ def _offer(ctx, i, g, arrive, group):
     ctx.field(field).sections[0] = sec.build()
 
 
-def _ledge(ctx, name, hrc, stand):
+def _ledge(ctx, name, hrc, stand, bench=False):
     """Sitting on a ledge (`name`.a): from the standing pose, each thigh swung forward to
     level (the knee bent back 90, so the shin hangs straight down and the foot stays as it
     was), the arms LEDGE_ARMS forward, the hip joints LEDGE_SEAT above the root's floor."""
@@ -423,8 +452,12 @@ def _ledge(ctx, name, hrc, stand):
         thigh = [E[I(s + "_femur")][2][k] - E[I(s + "_femur")][1][k] for k in range(3)]
         assert abs(thigh[1]) < 0.2 * math.hypot(*thigh) and abs(thigh[0]) < 0.5 * math.hypot(*thigh), \
             (name, s, thigh)                                                            # level, ahead
-    hip_y = max(E[I(s + "_femur")][1][1] for s in "lr")
-    root = [root[0], root[1] - hip_y - LEDGE_SEAT, root[2]]                             # hips just above the floor
+    if bench:                                        # feet on the floor (ankles where she stood)
+        drop = max(E[I(s + "_tibia")][2][1] for s in "lr") - max(F[I(s + "_tibia")][2][1] for s in "lr")
+        root = [root[0], root[1] - drop, root[2]]
+    else:
+        hip_y = max(E[I(s + "_femur")][1][1] for s in "lr")
+        root = [root[0], root[1] - hip_y - LEDGE_SEAT, root[2]]                         # hips just above the floor
     base.frames = [(rr, [root[0], -root[1], root[2]], fa.local_rotations(sk, rr, W))]
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
@@ -580,6 +613,83 @@ def _scarlet_bare(ctx):
     ctx.char_file(SCARLET_BARE.lower(), hrc.encode("latin-1"))
 
 
+# Scarlet's part two (user): standing in front of Cloud facing the same way, torso leaning
+# WALL_LEAN forward, arms straight out WALL_ARMS (against a wall), right thigh raised WALL_KNEE_UP
+# with the knee bent 90, head turned WALL_LOOK to her left (and lifted WALL_HEAD_UP); her pelvis
+# moves back and forth with his thrust (ZCTE), pivoting on her standing (left) ankle, its back
+# WALL_GAP in front of his pelvis.
+WALL_LEAN, WALL_ARMS, WALL_KNEE_UP, WALL_LOOK, WALL_HEAD_UP, WALL_GAP = 45, 95, 80, 45, 30, 3.5
+
+
+def _wall(ctx, name, hrc, stand, cloud="stand"):
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
+    names = [b[0] for b in sk]
+    I = names.index
+    base = fa.Anim(ctx.char_file(stand))
+    rr, rp, rots = base.frames[0]
+    root = [rp[0], -rp[1], rp[2]]
+    W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+    fk = lambda W, r=root: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
+    ends = lambda W: {names[i]: e for i, (_, _, e) in enumerate(fk(W))}
+    side, up = [1.0, 0.0, 0.0], [0.0, -1.0, 0.0]
+    cross = lambda a, b: [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+
+    def turned(W, bones, axis, angle, test):
+        e0 = ends(W)
+        for sg in (1, -1):
+            M = [fa._mul(fa.axis_angle(axis, sg * angle), m) if names[i] in bones else m for i, m in enumerate(W)]
+            if test(e0, ends(M)):
+                return M
+        raise AssertionError((name, sorted(bones), angle))
+    legs = {n for n in names if n[:2] in ("l_", "r_") and not any(k in n for k in ("chest", "collar", "arm", "hand"))}
+    upper = set(names) - legs
+    h = I("head")
+    face_local = fa._vec(fa._t(W[h]), [0.0, 0.0, -1.0])            # she faces -z standing
+    ankle0 = ends(W)["l_tibia"]
+    W = turned(W, upper, side, WALL_LEAN, lambda a, b: b["head"][2] < a["head"][2] - 1)          # lean forward
+    W = turned(W, {"head"}, side, WALL_HEAD_UP, lambda a, b: b["head"][1] < a["head"][1] - 0.2)  # chin up
+    F = fk(W)
+    neck = unit([F[h][2][k] - F[h][1][k] for k in range(3)])
+    looks = [[fa._mul(fa.axis_angle(neck, sg * WALL_LOOK), m) if i == h else m for i, m in enumerate(W)]
+             for sg in (1, -1)]
+    W = max(looks, key=lambda M: fa._vec(M[h], face_local)[0])      # her left = +x
+    for s in "lr":
+        arm = {s + "_uparm", s + "_foarm", s + "_hand"}
+        W = turned(W, arm, side, WALL_ARMS, lambda a, b: b[s + "_hand"][2] < a[s + "_hand"][2] - 1)
+    W = turned(W, {"r_femur", "r_tibia", "r_foot"}, side, WALL_KNEE_UP,
+               lambda a, b: b["r_femur"][2] < a["r_femur"][2] - 1)                              # right knee up
+    F = fk(W)
+    thigh = [F[I("r_femur")][2][k] - F[I("r_femur")][1][k] for k in range(3)]
+    W = turned(W, {"r_tibia", "r_foot"}, unit(cross(thigh, up)), 90,
+               lambda a, b: b["r_tibia"][1] > a["r_tibia"][1] + 1)                              # shin down
+    his = fa.Anim(ctx.char_file(_hb().CLOUD_BED[cloud].split(".")[0].lower() + ".a"))
+    hz0 = his.frames[0][1][2]
+    F = fk(W)
+    # frame 0: standing ankle back at its height, her pelvis WALL_GAP in front of his (same facing)
+    r0 = [root[0], root[1] + ankle0[1] - F[I("l_tibia")][2][1], root[2] + (hz0 - WALL_GAP) - F[I("hip")][1][2]]
+    F = fk(W, r0)
+    ank, pel = F[I("l_tibia")][2], F[I("hip")][1]
+    height = ank[1] - pel[1]                                       # y down: the pelvis above the ankle
+    keep = {I("l_foot")}
+    frames = []
+    for _, hp, _ in his.frames:
+        d = hp[2] - hz0                                            # his pelvis' move along z
+        a = math.degrees(math.asin(max(-1.0, min(1.0, abs(d) / height))))
+        R = fa.axis_angle(side, a)
+        if (fa._vec(R, [pel[k] - ank[k] for k in range(3)])[2] - (pel[2] - ank[2])) * d < 0:
+            R = fa.axis_angle(side, -a)                            # her pelvis follows his
+        Wt = [m if i in keep else fa._mul(R, m) for i, m in enumerate(W)]
+        rel = fa._vec(R, [r0[k] - ank[k] for k in range(3)])
+        rt = [ank[k] + rel[k] for k in range(3)]
+        E = fk(Wt, rt)
+        assert math.dist(E[I("l_tibia")][2], ank) < 0.05                # standing ankle planted
+        frames.append((rr, [rt[0], -rt[1], rt[2]], fa.local_rotations(sk, rr, Wt)))
+    base.frames = frames
+    ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
+
+
 def _koala(ctx, name, hrc, stand):
     """Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
     leaning KOALA_LEAN onto him (head upright); arms raised KOALA_ARMS forward; each thigh
@@ -665,9 +775,13 @@ def _koala(ctx, name, hrc, stand):
 def apply(ctx):
     for anim, (hrc, stand) in LEDGE.items():
         _ledge(ctx, anim, hrc, stand)
+    for anim, (hrc, stand) in BENCH.items():
+        _ledge(ctx, anim, hrc, stand, bench=True)
     _bare_tifa(ctx)
     _koala(ctx, "ZDKT.tor", "ztfa.hrc", "abcd.a")
     _scarlet_bare(ctx)
+    _wall(ctx, "ZDSW.tor", "zsca.hrc", "anae.a")
+    _wall(ctx, "ZDSX.tor", "zsca.hrc", "anae.a", "standf")      # with his double speed
     for anim, frames in (("ZDKA.tor", KNEEL_FRAMES), ("ZDKB.tor", KNEEL_FRAMES_FAST)):
         _kneel(ctx, anim, "auff.hrc", "avbf.a", frames)
     for group, names in enumerate(GROUPS):

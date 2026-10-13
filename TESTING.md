@@ -322,6 +322,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   third date is playfully submissive ("Sir."). Part two = the head scene in her own model:
   she kneels before bare Cloud (muffled lines), he stops and asks if she's okay, she demands
   more, then both go twice as fast. Check her kneeling height/distance, the stop, the speed-up.
+- **Dates with Scarlet** (new; untested in-game): talk to Scarlet (Shinra HQ 66F
+  conference room) -> "Ask her on a date." First and second dates seated (our sitting
+  poses for her); third date: she stands and slaps Cloud before each of three questions
+  (slap animation + sound from her Junon catfight). Part two: her skirtless model against a
+  wall in front of standing Cloud; she stops him ("put it THERE?"), allows it, he goes
+  faster. Check the slaps (pose pops while seated?), her sitting, the wall pose.
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens
   One Star Girls (Next page / Never mind), then Two .. Five Star Girls (Next /
   Previous / Never mind; no Next on Five). Girls not hired show as ???? and

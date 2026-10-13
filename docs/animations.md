@@ -179,4 +179,6 @@ The gondola and capsule seats use the gondola models' own sitting anims (bwhlin:
 | ZDLA | zdla.a | Aerith sitting on the water tower ledge, as ZDLC/ZDLT (from AVBF). | `660_dates._ledge` |
 
 Note (renders): `ff7.fieldanim.forward` needs the root position with y negated ([x, -y, z] as stored); a render that passes the stored root draws each model at the wrong height relative to another (scratch pair renders were off until fixed).
+| ZDBS / ZDLS | zdbs.a / zdls.a | Scarlet (AMCC) sitting: bench (feet on the floor, ankles where she stood) / ledge, as ZDLC. Her skirt bones hang from her hips (not children of the thighs). | `660_dates._ledge(bench=)` |
+| ZDSW / ZDSX | zdsw.a / zdsx.a | Scarlet (skirtless zsca.hrc) against a wall in front of standing Cloud (user): torso 45 forward, arms 95 forward (straight out), right thigh 80 up with the knee bent 90, head lifted 30 and turned 45 to her left; one frame per ZCTE (ZDSX: ZCTI, x2) frame, her pelvis 3.5 in front of his and following it by pivoting on her left ankle (planted). Same XYZI and DIR as Cloud. | `660_dates._wall` |
 
