@@ -175,7 +175,8 @@ EDGE_GIRL, EDGE_GAP = (-12, -180), 26
 EDGE_GIRL_MOVED, EDGE_CLOUD = (-5, -180), (-16, -180)
 # head reverse: her XYZI point (by her feet; the head top is ~94 along her, 27 model units
 # x ~3.4) so that her neck is at the bed's left edge (x ~24 at y -180), the head off it
-HEADREV_GIRL = (94, -180)
+HEADREV_GIRL = (88, -180)                     # (94 -> 88: the head now hangs straight down, clear of the edge)
+HEADREV_CLOUD = (-8, -180)                    # a step right of edge's first spot (user)
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # (first version) Cloud right and down a bit from CLOUD_SIT
 HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 27, 46      # she: at his x, this much nearer the camera (-y), 2/3 of
                                               # a body (~90) lower than the bed sitter (then a head higher: 46), turned round
@@ -208,6 +209,10 @@ RIDE_ANIM, RIDE_HIP, RIDE_KNEE, RIDE_SPREAD, RIDE_LEAN, RIDE_ARMS = "DZBR.tor", 
 # User: the humour lands better fast: 0.5 s (15 frames) per stroke, and more bounce
 # (the knees open 24 instead of 8, so her hips rise ~3x as high). Dog is left as it was.
 RIDE_ROCK, RIDE_FRAMES = 24, 15
+# cowgirl's own copy (user): arms rotate down COWGIRL_ARMS_ROCK as she comes up and back as
+# she comes down, head tilting COWGIRL_HEAD_ROCK down with them; ontop keeps DZBR
+COWGIRL_ANIM, COWGIRL_ARMS_ROCK, COWGIRL_HEAD_ROCK = "DZBL.tor", 20, 15
+COWGIRL_LEFT = 8                              # cowgirl: she sits this much left of CLOUD_ONTOP (user: slightly left)
 # The other built poses: an eased POSE_ROCK degrees and back; the scene beats loop them
 # with DFANM (her default animation). All fours keeps POSE_ROCK over FOURS_FRAMES.
 POSE_ROCK, POSE_FRAMES = 8, 60
@@ -226,14 +231,20 @@ KNEEL_ANIM, KNEEL_TILT, KNEEL_ROCK, KNEEL_FRAMES = "DZBK.tor", 10, 10, 15
 # out past her head level with the bed, rocking forward and back (0.5 s)
 EDGE_ANIM, EDGE_KNEE, EDGE_BEND, EDGE_ARMS, EDGE_ROCK, EDGE_FRAMES = "DZBG.tor", 15, 90, 90, 5, 15
 # then (user): head tipped back EDGE_HEAD_BACK (chin up) and turned EDGE_HEAD_TURN to her right,
-# arms EDGE_ARMS_DOWN below level, EDGE_ARMS_ROCK further down as she rocks forward
-EDGE_HEAD_BACK, EDGE_HEAD_TURN, EDGE_ARMS_DOWN, EDGE_ARMS_ROCK = 12, 15, 15, 10
+# arms EDGE_ARMS_DOWN below level (since, user: head back more (12 -> 25); the hands stay put
+# while she rocks, the elbows bending, instead of the arms dipping)
+EDGE_HEAD_BACK, EDGE_HEAD_TURN, EDGE_ARMS_DOWN = 25, 15, 15
 # after Tifa's "Faster!" (user: double speed): the same rock in 8 frames (~0.27 s)
 EDGE_ANIM_FAST, EDGE_FRAMES_FAST = "DZBI.tor", 8
+EDGE_FAST_BACK, EDGE_FAST_ARMS_DOWN = 20, 30   # the fast one (user): torso 20 more upright, arms further down
 # head reverse (user): on her back as DZBT, head tipped back (further back as she comes
 # down), arms up past her head at 160 from her sides
 HEADREV_ANIM, HEADREV_ARMS, HEADREV_HEAD, HEADREV_ROCK = "DZBH.tor", 160, 40, 12
-SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM, RIDE_ANIM, KNEEL_ANIM, EDGE_ANIM, HEADREV_ANIM, EDGE_ANIM_FAST]   # our own animations on the scene girl
+# since (user): the head hangs straight down (face upright) instead of the 40 tilt, the hips held
+# HEADREV_LIFT up (her body slopes back to the shoulders) and still bouncing
+HEADREV_LIFT = 2.0
+SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM, RIDE_ANIM, KNEEL_ANIM, EDGE_ANIM, HEADREV_ANIM, EDGE_ANIM_FAST,
+               COWGIRL_ANIM]   # our own animations on the scene girl
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
 # FTIB is only used on a Shinra soldier skeleton in the original game (same bone count).
@@ -285,6 +296,8 @@ CLOUD_STAND, STAND_KNEE, STAND_LEAN, STAND_ARMS, STAND_ARMS_IN, STAND_THRUST, ST
     "ZCTE.tor", 20, 25, 30, 10, 1.5, 15
 # edge's Cloud (user): ZCTE with the arms twice as far forward and the left leg raised
 # (hip 100, knee 10)
+# head's Cloud since (user): right arm up about 70, left about 30, both bent in a bit at the elbow
+STAND_ARMS_LR, STAND_ELBOW_IN = {"l": 30, "r": 70}, 20
 CLOUD_EDGE, EDGE_CLOUD_ARMS, EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE = "ZCTF.tor", 60, 100, 10
 CLOUD_EDGE_FAST = "ZCTG.tor"                   # the same in EDGE_FRAMES_FAST frames (after "Faster!")
 LOOPED_C = {"thrust", "pound", "buck", "stand", "standl", "standlf"}
@@ -705,8 +718,9 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     hr = spot(HEADREV_GIRL)
     assert abs(hr[2] - 76) < 2, hr                                      # on the bed
     ec = spot(EDGE_CLOUD)
-    hc_ = spot((EDGE_GIRL[0] - EDGE_GAP, EDGE_GIRL[1]))                 # head reverse's Cloud (edge's first spot)
+    hc_ = spot(HEADREV_CLOUD)                                           # head reverse's Cloud
     assert all(abs(p[2] - 25) < 2 for p in (ks, kg, eg, ec, hc_)), (ks, kg, eg, ec, hc_)   # on the floor, not the bed
+    cg = spot((CLOUD_ONTOP[0] - COWGIRL_LEFT, CLOUD_ONTOP[1]))
     hold = lambda name: [_anim(ca[name], hold=True)]
     girl_beats.update({
         "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1)] + _loop(da[LIE_ANIM_SCENE]),
@@ -714,8 +728,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                    _anim(da["DXHE.tor"], hold=True)],
         "fours": _loop(da[FOURS_ANIM]),                              # on all fours, where she lies (rocking)
         # astride Cloud (layout "ride"): on him at CLOUD_ONTOP, facing as he lies; "ride" rocks
-        "rideon": [_xyzi(rx_, ry_, rz_ + RIDE_RAISE, rt_), Op(bytes([0xB3, 0, CLOUD_BACK_DIR])), _visi(1),
-                   ] + _loop(da[RIDE_ANIM]),
+        "rideon": [_xyzi(cg[0], cg[1], cg[2] + RIDE_RAISE, cg[3]), Op(bytes([0xB3, 0, CLOUD_BACK_DIR])), _visi(1),
+                   ] + _loop(da[COWGIRL_ANIM]),                     # cowgirl: COWGIRL_LEFT left, own rock
         "rideonr": [_xyzi(rx_, ry_, rz_ + RIDE_RAISE, rt_), Op(bytes([0xB3, 0, (CLOUD_BACK_DIR + 128) % 256])),
                     _visi(1)] + _loop(da[RIDE_ANIM]),
         "fourson": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1)] + _loop(da[FOURS_ANIM]),
@@ -726,7 +740,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         "bendf": _loop(da[EDGE_ANIM_FAST]),                         # edge, twice as fast (Tifa: "Faster!")
         "bendfloor": [_xyzi(*eg), Op(bytes([0xB3, 0, facing_screen(cam, *eg[:3], (1, 0))])), _visi(1)]
                      + _loop(da[EDGE_ANIM]),
-        "ride": _loop(da[RIDE_ANIM]),                                # (already rocking from "rideon")
+        "ride": _loop(da[COWGIRL_ANIM]),                             # (Velvet, cowgirl: already rocking from "rideon")
         "sit1": [_anim(da["DXHE.tor"], hold=True)], "sit2": [_anim(da["DXIB.tor"], hold=True)],
         "sit3": [_anim(da["DXIC.tor"], hold=True)],
     })
@@ -1382,7 +1396,7 @@ def _cloud_buck(ctx):
     ctx.char_file(CLOUD_BUCK.split(".")[0].lower() + ".a", base.build())
 
 
-def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES):
+def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
     the left thigh raised to `hip` degrees forward of vertical, the left knee bent
     only `knee` (EDGE_CLOUD_*: zctf.a)."""
@@ -1430,10 +1444,20 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
              "r_chest", "r_collar", "r_uparm", "r_foarm", "r_hand"}
     head0 = end(fk(W), "head")
     W = signed(W, upper, STAND_LEAN, lambda F: dot(end(F, "head"), fwd) > dot(head0, fwd) + 1)        # torso forward
-    for s in "lr":
+    for s, out in (("l", 1), ("r", -1)):
         arm = (s + "_uparm", s + "_foarm", s + "_hand")
         hand0 = end(fk(W), s + "_hand")
-        W = signed(W, arm, arms, lambda F: dot(end(F, s + "_hand"), fwd) > dot(hand0, fwd) + 1)  # arms forward
+        angle = arms[s] if isinstance(arms, dict) else arms
+        W = signed(W, arm, angle, lambda F: dot(end(F, s + "_hand"), fwd) > dot(hand0, fwd) + 1)  # arms forward
+        if elbow_in:                                 # forearm turned in towards the middle at the elbow
+            hx = end(fk(W), s + "_hand")[0]
+            for sign in (1, -1):
+                M = rot(W, arm[1:], fa.axis_angle(up, sign * elbow_in))
+                if out * end(fk(M), s + "_hand")[0] < out * hx - 0.3:
+                    W = M
+                    break
+            else:
+                raise AssertionError("elbow " + s)
     F0 = fk(W)
     drop = max(end(F0, s + "_tibia")[1] for s in "lr") - max(feet0[s][1] for s in "lr")
     root = [root[0], root[1] - drop, root[2]]                                 # ankles back on the floor
@@ -1630,13 +1654,16 @@ def _cloud_thrust(ctx):
     ctx.char_file(CLOUD_THRUST.split(".")[0].lower() + ".a", base.build())
 
 
-def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK):
+def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0,
+             head_down=False):
     """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
     the knees fall open POSE_ROCK and close again (each leg turns about its
     hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames.
     arms: degrees out from her sides along the bed (160: up past her head);
     head: degrees chin to chest (< 0: tipped back), rocking head_rock (> 0: further
-    forward as she comes down)."""
+    forward as she comes down). hip_lift: her hips held this much higher throughout (the
+    shoulders stay down, so her body slopes back to them); head_down: the head
+    hangs straight down every frame (face upright: head reverse)."""
     fa, sk, idx, rr, world = _standing(ctx)
     names = [b[0] for b in sk]
     x, z = (1, 0, 0), (0, 0, 1)
@@ -1709,7 +1736,7 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
         for n in ("l_tibia", "r_tibia"):
             assert all(abs(e[n][k] - e0[n][k]) < 0.05 for k in range(3)), (t, n)   # feet stay put (before the bounce)
         rest = fa.forward(sk, rr, root, fa.local_rotations(sk, rr, w))
-        bounce, thrust = LIE_BOUNCE * b, LIE_THRUST * b
+        bounce, thrust = LIE_BOUNCE * b, hip_lift + LIE_THRUST * b
         lift = [root[0], root[1] - bounce - thrust, root[2]]                  # y down: up is -y
         for n in ("chest", "l_chest", "r_chest", "l_femur", "r_femur"):        # shoulders / knees: bounce only
             i = idx(n)
@@ -1719,7 +1746,10 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
             w[i] = fa._mul(align(bdir(w[i]), [target[k] - start[k] for k in range(3)]), w[i])
         v = math.sin(2 * math.pi * t / LIE_FRAMES)                           # > 0 going up, < 0 coming down
         tilt = head - head_rock * v                                           # (mission) forward coming down, back going up
-        w[idx("head")] = fa._mul(fa.axis_angle(x, sense * tilt), w[idx("head")])
+        if head_down:
+            w[idx("head")] = fa._mul(align(bdir(w[idx("head")]), [0.0, 1.0, 0.0]), w[idx("head")])   # y down
+        else:
+            w[idx("head")] = fa._mul(fa.axis_angle(x, sense * tilt), w[idx("head")])
         frames.append((lift, fa.local_rotations(sk, rr, w)))
     _save_frames(ctx, fa, name, frames)
 
@@ -1807,13 +1837,14 @@ def _ride(ctx):
     names = [b[0] for b in sk]
     x, z = (1, 0, 0), (0, 0, 1)
 
-    def pose(hip, knee, foot):
+    def pose(hip, knee, foot, arms_down=0.0, head_down=0.0):
         w = list(world)
         for n in ("hip", "chest", "head", "l_chest", "l_collar", "r_chest", "r_collar"):
             w[idx(n)] = fa._mul(fa.axis_angle(x, RIDE_LEAN), world[idx(n)])          # torso forward
+        w[idx("head")] = fa._mul(fa.axis_angle(x, head_down), w[idx("head")])         # + = chin to chest
         for side in "lr":
             for n in ("_uparm", "_foarm", "_hand"):
-                w[idx(side + n)] = fa._mul(fa.axis_angle(x, -RIDE_ARMS), world[idx(side + n)])
+                w[idx(side + n)] = fa._mul(fa.axis_angle(x, -(RIDE_ARMS - arms_down)), world[idx(side + n)])
         for side, out in (("l", -RIDE_SPREAD), ("r", RIDE_SPREAD)):                 # knees apart (checked: l -> +x)
             spread = fa.axis_angle(z, out)
             thigh = fa._mul(spread, fa.axis_angle(x, -hip))                          # forward-up
@@ -1830,19 +1861,24 @@ def _ride(ctx):
                    - ends(pose(RIDE_HIP, RIDE_KNEE, f))["l_foot"][1], -120, 60)     # feet flat behind
     knee0 = ends(pose(RIDE_HIP, RIDE_KNEE, foot))["l_femur"]
     planted = [knee0[0], 0.0, knee0[2]]                                              # the left knee on the bed
-    frames = []
-    for t in range(RIDE_FRAMES):
-        d = RIDE_ROCK * (1 - math.cos(2 * math.pi * t / RIDE_FRAMES)) / 2            # 0 -> ROCK -> 0, eased
-        local = pose(RIDE_HIP - d, RIDE_KNEE - d, foot)                              # shin direction unchanged
-        k = ends(local)["l_femur"]
-        root = [planted[i] - k[i] for i in range(3)]
-        e = ends(local, root)
-        for n in ("l_femur", "r_femur", "l_tibia", "r_tibia"):
-            assert abs(e[n][1]) < 0.6, (t, n, e[n])                                 # shins on the bed
-        frames.append(([0.0, 0.0, 0.0], [root[0], -root[1], root[2]], local))
-    out = fa.Anim(ctx.char_file("dzba.a"))
-    out.frames = frames
-    ctx.char_file(RIDE_ANIM.split(".")[0].lower() + ".a", out.build())
+    for name, arms_rock, head_rock in ((RIDE_ANIM, 0, 0), (COWGIRL_ANIM, COWGIRL_ARMS_ROCK, COWGIRL_HEAD_ROCK)):
+        frames = []
+        for t in range(RIDE_FRAMES):
+            b = (1 - math.cos(2 * math.pi * t / RIDE_FRAMES)) / 2                    # 0 -> 1 -> 0, eased
+            d = RIDE_ROCK * b                                                        # (the hips rise with d)
+            local = pose(RIDE_HIP - d, RIDE_KNEE - d, foot, arms_rock * b, head_rock * b)   # shin direction unchanged
+            k = ends(local)["l_femur"]
+            root = [planted[i] - k[i] for i in range(3)]
+            e = ends(local, root)
+            for n in ("l_femur", "r_femur", "l_tibia", "r_tibia"):
+                assert abs(e[n][1]) < 0.6, (t, n, e[n])                             # shins on the bed
+            if t == RIDE_FRAMES // 2 and arms_rock:
+                e0 = ends(pose(RIDE_HIP, RIDE_KNEE, foot), root)
+                assert e["l_hand"][1] > e0["l_hand"][1], "arms not lower at the top"            # y down
+            frames.append(([0.0, 0.0, 0.0], [root[0], -root[1], root[2]], local))
+        out = fa.Anim(ctx.char_file("dzba.a"))
+        out.frames = frames
+        ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
     # kneeling, rocking (KNEEL_*): the rest kneel tipped forward about the knee line
     local0 = pose(RIDE_HIP, RIDE_KNEE, foot)
     k = ends(local0)["l_femur"]
@@ -1869,10 +1905,11 @@ def _ride(ctx):
     ctx.char_file(KNEEL_ANIM.split(".")[0].lower() + ".a", out.build())
 
 
-def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES):
+def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=EDGE_ARMS_DOWN):
     """dzbg.a (EDGE_ANIM): standing, knees bent EDGE_KNEE, bent EDGE_BEND forward at
     the hips, arms straight out past her head (level), rocking forward and back
-    about the ankles by EDGE_ROCK; EDGE_FRAMES frames."""
+    about the ankles by EDGE_ROCK; EDGE_FRAMES frames. The hands stay where frame 0
+    has them (each arm re-bent by two-bone IK, elbows out and up)."""
     import math
     fa, sk, idx, rr, world = _standing(ctx)
     names = [b[0] for b in sk]
@@ -1885,7 +1922,7 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES):
     stand = ends(world, root0)
     w = list(world)
     for n in ("hip", "chest", "head", "l_chest", "l_collar", "r_chest", "r_collar"):
-        w[idx(n)] = fa._mul(fa.axis_angle(x, EDGE_BEND), world[idx(n)])          # torso forward to level
+        w[idx(n)] = fa._mul(fa.axis_angle(x, bend), world[idx(n)])               # torso forward (90: level)
     for side in "lr":
         for n in ("_uparm", "_foarm", "_hand"):                                   # hanging -> straight forward
             w[idx(side + n)] = fa._mul(fa.axis_angle(x, -EDGE_ARMS), world[idx(side + n)])
@@ -1898,7 +1935,7 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES):
     e = ends(w, root)
     fwd = 1 if e["l_femur"][2] > e["l_hip"][2] else -1                            # knees bend forward
     assert fwd * (e["head"][2] - e["hip"][2]) > 0, "torso bent backwards"
-    assert abs(e["head"][1] - e["hip"][1]) < 4, ("torso not level", e["head"], e["hip"])
+    assert bend != 90 or abs(e["head"][1] - e["hip"][1]) < 4, ("torso not level", e["head"], e["hip"])
     assert all(fwd * (e[s + "_hand"][2] - e["head"][2]) > 0 and abs(e[s + "_hand"][1] - e[s + "_uparm"][1]) < 2
                for s in "lr"), "arms not straight out past her head"
     # head: chin up, then turned to her right (-x; l -> +x) about the head bone's own line
@@ -1925,18 +1962,45 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES):
     down = next(sg for sg in (1, -1)
                 if ends([fa._mul(fa.axis_angle(x, sg * 5), m) if i in arm else m for i, m in enumerate(w)], root)["l_hand"][1]
                 > e1["l_hand"][1] + 0.1)
-    w = [fa._mul(fa.axis_angle(x, down * EDGE_ARMS_DOWN), m) if i in arm else m for i, m in enumerate(w)]
+    w = [fa._mul(fa.axis_angle(x, down * arms_down), m) if i in arm else m for i, m in enumerate(w)]
+    F0 = fa.forward(sk, rr, root, fa.local_rotations(sk, rr, w))
+    wrist = {sd: F0[idx(sd + "_foarm")][2] for sd in "lr"}                        # the hands stay here
+    blen = {n: math.dist(F0[idx(n)][1], F0[idx(n)][2]) for sd in "lr" for n in (sd + "_uparm", sd + "_foarm")}
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+    dotp = lambda a, b: sum(a[k] * b[k] for k in range(3))
+    bdir = lambda m: fa._vec(m, [0, 0, -1])
+
+    def align(a, b):                                 # the smallest rotation turning direction a into b
+        a, b = unit(a), unit(b)
+        ax = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+        si = math.sqrt(dotp(ax, ax))
+        return fa.axis_angle(ax, math.degrees(math.atan2(si, dotp(a, b)))) if si > 1e-9 else fa.euler_matrix(0, 0, 0)
     frames = []
     for t in range(nframes):
         b = (1 - math.cos(2 * math.pi * t / nframes)) / 2
         a = EDGE_ROCK * b                                                      # 0 -> ROCK -> 0, eased
         R = fa.axis_angle(x, a)
-        A = fa.axis_angle(x, down * EDGE_ARMS_ROCK * b)                        # arms lower as she rocks forward
-        Wt = [m if names[i] in ("l_foot", "r_foot") else fa._mul(R, fa._mul(A, m) if i in arm else m)
-              for i, m in enumerate(w)]
+        Wt = [m if names[i] in ("l_foot", "r_foot") else fa._mul(R, m) for i, m in enumerate(w)]
         rel = fa._vec(R, [root[k] - a0[k] for k in range(3)])
         rt = [a0[k] + rel[k] for k in range(3)]
+        Ft = fa.forward(sk, rr, rt, fa.local_rotations(sk, rr, Wt))
+        for sd, out in (("l", 1), ("r", -1)):        # two-bone IK: shoulder -> elbow -> the fixed wrist
+            u_, f_, hd = idx(sd + "_uparm"), idx(sd + "_foarm"), idx(sd + "_hand")
+            S, T = Ft[u_][1], wrist[sd]
+            L1, L2 = blen[sd + "_uparm"], blen[sd + "_foarm"]
+            d = min(math.dist(S, T), L1 + L2 - 1e-6)
+            u = unit([T[k] - S[k] for k in range(3)])
+            P = unit([out, -1.0, 0.0])               # elbows out and up (y down)
+            p = unit([P[k] - dotp(P, u) * u[k] for k in range(3)])
+            a_ = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
+            hh = math.sqrt(max(0.0, L1 * L1 - a_ * a_))
+            E = [S[k] + a_ * u[k] + hh * p[k] for k in range(3)]
+            Wt[u_] = fa._mul(align(bdir(Wt[u_]), [E[k] - S[k] for k in range(3)]), Wt[u_])
+            Wt[f_] = fa._mul(align(bdir(Wt[f_]), [T[k] - E[k] for k in range(3)]), Wt[f_])
+            Wt[hd] = w[hd]                           # the hand keeps its frame-0 angle
         et = ends(Wt, rt)
+        for sd in "lr":
+            assert math.dist(et[sd + "_foarm"], wrist[sd]) < 0.3, (t, sd, et[sd + "_foarm"], wrist[sd])   # hands fixed
         assert math.dist(ankle(et), a0) < 0.3, (t, ankle(et), a0)                 # feet planted
         if t == nframes // 2:
             assert fwd * (et["hip"][2] - e["hip"][2]) > 0, "rocks backwards first"
@@ -1948,19 +2012,19 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES):
 
 def apply(ctx):
     _on_back(ctx)
-    _on_back(ctx, HEADREV_ANIM, HEADREV_ARMS, -HEADREV_HEAD, -HEADREV_ROCK)
+    _on_back(ctx, HEADREV_ANIM, HEADREV_ARMS, hip_lift=HEADREV_LIFT, head_down=True)
     _fours(ctx)
     _cloud_thrust(ctx)
     _cloud_pound(ctx)
     _cloud_spread(ctx)
     _cloud_buck(ctx)
-    _cloud_stand(ctx)
+    _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE))
     _cloud_stand(ctx, CLOUD_EDGE_FAST, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE), EDGE_FRAMES_FAST)
     _bare_cloud(ctx)
     _ride(ctx)
     _bend(ctx)
-    _bend(ctx, EDGE_ANIM_FAST, EDGE_FRAMES_FAST)
+    _bend(ctx, EDGE_ANIM_FAST, EDGE_FRAMES_FAST, EDGE_BEND - EDGE_FAST_BACK, EDGE_FAST_ARMS_DOWN)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)
     assert tri is not None

@@ -320,8 +320,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   scene now has the girl walk in behind Cloud in part one (none start on the
   bed any more; the affection-10 Bambi scene too), and part two starts in one
   of seven positions: edge (Tifa), mission (Marisol, Bambi), cowgirl (Velvet, Ruby,
-  Peggy), ontop = cowgirl facing the other way (Aerith, Celeste, Holly, Lulu,
-  Gloria), dog (Scarlet, Mags, Rhonda, Dot), head reverse (Elena), head (Sakura, Aurora,
+  Peggy), ontop = cowgirl facing the other way (Aerith, Holly, Lulu,
+  Gloria), dog (Scarlet, Mags, Rhonda, Dot), head reverse (Elena, Celeste), head (Sakura, Aurora,
   Candy, Raven). Starting points, to tweak: head (new version) = both on the
   floor left of the bed, bare-legged Cloud standing facing left (knees bent,
   leaning forward, thrusting, arms swinging in and out), she kneels a step to
@@ -334,7 +334,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   and dipping as she rocks forward; after "Faster!" both move twice as fast); head reverse (Elena only, new) = she lies on
   her back along the bed, head at its left end tipped back over the edge, arms
   up past her head, bouncing with her knees opening and closing; Cloud as in
-  edge. Head / head reverse girls now only manage muffled "Mmf!" lines in part
+  edge (since: Celeste too; Cloud a step further right; her head hangs straight
+  down, hips held up and bouncing). Cowgirl: she's slightly left, arms and head
+  dip as she rises. Head's Cloud: right arm up ~70, left ~30, both bent in.
+  Edge: her head further back, hands stay put while she rocks (elbows bend);
+  after "Faster!" her torso is a bit more upright and arms lower. Head / head reverse girls now only manage muffled "Mmf!" lines in part
   two; cowgirl/ontop = she
   is 14 higher than in Velvet's old scene; mission = Tifa's with Cloud's new
   zcta animation; dog = she starts on all fours, Cloud starts knelt (HBGC),
