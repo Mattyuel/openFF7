@@ -345,7 +345,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   speed follows how fast you press (4 steps). Ruby says a line every ~2.5 s that closes by
   itself (~2 s; muffled during head / head reverse). Costa del Sol music. After six minutes:
   "That's a wrap", back in Wall Market, he says to come back in half an hour; after 30 play
-  minutes his talk pays presses x 10 gil. Check: does OK register (IFKEYON 0x20)? the gauge
+  minutes his talk pays presses x 10 gil. Check: does OK register now (IFKEYON 0x220, as the game's own OK checks; 0x20 alone didn't)? the gauge
   and cursor visible and on screen at each bed? the self-closing lines? the bed positions on
   the right beds? Ruby's bare model (skin legs/skirt/upper arms/feet, coat kept).
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens

@@ -15,7 +15,7 @@ the cameraman films beside each spot (FFBC). Her body is the Honey Bee
 dancer's skeleton (same bones and lengths, same stand/walk/run anims), so the
 dancer poses 620 builds (dzbt, dzbl, dzbf, dzbg, dzbh, dzbk) play on her.
 
-Play: press OK (IFKEYON 0x20) as fast as you dare. Every tick (~8 frames) the
+Play: press OK (IFKEYON 0x220) as fast as you dare. Every tick (~8 frames) the
 director (entity 0) takes the presses since the last tick, P:
     VEL = VEL*5/6 + P*A - B + (POS - 500)/C       (VEL stored + 1000, clamped +-VMAX)
     POS += VEL                                     (0..1000, starts 500)
@@ -56,7 +56,9 @@ CAMERA_AT, RUBY_AT = (310, 378), (386, 314)          # mrkt2: right of the item 
 CAMERA_DONOR, RUBY_DONOR = ("junone2", 6), ("jun_i2", 6)
 CAMERA_IDLE, CAMERA_FILM = "FDCB.yos", "FFBC.yos"    # camera held low / at his eye
 MUSIC = 35                                          # COSTA: Costa del Sol (user; was Turks' Theme, RHYTHM 45)
-OK_KEY = 0x20                                       # the field's OK (confirm) button bit
+OK_KEY = 0x220                                      # OK, as every original script tests it: IFKEYON (0x61225D) with
+                                                    # mask bit 0x200 reads the field header's +0x80 keys, else +0x70;
+                                                    # 0x20 alone (+0x70) never fired in-game (user)
 MINUTE = 1800                                       # frames per position (30 fps)
 SPEEDS = (20, 15, 11, 8)                            # frames per stroke, slowest to fastest
 RATE_STEPS = (30, 60, 95)                           # smoothed press rate thresholds for steps 1-3
