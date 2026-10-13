@@ -271,7 +271,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   harbour), Ruby (Gold Saucer Building 1F), Holly (Icicle Inn, left of the Snowboard Instructor),
   Sakura (Wutai shop), Mags (Rocket Town weapon store), Celeste (Gongaga
   jungle), Aurora (Cosmo Canyon observatory), Tifa (her house, upstairs in
-  her room), Aerith (Temple of the Ancients, top of the steps by the door
+  her room), Aerith (Temple of the Ancients, inside the door, left of the keystone altar
   where the key goes), Scarlet (Shinra HQ 66F Conference Room: the corridor's
   bottom door now leads into it), Velvet (Gold Saucer Battle Square, first screen, near the bottom right of
   the tube platform).

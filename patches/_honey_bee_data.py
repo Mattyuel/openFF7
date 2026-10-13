@@ -253,7 +253,7 @@ GIRLS = [
          fail="{TIFA}\n“Cloud… you forgot?\n …Ask me again some time.”",
          hired="{TIFA}\n“You remembered everything.\n …Okay. I'll be there. For you.”",
          idle="{TIFA}\n“…See you at the Inn, Cloud.”"),
-    dict(name="Aerith", stars=5, tag="flower girl", field="jtempl", at=(150, 1200), dir=136,
+    dict(name="Aerith", stars=5, tag="flower girl", field="jtmpin1", at=(-184, 52), dir=23,   # inside the temple door, left of the keystone altar (user)
          model=("ancnt1", 8),
          stranger="{AERIS}\n“This temple… it's like it's\n whispering to me. Hi, by the way!”",
          intro="{AERIS}\n“The Honey Bee Inn? You really want\n me there, huh? Hee hee.”",
