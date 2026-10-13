@@ -988,6 +988,90 @@ def _save_frames(ctx, fa, name, frames):
     ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
 
 
+# The bed picture (layer 2 tiles, draw depth 140-175, screen x >= 0) had one depth per
+# part, about that of the bed's far half: anyone lying on the near half was drawn
+# under it; moving it all back put people standing behind the bed in front of it
+# (user). Each 16 x 16 tile now gets the depth of what it shows: rays through its
+# corners, edges and centre hit the bed (a box on the raised walkmesh piece, TOP,
+# from the floor; EDGE wider) or the headboard (upright at its far edge, up to
+# HEAD_TOP); the tile takes the farthest hit + BED_MARGIN, so someone on the
+# mattress (nearer than the mattress under them) shows and someone behind the bed
+# (farther than its far edge + margin) stays hidden. Depth: tile id = view z / 4
+# (the GTE's SZ / 4: the bed's parts sit at 140-175 where the bed is 560-700 deep),
+# PC depth +38 = 1e7 - K / (id + d), fitted on the room's own tiles. Tiles stacked
+# at one spot keep their order (+1 per step). Tiles no ray hits (right of the bed)
+# are left alone.
+BED_TILE_IDS, BED_TOP, BED_FLOOR, BED_EDGE, BED_HEAD_TOP, BED_MARGIN = (140, 175), 76, 25, 8, 220, 16
+
+
+def _bed_depth(ctx):
+    import math
+    from ff7.background import Background
+    from ff7.camera import Camera
+    f = ctx.field(ROOM)
+    cam, mesh, bg = Camera(f.sections[1]), Walkmesh(f.section("walkmesh")), Background(f.section("background"))
+    R = [[a / 4096 for a in ax] for ax in cam.axes]
+    Rt = [[R[k][i] for k in range(3)] for i in range(3)]
+    view_z = lambda p: sum(R[2][k] * p[k] for k in range(3)) + cam.pos[2]
+    eye = [-sum(Rt[i][k] * cam.pos[k] for k in range(3)) for i in range(3)]
+    bed = [i for i, t in enumerate(mesh.tris) if all(abs(v[2] - BED_TOP) < 4 for v in t)]
+    assert len(bed) == 10, len(bed)
+    pts = [v for i in bed for v in mesh.tris[i]]
+    x0, x1, y_far = min(v[0] for v in pts), max(v[0] for v in pts), max(v[1] for v in pts)
+    e = BED_EDGE
+
+    def on_bed(x, y):
+        return any(mesh.contains(t, x + dx, y + dy) for t in bed for dx, dy in ((0, 0), (e, 0), (-e, 0), (0, e), (0, -e)))
+
+    def hit(sx, sy):
+        d = [sum(Rt[i][k] * v for k, v in enumerate((sx / cam.zoom, sy / cam.zoom, 1))) for i in range(3)]
+        n = math.sqrt(sum(v * v for v in d))
+        d = [v / n for v in d]
+        for s in range(0, 4000, 2):
+            p = [eye[i] + d[i] * s for i in range(3)]
+            if BED_FLOOR <= p[2] <= BED_TOP and on_bed(p[0], p[1]):
+                return view_z(p)
+        if d[1] > 0:                                             # the headboard
+            p = [eye[i] + d[i] * (y_far - eye[1]) / d[1] for i in range(3)]
+            if x0 - e <= p[0] <= x1 + e and BED_FLOOR <= p[2] <= BED_HEAD_TOP:
+                return view_z(p)
+        return None
+    layer2 = next(ts for k, _, ts, _ in bg.layers if k == 2)
+    # PC depth from the id: 1 / (1e7 - big) = (id + d) / K, least squares on the room's tiles
+    first = {}
+    for t in layer2:
+        i = t._get("<H", 24)
+        if 140 <= i <= 260:
+            first[i] = min(first.get(i, 1e7), t._get("<I", 38))
+    xs, ys = list(first), [1 / (1e7 - first[i]) for i in first]
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+    k_, d_ = 1 / slope, (my - slope * mx) / slope
+    assert all(abs(1e7 - k_ / (i + d_) - first[i]) < 2500 for i in first), "depth fit"
+    lo, hi = BED_TILE_IDS
+    tiles = [t for t in layer2 if lo <= t._get("<H", 24) <= hi and t.dst_x >= 0]
+    new = {}
+    for t in tiles:
+        zs = [hit(t.dst_x + u, t.dst_y + v) for u in (0, 8, 16) for v in (0, 8, 16)]
+        zs = [z for z in zs if z is not None]
+        if zs:
+            new[id(t)] = (max(zs) + BED_MARGIN) / 4
+    stacks = {}
+    for t in tiles:
+        stacks.setdefault((t.dst_x, t.dst_y), []).append(t)
+    changed = 0
+    for spot, ts in stacks.items():
+        for rank, t in enumerate(sorted(ts, key=lambda t: t._get("<H", 24))):
+            if id(t) not in new:
+                continue
+            z = new[id(t)] + rank
+            t._set("<H", 24, int(z))
+            t._set("<I", 38, round(1e7 - k_ / (z + d_)))
+            changed += 1
+    assert changed > 150, changed
+    f.set_section("background", bg.build())
+
+
 def _cloud_thrust(ctx):
     """zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST."""
     import math
@@ -1237,6 +1321,7 @@ def apply(ctx):
     _conference(ctx)
     _add_girls(ctx)
     _manager(ctx, back)
+    _bed_depth(ctx)                                  # every copy of the room (and the mirror) inherits it
     base = ctx.field(ROOM).build()                   # before the visit edits: the tier copies start here
     _room(ctx, back, ROOM, [[] for _ in GIRLS])     # lounge room: the visit-mode edits, no scenes
     basic = {g["name"]: g["scene"] for g in GIRLS}
