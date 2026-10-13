@@ -186,3 +186,17 @@ Note (renders): `ff7.fieldanim.forward` needs the root position with y negated (
 | ZCTL / ZCTM | zctl.a / zctm.a | Bare Cloud seated (ZDBC) for Elena (user): ZCTL his right arm raised 70 and swung down onto her, lowest at the middle of 15 frames (played once per spank, slap sound at the middle); ZCTM the same swing with his hips 1.0 up at the middle (seated thrust, 0.5 s). | `660_dates._cloud_seated` |
 | ZDEA / ZDEB | zdea.a / zdeb.a | Bare Elena (zela.hrc) with seated Cloud (same XYZI and DIR): ZDEA face down across his lap (her length along his side axis; upper body and legs hanging 25 over the sides; pelvis 1.8 above between his thighs' middles); ZDEB sitting on his lap facing his way (her bench pose), bouncing with ZCTM's hips plus 1.0. | `660_dates._lap` |
 
+
+## Movie minigame (670)
+
+Ruby = midgal_woman (CBFE.HRC, jun_i2 model 6): the Honey Bee dancer's skeleton (same bones and lengths; its
+l_chest / r_chest are called non_1 / non_2) and the dancer's DXID / DXHF / DXIA stand / walk / run, so the
+dancer poses play on her. Her bare copy ZRHA.HRC (`670._bare_ruby`): upper arms, skirt, thighs, shins and feet
+in skin colour, the boots shrunk to feet, the skirt's box round each thigh pulled in, the skirt's back corners
+pulled in (user's sketch).
+
+| Anim | Pose |
+|---|---|
+| ZM<p><s> / ZN<p><s> | Ruby / bare Cloud: position p (A mission DZBT+ZCTA, B cowgirl DZBL+ZCTD, C dog DZBF+ZCTB, D edge DZBG+ZCTF, E head reverse DZBH+ZCTE, F head DZBK+ZCTE) resampled from 15 frames to 20 / 15 / 11 / 8 (s = 0..3: the thrust speed steps). `670._speeds`. |
+
+Cameraman (junon_report2, FCGD.HRC from junone2 model 6): FDCB holds the camera low (idle), FFBC films with it at his eye, FDCD films crouching.

@@ -76,6 +76,10 @@ HB_AFFECTION = [(1, b) for b in list(range(188, 197)) + list(range(200, 208)) + 
 # to her (622_hb_kids). Bank 1 214-216.
 HB_KID = [((1, 214 + i // 8), i % 8) for i in range(20)]
 DATE_GIRL = (1, 217)               # girl index + 1 on a date (660_dates; 0 = none)
+# The movie minigame (670_movie): 0 nothing owed, 1 the cut is owed, 2 just back
+# from the shoot (the cameraman speaks on arrival); presses of the last shoot
+# (word, 219-220) and the play-clock minute it ended (word, 221-222). 223 free.
+MOVIE_STATE, MOVIE_PRESSES, MOVIE_AT = (1, 218), (2, 219), (2, 221)
 HB_RATE = 2                     # gil per star per minute
 HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 

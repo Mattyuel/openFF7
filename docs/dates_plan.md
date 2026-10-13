@@ -55,7 +55,7 @@ User decisions (asked 2026-10-13):
   Opcodes: BGMOVIE 0x27, PMVIE 0xF8, MOVIE 0xF9, MVIEF 0xFA, MVCAM 0xFB.
 - **New fields:** `ctx.new_field` needs a maplist name with no file. 16 are free besides the
   wmN / dummy / Honey Bee names:
-  qe, blackbga, blackbgf, blackbgg, whitebg1, whitebg2, blin69_2, trap, junmon, subin_4,
+  qe, blackbga, blackbgf, blackbgg, whitebg1 (used: 670's movie set), whitebg2, blin69_2, trap, junmon, subin_4,
   pass, hyou14, xmvtes, fallp, m_endo, fship_26.
 - **Limits:** 16 models and ~255 texts per field. So one field can't hold all 20 girls
   (plus their undressed copies), and dates are spread over several copies.

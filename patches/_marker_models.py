@@ -67,8 +67,8 @@ def keyed(sprite, template):
     return bytes(head) + bytes(pal) + sprite[0xEC + 4 * ncol:]
 
 
-def mesh(donor, crop):
-    """The donor quad (4 vertices, 5 edges, 2 triangles: same layout as every
+def mesh(donor, crop, half=HALF):
+    """`half`: half size of the longer side. The donor quad (4 vertices, 5 edges, 2 triangles: same layout as every
     other part of the file) with our size and texture crop, plus the same two
     triangles reversed so it shows from both sides."""
     h = list(struct.unpack_from("<16I", donor, 0))
@@ -88,7 +88,7 @@ def mesh(donor, crop):
 
     x0, y0, x1, y1 = crop
     w, hgt = x1 + 1 - x0, y1 + 1 - y0
-    sx, sy = HALF * w / max(w, hgt), HALF * hgt / max(w, hgt)
+    sx, sy = half * w / max(w, hgt), half * hgt / max(w, hgt)
     u0, v0, u1, v1 = x0 / TEX_SIZE, y0 / TEX_SIZE, (x1 + 1) / TEX_SIZE, (y1 + 1) / TEX_SIZE
     verts = [(-sx, -sy, 0), (sx, -sy, 0), (-sx, sy, 0), (sx, sy, 0)]   # as the donor's order; -y is up
     uvs = [(u0, v0), (u1, v0), (u0, v1), (u1, v1)]

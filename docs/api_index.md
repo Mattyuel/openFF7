@@ -728,6 +728,28 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
 - `apply(ctx)` 
 
+## `patches/670_movie.py`
+The movie minigame (user's design).
+
+- `_hb()` 
+- `_dates()` 
+- `_bare_ruby(ctx)` ZRHA.HRC: cbfe.hrc with the BARE parts copied (rsd ZRHB.., p ZRIB..).
+- `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
+- `_gauge_pixels()` 
+- `_cursor_pixels()` 
+- `_sprites(ctx, half_gauge)` The gauge bar and the cursor as one-bone sprite models (the quest markers' way).
+- `_spot(mesh, x, y, dz=0, high=False)` (x, y, z, tri) on the highest (a bed piece) or lowest (the floor) triangle under (x, y).
+- `_unproject(cam, sx, sy, depth)` Field point at screen (sx, sy) (pixels from the background centre) and view depth.
+- `_view_depth(cam, p)` 
+- `_nearest_tri(mesh, x, y)` 
+- `_shoot(ctx, back)` 
+- `_encode(t)` 
+- `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
+- `_tree(var, lo, hi, leaf)` Binary search on word var in lo..hi (values past hi take hi's leaf).
+- `_unlocked_or(skip)` Ops jumping to `skip` unless all 20 HB_KID bits are set.
+- `_wall_market(ctx, focus)` 
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -764,7 +786,7 @@ Quest marker models: battle-effect sprites shown in the field.
 
 - `magic_file(game_dir, name)` A file from battle/magic.lgp (it has directory entries, which ff7.lgp
 - `keyed(sprite, template)` The sprite as a field texture: header copied from a char.lgp field
-- `mesh(donor, crop)` The donor quad (4 vertices, 5 edges, 2 triangles: same layout as every
+- `mesh(donor, crop, half=HALF)` `half`: half size of the longer side. The donor quad (4 vertices, 5 edges, 2 triangles: same layout as every
 - `install(ctx, game_dir)` Add both marker models to char.lgp. Returns {hrc: model loader entry}
 
 ## `patches/_quest_data.py`

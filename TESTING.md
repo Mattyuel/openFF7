@@ -333,6 +333,21 @@ Existing saves load, but they keep their own story progress; use a new game.
   bare Cloud seated, her (new model: thighs bare) face down over his lap; spanks with the
   slap sound in rounds of 1, 2, 3; she asks for more; fade to part three: she sits on his
   lap bouncing as he thrusts and slaps. Check her placement on his lap, the spank timing.
+- **Movie minigame** (new; untested in-game): needs all 20 Honey Bee kids (debug menu:
+  Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
+  cameraman (the Junon reporter with the camera) and Ruby (red hair, black jacket). Talk to
+  him -> "Lights, camera, action!" -> the Sector 7 room with three beds. Press OK
+  (confirm button) repeatedly: the gauge at the bottom (red | green | red) and the cursor
+  above it; pressing pushes it right, stopping lets it drift left, it has momentum and runs
+  away from the middle. Red at either end = "CUT!" and back to Wall Market, no pay. Six
+  positions, one minute each, moving between the beds (mission left bed, cowgirl middle bed,
+  dog right bed, edge and head reverse at the left bed's foot, head on the floor); the thrust
+  speed follows how fast you press (4 steps). Ruby says a line every ~2.5 s that closes by
+  itself (~2 s; muffled during head / head reverse). Costa del Sol music. After six minutes:
+  "That's a wrap", back in Wall Market, he says to come back in half an hour; after 30 play
+  minutes his talk pays presses x 10 gil. Check: does OK register (IFKEYON 0x20)? the gauge
+  and cursor visible and on screen at each bed? the self-closing lines? the bed positions on
+  the right beds? Ruby's bare model (skin legs/skirt/upper arms/feet, coat kept).
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens
   One Star Girls (Next page / Never mind), then Two .. Five Star Girls (Next /
   Previous / Never mind; no Next on Five). Girls not hired show as ???? and
