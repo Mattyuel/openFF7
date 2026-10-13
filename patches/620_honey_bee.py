@@ -101,7 +101,7 @@ GIRLS_PER_ROOM = 5
 # sitting / standing animations with random pauses between them.
 # (spot, kind, DIR offset from facing down the screen; negated in the mirrored rooms)
 LOUNGE_SPOTS = [
-    ((170, -142), "lie", 0xC0),              # lying on the bed, head towards the door, clear of the sitter
+    ((102, -142), "lie", 0xC0),              # lying on the bed, head towards the door (3/4 body back from 170)
     ((55, -150), "sit", 0),                  # sitting on the bed's edge (lowered: SIT_DROP)
     ((-110, -180), "stand", 0x28),           # standing, away from the door
     ((-120, 180), "stand", 0),               # the dancer
