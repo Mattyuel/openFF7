@@ -101,7 +101,7 @@ GIRLS_PER_ROOM = 5
 # sitting / standing animations with random pauses between them.
 # (spot, kind, DIR offset from facing down the screen; negated in the mirrored rooms)
 LOUNGE_SPOTS = [
-    ((170, -162), "lie", 0xC0),              # lying on the bed, head towards the door, clear of the sitter
+    ((170, -142), "lie", 0xC0),              # lying on the bed, head towards the door, clear of the sitter
     ((55, -150), "sit", 0),                  # sitting on the bed's edge (lowered: SIT_DROP)
     ((-110, -180), "stand", 0x28),           # standing, away from the door
     ((-120, 180), "stand", 0),               # the dancer
@@ -145,7 +145,7 @@ MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (no
 # (the raised walkmesh piece, z 76) and fades back in. Layout -> (girl beat,
 # Cloud beat). Afterwards only in-place beats: girl sit1-3, Cloud CLOUD_BED.
 BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "sit": ("bedsit", "bedsitc")}
-CLOUD_BESIDE = (91, -155)                    # parallel to the lying girl (BED)
+CLOUD_BESIDE = (91, -135)                    # parallel to the lying girl (BED)
 ONTOP_RAISE = 4                              # Cloud on top of her: drawn this much higher (12 was too high)
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
@@ -164,10 +164,12 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "eiab": "EIAB.chi"}   # sitting comfortably
 FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
-BED = (91, -199)                             # lying girl in the scenes (half a body further from the door than 136)
+BED = (91, -179)                             # lying girl in the scenes (half a body further from the door than 136, a touch further back)
 BED_DIR = 0xC0                               # lying girl in the scenes (user: 0x40 then turned 180, so
                                              # she lines up with Cloud's lying poses)
-CLOUD_BED_DIR = 0x40                         # Cloud lying on the bed (unchanged)
+CLOUD_BED_DIR = 0x40                         # Cloud lying on his stomach on the bed (AVDD / AVEA)
+CLOUD_BACK_DIR = 0xC0                        # ... on his back (user: those poses face the other way)
+BACK_POSES, BELLY_POSES = {"grea", "greb", "grec", "ftib", "enje"}, {"avdd", "avea"}
 JUMP_SOUND = bytes.fromhex("f20000002840e9000000000000000000")[:14]
 
 
@@ -553,12 +555,14 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         "sit3": [_anim(da["DXIC.tor"], hold=True)],
     })
     if "grea" in ca:
-        cloud_beats["bedbeside"] = [_xyzi(*spot(CLOUD_BESIDE)), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + hold("grea")
+        cloud_beats["bedbeside"] = [_xyzi(*spot(CLOUD_BESIDE)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
     if "avdd" in ca:
         cloud_beats["bedontop"] = [_xyzi(bx_, by_, bz_ + ONTOP_RAISE, bt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + hold("avdd")
     if "eiab" in ca:
         cloud_beats["bedsitc"] = [_xyzi(cs[0], cs[1], cs[2] - SIT_DROP, cs[3]), Op(bytes([0xB3, 0, cdir]))] + hold("eiab")
-    cloud_beats.update({name: hold(name) for name in bed_used})
+    pose_dir = lambda name: ([Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] if name in BACK_POSES else
+                             [Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] if name in BELLY_POSES else [])   # knelt / sitting: as he is
+    cloud_beats.update({name: pose_dir(name) + hold(name) for name in bed_used})
     for i, sc in enumerate(scenes):              # after the fade to the bed: only in-place beats
         kinds = [st[0] for st in sc]
         if "bed" in kinds:
