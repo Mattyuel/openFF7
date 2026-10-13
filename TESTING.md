@@ -333,7 +333,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   bare Cloud seated, her (new model: thighs bare) face down over his lap; spanks with the
   slap sound in rounds of 1, 2, 3; she asks for more; fade to part three: she sits on his
   lap bouncing as he thrusts and slaps. Since (user): both on the left of the screen (at her seat)
-  and turned the other way, his spank a simple shoulder swing, a slap sound every 0.5 s through
+  and turned the other way (then 30 more to their right), his spank a simple shoulder swing (elbow
+  bent 90 at most), Elena sits on the left gondola seat in part one, a slap sound every 0.5 s through
   part three. Check her placement on his lap, the spank timing, the slap rhythm.
 - **Movie minigame** (new; untested in-game): needs all 20 Honey Bee kids (debug menu:
   Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a

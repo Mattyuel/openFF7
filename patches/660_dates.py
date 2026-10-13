@@ -62,7 +62,8 @@ STAND_DIR = {"gondola": 0x80, "capsule": None, "tower": "screen-right"}
 SCALE = {"tower": 0.85}               # the water tower: both a little big (user)
 GIRL_SCALE = {}                        # per-girl model scale (Scarlet 1.12 was tried; user: keep her size)
 # a girl's own seat in a place (x, y): Scarlet further left and nearer the camera in the gondola (user)
-GIRL_SEAT = {("gondola", "Scarlet"): (-5198, -6900), ("capsule", "Scarlet"): (52, 227)}   # (user: the capsule too)
+GIRL_SEAT = {("gondola", "Scarlet"): (-5198, -6900), ("capsule", "Scarlet"): (52, 227),   # (user: the capsule too)
+             ("gondola", "Elena"): (-5198, -6900)}       # (user) Elena too, left onto the seat
 WALK_TO = 0.35                        # "stand": she walks over to Cloud, this far from him along the way
 # places whose near background tiles (draw depth < 4093: the capsule's benches and rails, ids
 # 52-87) drew over the characters (user): pushed back just in front of the base layer
@@ -100,7 +101,7 @@ PART2 = {
               "same_way": True, "once": {"spank": "sitspank"},
               "switch": {"part3": ("sitthrust", "ZDEB.tor")}, "slap_loop": True,
               # (user) both on the left of the screen (at her seat) and turned the other way
-              "at_her_seat": True, "turn": 128},
+              "at_her_seat": True, "turn": 128 - 21},   # (user, since) then 30 more to their right (DIR -21)
     # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
     "Scarlet": {"bare": "ZSCA.HRC", "anims": ["ZDSW.tor", "ZDSX.tor"], "cloud": "stand", "cloud_fast": "standf",
                 "same_way": True, "at_her_seat": True},   # (user) on the left of the screen: at her seat
@@ -867,6 +868,7 @@ def _bare_elena(ctx):
 # (hips up SEAT_THRUST at the middle frame, feet riding along) with the same right-hand slap;
 # SEATED_FRAMES = 0.5 s
 SEATED_FRAMES, SPANK_UP, SEAT_THRUST = 15, 70, 1.0
+ELBOW_MAX = 90                        # (user) the spanking elbow bends this much at most
 ELBOW_POLE = (-0.3, -1.0, 0.2)        # the bent elbow points up (y down), a little out (his right = -x) and back
 
 
@@ -904,6 +906,18 @@ def _cloud_seated(ctx, name, thrust):
     T = [target[0], target[1] - HAND_UP, target[2]]
     d = math.dist(S, T)
     assert d < L1 + L2 - 0.1, (name, d, L1 + L2)                 # in reach
+    # (user) the elbow bends ELBOW_MAX at most: a nearer wrist would need more, so it moves out
+    # level (away from his shoulder) until that bend reaches it; the hand lands that much further
+    # across her
+    reach = math.sqrt(L1 * L1 + L2 * L2 - 2 * L1 * L2 * math.cos(math.radians(180 - ELBOW_MAX)))
+    if d < reach:
+        D = [T[k] - S[k] for k in range(3)]
+        h = unit([D[0], 0.0, D[2]])
+        dh = dotp(D, h)
+        t = -dh + math.sqrt(dh * dh - dotp(D, D) + reach * reach)
+        T = [T[k] + h[k] * t for k in range(3)]
+        target = [target[k] + h[k] * t for k in range(3)]
+        d = math.dist(S, T)
     u = unit([T[k] - S[k] for k in range(3)])
     P = unit(ELBOW_POLE)
     pp = unit([P[k] - dotp(P, u) * u[k] for k in range(3)])
@@ -916,6 +930,10 @@ def _cloud_seated(ctx, name, thrust):
     W[I("r_hand")] = fa._mul(_align(fa, bdir(W[I("r_hand")]), [0.0, 1.0, 0.0]), W[I("r_hand")])
     hit = fk(W)[I("r_hand")][2]
     assert math.dist(hit, target) < 1.0, (name, hit, target)    # the hand on her
+    Fb = fk(W)
+    ua, fa_ = ([Fb[I(n)][2][k] - Fb[I(n)][1][k] for k in range(3)] for n in ("r_uparm", "r_foarm"))
+    bend = math.degrees(math.acos(dotp(ua, fa_) / math.sqrt(dotp(ua, ua) * dotp(fa_, fa_))))
+    assert bend <= ELBOW_MAX + 0.5, (name, bend)                 # (user) no more than 90 at the elbow
     hand0 = fk(W)[I("r_hand")][2]
     sense = 1 if fk([fa._mul(fa.axis_angle(side, 10), m) if i in arm else m for i, m in enumerate(W)])[I("r_hand")][2][1] \
         < hand0[1] else -1                               # + sense: the hand goes up (y down)

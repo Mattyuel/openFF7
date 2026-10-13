@@ -72,8 +72,9 @@ PAY_RATE, PAY_DELAY = 10, 30                        # gil per press; play minute
 POSITIONS = [
     dict(name="mission", girl=("DZBT", (-225, -60, 0, 0x00), True), cloud=("ZCTA", (-220, -25, -4, 0x80), True),
          camera=(-130, -60, 0xC0)),                                         # left bed, she lies, head to the pillow
-    # middle bed, Cloud's head on the pillow; she (user) a body width to her right (x 0 -> 18): over his line
-    dict(name="cowgirl", girl=("DZBL", (18, -87, 18, 0x80), True), cloud=("ZCTD", (18, -95, 0, 0x80), True),
+    # middle bed, Cloud's head on the pillow; she (user) a body width to her right (x 0 -> 18): over his line;
+    # then (user) slightly lower onto him (raise 18 -> 14) and slightly back (y -87 -> -91: she faces +y)
+    dict(name="cowgirl", girl=("DZBL", (18, -91, 14, 0x80), True), cloud=("ZCTD", (18, -95, 0, 0x80), True),
          camera=(-130, -60, 0x40)),
     dict(name="dog", girl=("DZBF", (227, -125, 0, 0x00), True), cloud=("ZCTB", (225, -103, 0, 0x00), True),
          camera=(90, -60, 0x40)),                                           # right bed
