@@ -21,7 +21,7 @@ import csv
 import os
 import struct
 
-from _config import HB_AFFECTION, HB_HIRED, HB_JOB, HB_VISIT, HUNTER_PTS
+from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_VISIT, HUNTER_PTS
 from _recruit import sound
 from _travel import CHOICE, window
 import _honey_bee_gifts as gifts
@@ -122,12 +122,12 @@ def _menu(sec, dests):
     ops += [on, asm.bitoff(DEBUG_FLAGS, 0), asm.battles_enabled(True), asm.goto(done)]
     ops += [hb] + _ask(sec, "Honey Bee / Hunter", ["Job + hire all 20 girls", "All affection 0",
                                                    "All affection 10", "All affection 20", "All 12 gifts",
-                                                   "Hunter points +50", "Back"])
-    hb_acts = [asm.nop() for _ in range(6)]
+                                                   "All 20 kids", "Hunter points +50", "Back"])
+    hb_acts = [asm.nop() for _ in range(7)]
     for k, label in enumerate(hb_acts):
         ops += [asm.if_byte(CHOICE, "!=", 1 + k, label)]
     ops += [asm.goto_back(main)]
-    hire, a0, a10, a20, allg, hunt = hb_acts
+    hire, a0, a10, a20, allg, kids, hunt = hb_acts
     hv = HB_HIRED
     ops += [hire, asm.biton(*HB_JOB), asm.setbyte(hv, 0xFF), asm.setbyte((hv[0], hv[1] + 1), 0xFF),
             asm.setbyte((hv[0], hv[1] + 2), 0x0F), asm.goto(done)]
@@ -138,6 +138,7 @@ def _menu(sec, dests):
         k = gifts.FIRST_KEY_ITEM + j
         ops.append(asm.biton((1, 64 + k // 8), k % 8))
     ops += [asm.goto(done)]
+    ops += [kids] + [asm.biton(*k) for k in HB_KID] + [asm.goto(done)]
     ops += [hunt, Op(bytes([0x86, HUNTER_PTS[0] << 4, HUNTER_PTS[1]]) + struct.pack("<H", 50)), asm.goto(done)]
     ops += [done, sound(0x168), asm.goto_back(main)]
     # close: control back, wait for the buttons to be let go

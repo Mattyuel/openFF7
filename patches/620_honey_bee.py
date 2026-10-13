@@ -26,7 +26,7 @@
 """
 import struct
 
-from _config import HB_AFFECTION, HB_CAP, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
+from _config import HB_AFFECTION, HB_CAP, HB_KID, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
 from _honey_bee_data import GIRLS, LOUNGE, STARS
 import _honey_bee_gifts as gifts
 from _honey_bee_scenes_more import CLOSE, CLOSE_FINAL, DEVOTED, DEVOTED_FINAL
@@ -683,6 +683,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                 ops += [Op(bytes.fromhex("5e00000200000804")), _w(20)]
             else:
                 raise ValueError(step)
+        if field == DEVOTED_ROOM:
+            ops.append(asm.biton(*HB_KID[i]))          # 622: a kid appears next to her
         ops += [asm.goto(finale), nxt]
     ops += [asm.goto(stop), finale, _w(30),
             Op(bytes.fromhex("6b0000000000080200")), Op(b"\x6C"), _w(20)]       # FADE out, FADEW

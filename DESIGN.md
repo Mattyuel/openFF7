@@ -162,6 +162,12 @@ yours (instead of the original Gold Saucer gift).
   (+1) or hates (+0) each type. Visit scenes: affection 0-9 the basic scene,
   10-19 a more intimate one, 20 the most intimate (borderline explicit,
   fading out). Reaction lines are shared by all girls (text budget).
+- **Honey Bee kids** (a little joke, never spelled out): after a girl's
+  affection-20 scene, a child stands next to her where she is found in the
+  world, a kid model that suits the place (the snorkel boy at Costa del Sol,
+  the red-cap boy in Rocket Town...), with one line about "Mom" and a
+  spiky-haired dad. Rhonda's inn has no model room: her kid waits outside the
+  Nibelheim inn door.
 - **Honey Bee Inn income.** The manager pays out the girls' earnings: total
   stars of the hired girls x 2 gil x minutes of play since the last
   collection (at most 4.5 hours' worth).

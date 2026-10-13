@@ -648,6 +648,14 @@ Honey Bee Girl recruitment.
 - `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
 - `apply(ctx)` 
 
+## `patches/622_hb_kids.py`
+Honey Bee kids: after a girl's devoted (affection 20) scene, a child stands
+
+- `_beside(ctx, field, x, y)` Floor (x, y, z, tri) next to (x, y) as seen on screen: about GAP pixels
+- `_talk(line)` 
+- `_hidden_unless(i)` 
+- `apply(ctx)` 
+
 ## `patches/625_gift_shops.py`
 Gift shops: the Gift Merchant sells the Honey Bee gifts (_honey_bee_gifts:
 

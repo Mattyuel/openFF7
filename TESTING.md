@@ -306,9 +306,21 @@ Existing saves load, but they keep their own story progress; use a new game.
   Icicle Inn, Mideel), Gil +100,000, Encounters OFF / ON (fields and world
   map; stays set in your save until you turn it back on), Honey Bee /
   Hunter: job + all girls hired, all affection 0 / 10 / 20, all 12 gifts,
-  Hunter points +50. Not available in ~40 fields whose text tables are full
+  all 20 kids, Hunter points +50. Not available in ~40 fields whose text tables are full
   (Kalm bar, disc 2 Midgar, a few dungeons). Opening it during a cutscene
   can leave the scene without player control; use it while walking around.
+- **Honey Bee kids** (new; untested in-game): after a girl's affection-20
+  scene (onna_6), go to where you hired her: a kid stands beside her (Rhonda's
+  outside the Nibelheim inn door, Velvet's next to her in the Battle Square
+  entrance) and says one line. Before the scene the kid isn't there. Debug
+  menu: Honey Bee / Hunter -> All 20 kids. Kids: Bambi std girl (white blouse),
+  Gloria goggles boy, Dot Midgar boy, Peggy cowboy-hat boy, Candy dark red
+  dress girl, Rhonda Nibelheim boy, Lulu swimsuit girl, Raven grey-hood girl,
+  Elena red-pigtails girl, Marisol snorkel boy, Ruby Costa sun-dress girl,
+  Holly snow kid, Sakura Wutai kimono girl, Mags red-cap boy, Celeste
+  Gongaga boy, Aurora Cosmo boy, Tifa red-pigtails girl, Aerith white-blouse
+  girl, Scarlet Midgar boy, Velvet Gongaga girl. Report a kid off screen,
+  stuck in a wall or overlapping her.
 - **Honey Bee gifts and affection** (new; untested in-game; needs the new
   flevel.lgp, kernel2.bin AND KERNEL.BIN). A Gift Merchant (a woman from the
   Wall Market boutique) stands in Wall Market (main street, left side, above
