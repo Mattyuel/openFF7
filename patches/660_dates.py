@@ -119,7 +119,9 @@ GIRL_MODEL = {"Tifa": "main_n_tifa.char", "Aerith": "main_n_earith.char",   # he
 GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5)}   # where a base field lacks her model
 # extra anims on her model for the dates (the third date's "stand" and "slap" steps):
 # Scarlet's slap = junone7's (sca script 7: CANM!2 FDID 0-0x1D, SOUND 0x76, CANM!2 0x1D-0x31)
-GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"}}
+GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"},
+              # (user) Aerith's third date: she looks at him, gets up, kneels and bows
+              "Aerith": {"stand": "AVBF.chi", "kneel": "ZDKD.tor"}}
 SLAP_HIT, SLAP_END, SLAP_SOUND = 0x1D, 0x31, 0x76
 RETURN_GAP = 40                        # back beside her: this far from her spot
 
@@ -337,7 +339,7 @@ def _field(ctx, place, group, names):
             loader.models[m] = ModelLoader.with_anims(loader.models[m],
                                                       [a for a in extra.values() if a not in ModelLoader.anims(loader.models[m])])
             an = ModelLoader.anims(loader.models[m])
-            st, sl = an.index(extra["stand"]), an.index(extra["slap"])
+            st = an.index(extra["stand"])
             me = model_ent[m]
             # stands up and walks over to Cloud (MOVE when the straight way is all floor, else she
             # is simply put there: a MOVE that can't get through would never end), then faces him
@@ -357,11 +359,19 @@ def _field(ctx, place, group, names):
                 go = [hb._xyzi(round(tx), round(ty), mesh.height(tt, round(tx), round(ty)), tt)]
             scripts[me][9] = [Op(bytes([0xA2, st, 1])), Op(bytes([0xAE, st, 1])), hb._w(10)] + go \
                 + [hb._tura(model_ent[0]), asm.ret()]
-            scripts[me][10] = [Op(bytes([0xBC, sl, 0, SLAP_HIT, 1])), Op(b"\xAC"),                    # the slap
-                               Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
-                               Op(bytes([0xBC, sl, SLAP_HIT, SLAP_END, 1])), Op(b"\xAC"),
-                               Op(bytes([0xA2, st, 1])), Op(bytes([0xAE, st, 1])), asm.ret()]
-            tier_acts = {"stand": [hb._req(me, 9)], "slap": [hb._req(me, 10), hb._w(10)]}
+            scripts[me][12] = [hb._tura(model_ent[0]), asm.ret()]                                    # looks at him
+            tier_acts = {"stand": [hb._req(me, 9)], "look": [hb._req(me, 12), hb._w(15)]}
+            if "slap" in extra:
+                sl = an.index(extra["slap"])
+                scripts[me][10] = [Op(bytes([0xBC, sl, 0, SLAP_HIT, 1])), Op(b"\xAC"),                # the slap
+                                   Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
+                                   Op(bytes([0xBC, sl, SLAP_HIT, SLAP_END, 1])), Op(b"\xAC"),
+                                   Op(bytes([0xA2, st, 1])), Op(bytes([0xAE, st, 1])), asm.ret()]
+                tier_acts["slap"] = [hb._req(me, 10), hb._w(10)]
+            if "kneel" in extra:                                                                 # kneels, bowed
+                kn = an.index(extra["kneel"])
+                scripts[me][11] = [Op(bytes([0xA2, kn, 1])), Op(bytes([0xAE, kn, 1])), asm.ret()]
+                tier_acts["kneel"] = [hb._req(me, 11), hb._w(20)]
         p2 = PART2[gname]
         cpose = CLOUD_PART2.index(p2["cloud"])
         if p2.get("bare"):                       # her undressed copy: a second model and entity
@@ -595,9 +605,12 @@ KNEEL_ARMS, KNEEL_TILT, KNEEL_ROCK, KNEEL_FRAMES, KNEEL_FRAMES_FAST = 40, 10, 10
 # was at his chest); placed so her face is KNEEL_FACE in front of his pelvis
 KNEEL_SIT, KNEEL_FACE = 75, 7.5     # (FACE 3 -> 9: a head width further away, then 7.5: a little closer, user)
 KNEEL_LOOK = 35                       # her "look up" poses (zdkc, zdkb): chin up this much (user)
+BOW, BOW_HEAD = 40, 25                # Aerith's bow on her third date (zdkd: user)
 
 
-def _kneel(ctx, name, hrc, stand, nframes, look=0):
+def _kneel(ctx, name, hrc, stand, nframes, look=0, bow=None):
+    """bow: a still bow (one frame where she is, no offset): above the knees tipped `bow`
+    forward, the head lowered BOW_HEAD more."""
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
     names = [b[0] for b in sk]
@@ -644,15 +657,20 @@ def _kneel(ctx, name, hrc, stand, nframes, look=0):
     frames = []
     for t in range(nframes):
         a = tip * (KNEEL_TILT + KNEEL_ROCK * (1 - math.cos(2 * math.pi * t / nframes)) / 2)
+        if bow is not None:
+            a = tip * bow
         R = fa.axis_angle(side, a)
         rel = fa._vec(R, [root[k] - knee[k] for k in range(3)])
         rt = [knee[k] + rel[k] for k in range(3)]
         Wt = [m if i in keep else fa._mul(R, m) for i, m in enumerate(W)]
         Wt[I("head")] = head                                                       # upright
+        if bow is not None:
+            Wt[I("head")] = fa._mul(fa.axis_angle(side, tip * (bow + BOW_HEAD)), W[I("head")])   # bowed
         E = fk(Wt, rt)
         for s in "lr":
             assert abs(E[I(s + "_femur")][2][1]) < 0.8, (name, t, s)               # knees on the floor
-        rt = [rt[0], rt[1], rt[2] - (knee[2] + lift[2]) + dist]                     # in front of him
+        if bow is None:
+            rt = [rt[0], rt[1], rt[2] - (knee[2] + lift[2]) + dist]                 # in front of him
         frames.append((rr, [rt[0], -rt[1], rt[2]], fa.local_rotations(sk, rr, Wt)))
     base = fa.Anim(ctx.char_file(stand))
     base.frames = frames
@@ -846,6 +864,7 @@ def apply(ctx):
     for anim, frames, look in (("ZDKA.tor", KNEEL_FRAMES, 0), ("ZDKC.tor", KNEEL_FRAMES, KNEEL_LOOK),
                                ("ZDKB.tor", KNEEL_FRAMES_FAST, KNEEL_LOOK)):    # fast: still looking up
         _kneel(ctx, anim, "auff.hrc", "avbf.a", frames, look)
+    _kneel(ctx, "ZDKD.tor", "auff.hrc", "avbf.a", 1, bow=BOW)
     for group, names in enumerate(GROUPS):
         arrive = {p: _field(ctx, p, group, names) for p in PLACES}
         for gname in names:

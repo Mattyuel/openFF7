@@ -129,6 +129,12 @@ DATES = {
             {   # third date (user): playfully submissive
                 "open": "“Tonight… I'll do whatever you say.\n Ehehe.”",
                 "steps": [
+                    ("A", "look"),                              # (user) she looks at him,
+                    ("G", "“…”"),
+                    ("A", "stand"),                             # gets up and comes over,
+                    ("G", "“A proper bodyguard deserves\n a proper greeting.”"),
+                    ("A", "kneel"),                             # kneels and bows
+                    ("G", "“At your service, sir. Ehehe…\n Am I doing it right?”"),
                     ("G", "“You're the bodyguard. So you give\n the orders tonight, right?”"),
                     ("Q", "“So, what's your first order?”", ["Come here, Aerith.", "Guard the door.", "Go home."], 0,
                      "“Yes, sir! …Like this? Closer?”",
