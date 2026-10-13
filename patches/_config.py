@@ -46,7 +46,12 @@ OPEN_VARS_FIRST = 96
 QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63),
                # bank 1 runs unused by every field/world map script and with no exe
                # absolute reference (scan of 2026-10; bank 1 = plain field flags)
-               (1, 136, 159), (1, 236, 246)]
+               (1, 136, 159), (1, 236, 244)]
+
+# Hunter points (630_bounties.py): u16 at bank 1 245-246 (taken off the end of
+# the last quest area, unused and zero at new game). Lifetime total, never
+# spent; the Hunter rank is derived from it (630 RANKS).
+HUNTER_PTS = (2, 245)
 
 # Quest giver markers (600_quests): "sprites" = the S-Guard star (offer) and
 # heart (accepted) models built into char.lgp; "orbs" = the old tinted materia

@@ -123,6 +123,11 @@ yours (instead of the original Gold Saucer gift).
   "(Bounty) Title" with a description; once completed or timed out they are
   dropped (not remembered) and a new one can be taken straight away.
   Bounties are not saved.
+  **Hunter rank**: each claimed bounty adds Hunter points equal to its
+  region's level (Midgar 1, Kalm 2, Junon 3, Costa 4, Cosmo 5, Nibelheim 6,
+  Wutai 7, Icicle 8). Points are saved and never decrease; the rank follows
+  them (Rookie 0, Tracker 10, Hunter 30, Veteran 60, Elite 100, Master 160,
+  Legend 250). Planned: rank unlocks rare items to buy.
 - **Honey Bee Girl recruitment.** The Honey Bee Inn's manager (lobby) offers
   a job: recruit girls for the Inn. Then 20 women around the world (Tifa,
   Aerith, Elena, Scarlet and 16 new ones; all adults) can be recruited by

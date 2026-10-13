@@ -21,6 +21,7 @@ limit, then come back to Scoop (in that region's bar) to collect.
 """
 import struct
 
+from _config import HUNTER_PTS
 from _recruit import SOUND_ITEM, say, sound
 from _travel import add_npc, choice_menu, copy_model
 
@@ -42,11 +43,15 @@ STATUS, OFFER, ACCEPT, CLAIM, ACTIVE = range(5)
 RESULT, INDEX = (5, 237), (5, 238)   # temp vars (talk script only)
 MINUTES = 30
 GIL_PER_LEVEL = 75                   # reward = kills * level * this, rounded to 50
+# Hunter rank: every claimed bounty adds its region's level (1 Midgar .. 8
+# Icicle) to HUNTER_PTS (saved, lifetime); the rank is the highest threshold reached.
+RANKS = [("Rookie", 0), ("Tracker", 10), ("Hunter", 30), ("Veteran", 60),
+         ("Elite", 100), ("Master", 160), ("Legend", 250)]
 
 # region: bar field, Scoop's spot, facing, bar name (quest list), where the
 # hunting is (spiel), pool [(enemy, ids, level, kills, found at)]
 REGIONS = [
-    dict(key="midgar", field="mds7pb_1", at=(-115, 148), dir=32, bar="7th Heaven, Sector 7 Slums",
+    dict(key="midgar", level=1, field="mds7pb_1", at=(-115, 148), dir=32, bar="7th Heaven, Sector 7 Slums",
          area="Midgar", pool=[
              ("Cripshay", [42], 8, 2, "the Train Graveyard"),
              ("Eligor", [40], 12, 2, "the Train Graveyard"),
@@ -55,7 +60,7 @@ REGIONS = [
              ("Vice", [34], 7, 2, "the Sector 5 slums"),
              ("Sword Dance", [55], 11, 2, "the Shinra Building"),
          ]),
-    dict(key="kalm", field="elmpb", at=(267, -58), dir=220, bar="Kalm bar",
+    dict(key="kalm", level=2, field="elmpb", at=(267, -58), dir=220, bar="Kalm bar",
          area="the plains past Midgar", pool=[
              ("Mu", [77], 12, 3, "the grasslands"),
              ("Mandragora", [79], 10, 3, "the grasslands"),
@@ -63,7 +68,7 @@ REGIONS = [
              ("Elfadunk", [76], 14, 3, "the grasslands"),
              ("Devil Ride", [72], 13, 3, "the plains outside Midgar"),
          ]),
-    dict(key="junon", field="junpb_3", at=(100, 78), dir=22, bar="Junon bar",
+    dict(key="junon", level=3, field="junpb_3", at=(100, 78), dir=22, bar="Junon bar",
          area="the Junon area", pool=[
              ("Hell Rider VR2", [88], 18, 2, "the Junon coast"),
              ("Scrutin Eye", [93], 15, 3, "the cargo ship"),
@@ -72,7 +77,7 @@ REGIONS = [
              ("Ark Dragon", [84], 18, 3, "the Mythril Mine"),
              ("Capparwire", [90], 15, 3, "the Junon coast"),
          ]),
-    dict(key="costa", field="delpb", at=(127, 346), dir=4, bar="Costa del Sol bar",
+    dict(key="costa", level=4, field="delpb", at=(127, 346), dir=4, bar="Costa del Sol bar",
          area="the Corel area", pool=[
              ("Beachplug", [99], 16, 3, "the beaches"),
              ("Bloatfloat", [102], 18, 3, "Mt. Corel"),
@@ -80,7 +85,7 @@ REGIONS = [
              ("Grangalan", [96], 16, 3, "the Corel area"),
              ("Cokatolis", [104], 17, 3, "Mt. Corel"),
          ]),
-    dict(key="cosmo", field="cosin3", at=(115, 240), dir=30, bar="Pub Starlet, Cosmo Canyon",
+    dict(key="cosmo", level=5, field="cosin3", at=(115, 240), dir=30, bar="Pub Starlet, Cosmo Canyon",
          area="the canyon lands", pool=[
              ("Golem", [131], 24, 2, "the canyon lands"),
              ("Gi Spector", [134], 23, 2, "the Cave of the Gi"),
@@ -89,7 +94,7 @@ REGIONS = [
              ("Skeeskee", [129], 20, 3, "the canyon lands"),
              ("Griffin", [130], 21, 3, "the canyon lands"),
          ]),
-    dict(key="nibel", field="nivinn_1", at=(-14, -340), dir=233, bar="Nibelheim Inn",
+    dict(key="nibel", level=6, field="nivinn_1", at=(-14, -340), dir=233, bar="Nibelheim Inn",
          area="the Nibel area", pool=[
              ("Bahba Velamyu", [142], 23, 2, "the Nibel area"),
              ("Screamer", [162], 26, 2, "Mt. Nibel"),
@@ -98,7 +103,7 @@ REGIONS = [
              ("Nibel Wolf", [140], 23, 2, "the Nibel area"),
              ("Zuu", [160], 27, 2, "Mt. Nibel"),
          ]),
-    dict(key="wutai", field="utapb", at=(0, -232), dir=222, bar="Turtle's Paradise, Wutai",
+    dict(key="wutai", level=7, field="utapb", at=(0, -232), dir=222, bar="Turtle's Paradise, Wutai",
          area="the Wutai area", pool=[
              ("Edgehead", [169], 27, 2, "the Wutai area"),
              ("Thunderbird", [167], 28, 3, "the Wutai area"),
@@ -106,7 +111,7 @@ REGIONS = [
              ("Adamantaimai", [172], 30, 3, "the Wutai beaches"),
              ("Tail Vault", [171], 28, 3, "the Wutai area"),
          ]),
-    dict(key="icicle", field="sninn_b1", at=(169, 479), dir=22, bar="Icicle Inn bar",
+    dict(key="icicle", level=8, field="sninn_b1", at=(169, 479), dir=22, bar="Icicle Inn bar",
          area="the north", pool=[        # Icicle area, Great Glacier, snowfield maze, Gaea's Cliff, Forgotten Capital
              ("Vlakorados", [197], 33, 2, "the snowfields"),
              ("Blue Dragon", [216], 41, 2, "inside Gaea's Cliff"),
@@ -176,14 +181,26 @@ def _talk(i, r):
         remind = asm.nop()
         ops += [asm.if_byte(RESULT, "==", 2, remind)]
         # ---- claim
+        ranked = asm.nop()
         ops += [bounty_op(CLAIM, i, INDEX)]
         for k, (name, ids, level, kills, found) in enumerate(r["pool"]):
             nxt = asm.nop()
             g = gil(level, kills)
             ops += [asm.if_byte(INDEX, "==", k, nxt)]
-            ops += [Op(bytes([0x39, 0]) + struct.pack("<I", g)), sound(SOUND_ITEM)]      # GOLDU
-            ops += say(sec, NAME + "\n“%s, down! Front page stuff.\n Here's your %d gil.”" % (name, g))
-            ops += end + [nxt]
+            ops += [Op(bytes([0x39, 0]) + struct.pack("<I", g)), sound(SOUND_ITEM),     # GOLDU
+                    Op(bytes([0x86, HUNTER_PTS[0] << 4, HUNTER_PTS[1]]) + struct.pack("<H", r["level"]))]  # PLUS2
+            paid = say(sec, NAME + "\n“%s, down! Here's %d gil.”\n+%d Hunter points ({VAR} in all)."
+                       % (name, g, r["level"]))
+            paid.insert(1, Op(bytes([0x42, HUNTER_PTS[0], 0, 0]) + struct.pack("<H", HUNTER_PTS[1])))  # MPRA2
+            ops += paid + [asm.goto(ranked), nxt]
+        ops += end
+        # rank up: the points just crossed a threshold
+        ops.append(ranked)
+        for rank, at in RANKS[1:]:
+            skip = asm.nop()
+            ops += [asm.if_word(HUNTER_PTS, ">=", at, skip), asm.if_word(HUNTER_PTS, "<", at + r["level"], skip)]
+            ops += say(sec, NAME + "\n“Hunter rank up! You're a %s now.\n Folks are starting to talk.”" % rank)
+            ops += [skip]
         ops += end
         # ---- reminder
         offer = asm.nop()

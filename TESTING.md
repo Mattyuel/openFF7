@@ -297,7 +297,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   disappears from the list and Scoop offers a new one. One per region; the 8
   are independent. Saving and loading (or a new game) drops every bounty.
   Check: the list row and time, kills counting, the payout, a time-out, and
-  that loading a save clears them. Scoop's spots were picked by a script:
+  that loading a save clears them. Each payout shows "+N Hunter points (T in
+  all)" (N = 1 in Midgar .. 8 at Icicle Inn) and a rank-up line at 10, 30,
+  60, 100, 160, 250 points; points survive saving. Scoop's spots were picked by a script:
   report any that stand somewhere odd.
 - **Round of fixes (new game; untested in-game):**
   - Pillar: the gate at the bottom should now *look* open. At the top of the
