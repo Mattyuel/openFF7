@@ -68,7 +68,11 @@ HB_VISIT = (1, 255)               # girl index + 1 being visited (0 = none)
 # writes the play time in minutes to HB_MINUTES every second (quest_menu.asm
 # q_clock); HB_LAST = HB_MINUTES at the last collection.
 HB_MINUTES, HB_LAST = (2, 247), (2, 249)
-HB_RATE = 2                       # gil per star per minute
+# Affection 0-20 per girl (Honey Bee gifts), one byte each, girl i ->
+# HB_AFFECTION[i]. Bank 1 188-223 has no exe absolute refs and no world map
+# use; original field scripts use 197-199 and 208-209, so those are skipped.
+HB_AFFECTION = [(1, b) for b in list(range(188, 197)) + list(range(200, 208)) + list(range(210, 213))]
+HB_RATE = 2                     # gil per star per minute
 HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 
 # Regions that keep their own story line in a private 16-bit variable

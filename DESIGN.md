@@ -153,6 +153,15 @@ yours (instead of the original Gold Saucer gift).
   one plays a comic scene in the "&" room (Cloud + the Honey Bee dancer model
   under her name) ending in a fade and "You spent the rest of the night
   together and had a good time...".
+- **Honey Bee affection and gifts.** Each girl has an affection rating 0-20,
+  raised only by gifts given in the lounges. Gifts are 12 key items (usable
+  only as gifts, one of each held at a time) sold by the Gift Merchant in
+  Wall Market, Costa del Sol, Cosmo Canyon and Wutai (3 each, one of each
+  type, pricier further out). Hidden gift types: beautiful, practical, sweet
+  (the description hints at it); each girl likes (+2), is indifferent to
+  (+1) or hates (+0) each type. Visit scenes: affection 0-9 the basic scene,
+  10-19 a more intimate one, 20 the most intimate (borderline explicit,
+  fading out). Reaction lines are shared by all girls (text budget).
 - **Honey Bee Inn income.** The manager pays out the girls' earnings: total
   stars of the hired girls x 2 gil x minutes of play since the last
   collection (at most 4.5 hours' worth).

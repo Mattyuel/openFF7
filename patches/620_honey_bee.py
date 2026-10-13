@@ -26,8 +26,10 @@
 """
 import struct
 
-from _config import HB_CAP, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
+from _config import HB_AFFECTION, HB_CAP, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
 from _honey_bee_data import GIRLS, LOUNGE, STARS
+import _honey_bee_gifts as gifts
+from _honey_bee_scenes_more import CLOSE, CLOSE_FINAL, DEVOTED, DEVOTED_FINAL
 from _recruit import SOUND_RECRUIT, sound
 from _travel import CHOICE, add_npc, beside, copy_model
 
@@ -38,6 +40,10 @@ from ff7.text import encode
 from ff7.walkmesh import Walkmesh
 
 LOBBY, ROOM = "onna_4", "onna_52"
+# Affection tiers: the closer scenes play in copies of the "&" room made
+# before any visit edits (unused maplist names; each copy has the room's whole
+# text table for its 20 scenes). (field, first affection, scenes, last line)
+CLOSE_ROOM, DEVOTED_ROOM = "onna_3", "onna_6"
 MANAGER_MODEL = ("colne_3", 4)               # market_youjin_r: Scotch (Corneo's man, colne_3 SOTCH)
 # a Honey Bee girl either side of him (screen x = field x * 0.46 here)
 ESCORTS = [("hbbee_l", (44, -48), "Honey Bee\n“Ooh, a new face! The boss says\n you've got an eye for talent.”"),
@@ -124,6 +130,9 @@ CLOUD_EXTRA = {"shrug": "AQCB.chi", "take": "FYGC.chi", "nudge": "FYFC.chi", "no
                "formal": "EGGD.yos", "coy": "EGIC.yos", "point": "ALGB.yos", "cleanpants": "CCJF.tor",
                "stretch": "HOCF.tak", "warmup": "FJCB.yos", "leanin": "CDDE.tor", "cheer": "FDIF.hei",
                "drink": "FJCE.aki"}
+GIFT_GIRL, GIFT_SEL = (5, 220), (5, 221)  # temp: lounge girl talked to, gift picked
+DISPLAY = (6, 222)                           # temp word: affection shown with MPRA2
+MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (not from the bed)
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
 BED, BEDSIDE = (136, -199), (120, -95)
 BED_DIR = 0x40                               # lying girl: turned 90 degrees (user)
@@ -370,8 +379,12 @@ def _manager(ctx, back):
             ask, first = _ask(sec, "Manager\n“%s (%s), our %s.”" % (g["name"], STARS[g["stars"]], g["tag"]),
                               ["Visit her.", "Next girl.", "Never mind."])
             ops += [asm.if_byte(hv, "bit_on", bit, skip), asm.setbyte(SHOWN, 1)] + ask
-            ops += [asm.if_byte(CHOICE, "==", first, go),
-                    asm.setbyte(HB_VISIT, i + 1), _uc(0), asm.mapjump(room, rx, ry, rtri, rdir), asm.ret(),
+            ops += [asm.if_byte(CHOICE, "==", first, go), asm.setbyte(HB_VISIT, i + 1), _uc(0)]
+            for name, at in ((DEVOTED_ROOM, gifts.DEVOTED), (CLOSE_ROOM, gifts.CLOSE)):   # by her affection
+                lower = asm.nop()
+                ops += [asm.if_byte(HB_AFFECTION[i], ">=", at, lower),
+                        asm.mapjump(ctx.maplist.index(name), rx, ry, rtri, rdir), asm.ret(), lower]
+            ops += [asm.mapjump(room, rx, ry, rtri, rdir), asm.ret(),
                     go, asm.if_byte(CHOICE, "==", first + 2, stop), asm.goto(end), stop, skip]
         ops += [asm.if_byte(SHOWN, "==", 0, done)]
         ops += _say(sec, "Manager\n“You haven't hired anybody yet!\n Get out there and charm 'em.”")
@@ -423,8 +436,11 @@ def _guard(sec, ent, first, ops_after):
             sec.entry[ent][k] = guard[0]
 
 
-def _room(ctx, back):
-    f = ctx.field(ROOM)
+def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
+    """Visit mode for room copy `field`: girl i plays scenes[i] (default:
+    her basic scene), then `final`."""
+    scenes = scenes or [g["scene"] for g in GIRLS]
+    f = ctx.field(field)
     mesh = Walkmesh(f.section("walkmesh"))
 
     def spot(p):
@@ -449,7 +465,7 @@ def _room(ctx, back):
         return all(mesh.find(a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n) is not None
                    for i in range(n + 1))
     stops = [MID, NEAR, FAR, INSIDE]
-    legs = ([(ROOM_ARRIVE[:2], STAGE), (STAGE, BEDSIDE), (ROOM_ARRIVE[:2], BED_LEVEL)]
+    legs = ([(ROOM_ARRIVE[:2], STAGE), (STAGE, BEDSIDE), (ROOM_ARRIVE[:2], BED_LEVEL), (BED_LEVEL, BEDSIDE)]
             + [(a, b) for a in stops for b in stops if a != b])
     bad = [leg for leg in legs if not on_floor(*leg)]
     assert not bad, bad
@@ -512,9 +528,12 @@ def _room(ctx, back):
         "intobed": [Op(b"\xC7\x01"), _msped(WALK), gx(BED_LEVEL), _tura(girl)],
     }
     cloud_beats.update({name: one(name) for name in CLOUD_EXTRA})
-    used = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("g", "g&")}
-    on_bed = [i for i, g in enumerate(GIRLS) if g["scene"][0] == ("start", "bed")]
-    used_c = {s[1] for g in GIRLS for s in g["scene"] if s[0] in ("c", "c&")} | {"into"}
+    used = {s[1] for sc in scenes for s in sc if s[0] in ("g", "g&")}
+    on_bed = [i for i, sc in enumerate(scenes) if sc[0] == ("start", "bed")]
+    for i, sc in enumerate(scenes):
+        assert sum(s[0] in ("G", "C") for s in sc) <= 7, (field, GIRLS[i]["name"])
+        assert i not in on_bed or not {s[1] for s in sc if s[0] in ("g", "g&")} & MOVES, (field, GIRLS[i]["name"])
+    used_c = {s[1] for sc in scenes for s in sc if s[0] in ("c", "c&")} | {"into"}
     used_c |= {"intobed"} if on_bed else set()
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
@@ -558,7 +577,7 @@ def _room(ctx, back):
         into = "intobed" if i in on_bed else "into"
         ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt),
                 asm.setbyte(ACT, cloud_act[into]), _req(cloud, cslot), _w(15)]
-        for step in g["scene"]:
+        for step in scenes[i]:
             kind = step[0]
             if kind == "start":
                 continue
@@ -579,7 +598,7 @@ def _room(ctx, back):
         ops += [asm.goto(finale), nxt]
     ops += [asm.goto(stop), finale, _w(30),
             Op(bytes.fromhex("6b0000000000080200")), Op(b"\x6C"), _w(20)]       # FADE out, FADEW
-    ops += _say(sec, FINAL, x=24, y=96)
+    ops += _say(sec, final, x=24, y=96)
     ops += [asm.setbyte(HB_VISIT, 0), _uc(0), _menu(0),
             asm.mapjump(lobby, bx, by, btri, 0x80), stop]
     sec.add_entity("hbscene", {0: [asm.ret()] + ops})
@@ -608,6 +627,82 @@ def _idle_loop(da, kind, var):
             + [asm.goto_back(top)])
 
 
+def _key_bit(j):
+    """Gift j's key item: (var, bit)."""
+    k = gifts.FIRST_KEY_ITEM + j
+    return (1, 64 + k // 8), k % 8
+
+
+def _show_aff(say_ops, var):
+    """_say ops + the affection in `var` as {VAR} (MPRA2 right after WINDOW)."""
+    return ([asm.setword(DISPLAY, var), say_ops[0],
+             Op(bytes([0x42, DISPLAY[0], 0, 0]) + struct.pack("<H", DISPLAY[1]))] + say_ops[1:])
+
+
+def _gift_routine(sec):
+    """The lounge gift menu (entity hbgift script 1, REQEW'd by a girl's talk
+    with GIFT_GIRL = her index). Nothing if she's at full affection or no gift
+    is held; else pick a gift (two pages), it's taken, and her affection rises
+    by her liking of its type (gifts.PREFS), capped at gifts.MAX. Every text
+    is shared by all girls (the room's text table is nearly full)."""
+    n = len(gifts.GIFTS)
+    assert n == 12 and len(gifts.PREFS) == len(GIRLS)
+    end, devoted, menu, chosen, not_held = asm.ret(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    ops = []
+    for i in range(len(GIRLS)):
+        nxt = asm.nop()
+        ops += [asm.if_byte(GIFT_GIRL, "==", i, nxt), asm.if_byte(HB_AFFECTION[i], ">=", gifts.MAX, nxt),
+                asm.goto(devoted), nxt]
+    for j in range(n):                                   # holding any gift at all?
+        kv, bit = _key_bit(j)
+        nxt = asm.nop()
+        ops += [asm.if_byte(kv, "bit_on", bit, nxt), asm.goto(menu), nxt]
+    ops += [asm.goto(end), menu]
+    names = [g[0] for g in gifts.GIFTS]
+    page1, first1 = _ask(sec, gifts.GIVE_PROMPT, names[:6] + ["More gifts…", "Not now."])
+    page2, first2 = _ask(sec, gifts.GIVE_PROMPT, names[6:] + ["Back.", "Not now."])
+    more = asm.nop()
+    ops += page1 + [asm.if_byte(CHOICE, "!=", first1 + 6, more)]
+    for j in range(6):
+        nxt = asm.nop()
+        ops += [asm.if_byte(CHOICE, "==", first1 + j, nxt), asm.setbyte(GIFT_SEL, j), asm.goto(chosen), nxt]
+    ops += [asm.goto(end), more] + page2
+    for j in range(6):
+        nxt = asm.nop()
+        ops += [asm.if_byte(CHOICE, "==", first2 + j, nxt), asm.setbyte(GIFT_SEL, 6 + j), asm.goto(chosen), nxt]
+    back = asm.nop()
+    ops += [asm.if_byte(CHOICE, "==", first2 + 6, back), asm.goto_back(menu), back, asm.goto(end)]
+    # the gift picked: held? take it, then branch on its type
+    by_type = [asm.nop() for _ in gifts.TYPES]
+    ops.append(chosen)
+    for j, (_, _, t, _, _) in enumerate(gifts.GIFTS):
+        kv, bit = _key_bit(j)
+        nxt = asm.nop()
+        ops += [asm.if_byte(GIFT_SEL, "==", j, nxt), asm.if_byte(kv, "bit_on", bit, not_held),
+                asm.bitoff(kv, bit), asm.goto(by_type[t]), nxt]
+    ops += [asm.goto(end)]
+    react = {k: asm.nop() for k in gifts.GAIN}
+    for t, label in enumerate(by_type):
+        ops.append(label)
+        for i, g in enumerate(GIRLS):
+            like = gifts.PREFS[g["name"]][t]
+            gain, aff = gifts.GAIN[like], HB_AFFECTION[i]
+            nxt, ok = asm.nop(), asm.nop()
+            ops += [asm.if_byte(GIFT_GIRL, "==", i, nxt)]
+            if gain:
+                ops += [Op(bytes([0x85, aff[0] << 4, aff[1], gain])),                 # PLUS
+                        asm.if_byte(aff, ">", gifts.MAX, ok), asm.setbyte(aff, gifts.MAX), ok]
+            ops += [asm.setword(DISPLAY, aff), asm.goto(react[like]), nxt]
+        ops += [asm.goto(end)]
+    for like, label in react.items():
+        say = _say(sec, gifts.REACT[like])
+        ops += [label, say[0], Op(bytes([0x42, DISPLAY[0], 0, 0]) + struct.pack("<H", DISPLAY[1]))] + say[1:]
+        ops += [sound(0x168) if like == "L" else asm.nop(), asm.goto(end)]
+    ops += [not_held] + _say(sec, gifts.NOT_HELD) + [asm.goto(end)]
+    ops += [devoted] + _say(sec, gifts.DEVOTED_LINE) + [end]
+    return ops
+
+
 def _lounge(ctx):
     from ff7 import background as bgmod, camera as cammod, walkmesh as wmmod
     from ff7.camera import Camera, facing_screen
@@ -619,6 +714,7 @@ def _lounge(ctx):
     sec = Script.parse(f.sections[0])
     da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA)}
     assert len(GIRLS) == 4 * GIRLS_PER_ROOM == 20 and len(LOUNGE_SPOTS) == GIRLS_PER_ROOM
+    gift_ent = sec.add_entity("hbgift", {1: _gift_routine(sec)})
     for k, name in enumerate(LOUNGE_EXTRAS):
         ent = sec.entity_index(name)
         old = sec.script_ops(ent, 0)
@@ -646,7 +742,9 @@ def _lounge(ctx):
                          asm.if_byte(_hired(g)[0], "bit_on", _hired(g)[1], nxt)] + show + [asm.goto(done), nxt]
                 tnxt = asm.nop()
                 talk += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, tnxt)]
-                talk += _say(sec, GIRLS[g]["name"] + "\n" + LOUNGE[GIRLS[g]["name"]]) + [asm.goto(tend), tnxt]
+                line = GIRLS[g]["name"] + "\n" + LOUNGE[GIRLS[g]["name"]] + "\n(Affection {VAR}/20)"
+                talk += _show_aff(_say(sec, line), HB_AFFECTION[g])
+                talk += [asm.setbyte(GIFT_GIRL, g), _req(gift_ent, 1), asm.goto(tend), tnxt]
             if kind != "lie":
                 main = _idle_loop(da, kind, (LOUNGE_RAND[0], LOUNGE_RAND[1] + k))
         init += [done, asm.ret()]
@@ -725,5 +823,10 @@ def apply(ctx):
     _conference(ctx)
     _add_girls(ctx)
     _manager(ctx, back)
+    base = ctx.field(ROOM).build()                   # before the visit edits: the tier copies start here
     _room(ctx, back)
+    for name, scenes, final in ((CLOSE_ROOM, CLOSE, CLOSE_FINAL), (DEVOTED_ROOM, DEVOTED, DEVOTED_FINAL)):
+        assert set(scenes) == {g["name"] for g in GIRLS}, name
+        ctx.new_field(name, base)
+        _room(ctx, back, name, [scenes[g["name"]] for g in GIRLS], final)
     _lounge(ctx)

@@ -606,10 +606,22 @@ Honey Bee Girl recruitment.
 - `_manager(ctx, back)` 
 - `_free_slots(sec, ent, start)` 
 - `_guard(sec, ent, first, ops_after)` In VISIT mode, `first` (an op of entity `ent`'s script 0) is skipped:
-- `_room(ctx, back)` 
+- `_room(ctx, back, field=ROOM, scenes=None, final=FINAL)` Visit mode for room copy `field`: girl i plays scenes[i] (default:
 - `_pick(var, choices)` Ops running one of `choices` (op lists), picked by RANDOM into var.
 - `_idle_loop(da, kind, var)` A lounge girl's main: forever pause a random while, then a random
+- `_key_bit(j)` Gift j's key item: (var, bit).
+- `_show_aff(say_ops, var)` _say ops + the affection in `var` as {VAR} (MPRA2 right after WINDOW).
+- `_gift_routine(sec)` The lounge gift menu (entity hbgift script 1, REQEW'd by a girl's talk
 - `_lounge(ctx)` 
+- `apply(ctx)` 
+
+## `patches/625_gift_shops.py`
+Gift shops: the Gift Merchant sells the Honey Bee gifts (_honey_bee_gifts:
+
+- `_gil(n)` 
+- `_key_bit(j)` 
+- `_kernel_text(ctx)` 
+- `_build_talk(sec, shop)` 
 - `apply(ctx)` 
 
 ## `patches/630_bounties.py`
@@ -653,8 +665,16 @@ Shared openFF7 settings used by the patch modules.
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
 
 
+## `patches/_honey_bee_gifts.py`
+Honey Bee gifts: 12 new key items (ids 51-62, unused in the original game:
+
+
 ## `patches/_honey_bee_scenes.py`
 Honey Bee Inn visit scenes, one per girl (see _honey_bee_data.py for the
+
+
+## `patches/_honey_bee_scenes_more.py`
+Honey Bee visit scenes at higher affection (_honey_bee_gifts: 10-19 =
 
 
 ## `patches/_marker_models.py`

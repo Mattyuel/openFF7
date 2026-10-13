@@ -67,8 +67,8 @@ Existing saves load, but they keep their own story progress; use a new game.
 - No "Saving on the World Map" window on first entering the world map, and no
   submarine tutorial window (new game).
 - Cloud always leads (he can't be moved in the PHS; needs a new game).
-- If you installed the Tame test files earlier: put back the original
-  `data\lang-en\kernel\kernel2.bin` (the build no longer changes it).
+- `data\lang-en\kernel\kernel2.bin` is built again (the Honey Bee gift
+  key items' names): copy the new one with KERNEL.BIN.
   `ff7_en.exe` is built again (quest kill counting): copy the new one.
 - **World quests** (new game; untested): a quest giver with a marker in Kalm,
   the Chocobo Farm, Mythril Mine (first screen), Fort Condor, the beach
@@ -296,6 +296,22 @@ Existing saves load, but they keep their own story progress; use a new game.
   you. The menu works in there; the door line takes you back out by the door
   you used. If the mirrored room crashes or looks broken, say so: it is the
   first new field the mod adds.
+- **Honey Bee gifts and affection** (new; untested in-game; needs the new
+  flevel.lgp, kernel2.bin AND KERNEL.BIN). A Gift Merchant (a woman from the
+  Wall Market boutique) stands in Wall Market (main street, left side, above
+  the item shop), Costa del Sol (the square between the bar and the inn),
+  Cosmo Canyon (item store, left hut) and Wutai (the path by the save point).
+  Each sells 3 gifts (4,000 to 30,000 gil); a gift is a new KEY ITEM (check
+  the Key Items list shows its name and description), one of each at a time
+  ("You already have one"). In a lounge, talking to a hired girl shows her
+  line with "(Affection N/20)", then "Give her a gift?" if you hold any:
+  two pages of 6 gifts. Giving one takes it and raises her affection by 2,
+  1 or 0 depending on her taste (shared reaction lines); at 20 she says you
+  don't need gifts anymore. Visiting her through the manager then plays a
+  closer scene at 10-19 and the most intimate one at 20: these play in two
+  NEW copies of the bedroom (new fields, like the mirrored room). Check: the
+  number shown (not "0" every time), the key item vanishing when given, the
+  three scene tiers, and that every scene's room loads.
 - **Bounties: Scoop, roving reporter** (new game; untested in-game; needs the
   new ff7_en.exe AND flevel.lgp). Scoop (a Junon parade reporter) sits in 8
   bars: 7th Heaven (Midgar), Kalm bar (Midgar plains to the Zolom marsh),
