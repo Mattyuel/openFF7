@@ -631,7 +631,6 @@ Honey Bee Girl recruitment.
 - `_conference(ctx)` 
 - `_add_girls(ctx)` 
 - `_reuse_entity(ctx, field, name, i, g, pos)` A field already at 16 models: the girl takes over entity `name` (one
-- `_ranked()` 
 - `_manager(ctx, back)` 
 - `_free_slots(sec, ent, start)` 
 - `_guard(sec, ent, first, ops_after)` In VISIT mode, `first` (an op of entity `ent`'s script 0) is skipped:

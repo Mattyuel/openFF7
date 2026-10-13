@@ -27,7 +27,7 @@
 import struct
 
 from _config import HB_AFFECTION, HB_CAP, HB_KID, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
-from _honey_bee_data import GIRLS, LOUNGE, STARS
+from _honey_bee_data import GIRLS, LOUNGE
 import _honey_bee_gifts as gifts
 from _honey_bee_scenes_more import CLOSE, CLOSE_FINAL, DEVOTED, DEVOTED_FINAL
 from _recruit import SOUND_RECRUIT, sound
@@ -54,7 +54,6 @@ BACK_AT = (0, -250)                          # after a visit: mid-lobby, near th
 MANAGER_AT, MANAGER_DIR = (104, -48), 0
 ROOM_ARRIVE = (263, 163, 5, 220)             # onna_4's own jump into the "&" room; Cloud then walks to
                                              # the middle (STAGE) before the girl comes in
-SHOWN = (5, 245)                             # temp: a hired girl was listed
 WRONG = (5, 246)                             # temp: a question was answered wrong (girl fields)
 TOTAL, ELAPSED, EARN = (6, 246), (6, 248), (6, 250)   # temp words: stars, minutes, gil
 FINAL = "You spent the rest of the night together\nand had a good time..."
@@ -519,17 +518,13 @@ def _reuse_entity(ctx, field, name, i, g, pos):
 
 
 # ---- the manager -----------------------------------------------------------
-def _ranked():
-    return sorted(range(len(GIRLS)), key=lambda i: (-GIRLS[i]["stars"], i))
-
-
 def _manager(ctx, back):
     room = ctx.maplist.index(ROOM)
     rx, ry, rtri, rdir = ROOM_ARRIVE
     assert Walkmesh(ctx.field(ROOM).section("walkmesh")).contains(rtri, rx, ry)
 
     def talk(sec):
-        end, offer, visit, tips, done, cut = _uc(0), asm.nop(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
+        end, offer, visit, tips, cut = _uc(0), asm.nop(), asm.nop(), asm.nop(), asm.nop()
         ops = [_uc(1), Op(b"\x35\x00\x08\x02"), _w(8),
                asm.if_byte(HB_JOB[0], "bit_on", HB_JOB[1], offer)]
         menu, first = _ask(sec, "Manager\n“Back again, partner? What'll it be?”",
@@ -539,25 +534,57 @@ def _manager(ctx, back):
                        asm.if_byte(CHOICE, "!=", first + 1, cut),
                        asm.if_byte(CHOICE, "!=", first + 2, tips), asm.goto(end)]
         ops += [cut] + _collect(sec, end)
-        # visit: every hired girl, best first
-        ops += [visit, asm.setbyte(SHOWN, 0)]
-        for i in _ranked():
-            g = GIRLS[i]
-            hv, bit = _hired(i)
-            skip, go, stop = asm.nop(), asm.nop(), asm.nop()
-            ask, first = _ask(sec, "Manager\n“%s (%s), our %s.”" % (g["name"], STARS[g["stars"]], g["tag"]),
-                              ["Visit her.", "Next girl.", "Never mind."])
-            ops += [asm.if_byte(hv, "bit_on", bit, skip), asm.setbyte(SHOWN, 1)] + ask
-            ops += [asm.if_byte(CHOICE, "==", first, go), asm.setbyte(HB_VISIT, i + 1), _uc(0)]
+        # visit (user): one page per star rating, One Star Girls first. A girl not hired yet
+        # is "????" and picking her just shows the page again. The menu text can't change
+        # by itself, so each page has a text per combination of its girls hired (16).
+        pages = [[i for i in range(len(GIRLS)) if GIRLS[i]["stars"] == n] for n in range(1, 6)]
+        page_at = [asm.nop() for _ in pages]
+        visit_at = {i: asm.nop() for i in range(len(GIRLS))}
+        ops += [visit]
+        for p, girls in enumerate(pages):
+            nav = (["Next page."] if p < len(pages) - 1 else []) + (["Previous page."] if p else []) + ["Never mind."]
+            title = "Manager\n“%s Star Girls”" % ("One", "Two", "Three", "Four", "Five")[p]
+            pick = asm.nop()
+            first = None
+
+            def tree(k, mask):
+                nonlocal first
+                if k == len(girls):
+                    rows = ["%s (%s)" % (GIRLS[i]["name"], GIRLS[i]["tag"]) if mask >> n & 1 else "????"
+                            for n, i in enumerate(girls)]
+                    ask, f = _ask(sec, title, rows + nav)
+                    assert first in (None, f)
+                    first = f
+                    return ask + [asm.goto(pick)]
+                hv, bit = _hired(girls[k])
+                off = asm.nop()
+                return [asm.if_byte(hv, "bit_on", bit, off)] + tree(k + 1, mask | 1 << k) + [off] + tree(k + 1, mask)
+            ops += [page_at[p]] + tree(0, 0) + [pick]
+            for n, i in enumerate(girls):            # her row: visit her if hired, else the page again
+                hv, bit = _hired(i)
+                other, unhired = asm.nop(), asm.nop()
+                ops += [asm.if_byte(CHOICE, "==", first + n, other), asm.if_byte(hv, "bit_on", bit, unhired),
+                        asm.goto(visit_at[i]), unhired, asm.goto_back(page_at[p]), other]
+            row = first + len(girls)
+            for label in nav:
+                other = asm.nop()
+                ops += [asm.if_byte(CHOICE, "==", row, other)]
+                if label == "Next page.":
+                    ops += [asm.goto(page_at[p + 1])]
+                elif label == "Previous page.":
+                    ops += [asm.goto_back(page_at[p - 1])]
+                else:
+                    ops += [asm.goto(end)]
+                ops += [other]
+                row += 1
+            ops += [asm.goto(end)]
+        for i in range(len(GIRLS)):
+            ops += [visit_at[i], asm.setbyte(HB_VISIT, i + 1), _uc(0)]
             for name, at in ((DEVOTED_ROOM, gifts.DEVOTED), (CLOSE_ROOM, gifts.CLOSE)):   # by her affection
                 lower = asm.nop()
                 ops += [asm.if_byte(HB_AFFECTION[i], ">=", at, lower),
                         asm.mapjump(ctx.maplist.index(name), rx, ry, rtri, rdir), asm.ret(), lower]
-            ops += [asm.mapjump(ctx.maplist.index(BASIC_ROOM), rx, ry, rtri, rdir), asm.ret(),
-                    go, asm.if_byte(CHOICE, "==", first + 2, stop), asm.goto(end), stop, skip]
-        ops += [asm.if_byte(SHOWN, "==", 0, done)]
-        ops += _say(sec, "Manager\n“You haven't hired anybody yet!\n Get out there and charm 'em.”")
-        ops += [asm.goto(end), done] + _say(sec, "Manager\n“That's the whole roster.”") + [asm.goto(end)]
+            ops += [asm.mapjump(ctx.maplist.index(BASIC_ROOM), rx, ry, rtri, rdir), asm.ret()]
         ops += [tips] + _say(sec, "Manager\n“Word is there are fine ladies in\n Upper Midgar, the slums, Wall Market,\n"
                                   " Fort Condor, Junon, Nibelheim,\n the Gold Saucer…”{NEW}\n"
                                   "“…Icicle country, Costa del Sol,\n Wutai, Rocket Town, Gongaga,\n"
