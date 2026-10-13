@@ -425,12 +425,12 @@ DEVOTED = {
     'Tifa': [
         ('g', 'enter'),
         ('G', "“Bar's closed, Cloud. And I did\n squats ALL week for this.”"),
-        ('bed', 'mission'),
+        ('bed', 'edge'),
         ('G', "“Wait, is that the VICTORY FANFARE?\n …Did you bring a boombox?!”"),
         ('C', "{CLOUD}\n“…I'm a professional.”"),
-        ('c', 'thrust'),
+        ('c', 'stand'),
         ('G', "“Faster! Like a Limit Break!\n Ha… hahaha!”"),
-        ('G', "“Somersault! …Not literally!\n You'll fall off the bed!”"),
+        ('G', "“Somersault! …Not literally!\n You'll knock the bed over!”"),
     ],
     'Aerith': [
         ('g', 'enter'),
