@@ -148,12 +148,12 @@ BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "si
 CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
 CLOUD_ONTOP = (136, -179)                    # on top of her, half a body nearer the door (user)
 ONTOP_RAISE = 4                              # Cloud on top of her: drawn this much higher (12 was too high)
-# The scene girl's lying pose, rolled about her own length (user: head to the right,
-# turned 60 degrees to her right so she faces more upward than at the camera). DIR
-# only turns about the vertical, so this is a new animation: DZBA with the hip
-# bone's z angle (its own long axis: the spine is the hip's local -z; Euler order
-# Y X Z, z innermost) + LIE_TWIST, written to char.lgp as dzbt.a.
-LIE_TWIST, LIE_ANIM_SCENE = 60, "DZBT.tor"
+# The scene girl's lying pose (user): on her back, facing up, hips raised LEG_RAISE and
+# spread LEG_SPREAD, knees bent as far as it takes for the feet to be planted flat
+# on the bed (with the thighs raised 45 that is ~90 at the knee), arms along her
+# sides; hips where DZBA (the game's lying pose) has them. A new animation dzbt.a,
+# built from her standing pose BAJB like the all-fours one.
+LIE_ANIM_SCENE, LEG_RAISE, LEG_SPREAD = "DZBT.tor", 45, 45
 # On all fours (user): from her standing pose BAJB, the upper body pitched 90 degrees
 # forward (facing down), thighs hanging (hip 90), shins and feet folded back flat
 # (knee 90), upper arms hanging (shoulder 90 forward), hands flat forward; each
@@ -880,15 +880,63 @@ def _lounge(ctx):
     lob.sections[0] = sec.build()
 
 
-def _twisted_lie(ctx):
-    """dzbt.a: DZBA (1 frame, 21 bones) with the hip bone's z angle + LIE_TWIST."""
-    data = bytearray(ctx.char_file("dzba.a"))
-    version, frames, bones = struct.unpack_from("<III", data, 0)
-    assert (version, frames, bones, bytes(data[12:15])) == (1, 1, 21, b"\x01\x00\x02"), data[:16].hex()
-    hip_z = 36 + 24 + 8                      # header, root rotation + translation, bone 0 (x, y, z)
-    z, = struct.unpack_from("<f", data, hip_z)
-    struct.pack_into("<f", data, hip_z, (z + LIE_TWIST) % 360)
-    ctx.char_file("dzbt.a", bytes(data))
+def _standing(ctx):
+    """(fieldanim, skeleton, bone index, BAJB root rotation, its world matrices) for
+    building her poses."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file("badd.hrc").decode("latin-1"))
+    rr, rp, rots = fa.Anim(ctx.char_file("bajb.a")).frames[0]
+    world = [m for m, _, _ in fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)]
+    return fa, sk, [b[0] for b in sk].index, rr, world
+
+
+def _bisect(f, lo, hi):
+    """x in [lo, hi] with f(x) = 0 (f changes sign between lo and hi, either way)."""
+    sign = 1 if f(lo) < 0 else -1
+    assert sign * f(hi) > 0, "no root in range"
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if sign * f(mid) < 0 else (lo, mid)
+    return (lo + hi) / 2
+
+
+def _save_pose(ctx, fa, name, root, local):
+    out = fa.Anim(ctx.char_file("dzba.a"))                                     # same header (1 frame, 21 bones)
+    out.frames = [([0.0, 0.0, 0.0], [root[0], -root[1], root[2]], local)]      # root height stored negated
+    ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
+
+
+def _on_back(ctx):
+    """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted."""
+    fa, sk, idx, rr, world = _standing(ctx)
+    names = [b[0] for b in sk]
+    x, z = (1, 0, 0), (0, 0, 1)
+    back = fa.axis_angle(x, -90)                     # whole body pitched back: up -> +z, front -> up
+    hip_pos = fa.Anim(ctx.char_file("dzba.a")).frames[0][1]
+    root = [0.0, -hip_pos[1], hip_pos[2]]           # hips where the game's lying pose has them
+
+    def pose(knee, foot):
+        w = [fa._mul(back, m) for m in world]
+        for side, out in (("l", LEG_SPREAD), ("r", -LEG_SPREAD)):
+            thigh = fa._mul(fa.axis_angle(z, out), fa.axis_angle(x, -LEG_RAISE))   # up, then out to her side
+            for n in ("_hip", "_femur", "_tibia", "_foot"):
+                w[idx(side + n)] = fa._mul(thigh, w[idx(side + n)])
+            kneebend = fa.axis_angle(x, knee)
+            for n in ("_tibia", "_foot"):
+                w[idx(side + n)] = fa._mul(fa._mul(thigh, fa._mul(kneebend, fa._t(thigh))), w[idx(side + n)])
+            w[idx(side + "_foot")] = fa._mul(fa.axis_angle(x, foot), w[idx(side + "_foot")])
+        return fa.local_rotations(sk, rr, w)
+
+    def ends(local):
+        return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, local))}
+    knee = _bisect(lambda k: ends(pose(k, 0))["l_tibia"][1], 0, 120)          # ankle down to the bed (~95)
+    foot = _bisect(lambda f: ends(pose(knee, f))["l_tibia"][1] - ends(pose(knee, f))["l_foot"][1], -90, 90)
+    local = pose(knee, foot)
+    e = ends(local)
+    for n in ("l_tibia", "r_tibia", "l_foot", "r_foot"):
+        assert abs(e[n][1]) < 0.5, (n, e[n])                                   # feet planted
+    assert e["l_femur"][1] < -2 and e["r_femur"][1] < -2, (e["l_femur"], e["r_femur"])   # knees up
+    _save_pose(ctx, fa, LIE_ANIM_SCENE, root, local)
 
 
 def _fours(ctx):
@@ -937,7 +985,7 @@ def _fours(ctx):
 
 
 def apply(ctx):
-    _twisted_lie(ctx)
+    _on_back(ctx)
     _fours(ctx)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)

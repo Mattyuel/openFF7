@@ -637,7 +637,10 @@ Honey Bee Girl recruitment.
 - `_show_aff(say_ops, var)` _say ops + the affection in `var` as {VAR} (MPRA2 right after WINDOW).
 - `_gift_routine(sec)` The lounge gift menu (entity hbgift script 1, REQEW'd by a girl's talk
 - `_lounge(ctx)` 
-- `_twisted_lie(ctx)` dzbt.a: DZBA (1 frame, 21 bones) with the hip bone's z angle + LIE_TWIST.
+- `_standing(ctx)` (fieldanim, skeleton, bone index, BAJB root rotation, its world matrices) for
+- `_bisect(f, lo, hi)` x in [lo, hi] with f(x) = 0 (f changes sign between lo and hi, either way).
+- `_save_pose(ctx, fa, name, root, local)` 
+- `_on_back(ctx)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted.
 - `_fours(ctx)` dzbf.a: one frame on all fours (FOURS_ANIM), built from BAJB with
 - `apply(ctx)` 
 
