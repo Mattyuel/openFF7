@@ -10,7 +10,8 @@ the extension is only the original animator's tag. Use the spelling some field
 already uses (search the model loaders), or any tag for our own files.
 An animation only works on the skeleton it was made for (same bones).
 Add animations to a model with `ModelLoader.with_anims(entry, [names])`; play one
-with `ANIM!1` (0xAF, plays and holds the last frame), `ANIME1` (0xA3, plays once
+with `DFANM` (0xA2: becomes her default animation, which loops while she is idle; 620's
+`_loop` also plays it once with ANIME1 so the loop starts at once), `ANIM!1` (0xAF, plays and holds the last frame), `ANIME1` (0xA3, plays once
 and returns to the idle) or `CANM!1` (0xB1, a frame range); 620's `_anim` /
 `_canm` helpers.
 
