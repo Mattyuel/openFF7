@@ -591,6 +591,7 @@ Honey Bee Girl recruitment.
 - `_free_slots(sec, ent, start)` 
 - `_guard(sec, ent, first, ops_after)` In VISIT mode, `first` (an op of entity `ent`'s script 0) is skipped:
 - `_room(ctx, back)` 
+- `_lounge(ctx)` 
 - `apply(ctx)` 
 
 ## `patches/630_bounties.py`

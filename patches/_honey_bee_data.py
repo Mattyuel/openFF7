@@ -317,3 +317,29 @@ from _honey_bee_scenes import SCENES  # noqa: E402
 
 for _g in GIRLS:
     _g["scene"] = SCENES[_g["name"]]
+
+
+# What each hired girl says in the lounge rooms (620 _lounge): the two left
+# rooms off the Honey Bee Inn lobby, room 1 = girls 0-9, room 2 = girls 10-19.
+LOUNGE = {
+    "Bambi": "“Mmh… five more minutes. Or fifty.\n You can lie down too, you know.”",
+    "Gloria": "“What? Never seen a girl on a break?\n …Fine. You can stay. Quietly.”",
+    "Dot": "“I counted the ceiling tiles! There\n are… um. A lot. Wanna count with me?”",
+    "Peggy": "“I only knocked over two lamps today!\n That's a record! A good one!”",
+    "Candy": "“Psst. Guess who the manager's been\n sneaking chocolates to? …Me!”",
+    "Rhonda": "“It's a job. The tips are good.\n Don't tell anyone I said that.”",
+    "Lulu": "“Darling! You came! I KNEW you'd come.\n Tell me I'm the star. Say it.”",
+    "Raven": "“The lights in here are far too bright.\n …But the company is tolerable.”",
+    "Elena": "“Deep cover is going GREAT. Nobody\n suspects a thing. …Right?”",
+    "Marisol": "“No sea breeze, but the music's good.\n Dance with me later, okay?”",
+    "Ruby": "“House always wins, sugar. And I'm\n the house now.”",
+    "Holly": "“Warm in here. I might even smile.\n …Don't count on it.”",
+    "Sakura": "“A quiet room, soft lights… it is\n not so different from home.”",
+    "Mags": "“The bed frame squeaked. I fixed it.\n You're welcome, everyone.”",
+    "Celeste": "“The walls hum, can you hear it?\n Everything here feels so alive.”",
+    "Aurora": "“No stars on this ceiling. I'll\n paint some. Tell me where to start.”",
+    "Tifa": "“It's strange, working here…\n but it's nice seeing you, Cloud.”",
+    "Aerith": "“I put flowers in every room!\n Don't tell the manager. Hee hee.”",
+    "Scarlet": "“Kyahaha! This is MY room now.\n You may stay. Briefly.”",
+    "Velvet": "“A private audience with the star.\n Lucky you, sweetie.”",
+}

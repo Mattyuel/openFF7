@@ -282,6 +282,15 @@ Existing saves load, but they keep their own story progress; use a new game.
   star of every hired girl per minute of play since you last collected (or
   took the job), counting at most 4.5 hours; the amount shows in his line.
   Check the number matches the gil you get.
+- **Honey Bee lounges** (new; untested in-game): in the Honey Bee Inn lobby
+  walk straight through either left door (no room menu). Upper-left = room 1
+  (Bambi, Gloria, Dot, Peggy, Candy, Rhonda, Lulu, Raven, Elena, Marisol),
+  lower-left = room 2 (Ruby, Holly, Sakura, Mags, Celeste, Aurora, Tifa,
+  Aerith, Scarlet, Velvet); only hired girls appear (as Honey Bees): one
+  lying on the bed, two sitting on it, one sitting on the floor, dancers,
+  standing ones. Talk to each (her own line). They never block you. The menu
+  works in there; the door line takes you back to the door you used. Check
+  the poses look right and every girl can be reached.
 - **Bounties: Scoop, roving reporter** (new game; untested in-game; needs the
   new ff7_en.exe AND flevel.lgp). Scoop (a Junon parade reporter) sits in 8
   bars: 7th Heaven (Midgar), Kalm bar (Midgar plains to the Zolom marsh),

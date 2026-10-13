@@ -27,7 +27,7 @@
 import struct
 
 from _config import HB_CAP, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
-from _honey_bee_data import GIRLS, STARS
+from _honey_bee_data import GIRLS, LOUNGE, STARS
 from _recruit import SOUND_RECRUIT, sound
 from _travel import CHOICE, add_npc, beside, copy_model
 
@@ -65,6 +65,28 @@ GIRL, CLOUD = "girl2", "cloud"
 WALK = 0x0400                                # 0x0800 ran (MOVE runs above ~0x600)
 DOOR_OPEN, DOOR_CLOSE = 0x7A, 0x11D
 CORRIDOR, CONFERENCE = "blin66_1", "blin66_6"
+# Lounge rooms: the two left doors of the lobby open freely into onna_52 with
+# HB_VISIT = LOUNGE_ROOM + room (1 upper door, 2 lower door); the room's 10
+# spare entities (zax, muki1-9: the original scenes' extras) become Honey Bee
+# girls, girl k (room 1) or 10 + k (room 2), shown only if hired.
+LOUNGE_ROOM = 100
+LOUNGE_EXTRAS = ["zax"] + ["muki%d" % k for k in range(1, 10)]
+LOBBY_DOORS = {"border1": 1, "border2": 2}       # onna_4 door lines -> room
+LOBBY_LOCKS = (0x13, 0x1C)                        # the two left doors' triangles (locked until a room was chosen)
+ROOM_EXITS = {1: (-246, -135, 16, 96), 2: (-267, 153, 21, 32)}   # onna_52 border1's own two arrivals in the lobby
+# (x, y, pose): pose = None stand, ("hold", anim) a held pose, ("loop", anim) repeated
+LOUNGE_SPOTS = [
+    ((136, -199), ("hold", "DZBA.tor")),     # lying on the bed
+    ((90, -235), ("hold", "DXHE.tor")),      # sitting on the bed
+    ((175, -150), ("hold", "DXIB.tor")),     # sitting on the bed's edge
+    ((-40, -230), None),
+    ((-120, 180), ("loop", "DXJC.tor")),     # dancing
+    ((-240, 4), ("hold", "DXIC.tor")),       # sitting
+    ((-60, -50), None),
+    ((60, 230), None),
+    ((-50, 120), ("loop", "BAJF.tor")),      # squat and twirl
+    ((150, 60), ("loop", "DXIF.tor")),       # checking both sides
+]
 CONFERENCE_DOOR = (2, "blin66_2")           # blin66_1 gateway slot, its original destination
 CONFERENCE_COPIES = ["scarlet", "hyde", "leave"]   # visible (unplaced) at the pinned moment 998
 HIDE = [b"\x7E\x01", b"\xC7\x01", b"\xA4\x00"]  # TLKON 01, SOLID 01, VISI 00          # the room's own entrance scene's door sounds
@@ -433,7 +455,7 @@ def _room(ctx, back):
     border = sec.entity_index("border1")
     first = sec.entry[border][0]
     assert first.op == 0xD0, first.raw.hex()                       # LINE
-    _guard(sec, border, first, [asm.ret(), asm.ret()])
+    _guard(sec, border, first, [asm.if_byte(HB_VISIT, "<", LOUNGE_ROOM, first), asm.ret(), asm.ret()])
 
     d = lambda n, times=1: [_anim(da[n])] * times
     c = CLOUD_ANIMS
@@ -514,7 +536,8 @@ def _room(ctx, back):
     lobby = ctx.maplist.index(LOBBY)
     bx, by, bz, btri = back
     finale, stop = asm.nop(), asm.ret()
-    ops = [asm.if_byte(HB_VISIT, "!=", 0, stop), _uc(1), _menu(1)]               # no visit: nothing
+    ops = [asm.if_byte(HB_VISIT, "!=", 0, stop),                                  # no visit: nothing
+           asm.if_byte(HB_VISIT, "<", LOUNGE_ROOM, stop), _uc(1), _menu(1)]       # (lounge: nothing)
     for i, g in enumerate(GIRLS):
         nxt = asm.nop()
         into = "intobed" if i in on_bed else "into"
@@ -550,6 +573,91 @@ def _room(ctx, back):
     assert n <= 255, n
 
 
+def _lounge(ctx):
+    from ff7.camera import Camera, facing_screen
+    # ---- the room: the 10 extras become girls ----
+    f = ctx.field(ROOM)
+    mesh, cam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
+    loader = ModelLoader(f.section("models"))
+    sec = Script.parse(f.sections[0])
+    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA)}
+    assert len(LOUNGE_EXTRAS) == len(LOUNGE_SPOTS) == 10 and len(GIRLS) == 20
+    for k, (name, ((x, y), pose)) in enumerate(zip(LOUNGE_EXTRAS, LOUNGE_SPOTS)):
+        ent = sec.entity_index(name)
+        old = sec.script_ops(ent, 0)
+        assert old[0].op == 0xA1, (name, old[0].raw.hex())          # CHAR
+        model = old[0].raw[1]
+        loader.models[model] = loader.models[1]                      # the dancer, all 22 anims
+        t = mesh.find(x, y)
+        assert t is not None, (x, y)
+        z = mesh.height(t, x, y)
+        face = facing_screen(cam, x, y, z, (0, 1))
+        show = [_xyzi(x, y, z, t), Op(bytes([0xB3, 0, face])), _visi(1), Op(b"\x7E\x00"),   # TLKON 00
+                Op(bytes([0xC5, 0x00, 0x46]))]                                              # TALKR
+        if pose and pose[0] == "hold":
+            show.append(_anim(da[pose[1]], hold=True))
+        init, done = [Op(bytes([0xA1, model])), Op(b"\x7E\x01"), Op(b"\xC7\x01"), _visi(0)], asm.nop()
+        talk, tend = [Op(b"\x33\x01"), Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00")], asm.nop()
+        for room in (1, 2):
+            g = k + 10 * (room - 1)
+            nxt = asm.nop()
+            init += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, nxt),
+                     asm.if_byte(_hired(g)[0], "bit_on", _hired(g)[1], nxt)] + [Op(bytes(o.raw)) for o in show]
+            init += [asm.goto(done), nxt]
+            tnxt = asm.nop()
+            talk += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, tnxt)]
+            talk += _say(sec, GIRLS[g]["name"] + "\n" + LOUNGE[GIRLS[g]["name"]]) + [asm.goto(tend), tnxt]
+        init += [done, asm.ret()]
+        main = []
+        if pose and pose[0] == "loop":
+            top = asm.nop()
+            main = [top, _anim(da[pose[1]]), asm.goto_back(top)]
+        talk += [tend, Op(b"\x33\x00"), asm.ret()]
+        sec.remove(old[0])                                           # its old CHAR: no second CHAR
+        empty = asm.ret()
+        block = init + main + [asm.ret()] + talk + [empty]
+        sec.ops.extend(block)
+        sec.entry[ent] = [empty] * 32
+        sec.entry[ent][0], sec.entry[ent][1] = init[0], talk[0]
+    # menu back on in a lounge (produce's init turns it off for the room's scenes)
+    produce = sec.script_ops(sec.entity_index("produce"), 0)
+    ret = next(o for o in produce if o.op == 0x00)
+    skip = asm.nop()
+    sec.insert_before(ret, [asm.if_byte(HB_VISIT, ">=", LOUNGE_ROOM, skip), _menu(0), skip], retarget=False)
+    # leaving: back to the lobby door you came in by, out of lounge mode
+    border = sec.entity_index("border1")
+    exit_ = sec.script_ops(border, 2)
+    head = []
+    for room, (ex, ey, etri, edir) in ROOM_EXITS.items():
+        nxt = asm.nop()
+        head += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, nxt), asm.setbyte(HB_VISIT, 0),
+                 asm.mapjump(ctx.maplist.index(LOBBY), ex, ey, etri, edir), asm.ret(), nxt]
+    sec.insert_before(exit_[0], head, retarget=True)
+    f.set_section("models", loader.build())
+    f.sections[0] = sec.build()
+    n = struct.unpack_from("<H", sec.tail, 0)[0]
+    assert n <= 255, n
+    # ---- the lobby: the two left doors open, each to its room ----
+    lob = ctx.field(LOBBY)
+    lmesh = Walkmesh(lob.section("walkmesh"))
+    for ex, ey, etri, _ in ROOM_EXITS.values():
+        assert lmesh.contains(etri, ex, ey), (ex, ey, etri)
+    sec = Script.parse(lob.sections[0])
+    produce = sec.script_ops(sec.entity_index("produce"), 0)
+    locks = [o for o in produce if o.op == 0x6D and o.raw[3] == 1 and (o.raw[1] | o.raw[2] << 8) in LOBBY_LOCKS]
+    assert len(locks) == 2, locks
+    for o in locks:
+        sec.remove(o)
+    for name, room in LOBBY_DOORS.items():
+        ent = sec.entity_index(name)
+        jump = [o for o in sec.script_ops(ent, 2) if o.op == 0x60]
+        assert len(jump) == 1 and struct.unpack_from("<H", bytes(jump[0].raw), 1)[0] == ctx.maplist.index(ROOM), name
+        sec.replace_script(ent, 2, [asm.setbyte(HB_VISIT, LOUNGE_ROOM + room), Op(bytes(jump[0].raw)), asm.ret()])
+    for name in ("border7", "border8"):                              # the "take this room?" lines: nothing to choose now
+        sec.replace_script(sec.entity_index(name), 1, [asm.ret()])
+    lob.sections[0] = sec.build()
+
+
 def apply(ctx):
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)
@@ -559,3 +667,4 @@ def apply(ctx):
     _add_girls(ctx)
     _manager(ctx, back)
     _room(ctx, back)
+    _lounge(ctx)
