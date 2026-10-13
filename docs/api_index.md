@@ -646,6 +646,7 @@ Honey Bee Girl recruitment.
 - `_save_frames(ctx, fa, name, frames)` frames: [(root position as FK uses it (y down), local rotations)].
 - `_bed_depth(ctx)` 
 - `_bare_cloud(ctx)` 
+- `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
 - `_cloud_thrust(ctx)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
 - `_on_back(ctx)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
 - `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and

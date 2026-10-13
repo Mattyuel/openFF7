@@ -132,12 +132,14 @@ Avoid EACF (arms up): overused.
 | enjf | ENJF.yos | sitting, stretching his legs | as he is |
 | eiab | EIAB.chi | sitting comfortably | as he is |
 | thrust | ZCTA.tor (ours) | on his belly as AVDD, legs straight back, slow hips (below) | belly |
+| pound | ZCTB.tor (ours) | knelt as HBGB, quick deep hip thrust (below) | as he is |
 
 ### Our own pose for Cloud (built at build time, written to char.lgp)
 
 | Anim | File | Pose | Built by |
 |---|---|---|---|
-| ZCTA | zcta.a | AVDD (on his belly, propped on his forearms) with the knees straightened until the shins lie level, the feet pointed level behind them, the knees swung in to 0.7 from the midline at the same height (thighs pitched/swung at the hip). Moves (90 frames, ~3 s, eased): the hips rise 0.8 and settle; chest and thighs re-aimed each frame so the shoulders and hands stay put (the knees slide ~0.6 with the thighs). Looped with DFANM (`LOOPED_C`). First used in Tifa's devoted scene. | `_cloud_thrust` (`THRUST_*`) |
+| ZCTA | zcta.a | AVDD (on his belly, propped on his forearms) with the knees straightened until the shins lie level, the feet pointed level behind them, the knees swung in to 0.7 from the midline at the same height (thighs pitched/swung at the hip). Moves (90 frames, ~3 s, eased): the hips rise 0.8 and settle; chest and thighs re-aimed each frame so the shoulders and hands stay put (the knees slide ~0.6 with the thighs). Looped with DFANM (`LOOPED_C`). First used in Tifa's devoted scene; the mission position. | `_cloud_thrust` (`THRUST_*`) |
+| ZCTB | zctb.a | HBGB's first frame (knelt, sitting back, thighs ~54 behind upright; one knee higher and further forward). Moves (15 frames, 0.5 s, eased, looped): pelvis and thighs swing 40 forward about the line through both knees (hips up ~2 and forward ~3), torso and arms ride along unturned; knees, shins and feet stay put. The dog position. | `_cloud_pound` (`POUND_*`) |
 
 Cloud's skeleton (AAAA.HRC, 21 bones) has the same bone names as the dancer's; his
 standing root sits 13.5 up, the floor at y 0 once the stored root height is negated.

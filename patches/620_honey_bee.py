@@ -153,10 +153,10 @@ BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "sit": ("bedsit", "bedsitc"),    
                "head": ("headsit", "bedsith")}        # Sakura's: Cloud sits on the edge, she kneels before him
 # Beats allowed after each layout's fade (girl, Cloud); beside/sit: any sit / bed pose.
 LAYOUT_BEATS = {"mission": (set(), {"thrust"}), "cowgirl": ({"ride"}, {"grea", "greb"}),
-                "ontop": ({"ride"}, {"grea", "greb"}), "dog": ({"fours"}, {"hbgb", "hbgc"}),
+                "ontop": ({"ride"}, {"grea", "greb"}), "dog": ({"fours"}, {"pound"}),
                 "head": ({"sit1", "sit2", "sit3"}, {"eiab", "enjf"})}
 LAYOUT_ANIM = {"beside": "grea", "sit": "eiab", "mission": "thrust", "cowgirl": "grea", "ontop": "grea",
-               "dog": "hbgc", "head": "eiab"}       # Cloud's pose each layout starts in
+               "dog": "pound", "head": "eiab"}       # Cloud's pose each layout starts in
 RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head higher (user), then slightly more (+4)
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # head: Cloud right and down a bit from CLOUD_SIT
 HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 46      # she: at his x, this much nearer the camera (-y), 2/3 of
@@ -205,14 +205,21 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "hbgc": "HBGC.tak",   # knelt, looks to the side
              "hbfe": "HBFE.tak",   # knelt, rubbing his face
              "eiab": "EIAB.chi",   # sitting comfortably
-             "thrust": "ZCTA.tor"}  # ours (_cloud_thrust): AVDD, legs straight back, slow hips
+             "thrust": "ZCTA.tor",  # ours (_cloud_thrust): AVDD, legs straight back, slow hips
+             "pound": "ZCTB.tor"}   # ours (_cloud_pound): knelt (HBGB), quick deep hip thrust
 # Cloud's own pose (user): AVDD (on his belly, propped on his forearms) with each
 # knee straightened until the shin lies level with the ground, the feet pointed so
 # they're level too, the knees brought within THRUST_KNEE_GAP of the midline (both
 # at the same height); the hips rise THRUST_RISE and settle, eased, over
 # THRUST_FRAMES frames (~3 s) with the shoulders and hands where they were.
 CLOUD_THRUST, THRUST_KNEE_GAP, THRUST_RISE, THRUST_FRAMES = "ZCTA.tor", 0.7, 0.8, 90
-LOOPED_C = {"thrust"}                        # Cloud bed beats that loop (DFANM) instead of holding
+# Dog (user): from HBGB's first frame (knelt, sitting back, thighs ~54 degrees behind
+# upright) the thighs swing forward POUND_SWING about the knee line (knees, shins and
+# feet planted; the pelvis and the upper body ride along unturned: hips up and forward)
+# and back, eased, in POUND_FRAMES frames (0.5 s), looped. The pivot is the line through
+# both knees (one sits higher and further forward than the other).
+CLOUD_POUND, POUND_SWING, POUND_FRAMES = "ZCTB.tor", 40, 15
+LOOPED_C = {"thrust", "pound"}                       # Cloud bed beats that loop (DFANM) instead of holding
 FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
 BED = (91, -144)                             # lying girl in the scenes: half a body further from the door than 136,
@@ -638,8 +645,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     if "thrust" in ca:
         mx_, my_, mz_, mt_ = spot(MISSION_CLOUD)
         cloud_beats["bedmission"] = [_xyzi(mx_, my_, mz_ + MISSION_RAISE, mt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + _loop(ca["thrust"])
-    if "hbgc" in ca:                                 # knelt behind her (layout "dog")
-        cloud_beats["bedknee"] = [_xyzi(*spot(DOG_CLOUD)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("hbgc")
+    if "pound" in ca:                                # knelt behind her (layout "dog"), thrusting
+        cloud_beats["bedknee"] = [_xyzi(*spot(DOG_CLOUD)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + _loop(ca["pound"])
     if "grea" in ca:                                 # on his back under her (layout "ride")
         cloud_beats["bedback"] = [_xyzi(*spot(CLOUD_ONTOP)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
     if "eiab" in ca:
@@ -1175,6 +1182,54 @@ def _bare_cloud(ctx):
     ctx.char_file(CLOUD_BARE_HRC.lower(), hrc.encode("latin-1"))
 
 
+def _cloud_pound(ctx):
+    """zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND."""
+    import math
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
+    I = [b[0] for b in sk].index
+    base = fa.Anim(ctx.char_file("hbgb.a"))
+    rr, rp, rots = base.frames[0]
+    root = [rp[0], -rp[1], rp[2]]                    # root height stored negated: y down
+    fk = fa.forward(sk, rr, root, rots)
+    W = [m for m, _, _ in fk]
+    end = lambda n: fk[I(n)][2]
+    knee = [(end("l_femur")[k] + end("r_femur")[k]) / 2 for k in range(3)]
+    ankle = [(end("l_tibia")[k] + end("r_tibia")[k]) / 2 for k in range(3)]
+    fwd = [knee[0] - ankle[0], 0.0, knee[2] - ankle[2]]
+    n = math.hypot(fwd[0], fwd[2])
+    fwd = [fwd[0] / n, 0.0, fwd[2] / n]
+    lk, rk = end("l_femur"), end("r_femur")
+    side = [rk[k] - lk[k] for k in range(3)]         # the line through both knees (they aren't level)
+    n = math.sqrt(sum(v * v for v in side))
+    side = [v / n for v in side]
+    knee = lk                                        # pivot on that line: both knees stay put
+    hip = [(fk[I("l_femur")][1][k] + fk[I("r_femur")][1][k]) / 2 - knee[k] for k in range(3)]
+    probe = fa._vec(fa.axis_angle(side, 10), hip)    # pick the sign that swings the hips forward
+    sign = 1 if sum(probe[k] * fwd[k] for k in range(3)) > sum(hip[k] * fwd[k] for k in range(3)) else -1
+    moved = {"hip", "chest", "head", "l_chest", "l_collar", "l_uparm", "l_foarm", "l_hand", "r_chest",
+             "r_collar", "r_uparm", "r_foarm", "r_hand", "l_hip", "r_hip"}
+    frames = []
+    for t in range(POUND_FRAMES):
+        a = sign * POUND_SWING * (1 - math.cos(2 * math.pi * t / POUND_FRAMES)) / 2
+        R = fa.axis_angle(side, a)
+        rel = fa._vec(R, [root[k] - knee[k] for k in range(3)])
+        rt = [knee[k] + rel[k] for k in range(3)]                 # the pelvis swings about the knee line
+        Wt = [fa._mul(R, W[i]) if sk[i][0] in ("hip", "l_hip", "r_hip", "l_femur", "r_femur") else W[i]
+              for i in range(len(sk))]                            # pelvis + thighs rigid; torso unturned
+        local = fa.local_rotations(sk, rr, Wt)
+        if t == POUND_FRAMES // 2:
+            top = fa.forward(sk, rr, rt, local)
+            for leg in ("l", "r"):                                # knees and feet stay put
+                assert math.dist(top[I(leg + "_femur")][2], end(leg + "_femur")) < 0.1, leg
+                assert math.dist(top[I(leg + "_foot")][2], end(leg + "_foot")) < 0.1, leg
+            assert -top[I("hip")][1][1] > -root[1] + 0.5, "hips should rise"
+        frames.append((rr, [rt[0], -rt[1], rt[2]], local))
+    assert all(sk[i][0] in moved or sk[i][0].split("_")[1] in ("femur", "tibia", "foot") for i in range(len(sk)))
+    base.frames = frames
+    ctx.char_file(CLOUD_POUND.split(".")[0].lower() + ".a", base.build())
+
+
 def _cloud_thrust(ctx):
     """zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST."""
     import math
@@ -1416,6 +1471,7 @@ def apply(ctx):
     _on_back(ctx)
     _fours(ctx)
     _cloud_thrust(ctx)
+    _cloud_pound(ctx)
     _bare_cloud(ctx)
     _ride(ctx)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
