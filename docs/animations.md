@@ -64,6 +64,7 @@ kinematics on BADD.HRC; rotation order Y X Z, each bone runs along its own
 |---|---|---|---|
 | DZBT | dzbt.a | on her back facing up, thighs raised 45 and spread 45, knees bent (~101) so the feet are planted flat, arms along her sides; hips where DZBA has them | `_on_back` (`LEG_RAISE`, `LEG_SPREAD`) |
 | DZBF | dzbf.a | on all fours: facing down, hips / knees / shoulders at 90, knees and wrists on the floor (elbows bend to reach), feet flat, head lifted 30 | `_fours` (`FOURS_HEAD_LIFT`) |
+| DZBR | dzbr.a | kneeling astride, rocking (60 frames, ~2 s): hips flexed 70 and spread 30, knees 160 so the shins lie flat (feet flat behind), torso 25 forward, arms 25 forward; the knees open 8 towards straight and back, eased, with the shins planted (the hips rise ~0.6 and settle). Used in the bed layout `ride` (Cloud on his back under her) and the beat `ride` (plays it 3 times) | `_ride` (`RIDE_*`) |
 
 History: DZBT was first DZBA rolled 60 degrees about her length (the hip
 bone's z angle + 60), replaced by the knees-up pose.

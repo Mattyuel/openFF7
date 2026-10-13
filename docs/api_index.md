@@ -642,6 +642,7 @@ Honey Bee Girl recruitment.
 - `_save_pose(ctx, fa, name, root, local)` 
 - `_on_back(ctx)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted.
 - `_fours(ctx)` dzbf.a: one frame on all fours (FOURS_ANIM), built from BAJB with
+- `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
 - `apply(ctx)` 
 
 ## `patches/625_gift_shops.py`

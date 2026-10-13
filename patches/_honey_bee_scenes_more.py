@@ -10,7 +10,8 @@ Most scenes have two parts: she comes in, the first lines, then
   "ontop"   she lies, Cloud lies on top of her (starts in AVDD)
   "sit"     both sit on the bed's edge (she DXHE, Cloud EIAB)
 After it only in-place beats: her ("g", "sit1"/"sit2"/"sit3") when sitting,
-("g", "fours") on all fours where she lies;
+("g", "fours") on all fours where she lies; ("bed", "ride") Cloud on his back
+with her kneeling astride, ("g", "ride") her rocking;
 Cloud's bed animations ("c", name), 620 CLOUD_BED: grea greb grec ftib avdd
 avea enje enjf hbgb hbgc hbfe eiab.
 Each tier plays in its own copy of the room (620: CLOSE_ROOM, DEVOTED_ROOM),
@@ -470,10 +471,11 @@ DEVOTED = {
         ('start', 'bed'),
         ('G', "“No stage. No lights. No fans.\n Just Velvet… and nothing else.”"),
         ('c', 'shocked'),
-        ('bed', 'ontop'),
+        ('bed', 'ride'),
         ('G', "“A thousand men dream of this view.\n Tonight, it's only for you.”"),
         ('C', "{CLOUD}\n“…I'm the luckiest fan alive.”"),
-        ('c', 'avea'),
+        ('g', 'ride'),
         ('G', "“Then show me some appreciation,\n sweetie. All of it.”{NEW}\n“…No curtain call. Ever.”"),
+        ('g', 'ride'),
     ],
 }

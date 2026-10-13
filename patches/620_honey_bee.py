@@ -144,7 +144,8 @@ MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (no
 # The bed part of a scene: ("bed", layout) fades out, places both on the bed
 # (the raised walkmesh piece, z 76) and fades back in. Layout -> (girl beat,
 # Cloud beat). Afterwards only in-place beats: girl sit1-3, Cloud CLOUD_BED.
-BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "sit": ("bedsit", "bedsitc")}
+BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "sit": ("bedsit", "bedsitc"),
+               "ride": ("rideon", "bedback")}       # Cloud on his back, she kneels astride him
 CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
 CLOUD_ONTOP = (136, -179)                    # on top of her, half a body nearer the door (user)
 ONTOP_RAISE = 4                              # Cloud on top of her: drawn this much higher (12 was too high)
@@ -160,7 +161,14 @@ LIE_ANIM_SCENE, LEG_RAISE, LEG_SPREAD = "DZBT.tor", 45, 45
 # elbow bent just enough for its wrist to reach the floor, the knees on the floor
 # (y = 0, y down; the root height is stored negated), head lifted FOURS_HEAD_LIFT.
 FOURS_ANIM, FOURS_HEAD_LIFT = "DZBF.tor", 30
-SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM]          # our own animations on the scene girl
+# Kneeling astride, rocking (user): from standing, hips flexed RIDE_HIP and spread
+# RIDE_SPREAD, knees bent RIDE_KNEE so the shins lie flat on the bed (feet flat behind),
+# torso leaning RIDE_LEAN forward, arms RIDE_ARMS forward; then the knees open
+# RIDE_ROCK towards straight and back (shins planted, so the hips rise and settle),
+# eased, over RIDE_FRAMES frames (~2 s). Frame 0 is the rest pose.
+RIDE_ANIM, RIDE_HIP, RIDE_KNEE, RIDE_SPREAD, RIDE_LEAN, RIDE_ARMS = "DZBR.tor", 70, 160, 30, 25, 25
+RIDE_ROCK, RIDE_FRAMES, RIDE_REPEAT = 8, 60, 3     # the scene beat plays it RIDE_REPEAT times
+SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM, RIDE_ANIM]   # our own animations on the scene girl
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
 # FTIB is only used on a Shinra soldier skeleton in the original game (same bone count).
@@ -480,7 +488,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     assert [cloud_anims[i] for i in (3, 9, 15, 16, 20)] == ["AQAA.tor", "AVJE.aki", "AQAB.tor", "BICA.yos",
                                                              "EADD.tor"], cloud_anims
     # bed animations only where this room's scenes use them (layouts start with GREA / AVDD / EIAB)
-    layout_anim = {"beside": "grea", "ontop": "avdd", "sit": "eiab"}
+    layout_anim = {"beside": "grea", "ontop": "avdd", "sit": "eiab", "ride": "grea"}
     bed_used = sorted({st[1] for sc in scenes for st in sc if st[0] == "c" and st[1] in CLOUD_BED}
                       | {layout_anim[st[1]] for sc in scenes for st in sc if st[0] == "bed"})
     extra = dict(CLOUD_EXTRA, **{n: CLOUD_BED[n] for n in bed_used})
@@ -567,6 +575,10 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         "bedsit": [_xyzi(gs[0], gs[1], gs[2] - SIT_DROP, gs[3]), Op(bytes([0xB3, 0, gdir])), _visi(1),
                    _anim(da["DXHE.tor"], hold=True)],
         "fours": [_anim(da[FOURS_ANIM], hold=True)],                 # on all fours, where she lies
+        # astride Cloud (layout "ride"): on him at CLOUD_ONTOP, facing as he lies; "ride" rocks
+        "rideon": [_xyzi(*spot(CLOUD_ONTOP)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR])), _visi(1),
+                   _canm(da[RIDE_ANIM], 0, 0)],
+        "ride": [_anim(da[RIDE_ANIM], hold=True)] * RIDE_REPEAT,
         "sit1": [_anim(da["DXHE.tor"], hold=True)], "sit2": [_anim(da["DXIB.tor"], hold=True)],
         "sit3": [_anim(da["DXIC.tor"], hold=True)],
     })
@@ -574,6 +586,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         cloud_beats["bedbeside"] = [_xyzi(*spot(CLOUD_BESIDE)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
     if "avdd" in ca:
         cloud_beats["bedontop"] = [_xyzi(bx_, by_, bz_ + ONTOP_RAISE, bt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + hold("avdd")
+    if "grea" in ca:                                 # on his back under her (layout "ride")
+        cloud_beats["bedback"] = [_xyzi(*spot(CLOUD_ONTOP)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
     if "eiab" in ca:
         cloud_beats["bedsitc"] = [_xyzi(cs[0], cs[1], cs[2] - SIT_DROP, cs[3]), Op(bytes([0xB3, 0, cdir]))] + hold("eiab")
     pose_dir = lambda name: ([Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] if name in BACK_POSES else
@@ -584,7 +598,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         if "bed" in kinds:
             after = sc[kinds.index("bed") + 1:]
             assert kinds.count("bed") == 1 and sc[kinds.index("bed")][1] in BED_LAYOUTS, (field, GIRLS[i]["name"])
-            assert all(st[1] in ("sit1", "sit2", "sit3", "fours") for st in after if st[0] in ("g", "g&")), (field, GIRLS[i]["name"])
+            assert all(st[1] in ("sit1", "sit2", "sit3", "fours", "ride") for st in after if st[0] in ("g", "g&")), (field, GIRLS[i]["name"])
             assert all(st[1] in CLOUD_BED for st in after if st[0] in ("c", "c&")), (field, GIRLS[i]["name"])
     used = ({s[1] for sc in scenes for s in sc if s[0] in ("g", "g&")}
             | {BED_LAYOUTS[s[1]][0] for sc in scenes for s in sc if s[0] == "bed"})
@@ -984,9 +998,55 @@ def _fours(ctx):
     ctx.char_file(FOURS_ANIM.split(".")[0].lower() + ".a", out.build())
 
 
+def _ride(ctx):
+    """dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames."""
+    import math
+    fa, sk, idx, rr, world = _standing(ctx)
+    names = [b[0] for b in sk]
+    x, z = (1, 0, 0), (0, 0, 1)
+
+    def pose(hip, knee, foot):
+        w = list(world)
+        for n in ("hip", "chest", "head", "l_chest", "l_collar", "r_chest", "r_collar"):
+            w[idx(n)] = fa._mul(fa.axis_angle(x, RIDE_LEAN), world[idx(n)])          # torso forward
+        for side in "lr":
+            for n in ("_uparm", "_foarm", "_hand"):
+                w[idx(side + n)] = fa._mul(fa.axis_angle(x, -RIDE_ARMS), world[idx(side + n)])
+        for side, out in (("l", -RIDE_SPREAD), ("r", RIDE_SPREAD)):                 # knees apart (checked: l -> +x)
+            spread = fa.axis_angle(z, out)
+            thigh = fa._mul(spread, fa.axis_angle(x, -hip))                          # forward-up
+            shin = fa._mul(spread, fa.axis_angle(x, -(hip - knee)))                  # folded back under
+            for n in ("_hip", "_femur"):
+                w[idx(side + n)] = fa._mul(thigh, world[idx(side + n)])
+            w[idx(side + "_tibia")] = fa._mul(shin, world[idx(side + "_tibia")])
+            w[idx(side + "_foot")] = fa._mul(fa.axis_angle(x, foot), fa._mul(shin, world[idx(side + "_foot")]))
+        return fa.local_rotations(sk, rr, w)
+
+    def ends(local, root=(0.0, 0.0, 0.0)):
+        return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, list(root), local))}
+    foot = _bisect(lambda f: ends(pose(RIDE_HIP, RIDE_KNEE, f))["l_tibia"][1]
+                   - ends(pose(RIDE_HIP, RIDE_KNEE, f))["l_foot"][1], -120, 60)     # feet flat behind
+    knee0 = ends(pose(RIDE_HIP, RIDE_KNEE, foot))["l_femur"]
+    planted = [knee0[0], 0.0, knee0[2]]                                              # the left knee on the bed
+    frames = []
+    for t in range(RIDE_FRAMES):
+        d = RIDE_ROCK * (1 - math.cos(2 * math.pi * t / RIDE_FRAMES)) / 2            # 0 -> ROCK -> 0, eased
+        local = pose(RIDE_HIP - d, RIDE_KNEE - d, foot)                              # shin direction unchanged
+        k = ends(local)["l_femur"]
+        root = [planted[i] - k[i] for i in range(3)]
+        e = ends(local, root)
+        for n in ("l_femur", "r_femur", "l_tibia", "r_tibia"):
+            assert abs(e[n][1]) < 0.6, (t, n, e[n])                                 # shins on the bed
+        frames.append(([0.0, 0.0, 0.0], [root[0], -root[1], root[2]], local))
+    out = fa.Anim(ctx.char_file("dzba.a"))
+    out.frames = frames
+    ctx.char_file(RIDE_ANIM.split(".")[0].lower() + ".a", out.build())
+
+
 def apply(ctx):
     _on_back(ctx)
     _fours(ctx)
+    _ride(ctx)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)
     assert tri is not None
