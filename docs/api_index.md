@@ -596,6 +596,7 @@ Honey Bee Girl recruitment.
 ## `patches/630_bounties.py`
 Bounties: Scoop, a roving reporter, sits in a bar in each of 8 regions and
 
+- `cap_points(rank)` The most points a region capped at `rank` can bring you to.
 - `gil(level, kills)` 
 - `bounty_op(cmd, region, dst=RESULT)` 
 - `_text(s)` 
