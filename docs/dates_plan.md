@@ -25,6 +25,9 @@ User decisions (asked 2026-10-13):
 | Affection | **Shared** with the Honey Bee meter (`_config.HB_AFFECTION`, 0-20; gifts, visits, dates all raise it) |
 | Part 2 place | **Right there**, in the gondola / capsule |
 | Modelling | **A few girls first** (Tifa, Aerith, Elena, Scarlet), then the rest in batches |
+| Cost | **Free** |
+| Location | **Chosen each time** ("Where to?" Gondola / Space capsule), whatever the tier |
+| Background | **Still views, no FMV**: the gondola field's own Gold Saucer night view; the pod's space view |
 
 ## Game facts (verified by reading scripts and the exe)
 
@@ -66,20 +69,30 @@ User decisions (asked 2026-10-13):
 ## Design (proposed; to confirm)
 
 ### Starting a date
-- Every girl's world talk gets **"Ask her on a date."** It is there before and after hiring,
-  and doesn't need the Honey Bee job. It fades out and MAPJUMPs into the date field for her tier.
-- Afterwards it fades back to her spot (her field, beside her).
-- Optional: a Gold Saucer ticket cost, e.g. 300 gil. Say if you want one.
+- Every girl's world talk gets **"Ask her on a date."**, before and after hiring, with or without the
+  Honey Bee job. It's free.
+- Then "Where to?": **Gondola** / **Space capsule**. Fade, MAPJUMP into that location's field
+  copy for her group.
+- Afterwards, fade back to her spot (her field, beside her).
 
-### Tiers (by her affection when you ask)
+### Tiers (by her affection when you ask), in either location
 
-| Affection | Date | Place | Movie |
-|---|---|---|---|
-| 0-9 | First date | Gondola, ordinary ride | gold2-gold6 (as the normal ride) |
-| 10-19 | Second date | Space capsule (pod interior, space layer; FMV if disc 1 allows) | rocket movie / none |
-| 20 | Third date | Gondola, the fireworks date ride | gold7, conversation, gold7_2 |
+| Affection | Date |
+|---|---|
+| 0-9 | First date |
+| 10-19 | Second date |
+| 20 | Third date (repeatable; the ending choice) |
 
-- The third date can be repeated. Each time it plays again (as the Honey Bee devoted visits do).
+- One conversation per girl per tier, used in both places. The opening line and a
+  remark or two follow the location (the view of the Saucer / of the planet).
+
+### Backgrounds (user: still views, no FMV)
+- **Gondola:** bwhlin's still background is the Gold Saucer at night (no cabin drawn). Cloud
+  and the girl sit in front of it on the field's walkmesh.
+  - **To check:** how the pair looks against the view with no cabin. If it reads oddly, a
+    cabin frame could be drawn as extra background tiles.
+- **Space capsule:** rcktin7's pod interior with its space layer on (BGON), and the planet
+  in view. No movie, so no disc-1/disc-2 movie question and no camera-fixed framing.
 
 ### Conversation and questions
 - Each date has about 6-10 lines and **2-3 questions** about her: her past, her tastes, things she
@@ -91,44 +104,37 @@ User decisions (asked 2026-10-13):
   - Leave it be: a tender ending line.
   - Give in: part 2.
   - With a wrong answer, the date ends normally (no choice shown).
-- **Timing:** text over the movie is frame-timed (non-interactive windows, as the original).
-  Questions are asked on the static interior between movies (the original date's dialogue sits
-  between gold7 and gold7_2).
 
 ### Part 2 (explicit, "right there")
 - An undressed copy of the girl's own model (`ModelLoader.with_hrc`, new .rsd/.p as for the
   bare-legged Cloud: clothing colours to her skin colour, shape fixes where needed) and the
   bare Cloud.
 - Poses built per skeleton with `ff7.fieldanim` (seated / astride, 0.5 s loops as in the
-  Honey Bee positions), placed in the gondola seats.
-- It plays over gold7_2 (or the static interior if the camera framing doesn't allow it). Then a
-  fade and a closing line, and back to her spot.
+  Honey Bee positions), in the gondola seat / pod.
+- Then a fade, a closing line, and back to her spot.
 - **Order:** Tifa, Aerith, Elena, Scarlet first; then batches of 4.
 
-### Fields (7 of the 16 free names)
-
-| Field copy | Base | Holds |
-|---|---|---|
-| gondola 1 A / B | bwhlin (+ bwhlin2 movies) | first dates, 10 girls each (Cloud + 10 models) |
-| capsule A / B | rcktin7 | second dates, 10 girls each |
-| gondola 3 A / B / C | bwhlin | third dates + part 2: ~6 girls each (girl + undressed girl + Cloud + bare Cloud) |
-
-About 10 texts per girl per date, so 60-130 texts per field.
+### Fields (8 of the 16 free names)
+- Girls in 4 groups of 5. Per location, one field copy per group (gondola: bwhlin; capsule: rcktin7).
+- Each copy holds:
+  - Cloud + bare Cloud + 5 girls + 5 undressed girls = 12 models.
+  - 5 girls x 3 tiers x ~10 texts = ~150 texts.
+- The undressed copies are added only as their part 2 gets built.
 
 ## Milestones
 
 1. **Framework + Tifa:**
-   - Date option on her talk; tier routing; a gondola 1 copy with the movies and her seated.
-   - Seated pose builder for her skeleton; one first date with questions and affection.
+   - Date option + "Where to?" on her talk; tier routing.
+   - Both field copies (gondola view, pod with the space layer) with her and Cloud placed and seated
+     (seated pose builder for her skeleton).
+   - Her three dates with questions, affection and the ending choice (no part 2 yet).
    - Return to her spot.
-   - Test in-game: models over the FMV, framing, timing.
-2. **Space capsule + third date for Tifa,** the ending choice (no part 2 yet).
+   - Test in-game: how the two views look, positions, text.
+2. (merged into 1)
 3. **All 20 girls' dates** (writing 60 dates), seated poses for all 19 skeletons.
 4. **Part 2 for Tifa, Aerith, Elena, Scarlet** (undressed models + poses).
 5. **Part 2 for the other 16 girls** in batches of 4.
 
 ## Open questions for the user
 
-- Gil cost per date? (default: free)
-- Third date location: gondola (fireworks) as proposed, or the capsule?
-- If the pod FMV can't play on disc 1: is the static space view behind the pod window enough?
+- None for now. Answered 2026-10-13: free; location chosen each time; still views instead of FMV.
