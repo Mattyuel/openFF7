@@ -315,7 +315,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   bouncing higher; Cloud on his back thrusting up, head up looking at her,
   arms a little raised). Dog unchanged. From the fade to the bed the victory
   fanfare plays (dog: the chocobo fanfare). Tifa's and Aerith's lines are now
-  jokey. Report if the music doesn't start or keeps playing in the lobby.
+  jokey. Report if the music doesn't start or keeps playing in the lobby. Own tracks: Candy Fiddle de Chocobo, Scarlet Rufus' Welcoming Ceremony, Mags Steal the Tiny Bronco! (track picked from memory: say if it's another song), Elena Crazy Motorcycle, Aerith Interrupted by Fireworks, Tifa Debut. Every scene's closing text (all affection levels) plays the inn tune Good Night, Until Tomorrow!.
 - **Honey Bee positions** (new; untested in-game): every affection-20
   scene now has the girl walk in behind Cloud in part one (none start on the
   bed any more; the affection-10 Bambi scene too), and part two starts in one

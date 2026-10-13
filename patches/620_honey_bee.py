@@ -241,7 +241,14 @@ LOOPED_C = {"thrust", "pound", "buck"}
 # Devoted part two plays a fanfare from the fade to the bed (user): the victory fanfare,
 # the chocobo fanfare for dog. AKAO cmd 0x10 = play by music table index (exe 0x9684C8:
 # 5 FANFARE, 46 FAN2), as 250 does for md1stin.
-PART2_MUSIC, PART2_MUSIC_DEFAULT = {"dog": 46}, 5                       # Cloud bed beats that loop (DFANM) instead of holding
+PART2_MUSIC, PART2_MUSIC_DEFAULT = {"dog": 46}, 5
+# Per girl (user), by music table index; names checked against the fields that play
+# them: FIDDLE 8 (Chocobo Sage's house), PARADE 16 (Junon: Rufus' Welcoming Ceremony),
+# CHASE 38 (HQ lobby escape: Crazy Motorcycle), DATE 49 (Gold Saucer gondola:
+# Interrupted by Fireworks), GEKI 62 (the Gold Saucer stage: Debut); SID2 72 (Rocket
+# Town houses, Highwind) taken as Steal the Tiny Bronco!.
+PART2_MUSIC_GIRL = {"Candy": 8, "Scarlet": 16, "Mags": 72, "Elena": 38, "Aerith": 49, "Tifa": 62}
+END_MUSIC = 57              # YADO, the inns' Good Night, Until Tomorrow!: every scene's closing text                       # Cloud bed beats that loop (DFANM) instead of holding
 FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
 BED = (91, -144)                             # lying girl in the scenes: half a body further from the door than 136,
@@ -784,7 +791,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                     who = cloud2
                 ops += [asm.setbyte(ACT, cloud_act[cb]), _req(who, cslot if who == cloud else 2), _w(20)]
                 if field == DEVOTED_ROOM:
-                    track = PART2_MUSIC.get(step[1], PART2_MUSIC_DEFAULT)
+                    track = PART2_MUSIC_GIRL.get(g["name"], PART2_MUSIC.get(step[1], PART2_MUSIC_DEFAULT))
                     ops.append(Op(bytes([0xF2, 0, 0, 0, 0x10, track]) + bytes(8)))   # AKAO 10: play it
                 ops += [Op(FADE_IN), Op(b"\x6C"), _w(PACE)]
             elif kind == "shake":
@@ -795,7 +802,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
             ops.append(asm.biton(*HB_KID[i]))          # 622: a kid appears next to her
         ops += [asm.goto(finale), nxt]
     ops += [asm.goto(stop), finale, _w(30),
-            Op(bytes.fromhex("6b0000000000080200")), Op(b"\x6C"), _w(20)]       # FADE out, FADEW
+            Op(bytes.fromhex("6b0000000000080200")), Op(b"\x6C"), _w(20),       # FADE out, FADEW
+            Op(bytes([0xF2, 0, 0, 0, 0x10, END_MUSIC]) + bytes(8))]            # AKAO 10: the inn tune
     ops += _say(sec, final, x=24, y=96)
     ops += [asm.setbyte(HB_VISIT, 0), _uc(0), _menu(0),
             asm.mapjump(lobby, bx, by, btri, 0x80), stop]
