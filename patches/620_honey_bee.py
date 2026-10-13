@@ -159,7 +159,7 @@ LAYOUT_ANIM = {"beside": "grea", "sit": "eiab", "mission": "thrust", "cowgirl": 
                "dog": "hbgc", "head": "eiab"}       # Cloud's pose each layout starts in
 RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head higher (user), then slightly more (+4)
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # head: Cloud right and down a bit from CLOUD_SIT
-HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 60      # she: at his x, this much nearer the camera (-y), 2/3 of
+HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 46      # she: at his x, this much nearer the camera (-y), 2/3 of
                                               # a body (~90) lower than the bed sitter, turned round
 MISSION_CLOUD, MISSION_RAISE = (126, -169), 0  # mission: Cloud 10 left / 10 further back of CLOUD_ONTOP,
                                               # 4 lower than ONTOP_RAISE (user)
@@ -1036,7 +1036,8 @@ BED_TILE_IDS, BED_TOP, BED_FLOOR, BED_EDGE, BED_HEAD_TOP, BED_MARGIN = (140, 175
 # the mattress at its true depth, the tile row just nearer than a lying girl's hips covered
 # her lower half in the mission scene (user). Mattress tiles now sit at the depth of the
 # mattress's far edge (+ BED_TOP_MARGIN): behind anyone on the bed, in front of anyone
-# behind the headboard (floor there is ~30 deeper). Front / side faces keep their depth.
+# behind the headboard (floor there is ~30 deeper). The front / side faces too: with
+# their true depth the bed's foot covered the girl kneeling in front of it ("head", user).
 BED_TOP_MARGIN = 8
 
 
@@ -1066,9 +1067,8 @@ def _bed_depth(ctx):
         for s in range(0, 4000, 2):
             p = [eye[i] + d[i] * s for i in range(3)]
             if BED_FLOOR <= p[2] <= BED_TOP and on_bed(p[0], p[1]):
-                if p[2] > BED_TOP - 3:                           # the mattress: as deep as its far edge
-                    return view_z([p[0], y_far, BED_TOP]) + BED_TOP_MARGIN - BED_MARGIN
-                return view_z(p)
+                # mattress and front / sides alike: as deep as the mattress's far edge
+                return view_z([p[0], y_far, BED_TOP]) + BED_TOP_MARGIN - BED_MARGIN
         if d[1] > 0:                                             # the headboard
             p = [eye[i] + d[i] * (y_far - eye[1]) / d[1] for i in range(3)]
             if x0 - e <= p[0] <= x1 + e and BED_FLOOR <= p[2] <= BED_HEAD_TOP:
