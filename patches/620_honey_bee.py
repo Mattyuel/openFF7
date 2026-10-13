@@ -147,7 +147,7 @@ MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (no
 BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "sit": ("bedsit", "bedsitc"),       # the close scenes
                # the devoted scenes' positions (user's names and starting points)
                "mission": ("lie", "bedmission"),      # Tifa's: she lies, Cloud on top of her (zcta)
-               "cowgirl": ("rideon", "bedback"),      # Velvet's: Cloud on his back, she kneels astride
+               "cowgirl": ("rideon", "bedbackc"),     # Velvet's: Cloud on his back, she kneels astride
                "ontop": ("rideonr", "bedback"),       # as cowgirl, she faces the other way
                "dog": ("fourson", "bedknee"),         # Scarlet's: she's on all fours, Cloud knelt behind
                "head": ("headsit", "bedsith")}        # Sakura's: Cloud sits on the edge, she kneels before him
@@ -163,6 +163,7 @@ HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 27, 46      # she: at his x, this much nearer 
                                               # a body (~90) lower than the bed sitter (then a head higher: 46), turned round
 MISSION_CLOUD, MISSION_RAISE = (126, -149), -4  # mission: Cloud 10 left / 30 further back of CLOUD_ONTOP,
                                                # 8 lower than ONTOP_RAISE (user, two rounds)
+COWGIRL_CLOUD = (136, -161)                   # cowgirl: Cloud ~half a body width (18) further back than CLOUD_ONTOP (user)
 DOG_CLOUD = (113, -142)                       # dog: Cloud a little nearer the camera and left of CLOUD_BESIDE, then ~18 more left, then 5 right / 8 back (user)
 CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
 CLOUD_ONTOP = (136, -179)                    # on top of her, half a body nearer the door (user)
@@ -658,6 +659,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         cloud_beats["bedknee"] = [_xyzi(*spot(DOG_CLOUD)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + _loop(ca["pound"])
     if "grea" in ca:                                 # on his back under her (layout "ride")
         cloud_beats["bedback"] = [_xyzi(*spot(CLOUD_ONTOP)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
+        cloud_beats["bedbackc"] = [_xyzi(*spot(COWGIRL_CLOUD)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
     if "eiab" in ca:
         cloud_beats["bedsitc"] = [_xyzi(cs[0], cs[1], cs[2] - SIT_DROP, cs[3]), Op(bytes([0xB3, 0, cdir]))] + hold("eiab")
     pose_dir = lambda name: ([Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] if name in BACK_POSES else
