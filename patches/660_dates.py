@@ -60,6 +60,10 @@ SEATS = {
 # koala-hugging him (same XYZI, turned round; her height is in the anim): his DIR there
 STAND_DIR = {"gondola": 0x80, "capsule": None, "tower": "screen-right"}
 SCALE = {"tower": 0.85}               # the water tower: both a little big (user)
+GIRL_SCALE = {}                        # per-girl model scale (Scarlet 1.12 was tried; user: keep her size)
+# a girl's own seat in a place (x, y): Scarlet further left and nearer the camera in the gondola (user)
+GIRL_SEAT = {("gondola", "Scarlet"): (-5198, -6900), ("capsule", "Scarlet"): (52, 227)}   # (user: the capsule too)
+WALK_TO = 0.35                        # "stand": she walks over to Cloud, this far from him along the way
 # places whose near background tiles (draw depth < 4093: the capsule's benches and rails, ids
 # 52-87) drew over the characters (user): pushed back just in front of the base layer
 TILES_BACK = {"capsule"}
@@ -88,7 +92,7 @@ PART2 = {
                "acts": {"look": "ZDKC.tor"}},     # (user) she looks up at him when he tells her to
     # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
     "Scarlet": {"bare": "ZSCA.HRC", "anims": ["ZDSW.tor", "ZDSX.tor"], "cloud": "stand", "cloud_fast": "standf",
-                "same_way": True},
+                "same_way": True, "at_her_seat": True},   # (user) on the left of the screen: at her seat
 }
 TIFA_TOP, TIFA_SKIN = (204, 204, 204), (167, 190, 248)
 # her skirt (user: skin colour, contoured to her body): the hip part AAGC (aagd.p: skirt
@@ -275,6 +279,11 @@ def _field(ctx, place, group, names):
             sec.entry.append([None] * 32)
             chars[e] = m
             model_ent[m] = e
+    for gname in names:
+        if gname in GIRL_SCALE:
+            m = next(k for k, n in enumerate(model_names) if n.endswith(GIRL_MODEL[gname]))
+            loader.models[m] = ModelLoader.with_scale(loader.models[m],
+                                                      round(ModelLoader.entry_scale(loader.models[m]) * GIRL_SCALE[gname]))
     if place in SCALE:
         for k, e in enumerate(loader.models):
             loader.models[k] = ModelLoader.with_scale(e, round(ModelLoader.entry_scale(e) * SCALE[place]))
@@ -311,8 +320,14 @@ def _field(ctx, place, group, names):
         m = next(k for k, n in enumerate(model_names) if n.endswith(GIRL_MODEL[gname]))
         ga = sit_anim(m, GIRL_SIT[gname][kind])
         hide, end = asm.nop(), asm.nop()
+        my = gs
+        if (place, gname) in GIRL_SEAT:
+            x, y = GIRL_SEAT[(place, gname)]
+            t = mesh.find(x, y)
+            assert t is not None, (place, gname)
+            my = (x, y, mesh.height(t, x, y) + SEATS[place]["girl"][4], t)
         scripts[model_ent[m]] = {0: [Op(bytes([0xA1, m])), asm.if_byte(DATE_GIRL, "==", i + 1, hide),
-                                     hb._xyzi(*gs), Op(bytes([0xB3, 0, gdir])), Op(bytes([0xA2, ga, 1])),
+                                     hb._xyzi(*my), Op(bytes([0xB3, 0, gdir])), Op(bytes([0xA2, ga, 1])),
                                      Op(bytes([0xAE, ga, 1])), hb._visi(1), asm.goto(end), hide, hb._visi(0),
                                      end, asm.ret(), asm.ret()],
                                  3: [hb._visi(0), asm.ret()]}
@@ -324,7 +339,24 @@ def _field(ctx, place, group, names):
             an = ModelLoader.anims(loader.models[m])
             st, sl = an.index(extra["stand"]), an.index(extra["slap"])
             me = model_ent[m]
-            scripts[me][9] = [Op(bytes([0xA2, st, 1])), Op(bytes([0xAE, st, 1])), asm.ret()]          # stands up
+            # stands up and walks over to Cloud (MOVE when the straight way is all floor, else she
+            # is simply put there: a MOVE that can't get through would never end), then faces him
+            tx, ty = cs[0] + (my[0] - cs[0]) * WALK_TO, cs[1] + (my[1] - cs[1]) * WALK_TO
+            path = all(mesh.find(my[0] + (tx - my[0]) * k / 20, my[1] + (ty - my[1]) * k / 20) is not None
+                       for k in range(21))
+            tt = mesh.find(round(tx), round(ty))
+            k = 0
+            while tt is None and k < 50:              # (the capsule: the gangway between) nearest floor towards him
+                k += 1
+                tx, ty = tx + (cs[0] - tx) * 0.05, ty + (cs[1] - ty) * 0.05
+                tt = mesh.find(round(tx), round(ty))
+            if path:
+                go = [hb._move(round(tx), round(ty))]
+            else:
+                assert tt is not None, (place, gname, tx, ty)
+                go = [hb._xyzi(round(tx), round(ty), mesh.height(tt, round(tx), round(ty)), tt)]
+            scripts[me][9] = [Op(bytes([0xA2, st, 1])), Op(bytes([0xAE, st, 1])), hb._w(10)] + go \
+                + [hb._tura(model_ent[0]), asm.ret()]
             scripts[me][10] = [Op(bytes([0xBC, sl, 0, SLAP_HIT, 1])), Op(b"\xAC"),                    # the slap
                                Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
                                Op(bytes([0xBC, sl, SLAP_HIT, SLAP_END, 1])), Op(b"\xAC"),
@@ -351,7 +383,13 @@ def _field(ctx, place, group, names):
         # her slot 4: placed at Cloud's spot (turned round; her place in the anim), first pose;
         # 5.. each pose looped; 8: hold (the first pose's frame 0)
         gface = bdir if p2.get("same_way") else (bdir + 128) % 256
-        scripts[ge][4] = [hb._xyzi(*floor), Op(bytes([0xB3, 0, gface])), hb._visi(1),
+        spot = floor
+        show_cloud = 3
+        if p2.get("at_her_seat"):                    # both at her seat (cloudb gets a slot 20+ for it)
+            spot = (my[0], my[1], my[2] - SEATS[place]["girl"][4], my[3])
+            show_cloud = 20 + names.index(gname)
+            scripts[cb][show_cloud] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, bdir])), hb._visi(1), asm.ret()]
+        scripts[ge][4] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, gface])), hb._visi(1),
                           Op(bytes([0xA2, ka[0], 1])), Op(bytes([0xAE, ka[0], 1])), asm.ret()]
         for k, a_ in enumerate(ka):
             scripts[ge][5 + k] = [Op(bytes([0xA2, a_, 1])), Op(bytes([0xAE, a_, 1])), asm.ret()]
@@ -362,7 +400,7 @@ def _field(ctx, place, group, names):
                 "fast": [hb._req(cb, 4 + CLOUD_PART2.index(p2.get("cloud_fast", p2["cloud"]))),
                          hb._req(ge, 5 + len(ka) - 1)]}
         part2[i] = (tier_acts, [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(model_ent[0], 3)] + hide_her
-                    + [hb._req(cb, 3), hb._req(cb, 4 + cpose), hb._req(ge, 4),
+                    + [hb._req(cb, show_cloud), hb._req(cb, 4 + cpose), hb._req(ge, 4),
                        Op(bytes([0xF2, 0, 0, 0, 0x10, DATES[gname]["part2_music"]]) + bytes(8)),
                        Op(hb.FADE_IN), Op(b"\x6C"), hb._w(30)], acts)
     for e, m in chars.items():                   # everyone else: hidden
