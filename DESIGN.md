@@ -130,8 +130,13 @@ yours (instead of the original Gold Saucer gift).
   Cosmo/Nibelheim: Elite, Wutai: Master, Icicle: Legend) - no grinding early
   areas to a high rank. Points are saved and never decrease; the rank follows
   them (Rookie 0, Tracker 10, Hunter 30, Veteran 60, Elite 100, Master 160,
-  Legend 250) and shows in the Quests screen. Rank unlocks tiers of a Hunter
-  dealer's stock (rare steal-only equipment, sold for gil).
+  Legend 250) and shows in the Quests screen. Rank unlocks tiers of the Hunt
+  Quartermaster's stock: Reeve's model, secretive about where the goods come
+  from; Sector 7 station (lower platform, right), Upper Junon's first street
+  by the shops, the North Corel ropeway by the gondola, Rocket Town by Cid's
+  house. Tracker: common gear; Hunter: common gear + the cheaper steal-only
+  items; Veteran/Elite/Master/Legend: the rest of the steal-only equipment.
+  Prices from 4,000 to 200,000 gil.
 - **Honey Bee Girl recruitment.** The Honey Bee Inn's manager (lobby) offers
   a job: recruit girls for the Inn. Then 20 women around the world (Tifa,
   Aerith, Elena, Scarlet and 16 new ones; all adults) can be recruited by

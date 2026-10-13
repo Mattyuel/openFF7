@@ -604,6 +604,16 @@ Bounties: Scoop, a roving reporter, sits in a bar in each of 8 regions and
 - `_talk(i, r)` 
 - `apply(ctx)` 
 
+## `patches/640_hunt_quartermaster.py`
+The Hunt Quartermaster (Reeve's model): sells rare equipment for gil, each
+
+- `_rank_points(rank)` 
+- `_check_names(ctx)` Every item index must be the item the page names (kernel2 sections 10-13).
+- `_menu(sec, prompt, options)` (ops, first): WINDOW + ASK; CHOICE = first + the option picked.
+- `_gil(n)` 
+- `_build_talk(sec)` The whole talk script (tier menu, a locked-tier answer, the pages).
+- `apply(ctx)` 
+
 ## `patches/650_world_vehicles.py`
 World map vehicles that the early-game world map can't show.
 

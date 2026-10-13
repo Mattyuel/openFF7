@@ -303,7 +303,15 @@ Existing saves load, but they keep their own story progress; use a new game.
   Each region stops adding points at its ceiling (Midgar stops at 29 =
   Tracker, Kalm at 59 = Hunter, ...) and Scoop says "Bigger game out there". The Quests screen shows
   "Hunter: <rank> (<points>)" in cyan at the top right of the lower window
-  (check it doesn't overlap a long quest title). Scoop's spots were picked by a script:
+  (check it doesn't overlap a long quest title).
+- **Hunt Quartermaster** (new; untested in-game): Reeve's model at the
+  Sector 7 station (lower platform, right), Upper Junon first street
+  (between the item and materia shops), North Corel ropeway station (gondola
+  platform), Rocket Town in front of Cid's house. Under Tracker he sends you
+  away; otherwise a tier menu, a locked tier says "not for your rank", a page
+  lists items with prices; buying with too little gil = "You're short",
+  enough = gil taken, item in the inventory, back to the menu. Check the
+  windows fit (8 items + Back) and that equipment actually arrives. Scoop's spots were picked by a script:
   report any that stand somewhere odd.
 - **Round of fixes (new game; untested in-game):**
   - Pillar: the gate at the bottom should now *look* open. At the top of the
