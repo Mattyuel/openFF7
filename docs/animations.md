@@ -63,9 +63,9 @@ kinematics on BADD.HRC; rotation order Y X Z, each bone runs along its own
 
 | Anim | File | Pose | Built by |
 |---|---|---|---|
-| DZBT | dzbt.a | on her back facing up, thighs raised 45 and spread 45, knees bent (~101) so the feet are planted flat, arms along her sides; hips where DZBA has them. Moves (60 frames, ~2 s, eased): the knees fall open 8 degrees and close (each leg turns about its hip-ankle line: the feet don't move) | `_on_back` (`LEG_RAISE`, `LEG_SPREAD`, `POSE_ROCK`) |
+| DZBT | dzbt.a | on her back facing up, thighs raised 45 and spread 45, knees bent (~101) so the feet are planted flat, arms along her sides; hips where DZBA has them. Moves (15 frames = 0.5 s, eased): the knees fall open 8 degrees and close (each leg turns about its hip-ankle line) and her whole body bounces 1.2 up off the mattress and back (user: faster, more bounce) | `_on_back` (`LEG_RAISE`, `LEG_SPREAD`, `POSE_ROCK`) |
 | DZBF | dzbf.a | on all fours: facing down, hips / knees / shoulders at 90, knees and wrists on the floor, feet flat, head lifted 30. Moves (15 frames = 0.5 s, eased, starting rocked back): rocks forward 8 degrees on the knees to the rest pose and back again; knees, shins and hands stay planted (the arms re-bend each frame, Newton solve on the skeleton) | `_fours` (`FOURS_HEAD_LIFT`, `POSE_ROCK`) |
-| DZBR | dzbr.a | kneeling astride, rocking (60 frames, ~2 s): hips flexed 70 and spread 30, knees 160 so the shins lie flat (feet flat behind), torso 25 forward, arms 25 forward; the knees open 8 towards straight and back, eased, with the shins planted (the hips rise ~0.6 and settle). Used in the bed layout `ride` (Cloud on his back under her) and the beat `ride` (plays it 3 times) | `_ride` (`RIDE_*`) |
+| DZBR | dzbr.a | kneeling astride, bouncing (15 frames = 0.5 s; was 60 / ~2 s): hips flexed 70 and spread 30, knees 160 so the shins lie flat (feet flat behind), torso 25 forward, arms 25 forward; the knees open 24 towards straight and back, eased, with the shins planted (the hips rise ~1.8 and settle). Used in the bed layout `ride` (Cloud on his back under her) and the beat `ride` (plays it 3 times) | `_ride` (`RIDE_*`) |
 
 History: DZBT was first DZBA rolled 60 degrees about her length (the hip
 bone's z angle + 60), replaced by the knees-up pose.
@@ -134,14 +134,16 @@ Avoid EACF (arms up): overused.
 | thrust | ZCTA.tor (ours) | on his belly as AVDD, legs straight back, slow hips (below) | belly |
 | pound | ZCTB.tor (ours) | knelt as HBGB, quick deep hip thrust (below) | as he is |
 | spread | ZCTC.tor (ours) | sitting as EIAB, legs swung 30 out (below) | as he is |
+| buck | ZCTD.tor (ours) | on his back as GREA, quick upward thrusts, head up, arms raised (below) | back |
 
 ### Our own pose for Cloud (built at build time, written to char.lgp)
 
 | Anim | File | Pose | Built by |
 |---|---|---|---|
-| ZCTA | zcta.a | AVDD (on his belly, propped on his forearms) with the knees straightened until the shins lie level, the feet pointed level behind them, the knees swung in to 0.7 from the midline at the same height (thighs pitched/swung at the hip). Moves (90 frames, ~3 s, eased): the hips rise 0.8 and settle; chest and thighs re-aimed each frame so the shoulders and hands stay put (the knees slide ~0.6 with the thighs). Looped with DFANM (`LOOPED_C`). First used in Tifa's devoted scene; the mission position. | `_cloud_thrust` (`THRUST_*`) |
+| ZCTA | zcta.a | AVDD (on his belly, propped on his forearms) with the knees straightened until the shins lie level, the feet pointed level behind them, the knees swung in to 0.7 from the midline at the same height (thighs pitched/swung at the hip). Moves (15 frames = 0.5 s, eased; was 90 / 0.8): the hips rise 1.6 and settle; chest and thighs re-aimed each frame so the shoulders and hands stay put (the knees slide ~0.6 with the thighs). Looped with DFANM (`LOOPED_C`). First used in Tifa's devoted scene; the mission position. | `_cloud_thrust` (`THRUST_*`) |
 | ZCTB | zctb.a | HBGB's first frame (knelt, sitting back, thighs ~54 behind upright; one knee higher and further forward). Moves (15 frames, 0.5 s, eased, looped): pelvis and thighs swing 40 forward about the line through both knees (hips up ~2 and forward ~3), torso and arms ride along unturned; knees, shins and feet stay put. The dog position. | `_cloud_pound` (`POUND_*`) |
 | ZCTC | zctc.a | EIAB (sitting comfortably, one knee up) with each whole leg swung out about the vertical at its hip until the thigh points 30 out from straight ahead (/\ from the front); both frames, held. The head position. | `_cloud_spread` (`SPREAD_ANGLE`) |
+| ZCTD | zctd.a | GREA (on his back, looking right) with the head turned to face straight up and tilted 30 forward (chin to chest, looking at her), the arms raised 30 off the bed; the hips thrust 1.5 up and back every 15 frames (0.5 s), shoulders on the bed (chest and thighs re-aimed each frame). Cowgirl / ontop. | `_cloud_buck` (`BUCK_*`) |
 
 Cloud's skeleton (AAAA.HRC, 21 bones) has the same bone names as the dancer's; his
 standing root sits 13.5 up, the floor at y 0 once the stored root height is negated.

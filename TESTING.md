@@ -309,6 +309,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   all 20 kids, Hunter points +50. Not available in ~40 fields whose text tables are full
   (Kalm bar, disc 2 Midgar, a few dungeons). Opening it during a cutscene
   can leave the scene without player control; use it while walking around.
+- **Faster positions + fanfare** (new; untested in-game): in affection-20
+  part twos everything moves at 0.5 s per stroke with more bounce: mission
+  (Cloud's thrust, the girl bouncing on the mattress), cowgirl/ontop (girl
+  bouncing higher; Cloud on his back thrusting up, head up looking at her,
+  arms a little raised). Dog unchanged. From the fade to the bed the victory
+  fanfare plays (dog: the chocobo fanfare). Tifa's and Aerith's lines are now
+  jokey. Report if the music doesn't start or keeps playing in the lobby.
 - **Honey Bee positions** (new; untested in-game): every affection-20
   scene now has the girl walk in behind Cloud in part one (none start on the
   bed any more; the affection-10 Bambi scene too), and part two starts in one
