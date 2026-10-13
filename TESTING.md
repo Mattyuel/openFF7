@@ -296,6 +296,19 @@ Existing saves load, but they keep their own story progress; use a new game.
   you. The menu works in there; the door line takes you back out by the door
   you used. If the mirrored room crashes or looks broken, say so: it is the
   first new field the mod adds.
+- **Debug build** (for testing; untested in-game): `python3 tools/ff7tool.py
+  build --debug` writes `build/openFF7_debug/` (same files to copy, plus the
+  debug menu; build normally again to get rid of it). In almost any field
+  hold **L1 + R1** (on keyboard: whatever keys you mapped to L1/R1): a DEBUG
+  menu opens: Travel (Midgar / World 1 / World 2: 23 towns and test spots,
+  incl. Wall Market, Honey Bee Inn, 7th Heaven, Kalm, Junon, Costa del Sol,
+  Corel ropeway, Gold Saucer, Cosmo Canyon, Nibelheim, Rocket Town, Wutai,
+  Icicle Inn, Mideel), Gil +100,000, Encounters OFF / ON (fields and world
+  map; stays set in your save until you turn it back on), Honey Bee /
+  Hunter: job + all girls hired, all affection 0 / 10 / 20, all 12 gifts,
+  Hunter points +50. Not available in ~40 fields whose text tables are full
+  (Kalm bar, disc 2 Midgar, a few dungeons). Opening it during a cutscene
+  can leave the scene without player control; use it while walking around.
 - **Honey Bee gifts and affection** (new; untested in-game; needs the new
   flevel.lgp, kernel2.bin AND KERNEL.BIN). A Gift Merchant (a woman from the
   Wall Market boutique) stands in Wall Market (main street, left side, above

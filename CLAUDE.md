@@ -27,6 +27,7 @@ something new, hit a trap, or a feature's status changes.
 
 ```
 python3 tools/ff7tool.py build              # -> build/openFF7/, prints changed files (~2 min first time, ~12 s after: build/cache)
+python3 tools/ff7tool.py build --debug      # + patches/debug/ (L1+R1 debug menu) -> build/openFF7_debug/
 python3 tools/tests/test_formats.py         # all tests (~2 min), includes test_api_index_current
 python3 tools/ff7tool.py api-index          # regenerate docs/api_index.md after code changes
 python3 tools/ff7tool.py dump FIELD         # original script -> work/scripts/
@@ -91,6 +92,7 @@ delete `build/cache` (~350 MB) any time.
 | `640_hunt_quartermaster.py` | Hunt Quartermaster (Reeve: blin66_6 model 4 `sub_leave`) in mds7st3 (lower platform right), junonr1 (between item/materia shops; junin1 enters here), ropest (gondola platform), rckt + rckt2 (by Cid's house; the world map enters either). Tier menu -> page (`PAGES`: Tracker common gear, Hunter common + 2 rarity pages, Veteran, Elite, Master, Legend), tier locked below its `RANKS` points; buy = CHGLD 32-bit compare, GOLDD, STITM (inventory index: weapons 128+, armor 256+, accessories 288+; names asserted against kernel2 sections 10-13). IF ops only jump forward: back-jumps go via a local label + JMPB. |
 | `650_world_vehicles.py` | World map variant 0 (progress < 1000) model table + highwind/sbmrn/tail (Highwind was invisible: row 0x96DF10 had 0xFF for models 3/13; then still invisible with only its shadow because every model 3 object gets the static child 0xE39AE0 = model 9 'tail' (0x7619D2) and the draw pass 0x76328F skips an object whose child's model isn't loaded; row 0 now maps 9 too); submarine slot 4 parked by Junon at new game (`_config.SUBMARINE_SLOT`). |
 | `900_phs.py` | Clears the PHS bit wherever a field writes the menu lock mask. |
+| `debug/990_debug.py` | Only with `build --debug`. Entity `dbgmenu` (no model) appended to every field with text room (<= 250 texts, < 48 entities; 663 fields, not elmpb / most disc 2 Midgar): main loop holds BTLON 01 while DEBUG_FLAGS (1,213) bit 0 is set; L1+R1 held (IFKEY 0x04 then 0x08; IFKEY's jump is 1 byte, so it hops via a goto) opens travel pages (arrival = a gateway into the field, else a script MAPJUMP to it, from `docs/inventory/field_links.csv`), gil +100,000, encounters off/on, Honey Bee/Hunter shortcuts. World map: call 0x76760B -> stub returning -1 (no battle) while the bit is set. A normal build is byte-identical without it. |
 | `shelved/` | Not built: `500_tame.py` (Tame milestone 1), `950_leader_entities.py` (any leader). See `patches/shelved/README.md`. |
 | `_recruit.py`, `_travel.py` | Helpers: window/say/hide, recruit NPCs, choice menus, add_npc, add_line, beside, copy_model. |
 
@@ -274,7 +276,7 @@ delete `build/cache` (~350 MB) any time.
   now 27,490 of 27,648 bytes (158 left).
 - **Bank 1 188-223**: no exe absolute refs, no world map use; original field
   scripts use 197-199 and 208-209. 188-196/200-207/210-212 = HB_AFFECTION;
-  213-223 still free.
+  213 = debug flags (debug builds only); 214-223 still free.
 - New field models can be added to char.lgp (`ctx.char_file(name, data)`;
   .hrc/.rsd text, .p, .tex). magic.lgp has directory entries `ff7.lgp`
   can't parse: `_marker_models.magic_file` scans its TOC by hand.

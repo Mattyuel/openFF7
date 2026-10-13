@@ -526,12 +526,15 @@ def build(args):
     (a failed build used to leave the original game files there)."""
     if not os.path.isdir(FIELD_DIR):
         extract()
-    out = os.path.abspath(args.out)
+    out = os.path.abspath(args.out or os.path.join(ROOT, "build", "openFF7_debug" if args.debug else "openFF7"))
     src = os.path.dirname(GAME)
     ctx = BuildContext()
     patch_dir = os.path.join(ROOT, "patches")
     sys.path.insert(0, patch_dir)  # lets patches `import _config`
-    for path in sorted(glob.glob(os.path.join(patch_dir, "[0-9]*.py"))):
+    paths = sorted(glob.glob(os.path.join(patch_dir, "[0-9]*.py")))
+    if args.debug:   # patches/debug/: test tools, never in a normal build
+        paths += sorted(glob.glob(os.path.join(patch_dir, "debug", "[0-9]*.py")))
+    for path in paths:
         spec = importlib.util.spec_from_file_location(os.path.basename(path)[:-3], path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -823,7 +826,9 @@ def main():
     sc.add_argument("fields", nargs="*")
     sc.set_defaults(func=scenes)
     b = sub.add_parser("build")
-    b.add_argument("--out", default=os.path.join(ROOT, "build", "openFF7"))
+    b.add_argument("--out", help="default build/openFF7 (build/openFF7_debug with --debug)")
+    b.add_argument("--debug", action="store_true",
+                   help="also apply patches/debug/ (L1+R1 debug menu in every field); writes build/openFF7_debug")
     b.set_defaults(func=build)
     args = ap.parse_args()
     args.func(args)
