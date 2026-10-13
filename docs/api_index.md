@@ -180,6 +180,7 @@ Field animations (.a in char.lgp) and forward kinematics for field skeletons (.h
 - `matrix_euler(m)` (x, y, z) degrees with euler_matrix(x, y, z) == m (Ry Rx Rz).
 - `axis_angle(axis, d)` 
 - `forward(bones, root_rot, root_pos, rotations)` World (matrix, start, end) per bone for one frame.
+- `height(hrc_text, anim_bytes)` Height (skeleton units) of a model in the first frame of an animation:
 - `local_rotations(bones, root_rot, worlds)` Per-bone (x, y, z) giving the world matrices `worlds` (parent-relative).
 
 ## `tools/ff7/kernel.py`
@@ -488,6 +489,7 @@ Train travel from the Sector 7 station, the reactors, and their bosses.
 - `_reactor1_doors(ctx)` 
 - `_reactor5_bridge(ctx)` 
 - `_reactor1_music(ctx)` 
+- `_reactor5_door(ctx)` smkin_1's three-button door (two door models, entities 4/5, slid open by OFST at
 - `apply(ctx)` 
 
 ## `patches/260_reactor_elevator.py`
@@ -659,6 +661,7 @@ Honey Bee Girl recruitment.
 ## `patches/622_hb_kids.py`
 Honey Bee kids: after a girl's devoted (affection 20) scene, a child stands
 
+- `_at_screen(ctx, field, x, y, dx, dy)` Floor (x, y, z, tri) near (x, y) whose screen position is (dx, dy) pixels from it.
 - `_beside(ctx, field, x, y)` Floor (x, y, z, tri) next to (x, y) as seen on screen: about GAP pixels
 - `_talk(line)` 
 - `_hidden_unless(i)` 

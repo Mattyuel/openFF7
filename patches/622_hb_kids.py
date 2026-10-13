@@ -32,7 +32,7 @@ GON_BOY = ("games", 7)          # as nible_boy
 GON_GIRL = ("games", 8)         # as nible_girl
 COSMO_GIRL = ("cosmo", 3)       # grey hood
 COSMO_BOY = ("cosmin3", 5)      # headband, tribal
-KOSTA_RGIRL = ("del2", 9)       # tanned, sun dress
+KOSTA_RGIRL = ("del2", 9)       # tanned, sun dress (looked like an adult in game: not used)
 KOSTA_SBOY = ("del2", 11)       # snorkel and swim trunks
 KOSTA_SGIRL = ("del2", 12)      # swimsuit
 SNOW = ("snow", 10)             # pink hood
@@ -51,7 +51,7 @@ KIDS = {   # girl -> (model, line)
     "Raven": (COSMO_GIRL, "“Mom says I'm a child of darkness.\n I think she means I like the dark.”"),
     "Elena": (GON_GIRL, "“My mom's a Turk! Turk rule one:\n never trust spiky-haired men.\n …She broke that one.”"),
     "Marisol": (KOSTA_SBOY, "“Wanna build a sandcastle?\n Mom says my dad never stays\n long enough to help.”"),
-    "Ruby": (KOSTA_RGIRL, "“Mom says I was a lucky bet.\n Double or nothing!”"),
+    "Ruby": (STD_GIRL3, "“Mom says I was a lucky bet.\n Double or nothing!”"),
     "Holly": (SNOW, "“Mom's cold to everybody.\n Except you, I guess. Weird.”"),
     "Sakura": (UTAI, "“Mother is teaching me to bow.\n Bow to the spiky man, she said.”"),
     "Mags": (STD_BOY2, "“I fixed the toaster! Mom says\n I've got her hands and somebody\n else's hair.”"),
@@ -62,11 +62,40 @@ KIDS = {   # girl -> (model, line)
     "Scarlet": (MIDGAL, "“Kya ha ha! …That's how Mom\n laughs. I'm still practising.”"),
     "Velvet": (GON_GIRL, "“Mom's a superstar! She says I'm\n her best encore.”"),
 }
-REUSE = {"Velvet": "gaki2"}      # coloss: 16 models
+REUSE = {"Velvet": "gaki2",      # coloss: 16 models
+         "Rhonda": "mant2"}      # nivl_3: 16 models; a cloaked man hidden at its moment (678 > 677)
 # the inn (nivinn_1) is at 16 models with nothing hidden to take over (Zangan, the
-# innkeeper, the party): Rhonda's kid waits outside the inn door (nivl, by the arrival)
-ELSEWHERE = {"Rhonda": ("nivl", (-98, -347), 56)}
+# innkeeper, the party): Rhonda's kid waits outside the inn door (nivl_3, the present-day town the inn exits to; nivl is the flashback copy)
+ELSEWHERE = {"Rhonda": ("nivl_3", (-98, -347), 56)}
 GAP = 20       # screen pixels between her and the kid, side by side
+# Kids that blocked a path or the girl (user): placed by screen offset from her
+# (dx, dy pixels, y down: negative dy = behind her) or at a fixed field point.
+KID_OFFSET = {"Bambi": (-12, -14), "Peggy": (8, -14), "Candy": (0, -16)}
+KID_AT = {"Scarlet": (-128, -239)}      # lower left of the conference room (Scarlet lower right)
+
+
+def _at_screen(ctx, field, x, y, dx, dy):
+    """Floor (x, y, z, tri) near (x, y) whose screen position is (dx, dy) pixels from it."""
+    f = ctx.field(field)
+    mesh, cam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
+    tri = mesh.find(x, y)
+    near = mesh.nearby(tri, 8)
+    sx, sy = cam.project(x, y, mesh.height(tri, x, y))
+    best, cx, cy = None, int(x), int(y)
+    for radius, step in ((1500, 30), (60, 3), (6, 1)):          # coarse to fine (fields differ in scale)
+        for px in range(cx - radius, cx + radius + 1, step):
+            for py in range(cy - radius, cy + radius + 1, step):
+                t = next((t for t in near if mesh.contains(t, px, py)), None)
+                if t is None:
+                    continue
+                pz = mesh.height(t, px, py)
+                qx, qy = cam.project(px, py, pz)
+                e = (qx - sx - dx) ** 2 + (qy - sy - dy) ** 2
+                if best is None or e < best[0]:
+                    best = (e, (px, py, pz, t))
+        cx, cy = best[1][0], best[1][1]
+    assert best and best[0] < 100, (field, x, y, dx, dy, best)   # within 10 px (floor edges)
+    return best[1]
 
 
 def _beside(ctx, field, x, y):
@@ -114,7 +143,16 @@ def apply(ctx):
     for i, g in enumerate(GIRLS):
         model, line = KIDS[g["name"]]
         f, (x, y), d = ELSEWHERE.get(g["name"], (g["field"], g["at"], g["dir"]))
-        pos = _beside(ctx, f, x, y)
+        name = g["name"]
+        if name in KID_AT:
+            kx, ky = KID_AT[name]
+            kt = Walkmesh(ctx.field(f).section("walkmesh")).find(kx, ky)
+            assert kt is not None, (name, kx, ky)
+            pos = (kx, ky, Walkmesh(ctx.field(f).section("walkmesh")).height(kt, kx, ky), kt)
+        elif name in KID_OFFSET:
+            pos = _at_screen(ctx, f, x, y, *KID_OFFSET[name])
+        else:
+            pos = _beside(ctx, f, x, y)
         if g["name"] in REUSE:
             reuse_npc(ctx, f, REUSE[g["name"]], model, pos, d, _talk(line))
             sec = Script.parse(ctx.field(f).sections[0])

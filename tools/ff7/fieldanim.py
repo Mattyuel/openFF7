@@ -121,6 +121,15 @@ def forward(bones, root_rot, root_pos, rotations):
     return out
 
 
+def height(hrc_text, anim_bytes):
+    """Height (skeleton units) of a model in the first frame of an animation:
+    the vertical span of its joints (its standing height for a stand anim)."""
+    bones = skeleton(hrc_text)
+    rr, rp, rots = Anim(anim_bytes).frames[0]
+    ys = [p[1] for _, s, e in forward(bones, rr, rp, rots) for p in (s, e)]
+    return max(ys) - min(ys)
+
+
 def local_rotations(bones, root_rot, worlds):
     """Per-bone (x, y, z) giving the world matrices `worlds` (parent-relative)."""
     names = [b[0] for b in bones]

@@ -418,7 +418,7 @@ def _add_girls(ctx):
         x, y = g["at"]
         tri = mesh.find(x, y)
         assert tri is not None, (f, x, y)
-        pos = (x, y, mesh.height(tri, x, y), tri)
+        pos = (x, y, mesh.height(tri, x, y) - g.get("drop", 0), tri)        # drop: drawn lower (user)
         if "reuse" in g:
             _reuse_entity(ctx, f, g["reuse"], i, g, pos)
             continue

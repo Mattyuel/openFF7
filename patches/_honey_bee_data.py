@@ -88,7 +88,7 @@ GIRLS = [
          fail="Rhonda\n“Too cheerful. Goodbye.”",
          hired="Rhonda\n“Fine. I'll do it. It won't help,\n but I'll do it.”",
          idle="Rhonda\n“Yes, I'm going. No, I'm not happy.”"),
-    dict(name="Lulu", stars=2, tag="drama queen", field="juninn", at=(-353, 438), dir=17,
+    dict(name="Lulu", stars=2, tag="drama queen", field="juninn", at=(-338, 405), dir=17, drop=8,   # half a leg down the screen, drawn lower (user)
          model=("crcin_1", 4),
          stranger="Lulu\n“Oh, the TRAGEDY of it all!\n …I lost a sock.”",
          intro="Lulu\n“Darling! You look like a man with a\n BROKEN heart. Tell me EVERYTHING!”",
@@ -271,7 +271,7 @@ GIRLS = [
          fail="{AERIS}\n“Wrong! You'll have to try harder,\n mister bodyguard.”",
          hired="{AERIS}\n“Okay! But you owe me a date.\n A real one! …See you there.”",
          idle="{AERIS}\n“Don't keep me waiting!”"),
-    dict(name="Scarlet", stars=5, tag="the boss", field="blin66_6", at=(187, 441), dir=128,
+    dict(name="Scarlet", stars=5, tag="the boss", field="blin66_6", at=(132, -229), dir=248,   # lower right of the room, beside the arrival (user)
          model=("blin66_1", 5),
          stranger="Scarlet\n“Kyahaha! Out of my way, peasant.”",
          intro="Scarlet\n“You? The Honey Bee Inn sent YOU?\n Kyahaha! How adorable.”",

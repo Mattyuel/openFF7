@@ -24,7 +24,8 @@ from ff7.walkmesh import Walkmesh
 
 ENTRY, INSIDE = "jtmpin1", "kuro_1"
 ARRIVE = (66, 156, 0x80)       # kuro_1: where its arrival scene left Cloud (SPLIT)
-GUIDE = ("vince", ("rckt", 8), (38, 128))   # entity taken over, model (the archaeologist's), spot
+GUIDE = ("vince", ("rckt", 8), (-51, 48))   # entity taken over, model (the archaeologist's), spot
+                                            # (4 paces left of the first try: you got stuck on him, user)
 OUTSIDE = ("jtempl", 509, 760, 40, 0)       # jtmpin1's own exit into jtempl: before the temple door
 
 

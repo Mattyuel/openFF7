@@ -725,7 +725,7 @@ WORLD_GIVERS = [
                     "can't find my sandals.")),
 
     # ---- Temple of the Ancients ---------------------------------------------
-    dict(field="jtempl", name="archaeo", level=30, model=("rckt", 8), at=(640, -1400), dir=244,   # off the rope bridge, just right of the path to the exit (user: was too far right)
+    dict(field="jtempl", name="archaeo", level=30, model=("rckt", 8), at=(618, -1419), dir=244,   # off the rope bridge, right of the path to the exit (user: further left; floor edge)
          who="Archaeologist", where="Temple of the Ancients",
          quests=[
              dict(id="archaeo_frogs", kind="kill",

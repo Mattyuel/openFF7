@@ -40,6 +40,7 @@ DESTINATIONS = {
     "No. 5 Reactor": ("tunnel_2", 6, 338, 3, 128),
 }
 CONDUCTOR_MODEL = ("mds7st3", 6)   # shinra_guard: the Sector 7 station conductor
+CONDUCTOR_AT = {"Upper Midgar": (-240, 100)}   # 4 paces right of beside(): he was hidden (user)
 ROBOT_MODEL = ("md8brdg2", None)   # 'another_robo' (found by name below)
 # nmkin_5 (No.1 Reactor core): the original scene starts when Cloud's entity
 # is on walkmesh triangle 2 (the platform at the far end). A line across the
@@ -90,6 +91,12 @@ def _conductors(ctx):
         assert Walkmesh(ctx.field(field).section("walkmesh")).contains(tri, x, y), (field, x, y, tri)
         model = copy_model(ctx, field, *CONDUCTOR_MODEL)
         pos = beside(ctx, field, x, y, tri)
+        if name in CONDUCTOR_AT:
+            mesh = Walkmesh(ctx.field(field).section("walkmesh"))
+            cx, cy = CONDUCTOR_AT[name]
+            ct = mesh.find(cx, cy)
+            assert ct is not None, (name, cx, cy)
+            pos = (cx, cy, mesh.height(ct, cx, cy), ct)
 
         def talk(sec):
             back = _depart(sec, mapjump(ctx, START_FIELD, START_X, START_Y, START_TRIANGLE))
@@ -176,8 +183,26 @@ def _reactor1_music(ctx):
     ctx.field(REACTOR1_STATION).sections[0] = sec.build()
 
 
+def _reactor5_door(ctx):
+    """smkin_1's three-button door (two door models, entities 4/5, slid open by OFST at
+    progress >= 128) still read as shut in game (user: no way to Air Buster): the two
+    door models are hidden and non-solid in their init."""
+    f = ctx.field("smkin_1")
+    sec = Script.parse(f.sections[0])
+    done = 0
+    for ent in range(len(sec.entry)):
+        init = sec.script_ops(ent, 0)
+        if init and init[0].op == 0xA1 and init[0].raw[1] in (3, 4):          # CHAR 3 / 4: the door halves
+            ret = next(o for o in init if o.op == 0x00)
+            sec.insert_before(ret, hide(), retarget=True)
+            done += 1
+    assert done == 2, done
+    f.sections[0] = sec.build()
+
+
 def apply(ctx):
     _reactor1_music(ctx)
+    _reactor5_door(ctx)
     _train_menu(ctx)
     _conductors(ctx)
     _reactor1_doors(ctx)

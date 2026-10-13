@@ -70,7 +70,7 @@ REGIONS = [
              ("Vice", [34], 7, 2, "the Sector 5 slums"),
              ("Sword Dance", [55], 11, 2, "the Shinra Building"),
          ]),
-    dict(key="kalm", points=2, cap="Hunter", field="elmpb", at=(-41, 183), dir=227,   # down-left of the guest who heard about the bombing (was behind the counter)
+    dict(key="kalm", points=2, cap="Hunter", field="elmpb", at=(-81, 228), dir=227,   # 2 more paces left (user)   # down-left of the guest who heard about the bombing (was behind the counter)
          bar="Kalm bar",
          area="the plains past Midgar", pool=[
              ("Mu", [77], 12, 3, "the grasslands"),
@@ -106,7 +106,7 @@ REGIONS = [
              ("Skeeskee", [129], 20, 3, "the canyon lands"),
              ("Griffin", [130], 21, 3, "the canyon lands"),
          ]),
-    dict(key="nibel", points=8, cap="Elite", field="nivinn_1", at=(-14, -340), dir=233,
+    dict(key="nibel", points=8, cap="Elite", field="nivinn_1", at=(-94, -308), dir=233,   # 3 paces left (user)
          also=[("rktinn1", (-419, 257), 25)],   # Rocket Town inn: 3 steps right and up of the "real or fake?" man
          bar="Nibelheim Inn",
          area="the Nibel area", pool=[

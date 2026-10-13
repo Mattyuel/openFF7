@@ -44,15 +44,26 @@ PAGES = [
     ("World 1", [("Kalm", "elm"), ("Chocobo Ranch", "frcyo"), ("Fort Condor", "condor1"),
                  ("Upper Junon", "junonr1"), ("Costa del Sol", "del2"), ("Corel ropeway", "ropest"),
                  ("Gold Saucer", "games"), ("Gongaga", "gongaga")]),
-    ("World 2", [("Cosmo Canyon", "cos_btm"), ("Nibelheim", "nivl"), ("Shinra Mansion", "sinin1_1"),
+    ("World 2", [("Cosmo Canyon", "cos_btm"), ("Nibelheim", "nivl_3"), ("Shinra Mansion", "sinin1_1"),
                  ("Rocket Town", "rckt"), ("Wutai", "uutai1"), ("Temple of Ancients", "jtempl"),
                  ("Icicle Inn", "snow"), ("Mideel", "itown1a")]),
 ]
 
 
+# Arrivals picked by hand where the first link found was poor (user): Gold Saucer
+# = where the entrance gate (gldgate) drops you; Nibelheim = the present-day town
+# (nivl_3; nivl is the flashback copy, where the player was invisible beside a
+# scene Cloud), in front of the inn as its exit leaves you.
+ARRIVE_AT = {"games": (191, -1053, 99, 112), "nivl_3": (-98, -347, 17, 60)}
+
+
 def _arrival(ctx, target, links):
     """(x, y, tri, dir) of a gateway into `target` from a field that links to it."""
     mesh = Walkmesh(ctx.field(target).section("walkmesh"))
+    if target in ARRIVE_AT:
+        x, y, tri, d = ARRIVE_AT[target]
+        assert mesh.contains(tri, x, y), target
+        return x, y, tri, d
     tid = ctx.maplist.index(target)
     for src in links.get(target, []):
         if src not in ctx.flevel:

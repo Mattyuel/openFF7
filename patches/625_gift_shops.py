@@ -21,7 +21,7 @@ from ff7.text import decode, encode
 from ff7.walkmesh import Walkmesh
 
 NAME = "Gift Merchant"
-MODEL = ("blin60_1", 3)                  # shinra_onna: the woman on Shinra HQ floor 60 (user)
+MODEL = ("del2", 9)                      # kosta_rgirl: Costa del Sol woman in a sun dress (user: the HQ 60F woman looked odd)
 GIL_LO, GIL_HI = (6, 0xF8), (6, 0xFA)    # temp words for CHGLD (as 280 / 640)
 KEY_NAMES, KEY_DESC = 15, 7              # kernel2 sections
 
