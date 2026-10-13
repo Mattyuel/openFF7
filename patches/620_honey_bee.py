@@ -178,7 +178,8 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "eiab": "EIAB.chi"}   # sitting comfortably
 FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
-BED = (91, -179)                             # lying girl in the scenes (half a body further from the door than 136, a touch further back)
+BED = (91, -144)                             # lying girl in the scenes: half a body further from the door than 136,
+                                             # then a body width further back (the rolled pose sat off Cloud)
 BED_DIR = 0xC0                               # lying girl in the scenes (user: 0x40 then turned 180, so
                                              # she lines up with Cloud's lying poses)
 CLOUD_BED_DIR = 0x40                         # Cloud lying on his stomach on the bed (AVDD / AVEA)
