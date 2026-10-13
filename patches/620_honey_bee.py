@@ -44,6 +44,8 @@ LOBBY, ROOM = "onna_4", "onna_52"
 # before any visit edits (unused maplist names; each copy has the room's whole
 # text table for its 20 scenes). (field, first affection, scenes, last line)
 CLOSE_ROOM, DEVOTED_ROOM = "onna_3", "onna_6"
+BASIC_ROOM = "convil_3"     # the basic scenes too (unused maplist name, no exe special case): the "&"
+                            # room itself is only the lounges now, its texts free for the gift menus
 MANAGER_MODEL = ("colne_3", 4)               # market_youjin_r: Scotch (Corneo's man, colne_3 SOTCH)
 # a Honey Bee girl either side of him (screen x = field x * 0.46 here)
 ESCORTS = [("hbbee_l", (44, -48), "Honey Bee\n“Ooh, a new face! The boss says\n you've got an eye for talent.”"),
@@ -86,7 +88,10 @@ LOBBY_LOCKS = (0x13, 0x1C, 0x1E, 0x04)            # the side doors' triangles (l
 CHOOSERS = ("border5", "border6", "border7", "border8")   # the "take this room?" lines
 ROOM_EXITS = {1: (-246, -135, 16, 96), 2: (-267, 153, 21, 32),       # onna_52 border1's own two arrivals
               3: (251, -140, 6, 160), 4: (255, 142, 1, 224)}         # onna_5's two exits to the lobby
-ROOM_ARRIVAL = (263, 163, 5, 220)                 # onna_52 at the door (rooms 3/4: mirrored)
+ROOM_ARRIVAL = (215, 120, 6, 220)                 # onna_52 a little inside the door (rooms 3/4: mirrored),
+                                                  # clear of EXIT_LINE
+EXIT_LINE = ((290, 254, 25), (314, 116, 25))      # lounge exit: across the way in, before the door
+                                                  # (the original line is past the door: Cloud ran through it)
 GIRLS_PER_ROOM = 5
 # (x, y, pose) in onna_52 (mirrored in FLIPPED): pose None = stand,
 # ("hold", anim) a held pose, ("loop", anim) repeated
@@ -94,13 +99,16 @@ GIRLS_PER_ROOM = 5
 # sit near the floor's edge (<= 31 units) and get a bigger talk radius.
 # (spot, kind): "lie" holds the lying pose; "sit" / "stand" cycle random
 # sitting / standing animations with random pauses between them.
+# (spot, kind, DIR offset from facing down the screen; negated in the mirrored rooms)
 LOUNGE_SPOTS = [
-    ((80, -250), "lie"),                     # lying on the bed
-    ((70, -140), "sit"),                     # sitting on the bed
-    ((-60, -150), "sit"),                    # sitting
-    ((-120, 180), "stand"),                  # the dancer
-    ((60, 230), "stand"),
+    ((130, -180), "lie", 0x40),              # lying on the bed, turned 90 degrees, towards the back
+    ((55, -150), "sit", 0),                  # sitting on the bed's edge (lowered: SIT_DROP)
+    ((-110, -180), "stand", 0x28),           # standing, away from the door
+    ((-120, 180), "stand", 0),               # the dancer
+    ((60, 230), "stand", -0x28),
 ]
+SIT_DROP = 25                                # the sitting pose floated above the bed (z 76): drawn this much lower
+LIE_TALK_RADIUS = 0x70                       # she is further onto the bed
 LIE_ANIM = "DZBA.tor"
 SIT_ANIMS = ["DXHE.tor", "DXIB.tor", "DXIC.tor"]                       # held (they stay seated)
 STAND_ANIMS = ["DXJC.tor", "BAJE.tor", "BAJD.tor", "BAJF.tor", "BBAA.tor",   # played once, back to idle
@@ -384,7 +392,7 @@ def _manager(ctx, back):
                 lower = asm.nop()
                 ops += [asm.if_byte(HB_AFFECTION[i], ">=", at, lower),
                         asm.mapjump(ctx.maplist.index(name), rx, ry, rtri, rdir), asm.ret(), lower]
-            ops += [asm.mapjump(room, rx, ry, rtri, rdir), asm.ret(),
+            ops += [asm.mapjump(ctx.maplist.index(BASIC_ROOM), rx, ry, rtri, rdir), asm.ret(),
                     go, asm.if_byte(CHOICE, "==", first + 2, stop), asm.goto(end), stop, skip]
         ops += [asm.if_byte(SHOWN, "==", 0, done)]
         ops += _say(sec, "Manager\n“You haven't hired anybody yet!\n Get out there and charm 'em.”")
@@ -529,7 +537,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     }
     cloud_beats.update({name: one(name) for name in CLOUD_EXTRA})
     used = {s[1] for sc in scenes for s in sc if s[0] in ("g", "g&")}
-    on_bed = [i for i, sc in enumerate(scenes) if sc[0] == ("start", "bed")]
+    on_bed = [i for i, sc in enumerate(scenes) if sc[:1] == [("start", "bed")]]
     for i, sc in enumerate(scenes):
         assert sum(s[0] in ("G", "C") for s in sc) <= 7, (field, GIRLS[i]["name"])
         assert i not in on_bed or not {s[1] for s in sc if s[0] in ("g", "g&")} & MOVES, (field, GIRLS[i]["name"])
@@ -642,12 +650,14 @@ def _show_aff(say_ops, var):
 def _gift_routine(sec):
     """The lounge gift menu (entity hbgift script 1, REQEW'd by a girl's talk
     with GIFT_GIRL = her index). Nothing if she's at full affection or no gift
-    is held; else pick a gift (two pages), it's taken, and her affection rises
-    by her liking of its type (gifts.PREFS), capped at gifts.MAX. Every text
-    is shared by all girls (the room's text table is nearly full)."""
+    is held; else each gift you hold is offered in turn ("Give it" / "Next
+    gift" / "Not now"; past the last it starts over), so gifts you don't have
+    never show. The one given is taken, and her affection rises by her liking
+    of its type (gifts.PREFS), capped at gifts.MAX. The reactions are shared
+    by all girls."""
     n = len(gifts.GIFTS)
     assert n == 12 and len(gifts.PREFS) == len(GIRLS)
-    end, devoted, menu, chosen, not_held = asm.ret(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    end, devoted, menu = asm.ret(), asm.nop(), asm.nop()
     ops = []
     for i in range(len(GIRLS)):
         nxt = asm.nop()
@@ -658,29 +668,17 @@ def _gift_routine(sec):
         nxt = asm.nop()
         ops += [asm.if_byte(kv, "bit_on", bit, nxt), asm.goto(menu), nxt]
     ops += [asm.goto(end), menu]
-    names = [g[0] for g in gifts.GIFTS]
-    page1, first1 = _ask(sec, gifts.GIVE_PROMPT, names[:6] + ["More gifts…", "Not now."])
-    page2, first2 = _ask(sec, gifts.GIVE_PROMPT, names[6:] + ["Back.", "Not now."])
-    more = asm.nop()
-    ops += page1 + [asm.if_byte(CHOICE, "!=", first1 + 6, more)]
-    for j in range(6):
-        nxt = asm.nop()
-        ops += [asm.if_byte(CHOICE, "==", first1 + j, nxt), asm.setbyte(GIFT_SEL, j), asm.goto(chosen), nxt]
-    ops += [asm.goto(end), more] + page2
-    for j in range(6):
-        nxt = asm.nop()
-        ops += [asm.if_byte(CHOICE, "==", first2 + j, nxt), asm.setbyte(GIFT_SEL, 6 + j), asm.goto(chosen), nxt]
-    back = asm.nop()
-    ops += [asm.if_byte(CHOICE, "==", first2 + 6, back), asm.goto_back(menu), back, asm.goto(end)]
-    # the gift picked: held? take it, then branch on its type
     by_type = [asm.nop() for _ in gifts.TYPES]
-    ops.append(chosen)
-    for j, (_, _, t, _, _) in enumerate(gifts.GIFTS):
+    for j, (name, _, t, _, _) in enumerate(gifts.GIFTS):
         kv, bit = _key_bit(j)
-        nxt = asm.nop()
-        ops += [asm.if_byte(GIFT_SEL, "==", j, nxt), asm.if_byte(kv, "bit_on", bit, not_held),
-                asm.bitoff(kv, bit), asm.goto(by_type[t]), nxt]
-    ops += [asm.goto(end)]
+        skip = asm.nop()
+        ask, first = _ask(sec, gifts.GIVE_PROMPT % name, ["Give it.", "Next gift.", "Not now."])
+        give = asm.nop()
+        ops += [asm.if_byte(kv, "bit_on", bit, skip)] + ask        # not held: not offered
+        ops += [asm.if_byte(CHOICE, "!=", first + 1, skip),        # "Next gift." -> the next one held
+                asm.if_byte(CHOICE, "!=", first, give), asm.goto(end),   # "Give it." -> give; else done
+                give, asm.bitoff(kv, bit), asm.goto(by_type[t]), skip]
+    ops += [asm.goto_back(menu)]                         # past the last held gift: from the first again
     react = {k: asm.nop() for k in gifts.GAIN}
     for t, label in enumerate(by_type):
         ops.append(label)
@@ -698,7 +696,6 @@ def _gift_routine(sec):
         say = _say(sec, gifts.REACT[like])
         ops += [label, say[0], Op(bytes([0x42, DISPLAY[0], 0, 0]) + struct.pack("<H", DISPLAY[1]))] + say[1:]
         ops += [sound(0x168) if like == "L" else asm.nop(), asm.goto(end)]
-    ops += [not_held] + _say(sec, gifts.NOT_HELD) + [asm.goto(end)]
     ops += [devoted] + _say(sec, gifts.DEVOTED_LINE) + [end]
     return ops
 
@@ -714,7 +711,7 @@ def _lounge(ctx):
     sec = Script.parse(f.sections[0])
     da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA)}
     assert len(GIRLS) == 4 * GIRLS_PER_ROOM == 20 and len(LOUNGE_SPOTS) == GIRLS_PER_ROOM
-    gift_ent = sec.add_entity("hbgift", {1: _gift_routine(sec)})
+    gift_ent = sec.add_entity("hbgift", {0: [asm.ret(), asm.ret()], 1: _gift_routine(sec)})   # init, main: nothing
     for k, name in enumerate(LOUNGE_EXTRAS):
         ent = sec.entity_index(name)
         old = sec.script_ops(ent, 0)
@@ -725,16 +722,19 @@ def _lounge(ctx):
         talk, tend = [Op(b"\x33\x01"), Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00")], asm.nop()
         main = []
         if k < GIRLS_PER_ROOM:
-            (x0, y0), kind = LOUNGE_SPOTS[k]
+            (x0, y0), kind, turn = LOUNGE_SPOTS[k]
+            if kind == "lie":
+                talk = talk[:1]                                      # she stays as she lies (no PTURA)
             for room in (1, 2, 3, 4):
                 g = GIRLS_PER_ROOM * (room - 1) + k
                 m, c, x = (mesh, cam, x0) if room <= 2 else (fmesh, fcam, -x0)   # rooms 3/4: FLIPPED
                 t = m.find(x, y0)
                 assert t is not None, (room, x, y0)
                 z = m.height(t, x, y0)
-                show = [_xyzi(x, y0, z, t), Op(bytes([0xB3, 0, facing_screen(c, x, y0, z, (0, 1))])), _visi(1),
-                        Op(b"\x7E\x00"),                                         # TLKON 00, TALKR
-                        Op(bytes([0xC5, 0x00, BED_TALK_RADIUS if z > 50 else TALK_RADIUS]))]
+                d = (facing_screen(c, x, y0, z, (0, 1)) + (turn if room <= 2 else -turn)) % 256
+                radius = LIE_TALK_RADIUS if kind == "lie" else BED_TALK_RADIUS if z > 50 else TALK_RADIUS
+                show = [_xyzi(x, y0, z - (SIT_DROP if kind == "sit" else 0), t), Op(bytes([0xB3, 0, d])), _visi(1),
+                        Op(b"\x7E\x00"), Op(bytes([0xC5, 0x00, radius]))]          # TLKON 00, TALKR
                 if kind != "stand":
                     show.append(_anim(da[LIE_ANIM if kind == "lie" else SIT_ANIMS[0]], hold=True))
                 nxt = asm.nop()
@@ -761,11 +761,19 @@ def _lounge(ctx):
     sec.insert_before(ret, [asm.if_byte(HB_VISIT, ">=", LOUNGE_ROOM, skip), _menu(0), skip], retarget=False)
     # leaving: back to the lobby door you came in by, out of lounge mode
     border = sec.entity_index("border1")
+    lines = [o for o in sec.script_ops(border, 0) if o.op == 0xD0]
+    assert len(lines) == 1, lines
+    (ax, ay, az), (bx, by, bz) = EXIT_LINE
+    lines[0].raw[1:13] = struct.pack("<6h", ax, ay, az, bx, by, bz)
+    rx, ry = ROOM_ARRIVAL[:2]
+    assert mesh.contains(ROOM_ARRIVAL[2], rx, ry)
     exit_ = sec.script_ops(border, 2)
+    door = sec.entity_index("door")
     head = []
     for room, (ex, ey, etri, edir) in ROOM_EXITS.items():
         nxt = asm.nop()
         head += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, nxt), asm.setbyte(HB_VISIT, 0),
+                 _uc(1), sound(DOOR_OPEN), _req(door, 1, wait=False), _w(12), _uc(0),      # the door opens
                  asm.mapjump(ctx.maplist.index(LOBBY), ex, ey, etri, edir), asm.ret(), nxt]
     sec.insert_before(exit_[0], head, retarget=True)
     f.set_section("models", loader.build())
@@ -824,8 +832,10 @@ def apply(ctx):
     _add_girls(ctx)
     _manager(ctx, back)
     base = ctx.field(ROOM).build()                   # before the visit edits: the tier copies start here
-    _room(ctx, back)
-    for name, scenes, final in ((CLOSE_ROOM, CLOSE, CLOSE_FINAL), (DEVOTED_ROOM, DEVOTED, DEVOTED_FINAL)):
+    _room(ctx, back, ROOM, [[] for _ in GIRLS])     # lounge room: the visit-mode edits, no scenes
+    basic = {g["name"]: g["scene"] for g in GIRLS}
+    for name, scenes, final in ((BASIC_ROOM, basic, FINAL), (CLOSE_ROOM, CLOSE, CLOSE_FINAL),
+                                (DEVOTED_ROOM, DEVOTED, DEVOTED_FINAL)):
         assert set(scenes) == {g["name"] for g in GIRLS}, name
         ctx.new_field(name, base)
         _room(ctx, back, name, [scenes[g["name"]] for g in GIRLS], final)

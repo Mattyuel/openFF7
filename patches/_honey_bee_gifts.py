@@ -65,8 +65,7 @@ PREFS = {
 }
 
 # shared lines (the room text table is nearly full: one set for all girls)
-GIVE_PROMPT = "Give her a gift?"
-NOT_HELD = "You don't have that gift."
+GIVE_PROMPT = "Give her the %s?"     # one menu per gift: only gifts you hold are offered
 REACT = {
     "L": "She lights up and holds it close.\n“For me? You really get me…”\n(Affection +2: {VAR}/20)",
     "I": "She smiles politely.\n“Aw, thanks. That's sweet of you.”\n(Affection +1: {VAR}/20)",
