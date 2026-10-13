@@ -737,7 +737,7 @@ The movie minigame (user's design).
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `_gauge_pixels()` 
 - `_cursor_pixels()` 
-- `_sprites(ctx, half_gauge)` The gauge bar and the cursor as one-bone sprite models (the quest markers' way).
+- `_sprites(ctx, half_gauge, half_cursor)` The gauge bar and the cursor as one-bone sprite models (the quest markers' way).
 - `_spot(mesh, x, y, dz=0, high=False)` (x, y, z, tri) on the highest (a bed piece) or lowest (the floor) triangle under (x, y).
 - `_unproject(cam, sx, sy, depth)` Field point at screen (sx, sy) (pixels from the background centre) and view depth.
 - `_view_depth(cam, p)` 

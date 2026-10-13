@@ -72,25 +72,42 @@ PAY_RATE, PAY_DELAY = 10, 30                        # gil per press; play minute
 POSITIONS = [
     dict(name="mission", girl=("DZBT", (-225, -60, 0, 0x00), True), cloud=("ZCTA", (-220, -25, -4, 0x80), True),
          camera=(-130, -60, 0xC0)),                                         # left bed, she lies, head to the pillow
-    dict(name="cowgirl", girl=("DZBL", (0, -87, 18, 0x80), True), cloud=("ZCTD", (18, -95, 0, 0x80), True),
-         camera=(-130, -60, 0x40)),                                         # middle bed, Cloud's head on the pillow
+    # middle bed, Cloud's head on the pillow; she (user) a body width to her right (x 0 -> 18): over his line
+    dict(name="cowgirl", girl=("DZBL", (18, -87, 18, 0x80), True), cloud=("ZCTD", (18, -95, 0, 0x80), True),
+         camera=(-130, -60, 0x40)),
     dict(name="dog", girl=("DZBF", (227, -125, 0, 0x00), True), cloud=("ZCTB", (225, -103, 0, 0x00), True),
          camera=(90, -60, 0x40)),                                           # right bed
     dict(name="edge", girl=("DZBG", (-225, -150, 0, 0x80), False), cloud=("ZCTF", (-225, -161, 0, 0x80), False),
          camera=(-130, -180, 0xC0)),                                        # bent over the left bed's foot
     dict(name="headrev", girl=("DZBH", (-225, -54, 0, 0x80), True), cloud=("ZCTE", (-225, -150, 0, 0x80), False),
          camera=(-130, -180, 0xC0)),                                        # on her back, head over the foot
-    dict(name="head", girl=("DZBK", (50, -230, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
-         camera=(140, -235, 0xC0)),                                         # on the floor in front of the beds
+    # on the floor in front of the beds; she (user) half a head further from him (x 50 -> 42)
+    dict(name="head", girl=("DZBK", (42, -230, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
+         camera=(140, -235, 0xC0)),
 ]
-LINES = {   # Ruby, while it plays (4 per position, in turn); head / head reverse: muffled (user)
-    "mission": ["Mmm... the camera loves you.", "Oh... don't stop...", "Yes... just like that!", "Harder, star!"],
-    "cowgirl": ["Lie back... let me lead.", "Mmm, you feel so good...", "Can you keep up with me?", "Oh! Oh, yes!"],
-    "dog": ["Ah! Right there!", "Don't you dare slow down...", "Mmm... more!", "Oh, you're a natural!"],
-    "edge": ["Ah... the whole bed's shaking...", "Faster... faster!", "Mmm, hold on to me...", "Oh, yes... yes!"],
-    "headrev": ["Mmph... mmmh!", "Mmf! Mmmf...", "Hnnh... mmh...", "Mmmmh!"],
-    "head": ["Mmm... mmph!", "Mmf... mmh, mmh...", "Hmmm... mmmh!", "Mmph! Mmm..."],
+LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
+    "mission": ["Mmm... the camera loves you.", "Kiss my neck... yes, right there...",
+                "Pin my wrists down, star.", "Look me in the eyes while you do it.",
+                "Deeper... oh, deeper!", "Wrap my legs round you... don't let go.",
+                "Harder, star!", "Don't you dare stop now!"],
+    "cowgirl": ["Lie back... let me ride you.", "Grab my hips. Hold on tight.",
+                "Mmm, you fill me up so good...", "Squeeze my ass... harder!",
+                "Watch me bounce for the camera...", "Can you keep up with me?",
+                "Oh! Oh, yes! Right there!", "I'm not stopping till you beg."],
+    "dog": ["Ah! Right there!", "Pull my hair!", "Spank me! Harder!", "Grab my waist and pull me back...",
+            "Don't you dare slow down...", "Mmm... deeper!", "Make me scream for the camera!",
+            "Oh, you're a natural!"],
+    "edge": ["Ah... the whole bed's shaking...", "Pull my hair back... yes!", "Grip my hips... don't let go.",
+             "Faster... faster!", "Spank me! Again!", "Bend me over further...", "Mmm, hold on to me...",
+             "Oh, yes... yes!"],
+    "headrev": ["Mmph... mmmh!", "Mmf! Mmmf...", "(She grabs your thighs and pulls you in.)\n Mmmh!",
+                "Hnnh... mmh...", "Gk... mmh! Mmmh...", "(She moans around you.)\n Mmmmh...!",
+                "Mmm... mmm... mmm!", "Hmmf! Mmmh..."],
+    "head": ["Mmm... mmph!", "(She guides your hand into her hair.)\n Mmmh!", "Mmf... mmh, mmh...",
+             "(She looks up at you.) Mmm...", "Hmmm... mmmh!", "Gk... mmf! Mmmh...",
+             "(She pulls your hips closer.)\n Mmph!", "Mmph! Mmm..."],
 }
+LINES_EACH = 8
 SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines; frames each stays up
 
 # temp vars (this field only)
@@ -227,7 +244,8 @@ def _speeds(ctx):
 
 
 GAUGE_W, GAUGE_H = 64, 8                    # texture pixels (in a 64 x 64 texture)
-GAUGE_PX, CURSOR_UP = 180, 16               # on-screen width; cursor above the bar (screen px)
+GAUGE_PX, CURSOR_PX, CURSOR_UP = 45, 12, 8   # on-screen widths (user: the bar a quarter of its first 180); cursor
+                                            # above the bar (screen px)
 GAUGE_Y = -80                               # the bar's screen y from the view centre (user: at +88 it was below
                                             # the screen: the view sits higher than the centred guess)
 LINE_Y = 168                                # Ruby's lines: window at the bottom (the gauge is at the top)
@@ -257,7 +275,7 @@ def _cursor_pixels():
     return px
 
 
-def _sprites(ctx, half_gauge):
+def _sprites(ctx, half_gauge, half_cursor):
     """The gauge bar and the cursor as one-bone sprite models (the quest markers' way).
     Returns {hrc: loader entry (the Glacier Map entry, unscaled)}."""
     donor_p = ctx.char_file(mm.DONOR_P)
@@ -273,7 +291,7 @@ def _sprites(ctx, half_gauge):
             pass
         gauge = hrc == "QGAA"
         crop = (0, 0, GAUGE_W - 1, GAUGE_H - 1) if gauge else (0, 0, 15, 11)
-        half = half_gauge if gauge else half_gauge * 0.12
+        half = half_gauge if gauge else half_cursor
         ctx.char_file(hrc.lower() + ".hrc",
                       hrc_text.replace("icemap_sk", hrc.lower() + "_sk").replace("1 GUJD", "1 " + rsd).encode("latin1"))
         ctx.char_file(rsd.lower() + ".rsd",
@@ -349,6 +367,7 @@ def _shoot(ctx, back):
     sprite_scale = round(ModelLoader.entry_scale(donor_loader.models[mm.DONOR_MODEL]) * field_scale / donor_loader.scale)
     unit = 3.41 * sprite_scale / 512                         # field units per model unit (3.41 at 512: renders)
     half = GAUGE_PX / 2 * near / cam.zoom / unit
+    half_cursor = CURSOR_PX / 2 * near / cam.zoom / unit
     for pl in places:
         sx, sy = cam.project(*pl["focus"][:3])
         sx = min(max(sx, left + 160), right - 160)
@@ -391,7 +410,7 @@ def _shoot(ctx, back):
     cd = ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models"))
     cm = loader.add_from(cd, CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
-    sprites = _sprites(ctx, half)
+    sprites = _sprites(ctx, half, half_cursor)
     for hrc in ("QGAA", "QCUA"):
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
     assert len(loader.models) == 7
@@ -451,12 +470,13 @@ def _shoot(ctx, back):
     # voice: a line every SAY_EVERY frames while RUN; hush closes it SAY_FOR frames later
     vl, vdone = asm.nop(), asm.nop()
     voice = [asm.ret(), vl, hb._w(SAY_EVERY), asm.if_byte(RUN, "==", 1, vdone),
-             Op(bytes([0x95, K[0], K[1]])), Op(bytes([0x8D, K[0] << 4, K[1], 4]))]   # INC K, MOD K 4
+             Op(bytes([0x95, K[0], K[1]])), Op(bytes([0x8D, K[0] << 4, K[1], LINES_EACH]))]   # INC K, MOD K
 
     def line(p, pl):
         out = []
+        assert len(LINES[POSITIONS[p]["name"]]) == LINES_EACH, POSITIONS[p]["name"]
         for k_, text in enumerate(LINES[POSITIONS[p]["name"]]):
-            t = "Ruby\n“%s”" % text
+            t = "Ruby\n“%s”" % text if not text.startswith("(") else "Ruby\n%s" % text
             out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y), hb._req(ents["hush"], 2, wait=False),
                         asm.message(1, sec.add_string(_encode(t)))])
         return _chain(K, out)
@@ -502,11 +522,19 @@ def _shoot(ctx, back):
     # the next position each minute
     stay = asm.nop()
     main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, MINUTE),
-             Op(bytes([0x85, P[0] << 4, P[1], 1])), asm.if_byte(P, "<", len(POSITIONS), wrap)] + place_all() + \
-            [stay, asm.goto_back(tick)]
+             Op(bytes([0x85, P[0] << 4, P[1], 1])), asm.if_byte(P, "<", len(POSITIONS), wrap),
+             # (user: the switch showed awkward, late model moves) paused and hidden by a fade
+             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + \
+            [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setbyte(RUN, 1),
+             stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
-    out = lambda: [hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(WALL), rx, ry, rt, rdir), asm.ret()]
-    main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
+    def out():                                   # jump back; then wait (a main that reaches RET starts over)
+        stop = hb._w(30)
+        return [hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(WALL), rx, ry, rt, rdir), stop,
+                asm.goto_back(stop), asm.ret()]
+    # a CUT: nothing owed (user: ending early still paid), cleared before anything else
+    main += [lost, asm.setbyte(RUN, 0), asm.setbyte(MOVIE_STATE, 0), asm.setword(MOVIE_PRESSES, 0),
+             Op(b"\x54\x01"), hb._w(10)]
     main += say("“CUT! CUT! You lost it, man!\n That take's ruined... Let's try again\n some other day.”")
     main += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0)] + out()
     main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]

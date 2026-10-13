@@ -341,10 +341,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   him -> "Lights, camera, action!" -> the Sector 7 room with three beds. Press OK
   (confirm button) repeatedly: the gauge at the top (red | green | red; was off the bottom of the screen) and the cursor
   above it; pressing pushes it right, stopping lets it drift left, it has momentum and runs
-  away from the middle. Red at either end = "CUT!" and back to Wall Market, no pay. Six
+  away from the middle. Red at either end = "CUT!" and back to Wall Market, no pay (check: talking to him
+  afterwards should offer a new shoot, not the 'come back later' line). Six
   positions, one minute each, moving between the beds (mission left bed, cowgirl middle bed,
   dog right bed, edge and head reverse at the left bed's foot, head on the floor); the thrust
-  speed follows how fast you press (4 steps). Ruby says a line (window at the bottom) every ~2.5 s that closes by
+  speed follows how fast you press (4 steps). Each position change fades out and in (user). Ruby says a line (window at the bottom; 8 per
+  position, e.g. 'Pull my hair!') every ~2.5 s that closes by
   itself (~2 s; muffled during head / head reverse). Costa del Sol music. After six minutes:
   "That's a wrap", back in Wall Market, he says to come back in half an hour; after 30 play
   minutes his talk pays presses x 10 gil. Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
