@@ -332,7 +332,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   -> "Ask her on a date." Third date: she doubts herself and begs to be punished. Part two:
   bare Cloud seated, her (new model: thighs bare) face down over his lap; spanks with the
   slap sound in rounds of 1, 2, 3; she asks for more; fade to part three: she sits on his
-  lap bouncing as he thrusts and slaps. Check her placement on his lap, the spank timing.
+  lap bouncing as he thrusts and slaps. Since (user): both on the left of the screen (at her seat)
+  and turned the other way, his spank a simple shoulder swing, a slap sound every 0.5 s through
+  part three. Check her placement on his lap, the spank timing, the slap rhythm.
 - **Movie minigame** (new; untested in-game): needs all 20 Honey Bee kids (debug menu:
   Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
   cameraman (the Junon reporter with the camera) and Ruby (red hair, black jacket). Talk to

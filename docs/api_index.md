@@ -722,7 +722,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_scarlet_bare(ctx)` 
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
 - `_bare_elena(ctx)` 
-- `_cloud_seated(ctx, name, thrust)` His right arm, at its lowest (the middle frame), aimed so the hand lands on her behind
+- `_cloud_seated(ctx, name, thrust)` His right arm swung at the shoulder (user: a simple shoulder rotation), lowest at the middle
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_lap(ctx)` 
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:

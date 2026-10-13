@@ -301,12 +301,9 @@ DATES = {
                   ("G", "“Mmh…! Sorry… sorry…\n I'll be a better Turk…!”"),
                   ("act", "spank"), ("act", "spank"), ("act", "spank"),
                   ("G", "“…Don't stop. Punish me more.\n Please, sir.”"),
-                  ("act", "part3"),
+                  ("act", "part3"),                  # (user) a slap every 0.5 s from here (660 "slap_loop")
                   ("G", "“Wha—?! Cloud! This isn't in\n any Turk training…!”"),
-                  ("act", "smack"),
                   ("G", "“Ah…! Mission… mission status:\n …extremely successful…!”"),
-                  ("act", "smack"), ("act", "smack"),
-                  ("G", "“More… more punishment, sir!”"),
-                  ("act", "smack")],
+                  ("G", "“More… more punishment, sir!”")],
     },
 }

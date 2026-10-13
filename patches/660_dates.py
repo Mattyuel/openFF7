@@ -98,7 +98,9 @@ PART2 = {
     # "spank"), then (fade, "part3") on his lap, bouncing as he thrusts and slaps ("smack": sound)
     "Elena": {"bare": "ZELA.HRC", "anims": ["ZDEA.tor", "ZDEB.tor"], "cloud": "sitspank", "cloud_still": True,
               "same_way": True, "once": {"spank": "sitspank"},
-              "switch": {"part3": ("sitthrust", "ZDEB.tor")}, "sounds": {"smack": 0x76}},
+              "switch": {"part3": ("sitthrust", "ZDEB.tor")}, "slap_loop": True,
+              # (user) both on the left of the screen (at her seat) and turned the other way
+              "at_her_seat": True, "turn": 128},
     # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
     "Scarlet": {"bare": "ZSCA.HRC", "anims": ["ZDSW.tor", "ZDSX.tor"], "cloud": "stand", "cloud_fast": "standf",
                 "same_way": True, "at_her_seat": True},   # (user) on the left of the screen: at her seat
@@ -347,6 +349,10 @@ def _field(ctx, place, group, names):
                                Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
                                Op(bytes([0xBC, first + k, n // 2, n - 1, 1])), Op(b"\xAC"),
                                Op(bytes([0xB1, first + k, 0, 0, 1])), asm.ret()]
+    # 31: the slap sound every SEATED_FRAMES (0.5 s), from the middle of the stroke (where his
+    # hand comes down), forever (REQ'd at priority 7 by a part three's switch: "slap_loop")
+    snd = Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40")
+    scripts[cb][31] = [hb._w(SEATED_FRAMES // 2), snd, hb._w(SEATED_FRAMES), asm.goto_back(snd), asm.ret()]
     part2 = {}
     for gname in names:
         i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
@@ -434,13 +440,14 @@ def _field(ctx, place, group, names):
         ka = [anims.index(n) for n in p2["anims"]]
         # her slot 4: placed at Cloud's spot (turned round; her place in the anim), first pose;
         # 5.. each pose looped; 8: hold (the first pose's frame 0)
-        gface = bdir if p2.get("same_way") else (bdir + 128) % 256
+        pdir = (bdir + p2.get("turn", 0)) % 256      # (Elena, user: both turned the other way)
+        gface = pdir if p2.get("same_way") else (pdir + 128) % 256
         spot = floor
         show_cloud = 3
         if p2.get("at_her_seat"):                    # both at her seat (cloudb gets a slot 20+ for it)
             spot = (my[0], my[1], my[2] - SEATS[place]["girl"][4], my[3])
             show_cloud = 20 + names.index(gname)
-            scripts[cb][show_cloud] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, bdir])), hb._visi(1), asm.ret()]
+            scripts[cb][show_cloud] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, pdir])), hb._visi(1), asm.ret()]
         scripts[ge][4] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, gface])), hb._visi(1),
                           Op(bytes([0xA2, ka[0], 1])), Op(bytes([0xAE, ka[0], 1])), asm.ret()]
         for k, a_ in enumerate(ka):
@@ -455,7 +462,10 @@ def _field(ctx, place, group, names):
             acts[k] = [hb._req(cb, 24 + CLOUD_PART2.index(pose)), hb._w(6)]
         for k, (pose, her) in p2.get("switch", {}).items():                       # fade, both change pose
             acts[k] = [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(cb, 4 + CLOUD_PART2.index(pose)),
-                       hb._req(ge, 5 + p2["anims"].index(her)), Op(hb.FADE_IN), Op(b"\x6C"), hb._w(20)]
+                       hb._req(ge, 5 + p2["anims"].index(her))]
+            if p2.get("slap_loop"):                  # (user) a slap every stroke from here: cloudb slot 31 at
+                acts[k].append(Op(bytes([0x02, cb, 0xE0 | 31])))   # priority 7 (anything else interrupts it)
+            acts[k] += [Op(hb.FADE_IN), Op(b"\x6C"), hb._w(20)]
         for k, snd in p2.get("sounds", {}).items():
             acts[k] = [Op(bytes([0xF1, 0]) + snd.to_bytes(2, "little") + b"\x40"), hb._w(8)]
         start = 12 if p2.get("cloud_still") else 4
@@ -857,12 +867,13 @@ def _bare_elena(ctx):
 # (hips up SEAT_THRUST at the middle frame, feet riding along) with the same right-hand slap;
 # SEATED_FRAMES = 0.5 s
 SEATED_FRAMES, SPANK_UP, SEAT_THRUST = 15, 70, 1.0
+ELBOW_POLE = (-0.3, -1.0, 0.2)        # the bent elbow points up (y down), a little out (his right = -x) and back
 
 
 def _cloud_seated(ctx, name, thrust):
-    """His right arm, at its lowest (the middle frame), aimed so the hand lands on her behind
-    (spank: across his lap, `_lap`'s ZDEA; thrust: sitting on his lap facing him, ZDEB): the
-    turn of the arm (about his side axis, then the vertical) found by search."""
+    """His right arm swung at the shoulder (user: a simple shoulder rotation), lowest at the middle
+    frame where the hand comes nearest her behind (spank: across his lap, `_lap`'s ZDEA; thrust:
+    sitting on his lap facing him, ZDEB)."""
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
     names = [b[0] for b in sk]
@@ -881,8 +892,9 @@ def _cloud_seated(ctx, name, thrust):
         target = [lap[0] - 1.0, lap[1] - LAP_SEAT - 0.5, lap[2] - LAP_BACK - 1.8]
     else:                                        # across his lap: the top of her behind
         target = [lap[0] - LAP_RIGHT, lap[1] - LAP_UP - BUTT_TOP, lap[2]]
-    # two-bone IK: the wrist HAND_UP above the target (the hand pointing down onto her), the elbow
-    # bent out and back
+    # (user: "a simple shoulder rotation") one fixed bend at the elbow (two-bone IK at the lowest
+    # point: the wrist HAND_UP above her behind, the elbow up and a little out, like a hammer),
+    # then the whole arm only swings at the shoulder about his side axis (SPANK_UP up and back)
     unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
     dotp = lambda a, b: sum(a[k] * b[k] for k in range(3))
     F = fk(W)
@@ -893,7 +905,7 @@ def _cloud_seated(ctx, name, thrust):
     d = math.dist(S, T)
     assert d < L1 + L2 - 0.1, (name, d, L1 + L2)                 # in reach
     u = unit([T[k] - S[k] for k in range(3)])
-    P = unit([-1.0, 0.0, 1.0])                                   # elbow out (his right = -x) and back (+z)
+    P = unit(ELBOW_POLE)
     pp = unit([P[k] - dotp(P, u) * u[k] for k in range(3)])
     a_ = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
     E = [S[k] + a_ * u[k] + math.sqrt(max(0.0, L1 * L1 - a_ * a_)) * pp[k] for k in range(3)]
