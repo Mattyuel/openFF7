@@ -163,6 +163,25 @@ FF7 PC field file (one entry of flevel.lgp, after LZSS decompression).
   - `raw_string(i)` 
   - `script_bounds()` Sorted unique script entry points within the code area.
 
+## `tools/ff7/fieldanim.py`
+Field animations (.a in char.lgp) and forward kinematics for field skeletons (.hrc).
+
+- class `Anim` 
+  - `__init__(data)` 
+  - `build()` 
+- `skeleton(hrc_text)` [(name, parent name, length)] from an .hrc file's text.
+- `_mul(a, b)` 
+- `_vec(m, v)` 
+- `_t(m)` 
+- `_rx(d)` 
+- `_ry(d)` 
+- `_rz(d)` 
+- `euler_matrix(x, y, z)` 
+- `matrix_euler(m)` (x, y, z) degrees with euler_matrix(x, y, z) == m (Ry Rx Rz).
+- `axis_angle(axis, d)` 
+- `forward(bones, root_rot, root_pos, rotations)` World (matrix, start, end) per bone for one frame.
+- `local_rotations(bones, root_rot, worlds)` Per-bone (x, y, z) giving the world matrices `worlds` (parent-relative).
+
 ## `tools/ff7/kernel.py`
 KERNEL.BIN: 27 gzip'd sections, each with a 6-byte header
 
@@ -619,6 +638,7 @@ Honey Bee Girl recruitment.
 - `_gift_routine(sec)` The lounge gift menu (entity hbgift script 1, REQEW'd by a girl's talk
 - `_lounge(ctx)` 
 - `_twisted_lie(ctx)` dzbt.a: DZBA (1 frame, 21 bones) with the hip bone's z angle + LIE_TWIST.
+- `_fours(ctx)` dzbf.a: one frame on all fours (FOURS_ANIM), built from BAJB with
 - `apply(ctx)` 
 
 ## `patches/625_gift_shops.py`

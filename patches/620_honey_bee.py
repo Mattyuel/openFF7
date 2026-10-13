@@ -154,6 +154,13 @@ ONTOP_RAISE = 4                              # Cloud on top of her: drawn this m
 # bone's z angle (its own long axis: the spine is the hip's local -z; Euler order
 # Y X Z, z innermost) + LIE_TWIST, written to char.lgp as dzbt.a.
 LIE_TWIST, LIE_ANIM_SCENE = 60, "DZBT.tor"
+# On all fours (user): from her standing pose BAJB, the upper body pitched 90 degrees
+# forward (facing down), thighs hanging (hip 90), shins and feet folded back flat
+# (knee 90), upper arms hanging (shoulder 90 forward), hands flat forward; each
+# elbow bent just enough for its wrist to reach the floor, the knees on the floor
+# (y = 0, y down; the root height is stored negated), head lifted FOURS_HEAD_LIFT.
+FOURS_ANIM, FOURS_HEAD_LIFT = "DZBF.tor", 30
+SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM]          # our own animations on the scene girl
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
 # FTIB is only used on a Shinra soldier skeleton in the original game (same bone count).
@@ -465,9 +472,9 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
 
     loader = ModelLoader(f.section("models"))
     assert ModelLoader.anims(loader.models[1]) == DANCER_ANIMS, ModelLoader.anims(loader.models[1])
-    loader.models[1] = ModelLoader.with_anims(loader.models[1], DANCER_EXTRA + [LIE_ANIM_SCENE])
+    loader.models[1] = ModelLoader.with_anims(loader.models[1], DANCER_EXTRA + SCENE_ANIMS)
     f.set_section("models", loader.build())
-    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA + [LIE_ANIM_SCENE])}
+    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA + SCENE_ANIMS)}
     cloud_anims = ModelLoader.anims(loader.models[0])
     assert [cloud_anims[i] for i in (3, 9, 15, 16, 20)] == ["AQAA.tor", "AVJE.aki", "AQAB.tor", "BICA.yos",
                                                              "EADD.tor"], cloud_anims
@@ -558,6 +565,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1), _anim(da[LIE_ANIM_SCENE], hold=True)],
         "bedsit": [_xyzi(gs[0], gs[1], gs[2] - SIT_DROP, gs[3]), Op(bytes([0xB3, 0, gdir])), _visi(1),
                    _anim(da["DXHE.tor"], hold=True)],
+        "fours": [_anim(da[FOURS_ANIM], hold=True)],                 # on all fours, where she lies
         "sit1": [_anim(da["DXHE.tor"], hold=True)], "sit2": [_anim(da["DXIB.tor"], hold=True)],
         "sit3": [_anim(da["DXIC.tor"], hold=True)],
     })
@@ -575,7 +583,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         if "bed" in kinds:
             after = sc[kinds.index("bed") + 1:]
             assert kinds.count("bed") == 1 and sc[kinds.index("bed")][1] in BED_LAYOUTS, (field, GIRLS[i]["name"])
-            assert all(st[1] in ("sit1", "sit2", "sit3") for st in after if st[0] in ("g", "g&")), (field, GIRLS[i]["name"])
+            assert all(st[1] in ("sit1", "sit2", "sit3", "fours") for st in after if st[0] in ("g", "g&")), (field, GIRLS[i]["name"])
             assert all(st[1] in CLOUD_BED for st in after if st[0] in ("c", "c&")), (field, GIRLS[i]["name"])
     used = ({s[1] for sc in scenes for s in sc if s[0] in ("g", "g&")}
             | {BED_LAYOUTS[s[1]][0] for sc in scenes for s in sc if s[0] == "bed"})
@@ -757,7 +765,7 @@ def _lounge(ctx):
     fcam = Camera(cammod.flip_x(f.sections[1]))
     loader = ModelLoader(f.section("models"))
     sec = Script.parse(f.sections[0])
-    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA + [LIE_ANIM_SCENE])}
+    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA + SCENE_ANIMS)}
     assert len(GIRLS) == 4 * GIRLS_PER_ROOM == 20 and len(LOUNGE_SPOTS) == GIRLS_PER_ROOM
     gift_ent = sec.add_entity("hbgift", {0: [asm.ret(), asm.ret()], 1: _gift_routine(sec)})   # init, main: nothing
     for k, name in enumerate(LOUNGE_EXTRAS):
@@ -882,8 +890,54 @@ def _twisted_lie(ctx):
     ctx.char_file("dzbt.a", bytes(data))
 
 
+def _fours(ctx):
+    """dzbf.a: one frame on all fours (FOURS_ANIM), built from BAJB with
+    ff7.fieldanim's forward kinematics on her skeleton (BADD.HRC)."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file("badd.hrc").decode("latin-1"))
+    names = [b[0] for b in sk]
+    idx = names.index
+    stand = fa.Anim(ctx.char_file("bajb.a"))
+    rr, rp, rots = stand.frames[0]
+    world = [m for m, _, _ in fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)]
+    x = (1, 0, 0)                                    # her left-right axis: pitches turn about it
+
+    def pose(elbows, foot):
+        w = list(world)
+        for n in ("hip", "chest", "head", "l_chest", "l_collar", "r_chest", "r_collar"):
+            w[idx(n)] = fa._mul(fa.axis_angle(x, 90), world[idx(n)])          # facing down
+        w[idx("head")] = fa._mul(fa.axis_angle(x, -FOURS_HEAD_LIFT), w[idx("head")])
+        for side, elbow in zip("lr", elbows):
+            w[idx(side + "_foarm")] = fa._mul(fa.axis_angle(x, -elbow), world[idx(side + "_foarm")])
+            w[idx(side + "_hand")] = fa._mul(fa.axis_angle(x, -90), world[idx(side + "_hand")])
+            w[idx(side + "_tibia")] = fa._mul(fa.axis_angle(x, 90), world[idx(side + "_tibia")])
+            w[idx(side + "_foot")] = fa._mul(fa.axis_angle(x, foot), world[idx(side + "_foot")])
+        return fa.local_rotations(sk, rr, w)
+
+    def ends(local, root):
+        return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, local))}
+
+    def solve(f, lo, hi):                            # f(lo) < 0 < f(hi), bisection
+        for _ in range(40):
+            mid = (lo + hi) / 2
+            lo, hi = (mid, hi) if f(mid) < 0 else (lo, mid)
+        return (lo + hi) / 2
+    e = ends(pose((0, 0), 180), [0, 0, 0])
+    root = [0, -(e["l_femur"][1] + e["r_femur"][1]) / 2, 0]                   # knees on the floor
+    elbows = [solve(lambda a, s=s: -ends(pose((a, a), 180), root)[s + "_foarm"][1], 0, 90) for s in "lr"]
+    foot = solve(lambda f: ends(pose(elbows, f), root)["l_tibia"][1] - ends(pose(elbows, f), root)["l_foot"][1], 90, 270)
+    local = pose(elbows, foot)
+    e = ends(local, root)
+    for n in ("l_femur", "r_femur", "l_foarm", "r_foarm", "l_tibia", "r_tibia"):
+        assert abs(e[n][1]) < 0.5, (n, e[n])                                  # on the floor
+    out = fa.Anim(ctx.char_file("dzba.a"))                                     # same header (1 frame, 21 bones)
+    out.frames = [([0.0, 0.0, 0.0], [root[0], -root[1], root[2]], local)]
+    ctx.char_file(FOURS_ANIM.split(".")[0].lower() + ".a", out.build())
+
+
 def apply(ctx):
     _twisted_lie(ctx)
+    _fours(ctx)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)
     assert tri is not None

@@ -9,7 +9,8 @@ Most scenes have two parts: she comes in, the first lines, then
   "beside"  she lies (DZBA), Cloud lies next to her (starts in GREA)
   "ontop"   she lies, Cloud lies on top of her (starts in AVDD)
   "sit"     both sit on the bed's edge (she DXHE, Cloud EIAB)
-After it only in-place beats: her ("g", "sit1"/"sit2"/"sit3") when sitting;
+After it only in-place beats: her ("g", "sit1"/"sit2"/"sit3") when sitting,
+("g", "fours") on all fours where she lies;
 Cloud's bed animations ("c", name), 620 CLOUD_BED: grea greb grec ftib avdd
 avea enje enjf hbgb hbgc hbfe eiab.
 Each tier plays in its own copy of the room (620: CLOSE_ROOM, DEVOTED_ROOM),
@@ -455,10 +456,12 @@ DEVOTED = {
     'Scarlet': [
         ('g', 'enter'),
         ('G', "“Performance review complete.\n Verdict: promoted. To my bed.”"),
-        ('bed', 'ontop'),
-        ('G', "“Kyahaha! Look at you, darling.\n So eager to please.”"),
+        ('bed', 'beside'),
+        ('G', "“Kyahaha! Look at you, darling.\n Lying there like a new recruit.”"),
+        ('g', 'fours'),
+        ('G', "“Up. The Queen Bee doesn't wait.\n I've assumed the position.”"),
         ('C', "{CLOUD}\n“…Is this an order?”"),
-        ('c', 'avea'),
+        ('c', 'hbgc'),
         ('G', "“A promise. You'll be begging\n for overtime.”"),
         ('c', 'hbgb'),
         ('G', "“…Oh, darling. You're getting\n a raise.”"),
