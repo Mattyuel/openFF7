@@ -516,6 +516,11 @@ Open-world fixes outside Midgar that pinning and new-game flags can't do
 - `_progress_writes(ctx)` Replace writes to the story progress var with NOPs.
 - `apply(ctx)` 
 
+## `patches/415_temple.py`
+Temple of the Ancients, open as if explored up to the Demon Wall (pins in
+
+- `apply(ctx)` 
+
 ## `patches/420_cargo_ship.py`
 Cargo ship as a place to explore (Junon <-> Costa del Sol).
 

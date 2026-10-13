@@ -173,6 +173,17 @@ INITIAL_EVENT_FLAGS = [
     # (canon_2: hidden); 7 + offset 135 bits 0-3: party copies in the tunnels hidden.
     (15, 128, 0), (15, 128, 1), (15, 128, 2), (15, 128, 3), (15, 128, 4), (15, 128, 7),
     (15, 135, 0), (15, 135, 1), (15, 135, 2), (15, 135, 3),
+    # Temple of the Ancients as if explored up to the Demon Wall (415_temple; all its
+    # fields pinned at 631): (3,234) bits 2 Tseng/Keystone scene (jtmpin1), 3 arrival
+    # scene (kuro_1), 1 the running Ancient at his shop (kuro_1; not 6 = gone), 4 "Sealed"
+    # line, 5 entrance camera pan (jtempl), 7 kuro_2 scene; (3,233) bits 1 Ancient
+    # Dragon intro (kuro_5; the fight on entry stays, as in the game), 2-3 the
+    # key-guard puzzle seen + solved (kuro_7), 4 Demon Wall beaten (kuro_12: its exit
+    # line to the temple top is open; the quest boss line still fights it), 5 Time
+    # Guardian intro (kuro_4), 6-7 entrance scenes (jtempl). Treasure bits (bank 5
+    # 112-113) are left for the player.
+    (3, 234, 1), (3, 234, 2), (3, 234, 3), (3, 234, 4), (3, 234, 5), (3, 234, 7),
+    (3, 233, 1), (3, 233, 2), (3, 233, 3), (3, 233, 4), (3, 233, 5), (3, 233, 6), (3, 233, 7),
 ]
 
 # Batteries for the Wall Market wire climb: item 85 x3, plus the three
