@@ -101,7 +101,7 @@ GIRLS_PER_ROOM = 5
 # sitting / standing animations with random pauses between them.
 # (spot, kind, DIR offset from facing down the screen; negated in the mirrored rooms)
 LOUNGE_SPOTS = [
-    ((130, -180), "lie", 0x40),              # lying on the bed, turned 90 degrees, towards the back
+    ((170, -162), "lie", 0xC0),              # lying on the bed, head towards the door, clear of the sitter
     ((55, -150), "sit", 0),                  # sitting on the bed's edge (lowered: SIT_DROP)
     ((-110, -180), "stand", 0x28),           # standing, away from the door
     ((-120, 180), "stand", 0),               # the dancer
@@ -109,6 +109,12 @@ LOUNGE_SPOTS = [
 ]
 SIT_DROP = 25                                # the sitting pose floated above the bed (z 76): drawn this much lower
 LIE_TALK_RADIUS = 0x70                       # she is further onto the bed
+# The bed picture (layer 2 tiles with draw depth 140-175 right of the bathtub,
+# x >= 0) was drawn over anyone on it. Its tiles are moved back, behind every
+# character but in front of the back wall (4088+), keeping their own order:
+# depth id + BED_ID_SHIFT, the PC's finer depth (u32 at +38) + BED_BIG_SHIFT.
+# No other tile shares a pixel with the bed (checked), so nothing else changes.
+BED_TILE_IDS, BED_ID_SHIFT, BED_BIG_SHIFT = (140, 175), 4087 - 174, 9984000 - 9296147
 LIE_ANIM = "DZBA.tor"
 SIT_ANIMS = ["DXHE.tor", "DXIB.tor", "DXIC.tor"]                       # held (they stay seated)
 STAND_ANIMS = ["DXJC.tor", "BAJE.tor", "BAJD.tor", "BAJF.tor", "BBAA.tor",   # played once, back to idle
@@ -164,10 +170,8 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "eiab": "EIAB.chi"}   # sitting comfortably
 FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
-BED, BEDSIDE = (136, -199), (120, -95)
+BED = (136, -199)
 BED_DIR = 0x40                               # lying girl: turned 90 degrees (user)
-BED_LEVEL = (220, 161)                       # on Cloud's way in, at the bed's screen x (146): he stops here       # the bed (raised floor, z 76: Cloud lies there after the
-                                             # room's dream); the floor just above it
 JUMP_SOUND = bytes.fromhex("f20000002840e9000000000000000000")[:14]
 
 
@@ -500,7 +504,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         return all(mesh.find(a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n) is not None
                    for i in range(n + 1))
     stops = [MID, NEAR, FAR, INSIDE]
-    legs = ([(ROOM_ARRIVE[:2], STAGE), (STAGE, BEDSIDE), (ROOM_ARRIVE[:2], BED_LEVEL), (BED_LEVEL, BEDSIDE)]
+    legs = ([(ROOM_ARRIVE[:2], STAGE)]
             + [(a, b) for a in stops for b in stops if a != b])
     bad = [leg for leg in legs if not on_floor(*leg)]
     assert not bad, bad
@@ -557,10 +561,9 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         "shocked": [_anim(c["shocked"])],
         "hips": [_anim(c["hips"])],                                  # hands on hips
         "fallstay": [_anim(c["fall"], hold=True)],                   # BICA, staying down
-        "bedside": [_msped(WALK), gx(BEDSIDE), _tura(girl)],
         # the girl is already on the bed: stop level with her (the bed is in
         # the way of walking further down) and face her
-        "intobed": [Op(b"\xC7\x01"), _msped(WALK), gx(BED_LEVEL), _tura(girl)],
+        "intobed": [Op(b"\xC7\x01"), _msped(WALK), gx(STAGE), _tura(girl)],   # never towards the bed: he got stuck
     }
     cloud_beats.update({name: one(name) for name in CLOUD_EXTRA})
     # ---- the bed part ----
@@ -885,6 +888,22 @@ def _lounge(ctx):
     lob.sections[0] = sec.build()
 
 
+def _bed_behind(ctx):
+    """The bed picture behind the characters on it (BED_TILE_IDS)."""
+    from ff7.background import Background
+    f = ctx.field(ROOM)
+    bg = Background(f.section("background"))
+    lo, hi = BED_TILE_IDS
+    bed = [t for k, _, tiles, _ in bg.layers if k == 2 for t in tiles if lo <= t._get("<H", 24) <= hi and t.dst_x >= 0]
+    assert len(bed) == 207, len(bed)
+    for t in bed:
+        t._set("<H", 24, t._get("<H", 24) + BED_ID_SHIFT)
+        big = t._get("<I", 38) + BED_BIG_SHIFT
+        assert big < 9985011, big                    # still in front of the back wall (id 4088)
+        t._set("<I", 38, big)
+    f.set_section("background", bg.build())
+
+
 def apply(ctx):
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)
@@ -893,6 +912,7 @@ def apply(ctx):
     _conference(ctx)
     _add_girls(ctx)
     _manager(ctx, back)
+    _bed_behind(ctx)                                 # every copy of the room (and the mirror) inherits it
     base = ctx.field(ROOM).build()                   # before the visit edits: the tier copies start here
     _room(ctx, back, ROOM, [[] for _ in GIRLS])     # lounge room: the visit-mode edits, no scenes
     basic = {g["name"]: g["scene"] for g in GIRLS}

@@ -10,12 +10,12 @@ pace spin, sexy (DXJC), shimmy (BAJE shake behind), spinshake (BAJD), twirl
 present (DXJD), bow (DIEF), point (BYAD point/poke), checksides (DXIF),
 shocked (AVJE). Not used: DXHE/DXIB/DXIC (sitting), DZBA (lying down).
 Cloud beats (one dispatcher script in 620): into sit stand shocked hips
-fallstay bedside + 620's CLOUD_EXTRA (shrug take nudge nod shakehead laugh
+fallstay + 620's CLOUD_EXTRA (shrug take nudge nod shakehead laugh
 impatient lookaround lookup turnaway formal coy point cleanpants stretch
 warmup leanin cheer drink). Not BICA (falls down) / EACF (arms up). Bambi's
 ("start", "bed") as a scene's first step: she is already lying on the bed when
-the room appears (set in her init) and Cloud's walk in stops level with her
-("intobed"), then he turns to her.
+the room appears (set in her init); Cloud walks to mid-room as usual and
+turns to her ("intobed": never towards the bed, he got stuck).
 """
 
 C = "{CLOUD}\n"
