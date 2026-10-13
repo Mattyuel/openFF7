@@ -160,7 +160,7 @@ LAYOUT_ANIM = {"beside": "grea", "sit": "eiab", "mission": "thrust", "cowgirl": 
 RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head higher (user), then slightly more (+4)
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # head: Cloud right and down a bit from CLOUD_SIT
 HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 46      # she: at his x, this much nearer the camera (-y), 2/3 of
-                                              # a body (~90) lower than the bed sitter, turned round
+                                              # a body (~90) lower than the bed sitter (then a head higher: 46), turned round
 MISSION_CLOUD, MISSION_RAISE = (126, -169), 0  # mission: Cloud 10 left / 10 further back of CLOUD_ONTOP,
                                               # 4 lower than ONTOP_RAISE (user)
 DOG_CLOUD = (108, -150)                       # dog: Cloud a little nearer the camera and left of CLOUD_BESIDE, then half a body width (~18) more left (user)
