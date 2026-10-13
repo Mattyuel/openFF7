@@ -711,6 +711,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_clear_texts(sec)` Drop every text (before adding the new ones: ids start at 0 again).
 - `_blank(sec, scripts)` Drop every op; entity e gets scripts[e] ({slot: ops}, each ending in RET),
 - `_hb()` 
+- `_near(mesh, cs, my)` (x, y, tri) WALK_TO of the way from Cloud's seat cs towards hers, or the nearest floor
 - `_return_spot(ctx, g)` (x, y, tri, dir) beside her in her world field, facing her.
 - `_date(sec, ctx, place, i, g, d, part2)` 
 - `_field(ctx, place, group, names)` 
@@ -721,7 +722,8 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_scarlet_bare(ctx)` 
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
 - `_bare_elena(ctx)` 
-- `_cloud_seated(ctx, name, thrust)` 
+- `_cloud_seated(ctx, name, thrust)` His right arm, at its lowest (the middle frame), aimed so the hand lands on her behind
+- `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_lap(ctx)` 
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
 - `apply(ctx)` 

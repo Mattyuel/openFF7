@@ -129,11 +129,7 @@ DATES = {
             {   # third date (user): playfully submissive
                 "open": "“Tonight… I'll do whatever you say.\n Ehehe.”",
                 "steps": [
-                    ("A", "look"),                              # (user) she looks at him,
-                    ("G", "“…”"),
-                    ("A", "stand"),                             # gets up and comes over,
-                    ("G", "“A proper bodyguard deserves\n a proper greeting.”"),
-                    ("A", "kneel"),                             # kneels and bows
+                    ("G", "“A proper bodyguard deserves\n a proper greeting.”"),      # (user: she stays seated)
                     ("G", "“At your service, sir. Ehehe…\n Am I doing it right?”"),
                     ("G", "“You're the bodyguard. So you give\n the orders tonight, right?”"),
                     ("Q", "“So, what's your first order?”", ["Come here, Aerith.", "Guard the door.", "Go home."], 0,
@@ -204,8 +200,7 @@ DATES = {
             },
             {   # third date (user): the dominatrix comes out; a slap before each question
                 "open": "“Tonight, puppy, you speak when\n I say so. Not before.”",
-                "steps": [
-                    ("A", "stand"),
+                "steps": [                                  # (user: she starts standing close to him)
                     ("G", "“Eyes on me. Good.\n Now… let's test you.”"),
                     ("A", "slap"),
                     ("Q", "“Who's in charge here?”", ["You are, Scarlet.", "I am.", "Barret."], 0,

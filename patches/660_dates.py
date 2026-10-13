@@ -128,9 +128,11 @@ GIRL_MODEL = {"Tifa": "main_n_tifa.char", "Aerith": "main_n_earith.char",   # he
 GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5), "Elena": ("datiao_6", 10)}   # where a field lacks her
 # extra anims on her model for the dates (the third date's "stand" and "slap" steps):
 # Scarlet's slap = junone7's (sca script 7: CANM!2 FDID 0-0x1D, SOUND 0x76, CANM!2 0x1D-0x31)
-GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"},
-              # (user) Aerith's third date: she looks at him, gets up, kneels and bows
-              "Aerith": {"stand": "AVBF.chi", "kneel": "ZDKD.tor"}}
+GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"}}
+# (Aerith's third date had look / stand / kneel; user: she stays seated, no movement)
+# girls whose third date starts with them standing close to Cloud, facing him (user: Scarlet,
+# no sitting or walking before the slaps): at the "stand" walk's end spot, from the init
+STAND_ON_THIRD = {"Scarlet"}
 SLAP_HIT, SLAP_END, SLAP_SOUND = 0x1D, 0x31, 0x76
 RETURN_GAP = 40                        # back beside her: this far from her spot
 
@@ -165,6 +167,20 @@ def _blank(sec, scripts):
 def _hb():
     from importlib import import_module
     return import_module("620_honey_bee")
+
+
+def _near(mesh, cs, my):
+    """(x, y, tri) WALK_TO of the way from Cloud's seat cs towards hers, or the nearest floor
+    towards him from there (the capsule's gangway between them isn't floor)."""
+    tx, ty = cs[0] + (my[0] - cs[0]) * WALK_TO, cs[1] + (my[1] - cs[1]) * WALK_TO
+    tt = mesh.find(round(tx), round(ty))
+    k = 0
+    while tt is None and k < 50:
+        k += 1
+        tx, ty = tx + (cs[0] - tx) * 0.05, ty + (cs[1] - ty) * 0.05
+        tt = mesh.find(round(tx), round(ty))
+    assert tt is not None, (cs, my)
+    return round(tx), round(ty), tt
 
 
 def _return_spot(ctx, g):
@@ -343,16 +359,27 @@ def _field(ctx, place, group, names):
             t = mesh.find(x, y)
             assert t is not None, (place, gname)
             my = (x, y, mesh.height(t, x, y) + SEATS[place]["girl"][4], t)
-        scripts[model_ent[m]] = {0: [Op(bytes([0xA1, m])), asm.if_byte(DATE_GIRL, "==", i + 1, hide),
-                                     hb._xyzi(*my), Op(bytes([0xB3, 0, gdir])), Op(bytes([0xA2, ga, 1])),
-                                     Op(bytes([0xAE, ga, 1])), hb._visi(1), asm.goto(end), hide, hb._visi(0),
-                                     end, asm.ret(), asm.ret()],
-                                 3: [hb._visi(0), asm.ret()]}
         tier_acts = {}
         extra = GIRL_EXTRA.get(gname, {})
         if extra:
             loader.models[m] = ModelLoader.with_anims(loader.models[m],
                                                       [a for a in extra.values() if a not in ModelLoader.anims(loader.models[m])])
+        seated = asm.nop()
+        standing = []
+        if gname in STAND_ON_THIRD:                  # third date: standing close to him from the start
+            an = ModelLoader.anims(loader.models[m])
+            st = an.index(extra["stand"])
+            nx, ny, nt = _near(mesh, cs, my)
+            standing = [asm.if_byte(HB_AFFECTION[i], ">=", TIERS[1], seated),
+                        hb._xyzi(nx, ny, mesh.height(nt, nx, ny), nt),
+                        Op(bytes([0xB3, 0, _dir_to(cs[0] - nx, cs[1] - ny)])), Op(bytes([0xA2, st, 1])),
+                        Op(bytes([0xAE, st, 1])), hb._visi(1), asm.goto(end)]
+        scripts[model_ent[m]] = {0: [Op(bytes([0xA1, m])), asm.if_byte(DATE_GIRL, "==", i + 1, hide)] + standing
+                                 + [seated, hb._xyzi(*my), Op(bytes([0xB3, 0, gdir])), Op(bytes([0xA2, ga, 1])),
+                                    Op(bytes([0xAE, ga, 1])), hb._visi(1), asm.goto(end), hide, hb._visi(0),
+                                    end, asm.ret(), asm.ret()],
+                                 3: [hb._visi(0), asm.ret()]}
+        if extra:
             an = ModelLoader.anims(loader.models[m])
             st = an.index(extra["stand"])
             me = model_ent[m]
@@ -626,7 +653,7 @@ def _bare_tifa(ctx):
 KNEEL_ARMS, KNEEL_TILT, KNEEL_ROCK, KNEEL_FRAMES, KNEEL_FRAMES_FAST = 40, 10, 10, 15, 8
 # sitting back on her heels: thighs KNEEL_SIT forward of straight down (kneeling upright her head
 # was at his chest); placed so her face is KNEEL_FACE in front of his pelvis
-KNEEL_SIT, KNEEL_FACE = 75, 7.5     # (FACE 3 -> 9: a head width further away, then 7.5: a little closer, user)
+KNEEL_SIT, KNEEL_FACE = 75, 6.0     # (FACE 3 -> 9: a head width further away, then 7.5, 6.0: closer, user)
 KNEEL_LOOK = 35                       # her "look up" poses (zdkc, zdkb): chin up this much (user)
 BOW, BOW_HEAD = 40, 25                # Aerith's bow on her third date (zdkd: user)
 
@@ -833,6 +860,9 @@ SEATED_FRAMES, SPANK_UP, SEAT_THRUST = 15, 70, 1.0
 
 
 def _cloud_seated(ctx, name, thrust):
+    """His right arm, at its lowest (the middle frame), aimed so the hand lands on her behind
+    (spank: across his lap, `_lap`'s ZDEA; thrust: sitting on his lap facing him, ZDEB): the
+    turn of the arm (about his side axis, then the vertical) found by search."""
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
     names = [b[0] for b in sk]
@@ -844,6 +874,36 @@ def _cloud_seated(ctx, name, thrust):
     side = [1.0, 0.0, 0.0]
     fk = lambda W, r=root: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
     arm = {I(n) for n in ("r_uparm", "r_foarm", "r_hand")}
+    F = fk(W)
+    mids = [[(F[I(s + "_femur")][1][k] + F[I(s + "_femur")][2][k]) / 2 for k in range(3)] for s in "lr"]
+    lap = [(mids[0][k] + mids[1][k]) / 2 for k in range(3)]
+    if thrust:                                   # her behind: on his lap facing him, the far side of her pelvis
+        target = [lap[0] - 1.0, lap[1] - LAP_SEAT - 0.5, lap[2] - LAP_BACK - 1.8]
+    else:                                        # across his lap: the top of her behind
+        target = [lap[0] - LAP_RIGHT, lap[1] - LAP_UP - BUTT_TOP, lap[2]]
+    # two-bone IK: the wrist HAND_UP above the target (the hand pointing down onto her), the elbow
+    # bent out and back
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+    dotp = lambda a, b: sum(a[k] * b[k] for k in range(3))
+    F = fk(W)
+    S = F[I("r_uparm")][1]
+    L1 = math.dist(F[I("r_uparm")][1], F[I("r_uparm")][2])
+    L2 = math.dist(F[I("r_foarm")][1], F[I("r_foarm")][2])
+    T = [target[0], target[1] - HAND_UP, target[2]]
+    d = math.dist(S, T)
+    assert d < L1 + L2 - 0.1, (name, d, L1 + L2)                 # in reach
+    u = unit([T[k] - S[k] for k in range(3)])
+    P = unit([-1.0, 0.0, 1.0])                                   # elbow out (his right = -x) and back (+z)
+    pp = unit([P[k] - dotp(P, u) * u[k] for k in range(3)])
+    a_ = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
+    E = [S[k] + a_ * u[k] + math.sqrt(max(0.0, L1 * L1 - a_ * a_)) * pp[k] for k in range(3)]
+    bdir = lambda m: fa._vec(m, [0, 0, -1])
+    W = list(W)
+    W[I("r_uparm")] = fa._mul(_align(fa, bdir(W[I("r_uparm")]), [E[k] - S[k] for k in range(3)]), W[I("r_uparm")])
+    W[I("r_foarm")] = fa._mul(_align(fa, bdir(W[I("r_foarm")]), [T[k] - E[k] for k in range(3)]), W[I("r_foarm")])
+    W[I("r_hand")] = fa._mul(_align(fa, bdir(W[I("r_hand")]), [0.0, 1.0, 0.0]), W[I("r_hand")])
+    hit = fk(W)[I("r_hand")][2]
+    assert math.dist(hit, target) < 1.0, (name, hit, target)    # the hand on her
     hand0 = fk(W)[I("r_hand")][2]
     sense = 1 if fk([fa._mul(fa.axis_angle(side, 10), m) if i in arm else m for i, m in enumerate(W)])[I("r_hand")][2][1] \
         < hand0[1] else -1                               # + sense: the hand goes up (y down)
@@ -863,6 +923,24 @@ def _cloud_seated(ctx, name, thrust):
 # down over the sides; ZDEB sitting on his lap facing his way (our bench pose's legs), bouncing
 # with his ZCTM thrust plus LAP_BOUNCE
 LAP_HANG, LAP_UP, LAP_SEAT, LAP_BOUNCE = 25, 1.8, 1.4, 1.0
+# (user) her torso straighter (LAP_TORSO), her hips angled more (LAP_LEGS), arms dangling straight
+# down, LAP_RIGHT to his right (towards his slapping hand: his right = -x); BUTT_TOP = the top of
+# her behind above her pelvis' centre, where his hand lands
+LAP_TORSO, LAP_LEGS, LAP_RIGHT, BUTT_TOP = 10, 40, 2.0, 1.6
+HAND_UP = 2.0                         # his wrist this far above where the hand lands (the hand's length)
+# ZDEB (user: facing him): her bench pose with the thighs spread LAP_SPREAD round his hips, turned
+# round inside the anim (her entity keeps his DIR), LAP_BACK further from his chest
+LAP_SPREAD, LAP_BACK = 50, 0.5
+
+
+def _align(fa, a, b):
+    """The smallest rotation turning direction a into b."""
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+    a, b = unit(a), unit(b)
+    ax = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+    s_ = math.sqrt(sum(c * c for c in ax))
+    d = sum(a[k] * b[k] for k in range(3))
+    return fa.axis_angle(ax, math.degrees(math.atan2(s_, d))) if s_ > 1e-9 else fa.euler_matrix(0, 0, 0)
 
 
 def _lap(ctx):
@@ -895,24 +973,30 @@ def _lap(ctx):
         raise AssertionError(bones)
     # ZDEA: face down, then hanging over his lap, then her length turned across it
     W = turned(W0, set(names), side, 90, lambda a, b: b[I("head")][2][2] < a[I("head")][2][2] - 3)
-    W = turned(W, set(names) - legs, side, LAP_HANG, lambda a, b: b[I("head")][2][1] > a[I("head")][2][1] + 0.5)
-    W = turned(W, legs, side, LAP_HANG, lambda a, b: b[I("l_tibia")][2][1] > a[I("l_tibia")][2][1] + 0.5)
+    W = turned(W, set(names) - legs, side, LAP_TORSO, lambda a, b: b[I("head")][2][1] > a[I("head")][2][1] + 0.2)
+    W = turned(W, legs, side, LAP_LEGS, lambda a, b: b[I("l_tibia")][2][1] > a[I("l_tibia")][2][1] + 0.5)
     Y = fa.axis_angle(up, 90)
     W = [fa._mul(Y, m) for m in W]
-    r = [lap[0], lap[1] - LAP_UP, lap[2]]                                     # her pelvis on his lap
+    for n_ in ("l_uparm", "l_foarm", "l_hand", "r_uparm", "r_foarm", "r_hand"):   # arms straight down
+        W[I(n_)] = fa._mul(_align(fa, fa._vec(W[I(n_)], [0, 0, -1]), [0.0, 1.0, 0.0]), W[I(n_)])
+    r = [lap[0] - LAP_RIGHT, lap[1] - LAP_UP, lap[2]]                        # her pelvis on his lap, to his right
     A = fa.Anim(ctx.char_file("acfe.a"))
     A.frames = [(rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, W))]
     ctx.char_file("zdea.a", A.build())
     # ZDEB: sitting on his lap (her bench pose), bouncing with his thrust
     br, bp, brots = fa.Anim(ctx.char_file("zdbe.a")).frames[0]
     Wb = [m for m, _, _ in fa.forward(sk, br, [bp[0], -bp[1], bp[2]], brots)]
+    for s_, out in (("l", 1), ("r", -1)):                                     # thighs round his hips
+        Wb = turned(Wb, {s_ + "_femur", s_ + "_tibia", s_ + "_foot"}, up, LAP_SPREAD,
+                    lambda a, b: out * b[I(s_ + "_femur")][2][0] > out * a[I(s_ + "_femur")][2][0] + 0.5)
+    Wb = [fa._mul(fa.axis_angle(up, 180), m) for m in Wb]                    # facing him
     _, n, HA = his("zctm.a")
     hy0 = -HA.frames[0][1][1]
     frames = []
     for t in range(n):
         e = (1 - math.cos(2 * math.pi * t / n)) / 2
         lift = -HA.frames[t][1][1] - hy0                                       # his hips' rise (y down)
-        rt = [lap[0], lap[1] - LAP_SEAT + lift - LAP_BOUNCE * e, lap[2]]
+        rt = [lap[0], lap[1] - LAP_SEAT + lift - LAP_BOUNCE * e, lap[2] - LAP_BACK]
         frames.append((br, [rt[0], -rt[1], rt[2]], fa.local_rotations(sk, br, Wb)))
     B = fa.Anim(ctx.char_file("zdbe.a"))
     B.frames = frames
@@ -1016,7 +1100,7 @@ def apply(ctx):
     _wall(ctx, "ZDSW.tor", "zsca.hrc", "anae.a")
     _wall(ctx, "ZDSX.tor", "zsca.hrc", "anae.a", "standf")      # with his double speed
     for anim, frames, look in (("ZDKA.tor", KNEEL_FRAMES, 0), ("ZDKC.tor", KNEEL_FRAMES, KNEEL_LOOK),
-                               ("ZDKB.tor", KNEEL_FRAMES_FAST, KNEEL_LOOK)):    # fast: still looking up
+                               ("ZDKB.tor", KNEEL_FRAMES_FAST, 0)):    # fast: looking straight again (user)
         _kneel(ctx, anim, "auff.hrc", "avbf.a", frames, look)
     _kneel(ctx, "ZDKD.tor", "auff.hrc", "avbf.a", 1, bow=BOW)
     for group, names in enumerate(GROUPS):
