@@ -179,6 +179,7 @@ LIE_ANIM_SCENE, LEG_RAISE, LEG_SPREAD = "DZBT.tor", 45, 45
 # elbow bent just enough for its wrist to reach the floor, the knees on the floor
 # (y = 0, y down; the root height is stored negated), head lifted FOURS_HEAD_LIFT.
 FOURS_ANIM, FOURS_HEAD_LIFT = "DZBF.tor", 30
+FOURS_FRAMES = 15                            # her rocking cycle: 0.5 s, starting rocked back (user)
 # Kneeling astride, rocking (user): from standing, hips flexed RIDE_HIP and spread
 # RIDE_SPREAD, knees bent RIDE_KNEE so the shins lie flat on the bed (feet flat behind),
 # torso leaning RIDE_LEAN forward, arms RIDE_ARMS forward; then the knees open
@@ -1018,10 +1019,10 @@ def _save_pose(ctx, fa, name, root, local):
     ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
 
 
-def _eased(t):
-    """0 -> 1 -> 0 over POSE_FRAMES frames, slow at both ends (frame 0 = rest)."""
+def _eased(t, n=None):
+    """0 -> 1 -> 0 over n (POSE_FRAMES) frames, slow at both ends (frame 0 = rest)."""
     import math
-    return (1 - math.cos(2 * math.pi * t / POSE_FRAMES)) / 2
+    return (1 - math.cos(2 * math.pi * t / (n or POSE_FRAMES))) / 2
 
 
 def _save_frames(ctx, fa, name, frames):
@@ -1478,8 +1479,8 @@ def _fours(ctx):
             up, fore = up - du / cap, fore - df / cap
         return up, fore
     frames, arms = [], dict(arms0)                   # each frame's arm solve starts from the last
-    for t in range(POSE_FRAMES):
-        rock = -POSE_ROCK * _eased(t)                                          # sign checked: hips go back
+    for t in range(FOURS_FRAMES):
+        rock = -POSE_ROCK * _eased(t, FOURS_FRAMES)                            # sign checked: hips go back
         w = pose(rock, arms0, foot)
         k = ends(w, [0, 0, 0])["l_femur"]
         root = [knee0[i] - k[i] for i in range(3)]                             # the knees stay planted
@@ -1492,7 +1493,8 @@ def _fours(ctx):
         for s in "lr":                                                         # hands planted (y, z exact;
             assert all(abs(e[s + "_foarm"][i] - wrist0[s][i]) < 0.6 for i in range(3)), (t, s, e[s + "_foarm"])  # x drifts a little)
         frames.append((root, fa.local_rotations(sk, rr, w)))
-    _save_frames(ctx, fa, FOURS_ANIM, frames)
+    k = (FOURS_FRAMES + 1) // 2                      # start rocked back (user): the cycle from its middle
+    _save_frames(ctx, fa, FOURS_ANIM, frames[k:] + frames[:k])
 
 
 def _ride(ctx):

@@ -64,7 +64,7 @@ kinematics on BADD.HRC; rotation order Y X Z, each bone runs along its own
 | Anim | File | Pose | Built by |
 |---|---|---|---|
 | DZBT | dzbt.a | on her back facing up, thighs raised 45 and spread 45, knees bent (~101) so the feet are planted flat, arms along her sides; hips where DZBA has them. Moves (60 frames, ~2 s, eased): the knees fall open 8 degrees and close (each leg turns about its hip-ankle line: the feet don't move) | `_on_back` (`LEG_RAISE`, `LEG_SPREAD`, `POSE_ROCK`) |
-| DZBF | dzbf.a | on all fours: facing down, hips / knees / shoulders at 90, knees and wrists on the floor, feet flat, head lifted 30. Moves (60 frames, eased): rocks back 8 degrees on the knees and forward again; knees, shins and hands stay planted (the arms re-bend each frame, Newton solve on the skeleton) | `_fours` (`FOURS_HEAD_LIFT`, `POSE_ROCK`) |
+| DZBF | dzbf.a | on all fours: facing down, hips / knees / shoulders at 90, knees and wrists on the floor, feet flat, head lifted 30. Moves (15 frames = 0.5 s, eased, starting rocked back): rocks forward 8 degrees on the knees to the rest pose and back again; knees, shins and hands stay planted (the arms re-bend each frame, Newton solve on the skeleton) | `_fours` (`FOURS_HEAD_LIFT`, `POSE_ROCK`) |
 | DZBR | dzbr.a | kneeling astride, rocking (60 frames, ~2 s): hips flexed 70 and spread 30, knees 160 so the shins lie flat (feet flat behind), torso 25 forward, arms 25 forward; the knees open 8 towards straight and back, eased, with the shins planted (the hips rise ~0.6 and settle). Used in the bed layout `ride` (Cloud on his back under her) and the beat `ride` (plays it 3 times) | `_ride` (`RIDE_*`) |
 
 History: DZBT was first DZBA rolled 60 degrees about her length (the hip
