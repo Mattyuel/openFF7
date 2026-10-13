@@ -161,6 +161,8 @@ RIDE_RAISE = 14                              # cowgirl / ontop: she sits a head 
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # head: Cloud right and down a bit from CLOUD_SIT
 HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 60      # she: at his x, this much nearer the camera (-y), 2/3 of
                                               # a body (~90) lower than the bed sitter, turned round
+MISSION_CLOUD, MISSION_RAISE = (126, -169), 0  # mission: Cloud 10 left / 10 further back of CLOUD_ONTOP,
+                                              # 4 lower than ONTOP_RAISE (user)
 DOG_CLOUD = (126, -150)                       # dog: Cloud a little nearer the camera and left of CLOUD_BESIDE
 CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
 CLOUD_ONTOP = (136, -179)                    # on top of her, half a body nearer the door (user)
@@ -634,7 +636,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     if "grea" in ca:
         cloud_beats["bedbeside"] = [_xyzi(*spot(CLOUD_BESIDE)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("grea")
     if "thrust" in ca:
-        cloud_beats["bedmission"] = [_xyzi(bx_, by_, bz_ + ONTOP_RAISE, bt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + _loop(ca["thrust"])
+        mx_, my_, mz_, mt_ = spot(MISSION_CLOUD)
+        cloud_beats["bedmission"] = [_xyzi(mx_, my_, mz_ + MISSION_RAISE, mt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + _loop(ca["thrust"])
     if "hbgc" in ca:                                 # knelt behind her (layout "dog")
         cloud_beats["bedknee"] = [_xyzi(*spot(DOG_CLOUD)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] + hold("hbgc")
     if "grea" in ca:                                 # on his back under her (layout "ride")
