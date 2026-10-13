@@ -565,6 +565,21 @@ def _kneel(ctx, name, hrc, stand, nframes):
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
 
+# Scarlet without her skirt (user: "without the bottom 2 large sections of her red dress"): her
+# AMCC skeleton (so her anims work) with the skirt bones' parts dropped: both tiers (s1 hip to
+# knee, s2 knee to ankle), front and back, each side. Not used by a scene yet.
+SCARLET_BARE = "ZSCA.HRC"
+SCARLET_SKIRT = ["AMHA", "AMHC", "AMHE", "AMIA", "AMJC", "AMJE", "ANAA", "ANAC"]   # l/r f_s1 f_s2 r_s1 r_s2
+
+
+def _scarlet_bare(ctx):
+    hrc = ctx.char_file("amcc.hrc").decode("latin-1")
+    for part in SCARLET_SKIRT:
+        assert hrc.count("1 %s\r\n" % part) == 1, part
+        hrc = hrc.replace("1 %s\r\n" % part, "0\r\n")
+    ctx.char_file(SCARLET_BARE.lower(), hrc.encode("latin-1"))
+
+
 def _koala(ctx, name, hrc, stand):
     """Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
     leaning KOALA_LEAN onto him (head upright); arms raised KOALA_ARMS forward; each thigh
@@ -652,6 +667,7 @@ def apply(ctx):
         _ledge(ctx, anim, hrc, stand)
     _bare_tifa(ctx)
     _koala(ctx, "ZDKT.tor", "ztfa.hrc", "abcd.a")
+    _scarlet_bare(ctx)
     for anim, frames in (("ZDKA.tor", KNEEL_FRAMES), ("ZDKB.tor", KNEEL_FRAMES_FAST)):
         _kneel(ctx, anim, "auff.hrc", "avbf.a", frames)
     for group, names in enumerate(GROUPS):

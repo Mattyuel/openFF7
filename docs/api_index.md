@@ -718,6 +718,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_ledge(ctx, name, hrc, stand)` Sitting on a ledge (`name`.a): from the standing pose, each thigh swung forward to
 - `_bare_tifa(ctx)` 
 - `_kneel(ctx, name, hrc, stand, nframes)` 
+- `_scarlet_bare(ctx)` 
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
 - `apply(ctx)` 
 
