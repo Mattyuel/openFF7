@@ -82,13 +82,16 @@ TIFA_SKIRT = (25, 25, 25), (76, 76, 76)
 # -> ztfd/ztfe.rsd -> ztgd/ztge.p in TIFA_SKIN
 TIFA_THIGHS = {"ABAD": ("ZTFD", "ZTGD"), "ABBD": ("ZTFE", "ZTGE")}
 THIGH_SKIN = (135, 167, 248)
-SKIRT_RINGS = {0.0: (0.8, 0.68), -1.8: (0.86, 0.8)}
+THIGH_TOP = 1.3                       # (user) upper thighs thicker: the hip end ring (z 0) scaled
+SKIRT_RINGS = {0.0: (0.8, 0.68), -1.8: (0.86, 0.8),
+               -3.09: (0.83, 0.85)}   # (user) the ring under the waist (x 2.65) flanged out: tapered in
 # koala (user's test scene): she clings to standing Cloud (620's ZCTH: ZCTE leaning back,
 # arms bent in round her), legs spread wide and wrapped round him, arms round his neck,
 # bouncing with his thrusts; leaning a little forward onto him (he leans back)
 KOALA_LEAN, KOALA_ARMS, KOALA_THIGH, KOALA_SPREAD, KOALA_KNEE = -10, 95, 85, 45, 90   # (user: arms 85 then 95, thighs 85, spread, knees 90)
 KOALA_PELVIS = 10                     # then the pelvis tipped up 10 more (user)
-KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 2.0, 1.0, 1.5    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
+KOALA_ARMS_IN, KOALA_NOD = 10, 12     # (user) arms turned in a little; the head nods with her bounce
+KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 1.4, 1.0, 1.5   # (BACK 2.0 -> 1.4: closer, user)    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
 GIRL_MODEL = {"Tifa": "main_n_tifa.char"}   # her model entry in both base fields (name suffix)
 RETURN_GAP = 40                        # back beside her: this far from her spot
 
@@ -403,6 +406,13 @@ def _bare_tifa(ctx):
                 t[o:o + 3] = bytes(TIFA_SKIN)
                 k += 1
         assert k >= 8, (old, k)
+        top = 0
+        for i in range(h[3]):
+            x, y, z = struct.unpack_from("<3f", t, 128 + 12 * i)
+            if abs(z) < 0.1:
+                struct.pack_into("<3f", t, 128 + 12 * i, x * THIGH_TOP, y * THIGH_TOP, z)
+                top += 1
+        assert top == 4, (old, top)
         ctx.char_file(ply.lower() + ".p", bytes(t))
     ctx.char_file("ztfa.hrc", hrc.encode("latin-1"))
     rsd = ctx.char_file("aagc.rsd").decode("latin-1")
@@ -425,7 +435,7 @@ def _bare_tifa(ctx):
             if abs(z - rz) < 0.1:
                 struct.pack_into("<3f", d, 128 + 12 * i, x * fx, y * fy, z)
                 moved += 1
-    assert moved == 12, moved
+    assert moved == 24, moved
     ctx.char_file("ztgc.p", bytes(d))
     rsd = ctx.char_file("aage.rsd").decode("latin-1")
     assert "PLY=AAGF." in rsd, rsd
@@ -481,6 +491,7 @@ def _koala(ctx, name, hrc, stand):
     for s, out in (("l", 1), ("r", -1)):
         arm = {s + "_uparm", s + "_foarm", s + "_hand"}
         W = turned(W, arm, side, KOALA_ARMS, lambda a, b: b[s + "_hand"][2] < a[s + "_hand"][2] - 1)  # forward-up
+        W = turned(W, arm, up, KOALA_ARMS_IN, lambda a, b: out * b[s + "_hand"][0] < out * a[s + "_hand"][0] - 0.2)
         leg = {s + "_femur", s + "_tibia", s + "_foot"}
         W = turned(W, leg, side, KOALA_THIGH, lambda a, b: b[s + "_femur"][2] < a[s + "_femur"][2] - 1)
         W = turned(W, leg, up, KOALA_SPREAD, lambda a, b: out * b[s + "_femur"][0] > out * a[s + "_femur"][0] + 0.5)
@@ -518,6 +529,7 @@ def _koala(ctx, name, hrc, stand):
         length = head0[1] - pelvis0[1]
         a = math.degrees(math.asin(max(-1.0, min(1.0, back / abs(length))))) if length else 0.0
         Wt = [fa._mul(fa.axis_angle(side, tilt * a), m) if names[i] in upper else m for i, m in enumerate(W)]
+        Wt[I("head")] = fa._mul(fa.axis_angle(side, tilt * KOALA_NOD * e), Wt[I("head")])   # nods forward as she rises
         frames.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, Wt)))
     base.frames = frames
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())

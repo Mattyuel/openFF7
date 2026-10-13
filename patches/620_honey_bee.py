@@ -303,6 +303,7 @@ CLOUD_EDGE_FAST = "ZCTG.tor"                   # the same in EDGE_FRAMES_FAST fr
 # the dates' koala hug (user): ZCTE leaning back KOALA_CLOUD_LEAN instead of forward, the arms
 # KOALA_CLOUD_ARMS forward with the forearms turned KOALA_CLOUD_ELBOW in, round her
 CLOUD_KOALA, KOALA_CLOUD_LEAN, KOALA_CLOUD_ARMS, KOALA_CLOUD_ELBOW = "ZCTH.tor", -15, 55, 75
+KOALA_CLOUD_OUT = 10                           # (user) his arms turned out a little
 LOOPED_C = {"thrust", "pound", "buck", "stand", "standl", "standlf"}
 # Devoted part two plays a fanfare from the fade to the bed (user): the victory fanfare,
 # the chocobo fanfare for dog. AKAO cmd 0x10 = play by music table index (exe 0x9684C8:
@@ -1428,7 +1429,7 @@ def _cloud_buck(ctx):
 
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
-                 lean=STAND_LEAN):
+                 lean=STAND_LEAN, arms_out=0):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
     the left thigh raised to `hip` degrees forward of vertical, the left knee bent
     only `knee` (EDGE_CLOUD_*: zctf.a)."""
@@ -1482,6 +1483,15 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
         hand0 = end(fk(W), s + "_hand")
         angle = arms[s] if isinstance(arms, dict) else arms
         W = signed(W, arm, angle, lambda F: dot(end(F, s + "_hand"), fwd) > dot(hand0, fwd) + 1)  # arms forward
+        if arms_out:                                 # the whole arm turned out (about the vertical)
+            hx = end(fk(W), s + "_hand")[0]
+            for sign in (1, -1):
+                M = rot(W, arm, fa.axis_angle(up, sign * arms_out))
+                if out * end(fk(M), s + "_hand")[0] > out * hx + 0.2:
+                    W = M
+                    break
+            else:
+                raise AssertionError("arms out " + s)
         if elbow_in:                                 # forearm turned in towards the middle at the elbow
             hx = end(fk(W), s + "_hand")[0]
             for sign in (1, -1):
@@ -2054,7 +2064,8 @@ def apply(ctx):
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE))
     _cloud_stand(ctx, CLOUD_EDGE_FAST, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE), EDGE_FRAMES_FAST)
-    _cloud_stand(ctx, CLOUD_KOALA, KOALA_CLOUD_ARMS, elbow_in=KOALA_CLOUD_ELBOW, lean=KOALA_CLOUD_LEAN)
+    _cloud_stand(ctx, CLOUD_KOALA, KOALA_CLOUD_ARMS, elbow_in=KOALA_CLOUD_ELBOW, lean=KOALA_CLOUD_LEAN,
+                 arms_out=KOALA_CLOUD_OUT)
     _bare_cloud(ctx)
     _ride(ctx)
     _bend(ctx)
