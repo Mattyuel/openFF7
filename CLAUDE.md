@@ -278,7 +278,7 @@ delete `build/cache` (~350 MB) any time.
 - **Bank 1 188-223**: no exe absolute refs, no world map use; original field
   scripts use 197-199 and 208-209. 188-196/200-207/210-212 = HB_AFFECTION;
   213 = debug flags (debug builds only); 214-223 still free.
-- **Background tile depth**: tile +24 u16 id = draw depth (smaller = nearer; layer 1 4095), +38 u32 = the PC's finer depth (larger = further). 620 `_bed_behind` moves onna_52's bed tiles back (both fields) so characters on the bed draw over it.
+- **Background tile depth**: tile +24 u16 id = draw depth (smaller = nearer; layer 1 4095), +38 u32 = the PC's finer depth (larger = further). (Tried moving onna_52's bed tiles back so girls on the bed draw over it: then the bed covered nobody, including people behind it; reverted at the user's request.)
 - New field models can be added to char.lgp (`ctx.char_file(name, data)`;
   .hrc/.rsd text, .p, .tex). magic.lgp has directory entries `ff7.lgp`
   can't parse: `_marker_models.magic_file` scans its TOC by hand.
