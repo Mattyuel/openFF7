@@ -73,6 +73,12 @@ LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # skin colour (167,190,248): new zfta.hrc -> ztfb.rsd -> ztgb.p
 BARE_GIRL = {"Tifa": ("ZTFA.HRC", "ZDKT.tor")}
 TIFA_TOP, TIFA_SKIN = (204, 204, 204), (167, 190, 248)
+# her skirt (user: skin colour, contoured to her body): the hip part AAGC (aagd.p: skirt
+# 25,25,25 and its waistband 76,76,76) -> ztfc.rsd -> ztgc.p, all in skin colour, the flared
+# lower rings (z 0 / z -1.8 along the hip bone, up to x 3.3, y 2.5) pulled in to her hips
+# and thighs (thighs reach x ~2.6, radius 1.15 about x 1.43): (x, y) scale per ring
+TIFA_SKIRT = (25, 25, 25), (76, 76, 76)
+SKIRT_RINGS = {0.0: (0.8, 0.68), -1.8: (0.86, 0.8)}
 # koala (user's test scene): she clings to standing Cloud (620's ZCTH: ZCTE leaning back,
 # arms bent in round her), legs spread wide and wrapped round him, arms round his neck,
 # bouncing with his thrusts; leaning a little forward onto him (he leans back)
@@ -375,8 +381,30 @@ def _ledge(ctx, name, hrc, stand):
 def _bare_tifa(ctx):
     import struct
     hrc = ctx.char_file("aagb.hrc").decode("latin-1")
-    assert hrc.count("1 AAGE") == 1
-    ctx.char_file("ztfa.hrc", hrc.replace("1 AAGE", "1 ZTFB").encode("latin-1"))
+    assert hrc.count("1 AAGE") == 1 and hrc.count("1 AAGC") == 1
+    ctx.char_file("ztfa.hrc", hrc.replace("1 AAGE", "1 ZTFB").replace("1 AAGC", "1 ZTFC").encode("latin-1"))
+    rsd = ctx.char_file("aagc.rsd").decode("latin-1")
+    assert "PLY=AAGD." in rsd, rsd
+    ctx.char_file("ztfc.rsd", rsd.replace("PLY=AAGD.", "PLY=ZTGC.").encode("latin-1"))
+    d = bytearray(ctx.char_file("aagd.p"))
+    h = struct.unpack_from("<16I", d, 0)
+    nv, nn, nunk, nt, nc, npoly = h[3], h[4], h[5], h[6], h[7], h[9]
+    o_c = 128 + 12 * nv + 12 * nn + 12 * nunk + 8 * nt
+    n = 0
+    for o in [o_c + 4 * i for i in range(nc)] + [o_c + 4 * nc + 4 * i for i in range(npoly)]:
+        if tuple(d[o:o + 3]) in TIFA_SKIRT:
+            d[o:o + 3] = bytes(TIFA_SKIN)
+            n += 1
+    assert n >= 30, n
+    moved = 0
+    for i in range(nv):
+        x, y, z = struct.unpack_from("<3f", d, 128 + 12 * i)
+        for rz, (fx, fy) in SKIRT_RINGS.items():
+            if abs(z - rz) < 0.1:
+                struct.pack_into("<3f", d, 128 + 12 * i, x * fx, y * fy, z)
+                moved += 1
+    assert moved == 12, moved
+    ctx.char_file("ztgc.p", bytes(d))
     rsd = ctx.char_file("aage.rsd").decode("latin-1")
     assert "PLY=AAGF." in rsd, rsd
     ctx.char_file("ztfb.rsd", rsd.replace("PLY=AAGF.", "PLY=ZTGB.").encode("latin-1"))
