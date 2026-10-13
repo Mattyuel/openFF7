@@ -31,7 +31,7 @@ from _honey_bee_data import GIRLS, LOUNGE, STARS
 import _honey_bee_gifts as gifts
 from _honey_bee_scenes_more import CLOSE, CLOSE_FINAL, DEVOTED, DEVOTED_FINAL
 from _recruit import SOUND_RECRUIT, sound
-from _travel import CHOICE, add_npc, beside, copy_model
+from _travel import CHOICE, add_npc, beside, copy_model, reuse_npc
 
 from ff7 import asm, triggers
 from ff7.models import ModelLoader
@@ -355,32 +355,8 @@ def _add_girls(ctx):
 
 def _reuse_entity(ctx, field, name, i, g, pos):
     """A field already at 16 models: the girl takes over entity `name` (one
-    the pinned moment hides): its model entry becomes hers, its init places
-    her, its talk is hers. Every other script slot of it becomes RET."""
-    sec = Script.parse(ctx.field(field).sections[0])
-    ent = sec.entity_index(name)
-    init = sec.script_ops(ent, 0)
-    assert init[0].op == 0xA1, init[0].raw.hex()                 # CHAR
-    model = init[0].raw[1]
-    loader = ModelLoader(ctx.field(field).section("models"))
-    donor = ModelLoader(ctx.field(g["model"][0]).section("models"))
-    entry = donor.models[g["model"][1]]
-    loader.models[model] = loader.with_scale(entry, round(loader.entry_scale(entry) * loader.scale / donor.scale))
-    ctx.field(field).set_section("models", loader.build())
-    # the old init's CHAR becomes ours + a jump over the rest of it (its own
-    # XYZI/DIR/hide) to its RET; no second CHAR is left (the build checks)
-    ret = next(o for o in init if o.op == 0x00)
-    sec.replace(init[0], [Op(bytes([0xA1, model])), _xyzi(*pos), Op(bytes([0xB3, 0, g["dir"]])),
-                          Op(bytes([0xC5, 0x00, 0x46])), asm.goto(ret)])          # TALKR as add_npc
-    main = init[init.index(ret) + 1]
-    sec.insert_before(main, [asm.ret()], retarget=True)                          # no old main
-    talk = _girl_talk(sec, i, g)
-    empty = asm.ret()
-    sec.ops.extend([empty] + talk)
-    first = sec.entry[ent][0]
-    sec.entry[ent] = [empty] * 32
-    sec.entry[ent][0], sec.entry[ent][1] = first, talk[0]
-    ctx.field(field).sections[0] = sec.build()
+    the pinned moment hides); see _travel.reuse_npc."""
+    reuse_npc(ctx, field, name, g["model"], pos, g["dir"], lambda sec: _girl_talk(sec, i, g))
 
 
 # ---- the manager -----------------------------------------------------------

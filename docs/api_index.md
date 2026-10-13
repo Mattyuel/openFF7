@@ -721,3 +721,4 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 - `line_across(ctx, field, x, y, overhang=30, reach=800)` A LINE ((x1, y1, z1), (x2, y2, z2)) through (x, y) across the floor at
 - `add_line(ctx, field, name, p1, p2, on_cross, init_extra=())` Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
 - `add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=())` Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk
+- `reuse_npc(ctx, field, entity, donor, pos, direction, talk)` An NPC in a field already at 16 models: it takes over entity `entity`

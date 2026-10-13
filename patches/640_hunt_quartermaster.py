@@ -20,6 +20,7 @@ from _recruit import SOUND_ITEM, say, sound
 from _travel import CHOICE, add_npc, copy_model, window
 
 from ff7 import asm
+from ff7.models import ModelLoader
 from ff7.script import Op
 from ff7.text import decode, encode
 from ff7.walkmesh import Walkmesh
@@ -29,12 +30,12 @@ NAME = "Hunt Quartermaster"
 MODEL = ("blin66_6", 4)              # sub_leave: Reeve
 GIL_LO, GIL_HI = (6, 0xF8), (6, 0xFA)  # temp words for CHGLD (as 280)
 
-SPOTS = [  # field, (x, y), facing (down the screen)
-    ("mds7st3", (-2000, 2700), 10),      # Sector 7 station: lower platform, right
-    ("junonr1", (-400, -100), 216),      # Upper Junon: between the item and materia shops
-    ("ropest", (250, -150), 20),         # North Corel ropeway: the gondola platform
-    ("rckt", (200, 1100), 0),            # Rocket Town: in front of Cid's house
-    ("rckt2", (200, 1100), 0),
+SPOTS = [  # field, (x, y), facing (down the screen), size (user: he looked too big in some)
+    ("mds7st3", (-2000, 2700), 10, 1.0),     # Sector 7 station: lower platform, right
+    ("junonr1", (-400, -100), 216, 0.5),     # Upper Junon: between the item and materia shops
+    ("ropest", (250, -150), 20, 0.75),       # North Corel ropeway: the gondola platform
+    ("rckt", (200, 1100), 0, 0.7),           # Rocket Town: in front of Cid's house
+    ("rckt2", (200, 1100), 0, 0.7),
 ]
 
 # (page title, rank needed, [(item index, name as the game spells it, gil)])
@@ -142,9 +143,14 @@ def _build_talk(sec):
 
 def apply(ctx):
     _check_names(ctx)
-    for field, (x, y), facing in SPOTS:
+    for field, (x, y), facing, size in SPOTS:
         mesh = Walkmesh(ctx.field(field).section("walkmesh"))
         tri = mesh.find(x, y)
         assert tri is not None, (field, x, y)
         model = copy_model(ctx, field, *MODEL)
+        if size != 1.0:
+            loader = ModelLoader(ctx.field(field).section("models"))
+            entry = loader.models[model]
+            loader.models[model] = loader.with_scale(entry, round(loader.entry_scale(entry) * size))
+            ctx.field(field).set_section("models", loader.build())
         add_npc(ctx, field, "hunterqm", model, (x, y, mesh.height(tri, x, y), tri), facing, _build_talk)

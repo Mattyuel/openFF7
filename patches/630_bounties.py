@@ -23,7 +23,7 @@ import struct
 
 from _config import HUNTER_PTS
 from _recruit import SOUND_ITEM, say, sound
-from _travel import add_npc, choice_menu, copy_model
+from _travel import add_npc, choice_menu, copy_model, reuse_npc
 
 from ff7 import asm
 from ff7.script import Op
@@ -70,7 +70,8 @@ REGIONS = [
              ("Vice", [34], 7, 2, "the Sector 5 slums"),
              ("Sword Dance", [55], 11, 2, "the Shinra Building"),
          ]),
-    dict(key="kalm", points=2, cap="Hunter", field="elmpb", at=(267, -58), dir=220, bar="Kalm bar",
+    dict(key="kalm", points=2, cap="Hunter", field="elmpb", at=(-41, 183), dir=227,   # down-left of the guest who heard about the bombing (was behind the counter)
+         bar="Kalm bar",
          area="the plains past Midgar", pool=[
              ("Mu", [77], 12, 3, "the grasslands"),
              ("Mandragora", [79], 10, 3, "the grasslands"),
@@ -86,7 +87,8 @@ REGIONS = [
              ("Ark Dragon", [84], 18, 3, "the Mythril Mine"),
              ("Capparwire", [90], 15, 3, "the Junon coast"),
          ]),
-    dict(key="costa", points=4, cap="Veteran", field="delpb", at=(127, 346), dir=4, bar="Costa del Sol bar",
+    dict(key="costa", points=4, cap="Veteran", field="delpb", at=(245, 367), dir=4,   # 4 steps right of (127, 346)
+         bar="Costa del Sol bar",
          area="the Corel area", pool=[
              ("Beachplug", [99], 16, 3, "the beaches"),
              ("Bloatfloat", [102], 18, 3, "Mt. Corel"),
@@ -94,7 +96,8 @@ REGIONS = [
              ("Grangalan", [96], 16, 3, "the Corel area"),
              ("Cokatolis", [104], 17, 3, "Mt. Corel"),
          ]),
-    dict(key="cosmo", points=6, cap="Elite", field="cosin3", at=(115, 240), dir=30, bar="Pub Starlet, Cosmo Canyon",
+    dict(key="cosmo", points=6, cap="Elite", field="cos_btm", at=(170, -880), dir=221, reuse="PROPED",   # bottom level, right of the bar door (16 models: takes over a hidden prop)
+         bar="Pub Starlet, Cosmo Canyon",
          area="the canyon lands", pool=[
              ("Golem", [131], 24, 2, "the canyon lands"),
              ("Gi Spector", [134], 23, 2, "the Cave of the Gi"),
@@ -103,7 +106,9 @@ REGIONS = [
              ("Skeeskee", [129], 20, 3, "the canyon lands"),
              ("Griffin", [130], 21, 3, "the canyon lands"),
          ]),
-    dict(key="nibel", points=8, cap="Elite", field="nivinn_1", at=(-14, -340), dir=233, bar="Nibelheim Inn",
+    dict(key="nibel", points=8, cap="Elite", field="nivinn_1", at=(-14, -340), dir=233,
+         also=[("rktinn1", (-419, 257), 25)],   # Rocket Town inn: 3 steps right and up of the "real or fake?" man
+         bar="Nibelheim Inn",
          area="the Nibel area", pool=[
              ("Bahba Velamyu", [142], 23, 2, "the Nibel area"),
              ("Screamer", [162], 26, 2, "Mt. Nibel"),
@@ -263,5 +268,13 @@ def apply(ctx):
         x, y = r["at"]
         tri = mesh.find(x, y)
         assert tri is not None, (f, x, y)
-        model = copy_model(ctx, f, *MODEL)
-        add_npc(ctx, f, "scoop", model, (x, y, mesh.height(tri, x, y), tri), r["dir"], _talk(i, r))
+        pos = (x, y, mesh.height(tri, x, y), tri)
+        if "reuse" in r:
+            reuse_npc(ctx, f, r["reuse"], MODEL, pos, r["dir"], _talk(i, r))
+        else:
+            add_npc(ctx, f, "scoop", copy_model(ctx, f, *MODEL), pos, r["dir"], _talk(i, r))
+        for f2, (x2, y2), d2 in r.get("also", []):      # another spot for the same region's bounty
+            mesh2 = Walkmesh(ctx.field(f2).section("walkmesh"))
+            t2 = mesh2.find(x2, y2)
+            assert t2 is not None, (f2, x2, y2)
+            add_npc(ctx, f2, "scoop", copy_model(ctx, f2, *MODEL), (x2, y2, mesh2.height(t2, x2, y2), t2), d2, _talk(i, r))
