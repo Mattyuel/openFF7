@@ -141,6 +141,28 @@ CLOUD_EXTRA = {"shrug": "AQCB.chi", "take": "FYGC.chi", "nudge": "FYFC.chi", "no
 GIFT_GIRL, GIFT_SEL = (5, 220), (5, 221)  # temp: lounge girl talked to, gift picked
 DISPLAY = (6, 222)                           # temp word: affection shown with MPRA2
 MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (not from the bed)
+# The bed part of a scene: ("bed", layout) fades out, places both on the bed
+# (the raised walkmesh piece, z 76) and fades back in. Layout -> (girl beat,
+# Cloud beat). Afterwards only in-place beats: girl sit1-3, Cloud CLOUD_BED.
+BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "sit": ("bedsit", "bedsitc")}
+CLOUD_BESIDE = (136, -155)                   # parallel to the lying girl (BED, BED_DIR)
+ONTOP_RAISE = 12                             # Cloud on top of her: drawn this much higher
+GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
+# Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
+# FTIB is only used on a Shinra soldier skeleton in the original game (same bone count).
+CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
+             "greb": "GREB.hei",   # lying on his back, moving a little
+             "grec": "GREC.hei",   # lying, then sits up
+             "ftib": "FTIB.chi",   # lying on his back
+             "avdd": "AVDD.yos",   # lying on his belly (on her)
+             "avea": "AVEA.yos",   # on his belly, looks to the side
+             "enje": "ENJE.yos",   # laid down, slowly sits up
+             "enjf": "ENJF.yos",   # sitting, stretching his legs
+             "hbgb": "HBGB.tak",   # knelt, thrusting (like CPR)
+             "hbgc": "HBGC.tak",   # knelt, looks to the side
+             "hbfe": "HBFE.tak",   # knelt, rubbing his face
+             "eiab": "EIAB.chi"}   # sitting comfortably
+FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
 BED, BEDSIDE = (136, -199), (120, -95)
 BED_DIR = 0x40                               # lying girl: turned 90 degrees (user)
@@ -464,8 +486,13 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     cloud_anims = ModelLoader.anims(loader.models[0])
     assert [cloud_anims[i] for i in (3, 9, 15, 16, 20)] == ["AQAA.tor", "AVJE.aki", "AQAB.tor", "BICA.yos",
                                                              "EADD.tor"], cloud_anims
-    ca = {n: len(cloud_anims) + i for i, n in enumerate(CLOUD_EXTRA)}
-    loader.models[0] = ModelLoader.with_anims(loader.models[0], list(CLOUD_EXTRA.values()))
+    # bed animations only where this room's scenes use them (layouts start with GREA / AVDD / EIAB)
+    layout_anim = {"beside": "grea", "ontop": "avdd", "sit": "eiab"}
+    bed_used = sorted({st[1] for sc in scenes for st in sc if st[0] == "c" and st[1] in CLOUD_BED}
+                      | {layout_anim[st[1]] for sc in scenes for st in sc if st[0] == "bed"})
+    extra = dict(CLOUD_EXTRA, **{n: CLOUD_BED[n] for n in bed_used})
+    ca = {n: len(cloud_anims) + i for i, n in enumerate(extra)}
+    loader.models[0] = ModelLoader.with_anims(loader.models[0], list(extra.values()))
     f.set_section("models", loader.build())
 
     def on_floor(a, b):
@@ -536,12 +563,42 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         "intobed": [Op(b"\xC7\x01"), _msped(WALK), gx(BED_LEVEL), _tura(girl)],
     }
     cloud_beats.update({name: one(name) for name in CLOUD_EXTRA})
-    used = {s[1] for sc in scenes for s in sc if s[0] in ("g", "g&")}
+    # ---- the bed part ----
+    from ff7.camera import Camera, facing_screen
+    cam = Camera(f.sections[1])
+    gs, cs = spot(GIRL_SIT), spot(CLOUD_SIT)
+    gdir, cdir = facing_screen(cam, *gs[:3], (0, 1)), facing_screen(cam, *cs[:3], (0, 1))
+    bx_, by_, bz_, bt_ = spot(BED)
+    hold = lambda name: [_anim(ca[name], hold=True)]
+    girl_beats.update({
+        "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1), _anim(da["DZBA.tor"], hold=True)],
+        "bedsit": [_xyzi(gs[0], gs[1], gs[2] - SIT_DROP, gs[3]), Op(bytes([0xB3, 0, gdir])), _visi(1),
+                   _anim(da["DXHE.tor"], hold=True)],
+        "sit1": [_anim(da["DXHE.tor"], hold=True)], "sit2": [_anim(da["DXIB.tor"], hold=True)],
+        "sit3": [_anim(da["DXIC.tor"], hold=True)],
+    })
+    if "grea" in ca:
+        cloud_beats["bedbeside"] = [_xyzi(*spot(CLOUD_BESIDE)), Op(bytes([0xB3, 0, BED_DIR]))] + hold("grea")
+    if "avdd" in ca:
+        cloud_beats["bedontop"] = [_xyzi(bx_, by_, bz_ + ONTOP_RAISE, bt_), Op(bytes([0xB3, 0, BED_DIR]))] + hold("avdd")
+    if "eiab" in ca:
+        cloud_beats["bedsitc"] = [_xyzi(cs[0], cs[1], cs[2] - SIT_DROP, cs[3]), Op(bytes([0xB3, 0, cdir]))] + hold("eiab")
+    cloud_beats.update({name: hold(name) for name in bed_used})
+    for i, sc in enumerate(scenes):              # after the fade to the bed: only in-place beats
+        kinds = [st[0] for st in sc]
+        if "bed" in kinds:
+            after = sc[kinds.index("bed") + 1:]
+            assert kinds.count("bed") == 1 and sc[kinds.index("bed")][1] in BED_LAYOUTS, (field, GIRLS[i]["name"])
+            assert all(st[1] in ("sit1", "sit2", "sit3") for st in after if st[0] in ("g", "g&")), (field, GIRLS[i]["name"])
+            assert all(st[1] in CLOUD_BED for st in after if st[0] in ("c", "c&")), (field, GIRLS[i]["name"])
+    used = ({s[1] for sc in scenes for s in sc if s[0] in ("g", "g&")}
+            | {BED_LAYOUTS[s[1]][0] for sc in scenes for s in sc if s[0] == "bed"})
     on_bed = [i for i, sc in enumerate(scenes) if sc[:1] == [("start", "bed")]]
     for i, sc in enumerate(scenes):
         assert sum(s[0] in ("G", "C") for s in sc) <= 7, (field, GIRLS[i]["name"])
         assert i not in on_bed or not {s[1] for s in sc if s[0] in ("g", "g&")} & MOVES, (field, GIRLS[i]["name"])
-    used_c = {s[1] for sc in scenes for s in sc if s[0] in ("c", "c&")} | {"into"}
+    used_c = ({s[1] for sc in scenes for s in sc if s[0] in ("c", "c&")} | {"into"}
+              | {BED_LAYOUTS[s[1]][1] for sc in scenes for s in sc if s[0] == "bed"})
     used_c |= {"intobed"} if on_bed else set()
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
@@ -599,6 +656,11 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                 ops += _say(sec, step[1], win=1, y=150)
             elif kind == "wait":
                 ops.append(_w(step[1]))
+            elif kind == "bed":                        # fade out, both onto the bed, fade in
+                gb, cb = BED_LAYOUTS[step[1]]
+                ops += [_w(20), Op(FADE_OUT), Op(b"\x6C"), _req(girl, slots[(girl, gb)]),
+                        asm.setbyte(ACT, cloud_act[cb]), _req(cloud, cslot), _w(20),
+                        Op(FADE_IN), Op(b"\x6C"), _w(PACE)]
             elif kind == "shake":
                 ops += [Op(bytes.fromhex("5e00000200000804")), _w(20)]
             else:
