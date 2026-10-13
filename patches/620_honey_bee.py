@@ -163,7 +163,7 @@ HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 46      # she: at his x, this much nearer 
                                               # a body (~90) lower than the bed sitter (then a head higher: 46), turned round
 MISSION_CLOUD, MISSION_RAISE = (126, -159), -4  # mission: Cloud 10 left / 20 further back of CLOUD_ONTOP,
                                                # 8 lower than ONTOP_RAISE (user, two rounds)
-DOG_CLOUD = (108, -150)                       # dog: Cloud a little nearer the camera and left of CLOUD_BESIDE, then half a body width (~18) more left (user)
+DOG_CLOUD = (113, -142)                       # dog: Cloud a little nearer the camera and left of CLOUD_BESIDE, then ~18 more left, then 5 right / 8 back (user)
 CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
 CLOUD_ONTOP = (136, -179)                    # on top of her, half a body nearer the door (user)
 ONTOP_RAISE = 4                              # Cloud on top of her: drawn this much higher (12 was too high)
