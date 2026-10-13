@@ -235,7 +235,7 @@ GIRLS = [
          hired="Aurora\n“The stars said yes! I'll be there\n with my telescope.”",
          idle="Aurora\n“I'm charting a course to Midgar.”"),
     # ---- 5 stars -----------------------------------------------------------
-    dict(name="Tifa", stars=5, tag="the real deal", field="niv_ti2", at=(105, -280), dir=225,
+    dict(name="Tifa", stars=5, tag="the real deal", field="niv_ti2", at=(-230, -20), dir=232,   # main room (user: was (105,-280))
          model=("ancnt1", 2),
          stranger="{TIFA}\n“Cloud? What are you doing\n in my old house?”",
          intro="{TIFA}\n“Cloud… you heard about the Honey Bee\n job? Don't look at me like that.”",

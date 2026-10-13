@@ -152,6 +152,7 @@ delete `build/cache` (~350 MB) any time.
 - MAPJUMP [field u16][x][y][triangle][dir]; the (x, y) **must lie in** that
   triangle (some original arrivals are wrong because a scene repositions Cloud;
   tunnel_1 train-jump said tri 48, real is 205). Check with `Walkmesh.contains`.
+- **The player's facing on arrival = the MAPJUMP's direction byte**, even over a DIR in the player entity's init (dates: Cloud set DIR 0x80 in init, the jump said 0, he faced 0: user saw him the wrong way). Give the jump the facing you want (inferred from the user's report; fix awaiting confirmation).
 - **UC 01 (player control off) persists across MAPJUMP.** Always UC 00 before
   jumping away from a menu, or fields that don't reset it freeze the player.
 - **Script header byte 3 = model count** and must equal the model loader's

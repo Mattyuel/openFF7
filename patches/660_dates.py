@@ -46,9 +46,9 @@ PLACE_NAMES = {"gondola": "The Gold Saucer gondola.", "capsule": "The space caps
                "tower": "The water tower in Nibelheim."}
 # seats: (x, y, tri, dir) for Cloud and her (tri None: found; dir None: facing each other)
 SEATS = {
-    # the original date's XYZIs; Cloud's sitting anim faces backwards here: 0x00, not the
-    # original's 0x80 (user: he faced the wrong way)
-    "gondola": {"cloud": (-5175, -6999, 4, 0x00, 0), "girl": (-5150, -6903, 5, 0x00, 0)},
+    # the original date's XYZIs and DIRs (Cloud is the player: the MAPJUMP's direction
+    # overrode his DIR, so he faced 0 = the wrong way (user); the jump now carries it)
+    "gondola": {"cloud": (-5175, -6999, 4, 0x80, 0), "girl": (-5150, -6903, 5, 0x00, 0)},
     "capsule": {"cloud": (-45, 209, None, None, 0), "girl": (45, 209, None, None, 0)},  # floor before the benches
     # nivl_e1 (the promise flashback): near where young Cloud and Tifa end up sitting on the
     # rim (cloud MOVE to (547,-415), TURNGEN 0x18; tifa7 MOVE to (517,-451), TURNGEN 0xE8), then
@@ -297,7 +297,7 @@ def _field(ctx, place, group, names):
     _blank(sec, scripts)
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()
-    return cs
+    return cs, cdir
 
 
 def _offer(ctx, i, g, arrive, group):
@@ -319,9 +319,9 @@ def _offer(ctx, i, g, arrive, group):
     never = asm.nop()
     for k, p in enumerate(PLACES):
         nxt = asm.nop()
-        x, y, z, tri = arrive[p]
+        (x, y, z, tri), adir = arrive[p]
         ops += [asm.if_byte(CHOICE, "==", first + k, nxt), asm.setbyte(DATE_GIRL, i + 1), hb._uc(0),
-                asm.mapjump(ctx.maplist.index(FIELDS[(p, group)]), x, y, tri, 0), asm.ret(), nxt]
+                asm.mapjump(ctx.maplist.index(FIELDS[(p, group)]), x, y, tri, adir), asm.ret(), nxt]
     ops += [never, hb._uc(0), asm.ret()]
     sec.insert_after(talk[2], ops)
     ctx.field(field).sections[0] = sec.build()
