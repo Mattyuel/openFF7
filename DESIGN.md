@@ -111,6 +111,17 @@ yours (instead of the original Gold Saucer gift).
 ### Wall Market and Shinra HQ
 - **The dress-up sequence is removed.** Wall Market (including the Honey Bee Inn
   and Corneo's mansion) is a fully walkable area with no cutscenes.
+- **Bounties.** A recurring reporter, Scoop, sits in one bar per region (7th
+  Heaven: all of Midgar except the disc 2 areas; Kalm: Midgar plains to the
+  Zolom marsh; Junon: Junon area, Mythril Mine, the ship; Costa del Sol: the
+  Corel area and Mt. Corel; Cosmo Canyon: its region and the Cave of the Gi;
+  Nibelheim: its region and Mt. Nibel; Wutai; Icicle Inn). Same spiel, a
+  different bounty: hunt N of one of the region's rarer enemies. One active
+  bounty per region, started by accepting, with a time limit to kill them
+  and report back. Active bounties are listed first in the Quests screen as
+  "(Bounty) Title" with a description; once completed or timed out they are
+  dropped (not remembered) and a new one can be taken straight away.
+  Bounties are not saved.
 - **Honey Bee Girl recruitment.** The Honey Bee Inn's manager (lobby) offers
   a job: recruit girls for the Inn. Then 20 women around the world (Tifa,
   Aerith, Elena, Scarlet and 16 new ones; all adults) can be recruited by

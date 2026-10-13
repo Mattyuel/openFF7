@@ -7,7 +7,8 @@
 ; destroyed (bike minigame, from 0x6566B9), CODE+20 / CODE+25 balloon popped
 ; (snowboard minigame, from 0x737D45 / 0x73C52A), CODE+30 play clock tick
 ; (from 0x40ABF0: keeps the play time in minutes in field var bank 1 247-248,
-; for the Honey Bee Inn income, 620_honey_bee.py). The bike and balloon hooks
+; for the Honey Bee Inn income, 620_honey_bee.py), CODE+35 field opcode 0x1C
+; BOUNTY (630_bounties.py points the opcode table at it). The bike and balloon hooks
 ; count made-up enemy ids (BIKE_ID, BALLOON_ID) through the same kill table,
 ; so those quests are ordinary kill quests in 600_quests.py.
 ;
@@ -23,6 +24,21 @@
 ;           +7 u8 kind (0 kill, 1 deliver)
 ;   Texts are FF7 text, 0xFF-terminated. A "var" is a byte index from the
 ;   start of the field variables (savemap bank 1, 0xDC08DC): (bank-1)*256+offset.
+;
+; Bounties (630_bounties.py): one active bounty per region, kept only in this
+; section's memory (never saved; cleared when the play clock jumps, i.e. a
+; game was loaded or started). BDATA (built by 630_bounties.py):
+;   +0 u32 region count  +4 ptr "Time left: "  +8 ptr " min"
+;   +12 regions, 8 bytes each: +0 ptr pool, +4 u8 pool size
+;   pool entries, BENT bytes: +0 u16 enemy id, +2 u16 second id (0xFFFF none),
+;       +4 u8 kills, +5 u8 minutes, +8 title, +12 giver line, +16 where line,
+;       +20 / +24 description lines, +28 enemy label
+; Field opcode 1C [dst bank << 4][dst][cmd][region] (5 bytes) puts its result
+; in the variable: cmd 0 status (0 none, 1 hunting, 2 ready to claim),
+; 1 offer (the bounty on offer, picked once), 2 accept (starts the offered
+; one: kills 0, deadline = now + its minutes), 3 claim (ready: ends it, gives
+; its index; else 0xFF), 4 active index (0xFF none). A bounty past its
+; deadline is dropped (the clock tick and every command check).
 
 bits 32
 CODE      equ 0xFDD000
@@ -33,6 +49,11 @@ VIEW      equ 8               ; rows visible in the list window
 MAXLIST   equ 128             ; every quest fits (record index is a byte)
 VARS      equ 0xDC08DC        ; field var bank 1, offset 0 (banks 1-5 follow)
 INVENTORY equ 0xDC0234        ; savemap 0x04FC: 320 x u16 (id 9 bits, qty 7 bits)
+BDATA     equ 0xFE0000        ; bounty data (630_bounties.py places it here)
+BENT      equ 32
+BREGIONS  equ 8               ; at most
+NONE      equ 0xFF
+KIND_BOUNTY equ 2             ; part kind: kills of bounty region (source)
 ACCEPTED  equ 2
 DONE      equ 4
 Z_TEXT    equ 0x3dcccccd      ; 0.1f
@@ -58,6 +79,12 @@ SOUND         equ 0x74580A    ; (id)
 ENEMY_IDS     equ 0x9A8748    ; u16 enemy id per enemy type (3)
 HOOK_BACK     equ 0x43153C
 
+; field script engine (bounty opcode)
+CUR_ENTITY    equ 0xCC0964        ; u8 current entity
+SCRIPT_POS    equ 0xCC0CF8        ; u16 per entity: script offset
+SCRIPT_BASE   equ 0xCBF5E8        ; ptr: script section
+SET_VAR_BYTE  equ 0x60FA7D        ; (nibble 1 = high nibble of byte 1, operand offset, value)
+
 ; minigame hooks
 BIKE_ID       equ 0xFFFE          ; "Shinra motorbike" in the kill table
 BALLOON_ID    equ 0xFFFD          ; "balloon" (Icicle Inn snowboard run)
@@ -79,6 +106,7 @@ entry_bike:   jmp near q_bike
 entry_snow_a: jmp near q_snow_a
 entry_snow_b: jmp near q_snow_b
 entry_clock:  jmp near q_clock
+entry_bounty: jmp near b_op
 
 %macro TEXT 4                 ; x, y, text ptr, colour
     push Z_TEXT
@@ -110,7 +138,10 @@ q_kill:
     pushad
     mov eax, [ebp - 0x20]               ; enemy type
     movzx eax, word [ENEMY_IDS + eax*2]
+    push eax
     call q_count
+    pop eax
+    call b_count
     popad
     mov eax, [ebp - 4]
     add eax, 4
@@ -154,8 +185,15 @@ q_snow_b:
 ; ---- play clock: one more second (replaces the 13-byte increment at 0x40ABF0)
 q_clock:
     mov eax, [PLAY_SECONDS]
+    cmp eax, [b_last]                   ; not the second we counted last: a
+    je .same                            ; game was loaded (or started): no bounties
+    pushad
+    call b_reset
+    popad
+.same:
     add eax, 1
     mov [PLAY_SECONDS], eax
+    mov [b_last], eax
     xor edx, edx
     mov ecx, 60
     div ecx
@@ -164,6 +202,9 @@ q_clock:
     mov eax, 0xFFFF
 .store:
     mov [CLOCK_MINUTES], ax
+    pushad
+    call b_expire_all
+    popad
     jmp CLOCK_BACK
 
 q_balloon:
@@ -202,6 +243,7 @@ q_count:
 q_init:
     push ebx
     xor ecx, ecx                    ; list length
+    call b_rows
     mov dl, ACCEPTED
     call q_collect
     mov dl, DONE
@@ -236,6 +278,11 @@ q_collect:
 ; esi = record; ZF set if it was handed in
 q_isdone:
     movzx eax, word [esi]
+    cmp eax, 0xFFFF                 ; a bounty: never "handed in"
+    jne .quest
+    test esi, esi                   ; ZF clear
+    ret
+.quest:
     cmp byte [VARS + eax], DONE
     ret
 
@@ -246,6 +293,8 @@ q_have:
     cmp byte [q_done], 0
     jne .full
     movzx edx, word [edi + 4]
+    cmp byte [edi + 7], KIND_BOUNTY
+    je .bounty
     cmp byte [edi + 7], 0
     jne .items
     movzx eax, byte [VARS + edx]
@@ -274,6 +323,11 @@ q_have:
     pop ebx
 .cap:
     movzx edx, byte [edi + 6]
+    jmp .capped
+.bounty:
+    movzx eax, byte [b_state + edx*8 + 2]
+    jmp .cap
+.capped:
     cmp eax, edx
     jbe .ret
 .full:
@@ -354,10 +408,23 @@ q_parttext:
 
 ; esi = record for list index eax
 %macro RECORD 1
-    movzx esi, byte [q_list + %1]
+    mov eax, %1
+    call q_rec
+%endmacro
+
+; esi = record for list index eax (0x80 + region: that region's bounty)
+q_rec:
+    movzx esi, byte [q_list + eax]
+    test esi, 0x80
+    jnz .bounty
     imul esi, esi, REC
     add esi, DATA + 16
-%endmacro
+    ret
+.bounty:
+    and esi, 0x7F
+    imul esi, esi, REC
+    add esi, b_recs
+    ret
 
 ; ---- update(frame) ------------------------------------------------------
 q_update:
@@ -422,6 +489,11 @@ q_update:
 
     mov eax, [q_row]
     RECORD eax
+    cmp word [esi], 0xFFFF
+    jne .not_bounty
+    movzx eax, word [esi + PARTS + 4]   ; region
+    call b_timetext
+.not_bounty:
     call q_isdone
     sete [q_done]
     TEXT 24, LIST_H + 13, dword [esi + 4], 6
@@ -539,6 +611,276 @@ q_update:
     pop ebp
     ret
 
+; ---- bounties ------------------------------------------------------------
+; ebx = region -> esi = its state (8 bytes: +0 offered, +1 active, +2 kills,
+; +3 last claimed, +4 u16 deadline minute), edi = its pool
+b_region:
+    lea esi, [b_state + ebx*8]
+    mov edi, [BDATA + 12 + ebx*8]
+    ret
+
+; esi state, edi pool -> edx = active entry (or 0 when none: ZF set)
+b_active:
+    movzx edx, byte [esi + 1]
+    cmp edx, NONE
+    je .none
+    imul edx, edx, BENT
+    add edx, edi
+    ret
+.none:
+    xor edx, edx
+    ret
+
+; drop region ebx's bounty if its time is up
+b_expire:
+    call b_region
+    cmp byte [esi + 1], NONE
+    je .ok
+    mov ax, [CLOCK_MINUTES]
+    cmp ax, [esi + 4]
+    jbe .ok
+    mov byte [esi + 1], NONE
+.ok:
+    ret
+
+b_expire_all:
+    xor ebx, ebx
+.next:
+    cmp ebx, [BDATA]
+    jae .done
+    call b_expire
+    inc ebx
+    jmp .next
+.done:
+    ret
+
+b_reset:
+    mov ecx, BREGIONS * 8
+    mov edi, b_state
+.fill:
+    mov byte [edi], NONE
+    inc edi
+    loop .fill
+    ret
+
+; count a kill of enemy id eax for every region hunting it
+b_count:
+    xor ebx, ebx
+.next:
+    cmp ebx, [BDATA]
+    jae .done
+    push eax
+    call b_region
+    call b_active
+    pop eax
+    test edx, edx
+    jz .skip
+    cmp ax, [edx]
+    je .hit
+    cmp ax, [edx + 2]
+    jne .skip
+.hit:
+    mov cl, [esi + 2]
+    cmp cl, [edx + 4]
+    jae .skip
+    inc byte [esi + 2]
+.skip:
+    inc ebx
+    jmp .next
+.done:
+    ret
+
+; field opcode 1C [dst bank << 4][dst][cmd][region]
+b_op:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+    movzx eax, byte [CUR_ENTITY]
+    movzx ecx, word [SCRIPT_POS + eax*2]
+    mov edx, [SCRIPT_BASE]
+    add edx, ecx
+    movzx ebx, byte [edx + 4]           ; region
+    movzx eax, byte [edx + 3]           ; command
+    call b_cmd
+    push eax
+    push 2
+    push 1
+    call SET_VAR_BYTE
+    add esp, 12
+    movzx eax, byte [CUR_ENTITY]
+    add word [SCRIPT_POS + eax*2], 5
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    pop ebp
+    ret
+
+; eax = command, ebx = region -> eax = result
+b_cmd:
+    cmp ebx, [BDATA]
+    jae .bad
+    push eax
+    call b_expire
+    pop eax
+    cmp eax, 0
+    je .status
+    cmp eax, 1
+    je .offer
+    cmp eax, 2
+    je .accept
+    cmp eax, 3
+    je .claim
+    cmp eax, 4
+    je .active
+.bad:
+    mov eax, NONE
+    ret
+.status:
+    call b_active
+    xor eax, eax
+    test edx, edx
+    jz .ret
+    mov eax, 1
+    mov cl, [esi + 2]
+    cmp cl, [edx + 4]
+    jb .ret
+    mov eax, 2
+.ret:
+    ret
+.offer:
+    movzx eax, byte [esi]
+    cmp eax, NONE
+    jne .ret
+    movzx ecx, byte [BDATA + 16 + ebx*8]    ; pool size
+    mov eax, [PLAY_SECONDS]
+    add eax, [b_seed]
+    add dword [b_seed], 7
+    xor edx, edx
+    div ecx
+    mov eax, edx
+    cmp ecx, 1
+    je .picked
+    cmp al, [esi + 3]                   ; not the one just claimed
+    jne .picked
+    inc eax
+    cmp eax, ecx
+    jb .picked
+    xor eax, eax
+.picked:
+    mov [esi], al
+    ret
+.accept:
+    call .offer
+    mov byte [esi], NONE
+    mov [esi + 1], al
+    mov byte [esi + 2], 0
+    push eax
+    call b_active
+    movzx ecx, byte [edx + 5]
+    add cx, [CLOCK_MINUTES]
+    mov [esi + 4], cx
+    pop eax
+    ret
+.claim:
+    call .status
+    cmp eax, 2
+    jne .bad
+    movzx eax, byte [esi + 1]
+    mov [esi + 3], al
+    mov byte [esi + 1], NONE
+    ret
+.active:
+    movzx eax, byte [esi + 1]
+    ret
+
+; quest list rows for the active bounties (ecx = list length, advanced)
+b_rows:
+    push esi
+    push edi
+    xor ebx, ebx
+.next:
+    cmp ebx, [BDATA]
+    jae .done
+    call b_region
+    call b_active
+    test edx, edx
+    jz .skip
+    imul eax, ebx, REC
+    add eax, b_recs
+    mov word [eax], 0xFFFF
+    mov byte [eax + 2], 1               ; one part
+    mov esi, [edx + 8]
+    mov [eax + 4], esi                  ; title
+    mov esi, [edx + 12]
+    mov [eax + 8], esi                  ; giver
+    mov esi, [edx + 16]
+    mov [eax + 12], esi                 ; where
+    mov esi, [edx + 20]
+    mov [eax + 16], esi
+    mov esi, [edx + 24]
+    mov [eax + 20], esi
+    mov dword [eax + 24], b_tbuf        ; time left (b_timetext)
+    mov esi, [edx + 28]
+    mov [eax + PARTS], esi              ; label
+    mov [eax + PARTS + 4], bx           ; source: region
+    mov dl, [edx + 4]
+    mov [eax + PARTS + 6], dl           ; kills needed
+    mov byte [eax + PARTS + 7], KIND_BOUNTY
+    cmp ecx, MAXLIST
+    jge .skip
+    mov al, bl
+    or al, 0x80
+    mov [q_list + ecx], al
+    inc ecx
+.skip:
+    inc ebx
+    jmp .next
+.done:
+    pop edi
+    pop esi
+    ret
+
+; b_tbuf = "Time left: N min" for region eax
+b_timetext:
+    push esi
+    push edi
+    push ebx
+    mov ebx, eax
+    mov edi, b_tbuf
+    mov esi, [BDATA + 4]
+    call b_copy
+    movzx eax, word [b_state + ebx*8 + 4]
+    movzx edx, word [CLOCK_MINUTES]
+    sub eax, edx
+    jns .pos
+    xor eax, eax
+.pos:
+    cmp eax, 999
+    jbe .num
+    mov eax, 999
+.num:
+    call q_putnum
+    mov esi, [BDATA + 8]
+    call b_copy
+    mov byte [edi], 0xFF
+    pop ebx
+    pop edi
+    pop esi
+    ret
+
+; copy FF7 text esi (0xFF-terminated, without it) to edi
+b_copy:
+    lodsb
+    cmp al, 0xFF
+    je .done
+    stosb
+    jmp b_copy
+.done:
+    ret
+
 ; ---- variables -----------------------------------------------------------
 align 4
 q_n:     dd 0
@@ -549,3 +891,8 @@ q_rect1: dw 0, 0, 0, 0
 q_rect2: dw 0, 0, 0, 0
 q_list:  times MAXLIST db 0
 q_buf:   times 4 * 64 db 0xFF
+b_last:  dd 0xFFFFFFFF
+b_seed:  dd 0
+b_state: times BREGIONS * 8 db NONE
+b_tbuf:  times 32 db 0xFF
+b_recs:  times BREGIONS * REC db 0

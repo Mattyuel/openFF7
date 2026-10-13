@@ -282,6 +282,22 @@ Existing saves load, but they keep their own story progress; use a new game.
   star of every hired girl per minute of play since you last collected (or
   took the job), counting at most 4.5 hours; the amount shows in his line.
   Check the number matches the gil you get.
+- **Bounties: Scoop, roving reporter** (new game; untested in-game; needs the
+  new ff7_en.exe AND flevel.lgp). Scoop (a Junon parade reporter) sits in 8
+  bars: 7th Heaven (Midgar), Kalm bar (Midgar plains to the Zolom marsh),
+  Junon bar (Junon area, Mythril Mine, cargo ship), Costa del Sol bar (Corel
+  area, Mt. Corel), Pub Starlet in Cosmo Canyon (canyon lands, Cave of the
+  Gi), Nibelheim Inn (Nibel area, Mt. Nibel), Turtle's Paradise (Wutai),
+  Icicle Inn bar (snowfields, Great Glacier). Talk: the spiel names one of
+  the region's rarer enemies, how many, 30 minutes of play, the gil; "Deal."
+  starts it. The Quests screen should list it first as "(Bounty) <enemy>"
+  with the kills and "Time left: N min". Kill them, come back to the same
+  Scoop in time: gil. Talking while hunting = a reminder. Time out = it
+  disappears from the list and Scoop offers a new one. One per region; the 8
+  are independent. Saving and loading (or a new game) drops every bounty.
+  Check: the list row and time, kills counting, the payout, a time-out, and
+  that loading a save clears them. Scoop's spots were picked by a script:
+  report any that stand somewhere odd.
 - **Round of fixes (new game; untested in-game):**
   - Pillar: the gate at the bottom should now *look* open. At the top of the
     stairs, a few steps right starts Reno (every visit, no quest needed).

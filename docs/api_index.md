@@ -593,6 +593,16 @@ Honey Bee Girl recruitment.
 - `_room(ctx, back)` 
 - `apply(ctx)` 
 
+## `patches/630_bounties.py`
+Bounties: Scoop, a roving reporter, sits in a bar in each of 8 regions and
+
+- `gil(level, kills)` 
+- `bounty_op(cmd, region, dst=RESULT)` 
+- `_text(s)` 
+- `_data()` The BDATA block: header, region table, pools, texts (absolute pointers).
+- `_talk(i, r)` 
+- `apply(ctx)` 
+
 ## `patches/650_world_vehicles.py`
 World map vehicles that the early-game world map can't show.
 

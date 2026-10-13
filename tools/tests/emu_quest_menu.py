@@ -23,7 +23,8 @@ DATA, CODE = 0xFD5000, 0xFDD000
 BANK3, INV = 0xDC0ADC, 0xDC0234
 STUBS = {0x6C98A6: 'MENU_DRAW', 0x6C9D07: 'MENU_DRAW_LR', 0x6C9808: 'MENU_STATE', 0x6C9812: 'MENU_GO',
          0x6C6AEE: 'MENU_SET', 0x6F5B03: 'TEXT', 0x6E7BA1: 'WIN_RECT', 0x6E7D20: 'WIN_DRAW',
-         0x6EB3B8: 'HAND', 0x6F53B2: 'KEY_REPEAT', 0x41AB74: 'KEY_NEW', 0x74580A: 'SOUND'}
+         0x6EB3B8: 'HAND', 0x6F53B2: 'KEY_REPEAT', 0x41AB74: 'KEY_NEW', 0x74580A: 'SOUND',
+         0x60FA7D: 'SET_VAR_BYTE'}
 STOP = 0x43153C
 
 class Emu:
@@ -32,9 +33,10 @@ class Emu:
         u.mem_map(0x400000, 0x400000)      # code stubs
         u.mem_map(0x900000, 0x100000)      # 0x9A....
         u.mem_map(0xDB0000, 0x40000)       # savemap
-        u.mem_map(0xFD5000, 0xA000)        # .openff7
+        u.mem_map(0xFD5000, 0x10000)       # .openff7 (quest data, code, bounty data 0xFE0000)
+        u.mem_map(0xCB0000, 0x20000)       # field script engine globals
         u.mem_map(0x100000, 0x10000)       # stack
-        sec = rd(0xFD5000, 0x9000)
+        sec = rd(0xFD5000, 0xC000)
         u.mem_write(0xFD5000, sec)
         for a in STUBS: u.mem_write(a, b'\xc3')
         u.mem_write(STOP, b'\xf4')         # hlt
@@ -49,6 +51,7 @@ class Emu:
             if name == 'MENU_STATE': ret = self.state
             if name == 'KEY_REPEAT': ret = 1 if self.keys.get(args[0]) else 0
             if name == 'KEY_NEW': ret = 1 if self.keys.get(args[0]) else 0
+            if name == 'SET_VAR_BYTE': self.result = args[2]
             if name == 'TEXT':
                 s = bytes(u.mem_read(args[2], 80)); args = (args[0], args[1], decode(s), args[3])
             self.calls.append((name, args))
@@ -161,3 +164,55 @@ for secs, mins in ((3599, 60), (59, 1), (0xFFFFFFF0, 0xFFFF)):
     got = struct.unpack('<IH', bytes(e.u.mem_read(SECONDS, 4)) + bytes(e.u.mem_read(MINUTES, 2)))
     assert got == (secs + 1, mins), (secs, got)
 print('play clock ok')
+
+# ---- bounties (630_bounties.py): field opcode 1C via CODE+35 -------------
+BDATA, SCRIPT = 0xFE0000, 0xCB8000
+def bounty(cmd, region):
+    e.u.mem_write(0xCBF5E8, struct.pack('<I', SCRIPT))       # script base
+    e.u.mem_write(0xCC0964, b'\x00')                         # entity 0
+    e.u.mem_write(0xCC0CF8, struct.pack('<H', 0x10))         # its position
+    e.u.mem_write(SCRIPT + 0x10, bytes([0x1C, 0x50, 237, cmd, region]))
+    e.result = None
+    e.call(CODE + 35)
+    pos = struct.unpack('<H', bytes(e.u.mem_read(0xCC0CF8, 2)))[0]
+    assert pos == 0x15, hex(pos)
+    return e.result
+def tick(seconds):
+    e.u.mem_write(SECONDS, struct.pack('<I', seconds))
+    e.u.reg_write(UC_X86_REG_ESP, 0x10F000)
+    e.u.emu_start(0x40ABF0, 0x40ABFD)
+def entry(region, k):
+    pool = struct.unpack('<I', bytes(e.u.mem_read(BDATA + 12 + region * 8, 4)))[0]
+    return struct.unpack('<HHBB', bytes(e.u.mem_read(pool + 32 * k, 6)))
+tick(5999); tick(6000)                     # a fresh game: state reset, minute 100
+assert bounty(0, 0) == 0                   # nothing running
+k = bounty(1, 0); assert bounty(1, 0) == k # the offer stays the same
+assert bounty(2, 0) == k and bounty(0, 0) == 1
+id1, id2, need, mins = entry(0, k)
+print('bounty: region 0 entry', k, 'enemy', id1, 'kills', need, 'minutes', mins)
+setids(id1, 0, 0)
+for _ in range(need - 1): e.kill(0)
+assert bounty(0, 0) == 1
+e.kill(0); e.kill(0)
+assert bounty(0, 0) == 2                   # ready (capped)
+assert bounty(0, 1) == 0                   # other regions: nothing
+# quest list: the bounty first, "(Bounty) ...", time left
+e.call(CODE + 0); t, h = frame()
+rows = [x[2] for x in t if x[0] == 64]
+print('  rows', rows[:2]); assert rows[0].startswith('(Bounty)'), rows
+details = [x[2] for x in t if x[0] in (24, 324)]
+print('  details', details)
+assert any(d == 'Time left: 30 min' for d in details) and any(d.endswith('%d/%d' % (need, need)) for d in details), details
+assert bounty(3, 0) == k and bounty(0, 0) == 0 and bounty(4, 0) == 0xFF
+k2 = bounty(1, 0); assert k2 != k, (k, k2)  # not the one just claimed
+# time out: accepted at minute 100, limit mins -> dropped after 100 + mins
+assert bounty(2, 0) == k2
+def minute(m): e.u.mem_write(MINUTES, struct.pack('<H', m))  # (a clock jump would count as a load)
+minute(100 + mins); assert bounty(0, 0) == 1
+minute(101 + mins); assert bounty(0, 0) == 0, 'not expired'
+assert bounty(2, 0) is not None and bounty(0, 0) == 1         # a new one straight away
+tick(6001); tick(6002); assert bounty(0, 0) == 1              # the clock ticking on is not a load
+# a loaded game (the clock jumps): everything cleared
+k3 = bounty(2, 3); assert bounty(0, 3) == 1
+tick(123456); assert bounty(0, 3) == 0 and bounty(4, 3) == 0xFF
+print('bounties ok')
