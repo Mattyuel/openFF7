@@ -531,6 +531,9 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     extra = dict(CLOUD_EXTRA, **{n: CLOUD_BED[n] for n in bed_used})
     ca = {n: len(cloud_anims) + i for i, n in enumerate(extra)}
     loader.models[0] = ModelLoader.with_anims(loader.models[0], list(extra.values()))
+    bare = None                                      # devoted room: part two's Cloud (same anims, so same indices)
+    if field == DEVOTED_ROOM:
+        bare = loader.add(ModelLoader.with_hrc(loader.models[0], CLOUD_BARE_HRC, "onna_52main_n_cloud_b.char"))
     f.set_section("models", loader.build())
 
     def on_floor(a, b):
@@ -662,6 +665,9 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     used_c = ({s[1] for sc in scenes for s in sc if s[0] in ("c", "c&")} | {"into"}
               | {BED_LAYOUTS[s[1]][1] for sc in scenes for s in sc if s[0] == "bed"})
     used_c |= {"intobed"} if on_bed else set()
+    if bare is not None:
+        cloud_beats["hide"] = [_visi(0)]
+        used_c |= {"hide"}
     assert used <= set(girl_beats) and used_c <= set(cloud_beats), (used - set(girl_beats), used_c - set(cloud_beats))
     slots = {}
     cloud_names = sorted(used_c)
@@ -673,6 +679,19 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     cslot = _free_slots(sec, cloud, 24)[0]
     sec.ops.extend(disp)
     sec.entry[cloud][cslot] = disp[0]
+    cloud2 = None
+    if bare is not None:                             # the bare Cloud: hidden until the bed, same dispatcher
+        sx, sy, sz, st = spot(STAGE)
+        cloud2 = sec.add_entity("cloudb", {0: [Op(bytes([0xA1, bare])), _xyzi(sx, sy, sz, st), _visi(0),
+                                               Op(b"\x7E\x01"), Op(b"\xC7\x01"), asm.ret(), asm.ret()]})
+        disp2 = []
+        for k, name in enumerate(cloud_names, 1):
+            nxt = asm.nop()
+            disp2 += ([asm.if_byte(ACT, "==", k, nxt), _visi(1)] + [Op(bytes(o.raw)) for o in cloud_beats[name]]
+                      + [asm.ret(), nxt])
+        disp2.append(asm.ret())
+        sec.ops.extend(disp2)
+        sec.entry[cloud2][2] = disp2[0]
     cloud_act = {name: k for k, name in enumerate(cloud_names, 1)}
     for ent, beats, start in ((girl, girl_beats, 8),):
         free = _free_slots(sec, ent, start)
@@ -704,14 +723,16 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         into = "intobed" if i in on_bed else "into"
         ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt),
                 asm.setbyte(ACT, cloud_act[into]), _req(cloud, cslot), _w(15)]
+        who = cloud                                   # part two: the bare Cloud (devoted room)
         for step in scenes[i]:
             kind = step[0]
+            cs_ = cslot if who == cloud else 2
             if kind == "start":
                 continue
             if kind in ("g", "g&"):
                 ops += [_req(girl, slots[(girl, step[1])], wait=kind == "g"), _w(PACE)]
             elif kind == "c":                          # the dispatcher reads ACT: always waited for
-                ops += [asm.setbyte(ACT, cloud_act[step[1]]), _req(cloud, cslot), _w(PACE)]
+                ops += [asm.setbyte(ACT, cloud_act[step[1]]), _req(who, cs_), _w(PACE)]
             elif kind == "G":
                 ops += _say(sec, g["name"] + "\n" + step[1])
             elif kind == "C":
@@ -720,8 +741,11 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                 ops.append(_w(step[1]))
             elif kind == "bed":                        # fade out, both onto the bed, fade in
                 gb, cb = BED_LAYOUTS[step[1]]
-                ops += [_w(20), Op(FADE_OUT), Op(b"\x6C"), _req(girl, slots[(girl, gb)]),
-                        asm.setbyte(ACT, cloud_act[cb]), _req(cloud, cslot), _w(20),
+                ops += [_w(20), Op(FADE_OUT), Op(b"\x6C"), _req(girl, slots[(girl, gb)])]
+                if cloud2 is not None:
+                    ops += [asm.setbyte(ACT, cloud_act["hide"]), _req(cloud, cslot)]
+                    who = cloud2
+                ops += [asm.setbyte(ACT, cloud_act[cb]), _req(who, cslot if who == cloud else 2), _w(20),
                         Op(FADE_IN), Op(b"\x6C"), _w(PACE)]
             elif kind == "shake":
                 ops += [Op(bytes.fromhex("5e00000200000804")), _w(20)]
@@ -1072,6 +1096,60 @@ def _bed_depth(ctx):
     f.set_section("background", bg.build())
 
 
+# Cloud for the devoted scenes' part two (user): his model (AAAA.HRC) with the pants'
+# colour (purple, on the pelvis, thighs and upper shins) replaced by his arms' skin
+# colour, and each knee ring (thigh bottom, shin top: radius ~2.8, the bulge) brought
+# in to the size of the thigh's hip ring (~1.6) about its own centre. New files:
+# zcla.hrc (bones as AAAA) -> new .rsd for the five changed parts -> new .p.
+CLOUD_BARE_HRC = "ZCLA.HRC"
+BARE_PARTS = {"AAAB": "ZCLB", "AADE": "ZCLC", "AAEA": "ZCLD", "AAEE": "ZCLE", "AAFA": "ZCLF"}   # rsd -> rsd
+PANTS, SKIN = (119, 73, 97), (135, 167, 248)        # vertex colours (B, G, R) of the pants / the arms
+
+
+def _bare_cloud(ctx):
+    import math
+    hrc = ctx.char_file("aaaa.hrc").decode("latin-1")
+    arm = ctx.char_file("aabf.p")
+    for old, new in BARE_PARTS.items():
+        assert hrc.count("1 %s\r\n" % old) == 1 or hrc.count("1 %s\n" % old) == 1, old
+        hrc = hrc.replace("1 %s" % old, "1 %s" % new)
+        rsd = ctx.char_file(old.lower() + ".rsd").decode("latin-1")
+        ply = rsd.split("PLY=")[1][:4]
+        newp = "ZCM" + new[3]                                       # ZCMB.. : the new .p files
+        ctx.char_file(new.lower() + ".rsd", rsd.replace("PLY=%s." % ply, "PLY=%s." % newp).encode("latin-1"))
+        d = bytearray(ctx.char_file(ply.lower() + ".p"))
+        h = struct.unpack_from("<16I", d, 0)
+        nv, nn, nunk, nt, nc, ne, npoly = h[3], h[4], h[5], h[6], h[7], h[8], h[9]
+        o_v = 128
+        o_c = o_v + 12 * nv + 12 * nn + 12 * nunk + 8 * nt
+        o_pc = o_c + 4 * nc
+        recoloured = 0
+        for o in [o_c + 4 * i for i in range(nc)] + [o_pc + 4 * i for i in range(npoly)]:
+            if tuple(d[o:o + 3]) == PANTS:
+                d[o:o + 3] = bytes(SKIN)
+                recoloured += 1
+        assert recoloured, old
+        V = [list(struct.unpack_from("<3f", d, o_v + 12 * i)) for i in range(nv)]
+        if old != "AAAB":                                           # thigh / shin: the knee ring
+            thigh = old in ("AADE", "AAEE")
+            ring = lambda zz: [i for i, v in enumerate(V) if abs(v[2] - zz) < 0.2]
+            if thigh:
+                hip, knee = ring(0.0), ring(-5.08)
+                cx, cy = sum(V[i][0] for i in hip) / len(hip), sum(V[i][1] for i in hip) / len(hip)
+                target = sum(math.hypot(V[i][0] - cx, V[i][1] - cy) for i in hip) / len(hip)
+                _bare_cloud.target = target
+            else:
+                knee, target = ring(0.0), _bare_cloud.target
+            assert len(knee) == 4 and (not thigh or len(hip) == 4), (old, knee)
+            kx, ky = sum(V[i][0] for i in knee) / 4, sum(V[i][1] for i in knee) / 4
+            for i in knee:
+                r = math.hypot(V[i][0] - kx, V[i][1] - ky)
+                V[i][0], V[i][1] = kx + (V[i][0] - kx) * target / r, ky + (V[i][1] - ky) * target / r
+                struct.pack_into("<3f", d, o_v + 12 * i, *V[i])
+        ctx.char_file(newp.lower() + ".p", bytes(d))
+    ctx.char_file(CLOUD_BARE_HRC.lower(), hrc.encode("latin-1"))
+
+
 def _cloud_thrust(ctx):
     """zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST."""
     import math
@@ -1313,6 +1391,7 @@ def apply(ctx):
     _on_back(ctx)
     _fours(ctx)
     _cloud_thrust(ctx)
+    _bare_cloud(ctx)
     _ride(ctx)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)

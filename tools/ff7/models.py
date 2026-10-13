@@ -50,6 +50,16 @@ class ModelLoader:
         return entry[:2 + nl + 10] + text.ljust(4, b"\0") + entry[2 + nl + 14:]
 
     @staticmethod
+    def with_hrc(entry, hrc, name=None):
+        """The entry using skeleton file `hrc` (e.g. "ZCLA.HRC", 8 chars), renamed to `name`."""
+        nl, = struct.unpack_from("<H", entry, 0)
+        hrc = hrc.encode("latin-1")
+        assert len(hrc) == 8, hrc
+        body = entry[2 + nl:2 + nl + 2] + hrc + entry[2 + nl + 10:]
+        name = (name.encode("latin-1") if name else entry[2:2 + nl])
+        return struct.pack("<H", len(name)) + name + body
+
+    @staticmethod
     def anims(entry):
         """Animation file names of a model entry."""
         nl, = struct.unpack_from("<H", entry, 0)

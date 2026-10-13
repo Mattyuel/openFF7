@@ -72,6 +72,10 @@ bone's z angle + 60), replaced by the knees-up pose.
 
 ## Cloud (AAAA.HRC)
 
+The devoted room's part two uses a second Cloud (zcla.hrc, same skeleton: bare
+legs, slim knees; 620 `_bare_cloud`) carrying the same animation list, so every
+Cloud animation below works on it too.
+
 ### In the "&" room's own loader (onna_52)
 
 All 25 (index: name): 0 ACFE, 1 AAFF, 2 AAGA, 3 AQAA, 4 EACF, 5 DMBC, 6 EADA,

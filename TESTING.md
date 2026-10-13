@@ -322,6 +322,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   zcta animation; dog = she starts on all fours, Cloud starts knelt (HBGC),
   10 left / 15 nearer the camera than the old 'beside' spot. Report what's
   off per position (field units: a body is ~90, a head ~14).
+- **Bare-legged Cloud** (new; untested in-game): in affection-20 scenes,
+  after the fade to the bed Cloud is a second model with skin-coloured legs
+  (no pants) and slimmer knees; part one is the normal Cloud. Report a
+  missing/odd model, a Cloud still standing where he was, or both Clouds showing.
 - **Honey Bee kids** (new; untested in-game): after a girl's affection-20
   scene (onna_6), go to where you hired her: a kid stands beside her (Rhonda's
   outside the Nibelheim inn door, Velvet's next to her in the Battle Square

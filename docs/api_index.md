@@ -241,6 +241,7 @@ Field model loader section (section 2): which character models a field
   - `hrc(entry)` 
   - `entry_scale(entry)` The model's scale (ASCII digits, e.g. b"512 ").
   - `with_scale(entry, scale)` 
+  - `with_hrc(entry, hrc, name=None)` The entry using skeleton file `hrc` (e.g. "ZCLA.HRC", 8 chars), renamed to `name`.
   - `anims(entry)` Animation file names of a model entry.
   - `with_anims(entry, names)` The entry with animations `names` appended (each with the unknown
   - `add_from(donor, index)` Copy model `index` from loader `donor`, rescaled from the donor
@@ -644,6 +645,7 @@ Honey Bee Girl recruitment.
 - `_eased(t)` 0 -> 1 -> 0 over POSE_FRAMES frames, slow at both ends (frame 0 = rest).
 - `_save_frames(ctx, fa, name, frames)` frames: [(root position as FK uses it (y down), local rotations)].
 - `_bed_depth(ctx)` 
+- `_bare_cloud(ctx)` 
 - `_cloud_thrust(ctx)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
 - `_on_back(ctx)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
 - `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
