@@ -196,6 +196,11 @@ POSE_ROCK, POSE_FRAMES = 8, 60
 # On her back (mission): LIE_FRAMES per stroke, the knees fall open POSE_ROCK, and her
 # whole body bounces LIE_BOUNCE up off the mattress and back (user: more bounce).
 LIE_FRAMES, LIE_BOUNCE = 15, 1.2
+# ... and (user) her head tilted LIE_HEAD forward (chin to chest), rocking LIE_HEAD_ROCK
+# further forward as she comes down and back as she goes up; her arms angled LIE_ARMS
+# out from her sides; her hips thrusting LIE_THRUST up on top of the bounce (shoulders
+# and knees ride only the bounce: chest and thighs re-aimed each frame).
+LIE_HEAD, LIE_HEAD_ROCK, LIE_ARMS, LIE_THRUST = 25, 12, 20, 1.0
 SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM, RIDE_ANIM]   # our own animations on the scene girl
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
@@ -1501,18 +1506,59 @@ def _on_back(ctx):
     for n in ("l_tibia", "r_tibia", "l_foot", "r_foot"):
         assert abs(e0[n][1]) < 0.5, (n, e0[n])                                 # feet planted
     assert e0["l_femur"][1] < -2 and e0["r_femur"][1] < -2, (e0["l_femur"], e0["r_femur"])   # knees up
+    import math
+    up = [0.0, -1.0, 0.0]
+    bdir = lambda m: fa._vec(m, [0, 0, -1])
+
+    def align(a, b):                                 # the smallest rotation turning direction a into b
+        n = lambda v: [c / math.sqrt(sum(q * q for q in v)) for q in [0] for c in v]
+        a, b = n(a), n(b)
+        ax = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+        s = math.sqrt(sum(c * c for c in ax))
+        return fa.axis_angle(ax, math.degrees(math.atan2(s, sum(a[k] * b[k] for k in range(3))))) if s > 1e-9 \
+            else fa.euler_matrix(0, 0, 0)
+
+    def pick(rotate, test):                          # the sign of a rotation that passes `test`
+        for s in (1, -1):
+            w = rotate(s)
+            if test(ends(w)):
+                return w
+        raise AssertionError("no sign")
+    # arms out from her sides (about the vertical at each shoulder: the hand moves away from the middle)
+    for side in "lr":
+        chain = [idx(side + n) for n in ("_uparm", "_foarm", "_hand")]
+        mid_x = e0["hip"][0]
+        w0 = pick(lambda s: [fa._mul(fa.axis_angle(up, s * LIE_ARMS), m) if i in chain else m for i, m in enumerate(w0)],
+                  lambda e, side=side: abs(e[side + "_hand"][0] - mid_x) > abs(e0[side + "_hand"][0] - mid_x) + 0.5)
+    e0 = ends(w0)
+    # the head: which sense of the side axis lifts the top of her head (chin to chest)
+    head_up = pick(lambda s: [fa._mul(fa.axis_angle(x, s * 20), m) if i == idx("head") else m for i, m in enumerate(w0)],
+                   lambda e: e["head"][1] < e0["head"][1] - 0.5)
+    sense = 1 if fa._mul(fa.axis_angle(x, 20), w0[idx("head")]) == head_up[idx("head")] else -1
     frames = []
     for t in range(LIE_FRAMES):
+        b = _eased(t, LIE_FRAMES)
         w = list(w0)
         for side, outward in (("l", -1), ("r", 1)):            # sign checked: the knees move apart
             h, a = e0[side + "_hip"], e0[side + "_tibia"]                      # hip joint, ankle
-            turn = fa.axis_angle([a[k] - h[k] for k in range(3)], outward * POSE_ROCK * _eased(t, LIE_FRAMES))
+            turn = fa.axis_angle([a[k] - h[k] for k in range(3)], outward * POSE_ROCK * b)
             for n in ("_femur", "_tibia", "_foot"):
                 w[idx(side + n)] = fa._mul(turn, w0[idx(side + n)])
         e = ends(w)
         for n in ("l_tibia", "r_tibia"):
             assert all(abs(e[n][k] - e0[n][k]) < 0.05 for k in range(3)), (t, n)   # feet stay put (before the bounce)
-        lift = [root[0], root[1] - LIE_BOUNCE * _eased(t, LIE_FRAMES), root[2]]    # y down: the bounce goes up
+        rest = fa.forward(sk, rr, root, fa.local_rotations(sk, rr, w))
+        bounce, thrust = LIE_BOUNCE * b, LIE_THRUST * b
+        lift = [root[0], root[1] - bounce - thrust, root[2]]                  # y down: up is -y
+        for n in ("chest", "l_chest", "r_chest", "l_femur", "r_femur"):        # shoulders / knees: bounce only
+            i = idx(n)
+            _, s0, e_ = rest[i]
+            start = [s0[0], s0[1] - bounce - thrust, s0[2]]
+            target = [e_[0], e_[1] - bounce, e_[2]]
+            w[i] = fa._mul(align(bdir(w[i]), [target[k] - start[k] for k in range(3)]), w[i])
+        v = math.sin(2 * math.pi * t / LIE_FRAMES)                           # > 0 going up, < 0 coming down
+        tilt = LIE_HEAD - LIE_HEAD_ROCK * v                                   # forward coming down, back going up
+        w[idx("head")] = fa._mul(fa.axis_angle(x, sense * tilt), w[idx("head")])
         frames.append((lift, fa.local_rotations(sk, rr, w)))
     _save_frames(ctx, fa, LIE_ANIM_SCENE, frames)
 
