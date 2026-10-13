@@ -18,7 +18,7 @@ and returns to the idle) or `CANM!1` (0xB1, a frame range); 620's `_anim` /
 **Limits seen so far** (no hard cap found; each animation costs memory and load
 time on entering a field): the original game's maximum is 47 on one model
 (junbin5) and 173 in one field (jundoc1a). Ours, played in game without trouble:
-55 on Cloud in onna_6, 308 in the lounges (onna_52 / onna_1: 10 extra girls
+56 on Cloud in onna_6, 308 in the lounges (onna_52 / onna_1: 10 extra girls
 carrying all 24 dancer animations; trim them if a field ever needs headroom).
 
 ## Honey Bee dancer (BADD.HRC, 21 bones)
@@ -127,6 +127,16 @@ Avoid EACF (arms up): overused.
 | avea | AVEA.yos | on his belly, looks to the side | belly |
 | enjf | ENJF.yos | sitting, stretching his legs | as he is |
 | eiab | EIAB.chi | sitting comfortably | as he is |
+| thrust | ZCTA.tor (ours) | on his belly as AVDD, legs straight back, slow hips (below) | belly |
+
+### Our own pose for Cloud (built at build time, written to char.lgp)
+
+| Anim | File | Pose | Built by |
+|---|---|---|---|
+| ZCTA | zcta.a | AVDD (on his belly, propped on his forearms) with the knees straightened until the shins lie level, the feet pointed level behind them, the knees swung in to 0.7 from the midline at the same height (thighs pitched/swung at the hip). Moves (90 frames, ~3 s, eased): the hips rise 0.8 and settle; chest and thighs re-aimed each frame so the shoulders and hands stay put (the knees slide ~0.6 with the thighs). Looped with DFANM (`LOOPED_C`). First used in Tifa's devoted scene. | `_cloud_thrust` (`THRUST_*`) |
+
+Cloud's skeleton (AAAA.HRC, 21 bones) has the same bone names as the dancer's; his
+standing root sits 13.5 up, the floor at y 0 once the stored root height is negated.
 | hbgb | HBGB.tak | knelt, thrusting motion (like CPR) | as he is |
 | hbgc | HBGC.tak | knelt, looks to the side | as he is |
 | hbfe | HBFE.tak | knelt, rubbing his face | as he is |

@@ -440,6 +440,7 @@ DEVOTED = {
         ('C', "{CLOUD}\n“…Me too, Tifa.”"),
         ('c', 'avea'),
         ('G', "“Then don't hold back. Help me with\n this… yes. Like that.”"),
+        ('c', 'thrust'),
         ('G', "“Don't think, Cloud.\n It's just you and me now.”"),
     ],
     'Aerith': [

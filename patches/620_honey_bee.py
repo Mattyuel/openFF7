@@ -186,7 +186,15 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "hbgb": "HBGB.tak",   # knelt, thrusting (like CPR)
              "hbgc": "HBGC.tak",   # knelt, looks to the side
              "hbfe": "HBFE.tak",   # knelt, rubbing his face
-             "eiab": "EIAB.chi"}   # sitting comfortably
+             "eiab": "EIAB.chi",   # sitting comfortably
+             "thrust": "ZCTA.tor"}  # ours (_cloud_thrust): AVDD, legs straight back, slow hips
+# Cloud's own pose (user): AVDD (on his belly, propped on his forearms) with each
+# knee straightened until the shin lies level with the ground, the feet pointed so
+# they're level too, the knees brought within THRUST_KNEE_GAP of the midline (both
+# at the same height); the hips rise THRUST_RISE and settle, eased, over
+# THRUST_FRAMES frames (~3 s) with the shoulders and hands where they were.
+CLOUD_THRUST, THRUST_KNEE_GAP, THRUST_RISE, THRUST_FRAMES = "ZCTA.tor", 0.7, 0.8, 90
+LOOPED_C = {"thrust"}                        # Cloud bed beats that loop (DFANM) instead of holding
 FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
 BED = (91, -144)                             # lying girl in the scenes: half a body further from the door than 136,
@@ -195,7 +203,7 @@ BED_DIR = 0xC0                               # lying girl in the scenes (user: 0
                                              # she lines up with Cloud's lying poses)
 CLOUD_BED_DIR = 0x40                         # Cloud lying on his stomach on the bed (AVDD / AVEA)
 CLOUD_BACK_DIR = 0xC0                        # ... on his back (user: those poses face the other way)
-BACK_POSES, BELLY_POSES = {"grea", "greb", "grec", "ftib", "enje"}, {"avdd", "avea"}
+BACK_POSES, BELLY_POSES = {"grea", "greb", "grec", "ftib", "enje"}, {"avdd", "avea", "thrust"}
 JUMP_SOUND = bytes.fromhex("f20000002840e9000000000000000000")[:14]
 
 
@@ -605,7 +613,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         cloud_beats["bedsitc"] = [_xyzi(cs[0], cs[1], cs[2] - SIT_DROP, cs[3]), Op(bytes([0xB3, 0, cdir]))] + hold("eiab")
     pose_dir = lambda name: ([Op(bytes([0xB3, 0, CLOUD_BACK_DIR]))] if name in BACK_POSES else
                              [Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] if name in BELLY_POSES else [])   # knelt / sitting: as he is
-    cloud_beats.update({name: pose_dir(name) + hold(name) for name in bed_used})
+    cloud_beats.update({name: pose_dir(name) + (_loop(ca[name]) if name in LOOPED_C else hold(name))
+                        for name in bed_used})
     for i, sc in enumerate(scenes):              # after the fade to the bed: only in-place beats
         kinds = [st[0] for st in sc]
         if "bed" in kinds:
@@ -948,6 +957,76 @@ def _save_frames(ctx, fa, name, frames):
     ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
 
 
+def _cloud_thrust(ctx):
+    """zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST."""
+    import math
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
+    names = [b[0] for b in sk]
+    I = names.index
+    base = fa.Anim(ctx.char_file("avdd.a"))
+    rr, rp, rots = base.frames[0]
+    stand = fa.Anim(ctx.char_file("acfe.a")).frames[0][2]
+    root = [rp[0], -rp[1], rp[2]]                    # root height stored negated: y down, floor 0
+    sub = lambda a, b: [a[k] - b[k] for k in range(3)]
+    add = lambda a, b: [a[k] + b[k] for k in range(3)]
+    dot = lambda a, b: sum(a[k] * b[k] for k in range(3))
+    cross = lambda a, b: [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+    unit = lambda a: [x / math.sqrt(dot(a, a)) for x in a]
+    bdir = lambda m: fa._vec(m, [0, 0, -1])          # a bone runs along its own -z
+
+    def align(a, b):                                 # the smallest rotation turning direction a into b
+        a, b = unit(a), unit(b)
+        ax = cross(a, b)
+        s = math.sqrt(dot(ax, ax))
+        return fa.axis_angle(ax, math.degrees(math.atan2(s, dot(a, b)))) if s > 1e-9 else fa.euler_matrix(0, 0, 0)
+    fk = fa.forward(sk, rr, root, rots)
+    W, S, E = [m for m, _, _ in fk], [s for _, s, _ in fk], [e for _, _, e in fk]
+    up = [0, -1, 0]
+    mid = [(S[I("l_femur")][k] + S[I("r_femur")][k]) / 2 for k in range(3)]
+    head = E[I("head")]
+    along = unit([mid[0] - head[0], 0, mid[2] - head[2]])        # level, head -> feet
+    lat = unit(cross(up, along))
+    knee_h = (-E[I("l_femur")][1] - E[I("r_femur")][1]) / 2     # both knees at their mean height
+    for side in ("l", "r"):
+        fe, ti, fo = I(side + "_femur"), I(side + "_tibia"), I(side + "_foot")
+        s0 = S[fe]
+        want = THRUST_KNEE_GAP if dot(sub(E[fe], mid), lat) > 0 else -THRUST_KNEE_GAP
+        knee = lambda R: add(s0, fa._vec(R, sub(E[fe], s0)))
+        side_axis = unit(cross(bdir(W[fe]), up))
+        pitch = min((x / 4 for x in range(-160, 161)),                # level the knee
+                    key=lambda x: abs(-knee(fa.axis_angle(side_axis, x))[1] - knee_h))
+        P = fa.axis_angle(side_axis, pitch)
+        swing = min((x / 4 for x in range(-320, 321)),                # then swing it in (about the vertical)
+                    key=lambda x: abs(dot(sub(knee(fa._mul(fa.axis_angle(up, x), P)), mid), lat) - want))
+        R = fa._mul(fa.axis_angle(up, swing), P)
+        assert abs(-knee(R)[1] - knee_h) < 0.1 and abs(dot(sub(knee(R), mid), lat) - want) < 0.1, (side, knee(R))
+        W[fe] = fa._mul(R, W[fe])
+        shin = fa._mul(R, W[ti])
+        W[ti] = fa._mul(align(bdir(shin), along), shin)            # the shin straight back, level
+        foot = fa._mul(W[ti], fa.euler_matrix(*stand[fo]))          # the standing ankle, then pointed
+        W[fo] = fa._mul(align(bdir(foot), along), foot)
+    rest = fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W))
+    W0, S0, E0 = [m for m, _, _ in rest], [s for _, s, _ in rest], [e for _, _, e in rest]
+    for n in ("l_tibia", "r_tibia", "l_foot", "r_foot"):
+        assert abs(E0[I(n)][1] - S0[I(n)][1]) < 0.05, n               # level
+    frames = []
+    for t in range(THRUST_FRAMES):
+        h = THRUST_RISE * (1 - math.cos(2 * math.pi * t / THRUST_FRAMES)) / 2
+        rt = [root[0], root[1] - h, root[2]]
+        Wt = list(W0)
+        for n in ("chest", "l_chest", "r_chest", "l_femur", "r_femur"):   # aimed back at where they ended
+            i = I(n)
+            Wt[i] = fa._mul(align(bdir(W0[i]), sub(E0[i], [S0[i][0], S0[i][1] - h, S0[i][2]])), W0[i])
+        local = fa.local_rotations(sk, rr, Wt)
+        if t == THRUST_FRAMES // 2:
+            top = fa.forward(sk, rr, rt, local)
+            assert all(math.dist(top[I(n)][2], E0[I(n)]) < 0.4 for n in ("l_hand", "r_hand", "head")), "shoulders moved"
+        frames.append((rr, [rt[0], -rt[1], rt[2]], local))
+    base.frames = frames
+    ctx.char_file(CLOUD_THRUST.split(".")[0].lower() + ".a", base.build())
+
+
 def _on_back(ctx):
     """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
     the knees fall open POSE_ROCK and close again (each leg turns about its
@@ -1118,6 +1197,7 @@ def _ride(ctx):
 def apply(ctx):
     _on_back(ctx)
     _fours(ctx)
+    _cloud_thrust(ctx)
     _ride(ctx)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)
