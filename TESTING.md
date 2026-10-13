@@ -319,16 +319,20 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Honey Bee positions** (new; untested in-game): every affection-20
   scene now has the girl walk in behind Cloud in part one (none start on the
   bed any more; the affection-10 Bambi scene too), and part two starts in one
-  of six positions: edge (Tifa), mission (Marisol, Bambi), cowgirl (Velvet, Ruby,
+  of seven positions: edge (Tifa), mission (Marisol, Bambi), cowgirl (Velvet, Ruby,
   Peggy), ontop = cowgirl facing the other way (Aerith, Celeste, Holly, Lulu,
-  Gloria), dog (Scarlet, Mags, Elena, Rhonda, Dot), head (Sakura, Aurora,
+  Gloria), dog (Scarlet, Mags, Rhonda, Dot), head reverse (Elena), head (Sakura, Aurora,
   Candy, Raven). Starting points, to tweak: head (new version) = both on the
   floor left of the bed, bare-legged Cloud standing facing left (knees bent,
   leaning forward, thrusting, arms swinging in and out), she kneels a step to
   his left facing him, rocking, her head kept upright (both 0.5 s); edge (Tifa only, new) = she stands
   just left of the bed's left end facing right, bent over 90 at the hips with her
   arms stretched out over the bed, rocking; Cloud stands behind her facing the
-  bed in the same thrusting pose; cowgirl/ontop = she
+  bed in the same thrusting pose; head reverse (Elena only, new) = she lies on
+  her back along the bed, head at its left end tipped back over the edge, arms
+  up past her head, bouncing with her knees opening and closing; Cloud as in
+  edge. Head / head reverse girls now only manage muffled "Mmf!" lines in part
+  two; cowgirl/ontop = she
   is 14 higher than in Velvet's old scene; mission = Tifa's with Cloud's new
   zcta animation; dog = she starts on all fours, Cloud starts knelt (HBGC),
   10 left / 15 nearer the camera than the old 'beside' spot. Report what's

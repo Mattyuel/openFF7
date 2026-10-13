@@ -150,16 +150,19 @@ BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "sit": ("bedsit", "bedsitc"),    
                "cowgirl": ("rideon", "bedbackc"),     # Velvet's: Cloud on his back, she kneels astride
                "ontop": ("rideonr", "bedback"),       # as cowgirl, she faces the other way
                "dog": ("fourson", "bedknee"),         # Scarlet's: she's on all fours, Cloud knelt behind
-               "head": ("kneelfloor", "standfloor"),
-               "edge": ("bendfloor", "standedge")}    # user: she stands bent over the bed's left end facing
-                                                      # right, Cloud standing behind her facing the bed  # user's second version: both on the floor left of the
+               "head": ("kneelfloor", "standfloor"),  # user's second version: both on the floor left of the
                                                       # bed, Cloud standing facing left, she kneels facing him
+               "edge": ("bendfloor", "standedge"),    # user: she stands bent over the bed's left end facing
+                                                      # right, Cloud standing behind her facing the bed
+               "headrev": ("lierev", "standedge")}    # "head reverse" (user): she lies on her back along the
+                                                      # bed, head at its left end; Cloud as in edge
 # Beats allowed after each layout's fade (girl, Cloud); beside/sit: any sit / bed pose.
 LAYOUT_BEATS = {"mission": (set(), {"thrust"}), "cowgirl": ({"ride"}, {"buck"}),
                 "ontop": ({"ride"}, {"buck"}), "dog": ({"fours"}, {"pound"}),
-                "head": (set(), {"stand"}), "edge": (set(), {"stand"})}
+                "head": (set(), {"stand"}), "edge": (set(), {"stand"}),
+                "headrev": (set(), {"stand"})}
 LAYOUT_ANIM = {"beside": "grea", "sit": "eiab", "mission": "thrust", "cowgirl": "buck", "ontop": "buck",
-               "dog": "pound", "head": "stand", "edge": "stand"}       # Cloud's pose each layout starts in
+               "dog": "pound", "head": "stand", "edge": "stand", "headrev": "stand"}       # Cloud's pose each layout starts in
 RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head higher (user), then slightly more (+4)
 # head (second version, user): on the floor left of the bed (z 25), Cloud facing screen-left,
 # the girl HEAD_GAP further left facing him.
@@ -167,6 +170,9 @@ HEAD_STAND, HEAD_GAP = (-20, -180), 30
 # edge: her feet just left of the bed's left end (screen x ~10), torso and arms out over it;
 # Cloud EDGE_GAP further left, facing the bed (screen-right) like her
 EDGE_GIRL, EDGE_GAP = (-12, -180), 26
+# head reverse: her XYZI point (by her feet; the head top is ~94 along her, 27 model units
+# x ~3.4) so that her neck is at the bed's left edge (x ~24 at y -180), the head off it
+HEADREV_GIRL = (94, -180)
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # (first version) Cloud right and down a bit from CLOUD_SIT
 HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 27, 46      # she: at his x, this much nearer the camera (-y), 2/3 of
                                               # a body (~90) lower than the bed sitter (then a head higher: 46), turned round
@@ -216,7 +222,10 @@ KNEEL_ANIM, KNEEL_TILT, KNEEL_ROCK, KNEEL_FRAMES = "DZBK.tor", 10, 10, 15
 # edge (user): standing, legs slightly bent, bent 90 forward at the hips, arms straight
 # out past her head level with the bed, rocking forward and back (0.5 s)
 EDGE_ANIM, EDGE_KNEE, EDGE_BEND, EDGE_ARMS, EDGE_ROCK, EDGE_FRAMES = "DZBG.tor", 15, 90, 90, 5, 15
-SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM, RIDE_ANIM, KNEEL_ANIM, EDGE_ANIM]   # our own animations on the scene girl
+# head reverse (user): on her back as DZBT, head tipped back (further back as she comes
+# down), arms up past her head at 160 from her sides
+HEADREV_ANIM, HEADREV_ARMS, HEADREV_HEAD, HEADREV_ROCK = "DZBH.tor", 160, 40, 12
+SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM, RIDE_ANIM, KNEEL_ANIM, EDGE_ANIM, HEADREV_ANIM]   # our own animations on the scene girl
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
 # FTIB is only used on a Shinra soldier skeleton in the original game (same bone count).
@@ -679,6 +688,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     ks = spot(HEAD_STAND)
     kg = spot((HEAD_STAND[0] - HEAD_GAP, HEAD_STAND[1]))
     eg = spot(EDGE_GIRL)
+    hr = spot(HEADREV_GIRL)
+    assert abs(hr[2] - 76) < 2, hr                                      # on the bed
     ec = spot((EDGE_GIRL[0] - EDGE_GAP, EDGE_GIRL[1]))
     assert all(abs(p[2] - 25) < 2 for p in (ks, kg, eg, ec)), (ks, kg, eg, ec)   # on the floor, not the bed
     hold = lambda name: [_anim(ca[name], hold=True)]
@@ -695,6 +706,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         "fourson": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1)] + _loop(da[FOURS_ANIM]),
         "kneelfloor": [_xyzi(*kg), Op(bytes([0xB3, 0, facing_screen(cam, *kg[:3], (1, 0))])), _visi(1)]
                       + _loop(da[KNEEL_ANIM]),
+        "lierev": [_xyzi(*hr), Op(bytes([0xB3, 0, facing_screen(cam, *hr[:3], (1, 0))])), _visi(1)]
+                  + _loop(da[HEADREV_ANIM]),                         # feet to the right: head to the left
         "bendfloor": [_xyzi(*eg), Op(bytes([0xB3, 0, facing_screen(cam, *eg[:3], (1, 0))])), _visi(1)]
                      + _loop(da[EDGE_ANIM]),
         "ride": _loop(da[RIDE_ANIM]),                                # (already rocking from "rideon")
@@ -1582,10 +1595,13 @@ def _cloud_thrust(ctx):
     ctx.char_file(CLOUD_THRUST.split(".")[0].lower() + ".a", base.build())
 
 
-def _on_back(ctx):
+def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK):
     """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
     the knees fall open POSE_ROCK and close again (each leg turns about its
-    hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames."""
+    hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames.
+    arms: degrees out from her sides along the bed (160: up past her head);
+    head: degrees chin to chest (< 0: tipped back), rocking head_rock (> 0: further
+    forward as she comes down)."""
     fa, sk, idx, rr, world = _standing(ctx)
     names = [b[0] for b in sk]
     x, z = (1, 0, 0), (0, 0, 1)
@@ -1636,8 +1652,10 @@ def _on_back(ctx):
     for side in "lr":
         chain = [idx(side + n) for n in ("_uparm", "_foarm", "_hand")]
         mid_x = e0["hip"][0]
-        w0 = pick(lambda s: [fa._mul(fa.axis_angle(up, s * LIE_ARMS), m) if i in chain else m for i, m in enumerate(w0)],
-                  lambda e, side=side: abs(e[side + "_hand"][0] - mid_x) > abs(e0[side + "_hand"][0] - mid_x) + 0.5)
+        turned = lambda s: [fa._mul(fa.axis_angle(up, s), m) if i in chain else m for i, m in enumerate(w0)]
+        s = next(s for s in (1, -1)                  # the sense that swings the hand away from the middle
+                 if abs(ends(turned(s * 20))[side + "_hand"][0] - mid_x) > abs(e0[side + "_hand"][0] - mid_x) + 0.5)
+        w0 = turned(s * arms)
     e0 = ends(w0)
     # the head: which sense of the side axis lifts the top of her head (chin to chest)
     head_up = pick(lambda s: [fa._mul(fa.axis_angle(x, s * 20), m) if i == idx("head") else m for i, m in enumerate(w0)],
@@ -1665,10 +1683,10 @@ def _on_back(ctx):
             target = [e_[0], e_[1] - bounce, e_[2]]
             w[i] = fa._mul(align(bdir(w[i]), [target[k] - start[k] for k in range(3)]), w[i])
         v = math.sin(2 * math.pi * t / LIE_FRAMES)                           # > 0 going up, < 0 coming down
-        tilt = LIE_HEAD - LIE_HEAD_ROCK * v                                   # forward coming down, back going up
+        tilt = head - head_rock * v                                           # (mission) forward coming down, back going up
         w[idx("head")] = fa._mul(fa.axis_angle(x, sense * tilt), w[idx("head")])
         frames.append((lift, fa.local_rotations(sk, rr, w)))
-    _save_frames(ctx, fa, LIE_ANIM_SCENE, frames)
+    _save_frames(ctx, fa, name, frames)
 
 
 def _fours(ctx):
@@ -1867,6 +1885,7 @@ def _bend(ctx):
 
 def apply(ctx):
     _on_back(ctx)
+    _on_back(ctx, HEADREV_ANIM, HEADREV_ARMS, -HEADREV_HEAD, -HEADREV_ROCK)
     _fours(ctx)
     _cloud_thrust(ctx)
     _cloud_pound(ctx)

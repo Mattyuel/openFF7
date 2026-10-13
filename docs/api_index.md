@@ -655,7 +655,7 @@ Honey Bee Girl recruitment.
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
 - `_cloud_thrust(ctx)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
-- `_on_back(ctx)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
+- `_on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
 - `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
 - `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
 - `_bend(ctx)` dzbg.a (EDGE_ANIM): standing, knees bent EDGE_KNEE, bent EDGE_BEND forward at
