@@ -607,6 +607,8 @@ Honey Bee Girl recruitment.
 - `_free_slots(sec, ent, start)` 
 - `_guard(sec, ent, first, ops_after)` In VISIT mode, `first` (an op of entity `ent`'s script 0) is skipped:
 - `_room(ctx, back)` 
+- `_pick(var, choices)` Ops running one of `choices` (op lists), picked by RANDOM into var.
+- `_idle_loop(da, kind, var)` A lounge girl's main: forever pause a random while, then a random
 - `_lounge(ctx)` 
 - `apply(ctx)` 
 

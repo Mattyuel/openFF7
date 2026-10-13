@@ -290,8 +290,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   Bambi, Gloria, Dot, Peggy, Candy; lower-left: Rhonda, Lulu, Raven, Elena,
   Marisol; upper-right: Ruby, Holly, Sakura, Mags, Celeste; lower-right:
   Aurora, Tifa, Aerith, Scarlet, Velvet. Only hired girls appear (as Honey
-  Bees): one lying on the bed, one sitting on it, one sitting, a dancer, one
-  standing; talk to each (the bed girls from beside the bed). They never block
+  Bees): one lying on the bed, one sitting on it, one sitting, two standing;
+  the sitting and standing ones play random animations of their kind with
+  pauses in between (sitting ones stay seated); talk to each (the bed girls from beside the bed). They never block
   you. The menu works in there; the door line takes you back out by the door
   you used. If the mirrored room crashes or looks broken, say so: it is the
   first new field the mod adds.

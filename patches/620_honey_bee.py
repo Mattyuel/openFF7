@@ -86,13 +86,21 @@ GIRLS_PER_ROOM = 5
 # ("hold", anim) a held pose, ("loop", anim) repeated
 # The bed is a separate piece of walkmesh (z 76; the floor is z 25): its girls
 # sit near the floor's edge (<= 31 units) and get a bigger talk radius.
+# (spot, kind): "lie" holds the lying pose; "sit" / "stand" cycle random
+# sitting / standing animations with random pauses between them.
 LOUNGE_SPOTS = [
-    ((80, -250), ("hold", "DZBA.tor")),      # lying on the bed
-    ((70, -140), ("hold", "DXHE.tor")),      # sitting on the bed
-    ((-60, -150), ("hold", "DXIC.tor")),     # sitting
-    ((-120, 180), ("loop", "DXJC.tor")),     # dancing
-    ((60, 230), None),                       # standing
+    ((80, -250), "lie"),                     # lying on the bed
+    ((70, -140), "sit"),                     # sitting on the bed
+    ((-60, -150), "sit"),                    # sitting
+    ((-120, 180), "stand"),                  # the dancer
+    ((60, 230), "stand"),
 ]
+LIE_ANIM = "DZBA.tor"
+SIT_ANIMS = ["DXHE.tor", "DXIB.tor", "DXIC.tor"]                       # held (they stay seated)
+STAND_ANIMS = ["DXJC.tor", "BAJE.tor", "BAJD.tor", "BAJF.tor", "BBAA.tor",   # played once, back to idle
+               "DXJD.tor", "DIEF.chi", "BYAD.aki", "DXIF.tor"]
+PAUSES = [45, 75, 105, 150]                  # frames between animations (random)
+LOUNGE_RAND = (5, 200)                       # temp: girl slot k uses (5, 200 + k) (never shared: 8-op rule)
 TALK_RADIUS, BED_TALK_RADIUS = 0x46, 0x60
 CONFERENCE_DOOR = (2, "blin66_2")           # blin66_1 gateway slot, its original destination
 CONFERENCE_COPIES = ["scarlet", "hyde", "leave"]   # visible (unplaced) at the pinned moment 998
@@ -580,6 +588,26 @@ def _room(ctx, back):
     assert n <= 255, n
 
 
+def _pick(var, choices):
+    """Ops running one of `choices` (op lists), picked by RANDOM into var."""
+    ops, end = [Op(bytes([0x99, var[0], var[1]]))], asm.nop()            # RANDOM: 0-255
+    for i, act in enumerate(choices):
+        nxt = asm.nop()
+        if i + 1 < len(choices):
+            ops.append(asm.if_byte(var, "<", (i + 1) * 256 // len(choices), nxt))
+        ops += act + [asm.goto(end), nxt]
+    return ops + [end]
+
+
+def _idle_loop(da, kind, var):
+    """A lounge girl's main: forever pause a random while, then a random
+    animation of her kind (sitting ones held so she stays seated)."""
+    top = asm.nop()
+    anims = ([_anim(da[a], hold=True)] for a in SIT_ANIMS) if kind == "sit" else ([_anim(da[a])] for a in STAND_ANIMS)
+    return ([top] + _pick(var, [[_w(n)] for n in PAUSES]) + _pick(var, list(anims))
+            + [asm.goto_back(top)])
+
+
 def _lounge(ctx):
     from ff7 import background as bgmod, camera as cammod, walkmesh as wmmod
     from ff7.camera import Camera, facing_screen
@@ -601,7 +629,7 @@ def _lounge(ctx):
         talk, tend = [Op(b"\x33\x01"), Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00")], asm.nop()
         main = []
         if k < GIRLS_PER_ROOM:
-            (x0, y0), pose = LOUNGE_SPOTS[k]
+            (x0, y0), kind = LOUNGE_SPOTS[k]
             for room in (1, 2, 3, 4):
                 g = GIRLS_PER_ROOM * (room - 1) + k
                 m, c, x = (mesh, cam, x0) if room <= 2 else (fmesh, fcam, -x0)   # rooms 3/4: FLIPPED
@@ -611,17 +639,16 @@ def _lounge(ctx):
                 show = [_xyzi(x, y0, z, t), Op(bytes([0xB3, 0, facing_screen(c, x, y0, z, (0, 1))])), _visi(1),
                         Op(b"\x7E\x00"),                                         # TLKON 00, TALKR
                         Op(bytes([0xC5, 0x00, BED_TALK_RADIUS if z > 50 else TALK_RADIUS]))]
-                if pose and pose[0] == "hold":
-                    show.append(_anim(da[pose[1]], hold=True))
+                if kind != "stand":
+                    show.append(_anim(da[LIE_ANIM if kind == "lie" else SIT_ANIMS[0]], hold=True))
                 nxt = asm.nop()
                 init += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, nxt),
                          asm.if_byte(_hired(g)[0], "bit_on", _hired(g)[1], nxt)] + show + [asm.goto(done), nxt]
                 tnxt = asm.nop()
                 talk += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, tnxt)]
                 talk += _say(sec, GIRLS[g]["name"] + "\n" + LOUNGE[GIRLS[g]["name"]]) + [asm.goto(tend), tnxt]
-            if pose and pose[0] == "loop":
-                top = asm.nop()
-                main = [top, _anim(da[pose[1]]), asm.goto_back(top)]
+            if kind != "lie":
+                main = _idle_loop(da, kind, (LOUNGE_RAND[0], LOUNGE_RAND[1] + k))
         init += [done, asm.ret()]
         talk += [tend, Op(b"\x33\x00"), asm.ret()]
         sec.remove(old[0])                                           # its old CHAR: no second CHAR
