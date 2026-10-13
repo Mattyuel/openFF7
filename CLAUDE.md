@@ -16,6 +16,7 @@ something new, hit a trap, or a feature's status changes.
 | Every function/class signature, one line each | `docs/api_index.md` (generated) |
 | What to test in-game, install steps | `TESTING.md` |
 | Midgar / rest-of-world pinning plans | `docs/midgar_plan.md`, `docs/world_plan.md` |
+| Dates with the girls (gondola / space capsule): plan, decisions, FMV facts | `docs/dates_plan.md` |
 | Fields, locations, exits, battles, world map | `docs/inventory/` |
 | .exe findings | `docs/exe_notes.md`, `docs/research_menu.md`, `docs/research_battle.md` |
 | One-off story scenes outside Midgar (applied / open) | `docs/research_story_scenes.md` |
@@ -286,6 +287,11 @@ delete `build/cache` (~350 MB) any time.
   scripts use 197-199 and 208-209. 188-196/200-207/210-212 = HB_AFFECTION;
   213 = debug flags (debug builds only); 214-216 = HB_KID (622); 217-223 still free.
 - **Background tile depth**: tile +24 u16 id = draw depth (smaller = nearer; layer 1 4095), +38 u32 = the PC's finer depth (larger = further). (Tried moving onna_52's bed tiles back so girls on the bed draw over it: then the bed covered nobody, including people behind it; reverted at the user's request.) Tile id = view z / 4 (GTE SZ/4: onna_52's bed parts 140-175 where the bed is 560-700 deep); +38 = 1e7 - K/(id + d), K ~1.19e8, d ~-4.7 (fitted per room): a z-buffer-style value, so the PC most likely depth-tests per pixel. 620 `_bed_depth` gives each bed tile the depth of what it shows (ray-cast on the walkmesh bed box + headboard plane; every tile showing the bed box at the mattress's far-edge depth + 8, headboard tiles their own depth + 16). User: with true mattress depths a tile row still covered the mission girl's lower half, so a character seems to be sorted by one depth (its position), not per pixel.
+- **FMV with field models (research, not yet used):** gondola date = bwhlin (gold7 PMVIE 0x30,
+  dialogue, gold7_2 0x31; normal ride gold2-6 via bwhlin2), escape pod = rcktin7. Movies with a
+  .cam in data/cd/moviecam.lgp drive the field camera while MOVIE runs, so models placed with XYZI
+  are drawn over the movie; helpers time things with MVIEF 06 xx frame polls. Movie name table
+  exe 0x7BAE80 (105 pointers, disc 1). Free maplist names for new fields: see docs/dates_plan.md.
 - New field models can be added to char.lgp (`ctx.char_file(name, data)`;
   .hrc/.rsd text, .p, .tex). magic.lgp has directory entries `ff7.lgp`
   can't parse: `_marker_models.magic_file` scans its TOC by hand.
