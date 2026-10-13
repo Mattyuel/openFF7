@@ -337,12 +337,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
   cameraman (the Junon reporter with the camera) and Ruby (red hair, black jacket). Talk to
   him -> "Lights, camera, action!" -> the Sector 7 room with three beds. Press OK
-  (confirm button) repeatedly: the gauge at the bottom (red | green | red) and the cursor
+  (confirm button) repeatedly: the gauge at the top (red | green | red; was off the bottom of the screen) and the cursor
   above it; pressing pushes it right, stopping lets it drift left, it has momentum and runs
   away from the middle. Red at either end = "CUT!" and back to Wall Market, no pay. Six
   positions, one minute each, moving between the beds (mission left bed, cowgirl middle bed,
   dog right bed, edge and head reverse at the left bed's foot, head on the floor); the thrust
-  speed follows how fast you press (4 steps). Ruby says a line every ~2.5 s that closes by
+  speed follows how fast you press (4 steps). Ruby says a line (window at the bottom) every ~2.5 s that closes by
   itself (~2 s; muffled during head / head reverse). Costa del Sol music. After six minutes:
   "That's a wrap", back in Wall Market, he says to come back in half an hour; after 30 play
   minutes his talk pays presses x 10 gil. Check: does OK register now (IFKEYON 0x220, as the game's own OK checks; 0x20 alone didn't)? the gauge

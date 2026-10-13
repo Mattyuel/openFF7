@@ -228,6 +228,9 @@ def _speeds(ctx):
 
 GAUGE_W, GAUGE_H = 64, 8                    # texture pixels (in a 64 x 64 texture)
 GAUGE_PX, CURSOR_UP = 180, 16               # on-screen width; cursor above the bar (screen px)
+GAUGE_Y = -80                               # the bar's screen y from the view centre (user: at +88 it was below
+                                            # the screen: the view sits higher than the centred guess)
+LINE_Y = 168                                # Ruby's lines: window at the bottom (the gauge is at the top)
 SPRITES = {"QGAA": ("QGAB", "QGAC", "QGAD"), "QCUA": ("QCUB", "QCUC", "QCUD")}
 PALETTE = [(0, 0, 0, 0), (255, 255, 255, 255), (40, 40, 230, 255), (60, 200, 60, 255),
            (40, 230, 255, 255), (30, 30, 30, 255)]       # B, G, R, A: clear, white, red, green, yellow, dark
@@ -337,7 +340,7 @@ def _shoot(ctx, back):
         places.append(dict(girl=g, gdir=pos["girl"][1][3], cloud=c, cdir=pos["cloud"][1][3], cam=cm, camdir=cdir,
                            focus=focus))
     # gauge per position: the camera centres on the (hidden) player at `focus`, clamped
-    # to the scroll range; the bar sits near the bottom of the view, nearer the camera
+    # to the scroll range; the bar sits near the top of the view, nearer the camera
     # than any floor point (drawn over everything), the cursor above it
     left, top, right, bottom = screen_range(f.section("triggers"))
     near = min(_view_depth(cam, v) for t in mesh.tris for v in t) * 0.8
@@ -350,7 +353,7 @@ def _shoot(ctx, back):
         sx, sy = cam.project(*pl["focus"][:3])
         sx = min(max(sx, left + 160), right - 160)
         sy = min(max(sy, top + 120), bottom - 120)
-        gy = sy + 88
+        gy = sy + GAUGE_Y
         g = _unproject(cam, sx, gy, near)
         pl["gauge"] = (round(g[0]), round(g[1]), round(g[2]), _nearest_tri(mesh, g[0], g[1]))
         pl["cursor"] = []
@@ -447,7 +450,7 @@ def _shoot(ctx, back):
         out = []
         for k_, text in enumerate(LINES[POSITIONS[p]["name"]]):
             t = "Ruby\n“%s”" % text
-            out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, 8), hb._req(ents["hush"], 2, wait=False),
+            out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y), hb._req(ents["hush"], 2, wait=False),
                         asm.message(1, sec.add_string(_encode(t)))])
         return _chain(K, out)
     voice += by_p(line) + [vdone, asm.goto_back(vl), asm.ret()]
