@@ -606,7 +606,7 @@ Honey Bee Girl recruitment.
 
 - `_w(n)` 
 - `_anim(i, hold=False)` 
-- `_loop(i)` Make animation i her default (DFANM: loops while she stands idle) and play it
+- `_loop(i, wait=True)` Make animation i her default (DFANM: loops while she stands idle) and play it
 - `_canm(i, a, b)` 
 - `_move(x, y)` 
 - `_msped(v)` 

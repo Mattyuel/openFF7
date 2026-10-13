@@ -254,6 +254,11 @@ delete `build/cache` (~350 MB) any time.
 - Numbers in dialogue: `MPRA2 [src bank][window][slot][u16 var]` after the
   WINDOW op, text `{VAR}` (FE E1, no operand) shows it. GOLDU/GOLDD
   `[bank<<4][u32]`: bank 6 + offset = add/remove a temp word var of gil.
+- **No waiting animation op in an init**: ANIME1 (0xA3) and ANIM!1 (0xAF) yield
+  until the animation ends (handlers 0x61484A / 0x6149A5); ANIME1 of a 60-frame
+  loop in girl2's init left Tifa's/Velvet's devoted room on a black screen
+  (user). ANIME2 (0xAE, same handler) doesn't wait: 620's `_loop(i, wait=False)`.
+  (ANIM!1 of a lounge sitter's pose in an init does work.)
 - Text: `{NEW}` (0xE8) is a new page *and* line; `encode` swallows a "\n"
   right after it (decode writes "{NEW}\n").
 - Model loader animation lists: `ModelLoader.anims` / `with_anims` (append

@@ -208,10 +208,14 @@ def _anim(i, hold=False):
     return Op(bytes([0xAF if hold else 0xA3, i, 1]))         # ANIM!1 / ANIME1
 
 
-def _loop(i):
+def _loop(i, wait=True):
     """Make animation i her default (DFANM: loops while she stands idle) and play it
-    once (ANIME1, which returns to the default), so the loop starts whatever she held."""
-    return [Op(bytes([0xA2, i, 1])), Op(bytes([0xA3, i, 1]))]
+    once (ANIME1, which returns to the default), so the loop starts whatever she held.
+    wait=False uses ANIME2 (0xAE: same handler 0x61484A, but it doesn't wait for the
+    animation's end): needed in an init. Tifa's and Velvet's devoted scenes start with
+    her on the bed, set in girl2's init; ANIME1 there (waits a 60-frame cycle) hung the
+    room on its black screen."""
+    return [Op(bytes([0xA2, i, 1])), Op(bytes([0xA3 if wait else 0xAE, i, 1]))]
 
 
 def _canm(i, a, b):
@@ -647,7 +651,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         nxt = asm.nop()
         sec.insert_before(ret, [asm.if_byte(HB_VISIT, "==", i + 1, nxt), _xyzi(*spot(BED)),
                                 Op(bytes([0xB3, 0, BED_DIR])), _visi(1),
-                                *_loop(da[LIE_ANIM_SCENE]), nxt], retarget=False)
+                                *_loop(da[LIE_ANIM_SCENE], wait=False), nxt], retarget=False)
 
     # the director
     lobby = ctx.maplist.index(LOBBY)
