@@ -618,6 +618,7 @@ Honey Bee Girl recruitment.
 - `_show_aff(say_ops, var)` _say ops + the affection in `var` as {VAR} (MPRA2 right after WINDOW).
 - `_gift_routine(sec)` The lounge gift menu (entity hbgift script 1, REQEW'd by a girl's talk
 - `_lounge(ctx)` 
+- `_twisted_lie(ctx)` dzbt.a: DZBA (1 frame, 21 bones) with the hip bone's z angle + LIE_TWIST.
 - `apply(ctx)` 
 
 ## `patches/625_gift_shops.py`

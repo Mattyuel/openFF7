@@ -145,8 +145,15 @@ MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (no
 # (the raised walkmesh piece, z 76) and fades back in. Layout -> (girl beat,
 # Cloud beat). Afterwards only in-place beats: girl sit1-3, Cloud CLOUD_BED.
 BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "sit": ("bedsit", "bedsitc")}
-CLOUD_BESIDE = (91, -135)                    # parallel to the lying girl (BED)
+CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
+CLOUD_ONTOP = (136, -179)                    # on top of her, half a body nearer the door (user)
 ONTOP_RAISE = 4                              # Cloud on top of her: drawn this much higher (12 was too high)
+# The scene girl's lying pose, rolled about her own length (user: head to the right,
+# turned 60 degrees to her right so she faces more upward than at the camera). DIR
+# only turns about the vertical, so this is a new animation: DZBA with the hip
+# bone's z angle (its own long axis: the spine is the hip's local -z; Euler order
+# Y X Z, z innermost) + LIE_TWIST, written to char.lgp as dzbt.a.
+LIE_TWIST, LIE_ANIM_SCENE = 60, "DZBT.tor"
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
 # FTIB is only used on a Shinra soldier skeleton in the original game (same bone count).
@@ -458,9 +465,9 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
 
     loader = ModelLoader(f.section("models"))
     assert ModelLoader.anims(loader.models[1]) == DANCER_ANIMS, ModelLoader.anims(loader.models[1])
-    loader.models[1] = ModelLoader.with_anims(loader.models[1], DANCER_EXTRA)
+    loader.models[1] = ModelLoader.with_anims(loader.models[1], DANCER_EXTRA + [LIE_ANIM_SCENE])
     f.set_section("models", loader.build())
-    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA)}
+    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA + [LIE_ANIM_SCENE])}
     cloud_anims = ModelLoader.anims(loader.models[0])
     assert [cloud_anims[i] for i in (3, 9, 15, 16, 20)] == ["AQAA.tor", "AVJE.aki", "AQAB.tor", "BICA.yos",
                                                              "EADD.tor"], cloud_anims
@@ -545,10 +552,10 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     cam = Camera(f.sections[1])
     gs, cs = spot(GIRL_SIT), spot(CLOUD_SIT)
     gdir, cdir = facing_screen(cam, *gs[:3], (0, 1)), facing_screen(cam, *cs[:3], (0, 1))
-    bx_, by_, bz_, bt_ = spot(BED)
+    bx_, by_, bz_, bt_ = spot(CLOUD_ONTOP)
     hold = lambda name: [_anim(ca[name], hold=True)]
     girl_beats.update({
-        "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1), _anim(da["DZBA.tor"], hold=True)],
+        "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1), _anim(da[LIE_ANIM_SCENE], hold=True)],
         "bedsit": [_xyzi(gs[0], gs[1], gs[2] - SIT_DROP, gs[3]), Op(bytes([0xB3, 0, gdir])), _visi(1),
                    _anim(da["DXHE.tor"], hold=True)],
         "sit1": [_anim(da["DXHE.tor"], hold=True)], "sit2": [_anim(da["DXIB.tor"], hold=True)],
@@ -608,7 +615,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         nxt = asm.nop()
         sec.insert_before(ret, [asm.if_byte(HB_VISIT, "==", i + 1, nxt), _xyzi(*spot(BED)),
                                 Op(bytes([0xB3, 0, BED_DIR])), _visi(1),
-                                _anim(da["DZBA.tor"], hold=True), nxt], retarget=False)
+                                _anim(da[LIE_ANIM_SCENE], hold=True), nxt], retarget=False)
 
     # the director
     lobby = ctx.maplist.index(LOBBY)
@@ -750,7 +757,7 @@ def _lounge(ctx):
     fcam = Camera(cammod.flip_x(f.sections[1]))
     loader = ModelLoader(f.section("models"))
     sec = Script.parse(f.sections[0])
-    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA)}
+    da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA + [LIE_ANIM_SCENE])}
     assert len(GIRLS) == 4 * GIRLS_PER_ROOM == 20 and len(LOUNGE_SPOTS) == GIRLS_PER_ROOM
     gift_ent = sec.add_entity("hbgift", {0: [asm.ret(), asm.ret()], 1: _gift_routine(sec)})   # init, main: nothing
     for k, name in enumerate(LOUNGE_EXTRAS):
@@ -864,7 +871,19 @@ def _lounge(ctx):
     lob.sections[0] = sec.build()
 
 
+def _twisted_lie(ctx):
+    """dzbt.a: DZBA (1 frame, 21 bones) with the hip bone's z angle + LIE_TWIST."""
+    data = bytearray(ctx.char_file("dzba.a"))
+    version, frames, bones = struct.unpack_from("<III", data, 0)
+    assert (version, frames, bones, bytes(data[12:15])) == (1, 1, 21, b"\x01\x00\x02"), data[:16].hex()
+    hip_z = 36 + 24 + 8                      # header, root rotation + translation, bone 0 (x, y, z)
+    z, = struct.unpack_from("<f", data, hip_z)
+    struct.pack_into("<f", data, hip_z, (z + LIE_TWIST) % 360)
+    ctx.char_file("dzbt.a", bytes(data))
+
+
 def apply(ctx):
+    _twisted_lie(ctx)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
     tri = mesh.find(*BACK_AT)
     assert tri is not None
