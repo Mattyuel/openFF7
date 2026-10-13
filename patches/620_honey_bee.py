@@ -161,7 +161,7 @@ RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head 
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # head: Cloud right and down a bit from CLOUD_SIT
 HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 27, 46      # she: at his x, this much nearer the camera (-y), 2/3 of
                                               # a body (~90) lower than the bed sitter (then a head higher: 46), turned round
-MISSION_CLOUD, MISSION_RAISE = (126, -159), -4  # mission: Cloud 10 left / 20 further back of CLOUD_ONTOP,
+MISSION_CLOUD, MISSION_RAISE = (126, -149), -4  # mission: Cloud 10 left / 30 further back of CLOUD_ONTOP,
                                                # 8 lower than ONTOP_RAISE (user, two rounds)
 DOG_CLOUD = (113, -142)                       # dog: Cloud a little nearer the camera and left of CLOUD_BESIDE, then ~18 more left, then 5 right / 8 back (user)
 CLOUD_BESIDE = (136, -135)                   # beside the lying girl, half a body nearer the door (user)
