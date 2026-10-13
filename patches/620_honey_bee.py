@@ -167,7 +167,10 @@ FOURS_ANIM, FOURS_HEAD_LIFT = "DZBF.tor", 30
 # RIDE_ROCK towards straight and back (shins planted, so the hips rise and settle),
 # eased, over RIDE_FRAMES frames (~2 s). Frame 0 is the rest pose.
 RIDE_ANIM, RIDE_HIP, RIDE_KNEE, RIDE_SPREAD, RIDE_LEAN, RIDE_ARMS = "DZBR.tor", 70, 160, 30, 25, 25
-RIDE_ROCK, RIDE_FRAMES, RIDE_REPEAT = 8, 60, 3     # the scene beat plays it RIDE_REPEAT times
+RIDE_ROCK, RIDE_FRAMES = 8, 60
+# The other built poses move the same way: an eased POSE_ROCK degrees and back over
+# POSE_FRAMES frames (~2 s); the scene beats loop them with DFANM (her default animation).
+POSE_ROCK, POSE_FRAMES = RIDE_ROCK, RIDE_FRAMES
 SCENE_ANIMS = [LIE_ANIM_SCENE, FOURS_ANIM, RIDE_ANIM]   # our own animations on the scene girl
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
@@ -203,6 +206,12 @@ def _w(n):
 
 def _anim(i, hold=False):
     return Op(bytes([0xAF if hold else 0xA3, i, 1]))         # ANIM!1 / ANIME1
+
+
+def _loop(i):
+    """Make animation i her default (DFANM: loops while she stands idle) and play it
+    once (ANIME1, which returns to the default), so the loop starts whatever she held."""
+    return [Op(bytes([0xA2, i, 1])), Op(bytes([0xA3, i, 1]))]
 
 
 def _canm(i, a, b):
@@ -571,14 +580,14 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     bx_, by_, bz_, bt_ = spot(CLOUD_ONTOP)
     hold = lambda name: [_anim(ca[name], hold=True)]
     girl_beats.update({
-        "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1), _anim(da[LIE_ANIM_SCENE], hold=True)],
+        "lie": [_xyzi(*spot(BED)), Op(bytes([0xB3, 0, BED_DIR])), _visi(1)] + _loop(da[LIE_ANIM_SCENE]),
         "bedsit": [_xyzi(gs[0], gs[1], gs[2] - SIT_DROP, gs[3]), Op(bytes([0xB3, 0, gdir])), _visi(1),
                    _anim(da["DXHE.tor"], hold=True)],
-        "fours": [_anim(da[FOURS_ANIM], hold=True)],                 # on all fours, where she lies
+        "fours": _loop(da[FOURS_ANIM]),                              # on all fours, where she lies (rocking)
         # astride Cloud (layout "ride"): on him at CLOUD_ONTOP, facing as he lies; "ride" rocks
         "rideon": [_xyzi(*spot(CLOUD_ONTOP)), Op(bytes([0xB3, 0, CLOUD_BACK_DIR])), _visi(1),
-                   _canm(da[RIDE_ANIM], 0, 0)],
-        "ride": [_anim(da[RIDE_ANIM], hold=True)] * RIDE_REPEAT,
+                   ] + _loop(da[RIDE_ANIM]),
+        "ride": _loop(da[RIDE_ANIM]),                                # (already rocking from "rideon")
         "sit1": [_anim(da["DXHE.tor"], hold=True)], "sit2": [_anim(da["DXIB.tor"], hold=True)],
         "sit3": [_anim(da["DXIC.tor"], hold=True)],
     })
@@ -638,7 +647,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         nxt = asm.nop()
         sec.insert_before(ret, [asm.if_byte(HB_VISIT, "==", i + 1, nxt), _xyzi(*spot(BED)),
                                 Op(bytes([0xB3, 0, BED_DIR])), _visi(1),
-                                _anim(da[LIE_ANIM_SCENE], hold=True), nxt], retarget=False)
+                                *_loop(da[LIE_ANIM_SCENE]), nxt], retarget=False)
 
     # the director
     lobby = ctx.maplist.index(LOBBY)
@@ -920,8 +929,23 @@ def _save_pose(ctx, fa, name, root, local):
     ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
 
 
+def _eased(t):
+    """0 -> 1 -> 0 over POSE_FRAMES frames, slow at both ends (frame 0 = rest)."""
+    import math
+    return (1 - math.cos(2 * math.pi * t / POSE_FRAMES)) / 2
+
+
+def _save_frames(ctx, fa, name, frames):
+    """frames: [(root position as FK uses it (y down), local rotations)]."""
+    out = fa.Anim(ctx.char_file("dzba.a"))                                     # same header (21 bones)
+    out.frames = [([0.0, 0.0, 0.0], [r[0], -r[1], r[2]], local) for r, local in frames]   # root height stored negated
+    ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
+
+
 def _on_back(ctx):
-    """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted."""
+    """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
+    the knees fall open POSE_ROCK and close again (each leg turns about its
+    hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames."""
     fa, sk, idx, rr, world = _standing(ctx)
     names = [b[0] for b in sk]
     x, z = (1, 0, 0), (0, 0, 1)
@@ -929,7 +953,7 @@ def _on_back(ctx):
     hip_pos = fa.Anim(ctx.char_file("dzba.a")).frames[0][1]
     root = [0.0, -hip_pos[1], hip_pos[2]]           # hips where the game's lying pose has them
 
-    def pose(knee, foot):
+    def pose(knee, foot):                            # world matrices
         w = [fa._mul(back, m) for m in world]
         for side, out in (("l", LEG_SPREAD), ("r", -LEG_SPREAD)):
             thigh = fa._mul(fa.axis_angle(z, out), fa.axis_angle(x, -LEG_RAISE))   # up, then out to her side
@@ -939,63 +963,105 @@ def _on_back(ctx):
             for n in ("_tibia", "_foot"):
                 w[idx(side + n)] = fa._mul(fa._mul(thigh, fa._mul(kneebend, fa._t(thigh))), w[idx(side + n)])
             w[idx(side + "_foot")] = fa._mul(fa.axis_angle(x, foot), w[idx(side + "_foot")])
-        return fa.local_rotations(sk, rr, w)
+        return w
 
-    def ends(local):
-        return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, local))}
-    knee = _bisect(lambda k: ends(pose(k, 0))["l_tibia"][1], 0, 120)          # ankle down to the bed (~95)
+    def ends(w):
+        return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, fa.local_rotations(sk, rr, w)))}
+    knee = _bisect(lambda k: ends(pose(k, 0))["l_tibia"][1], 0, 120)          # ankle down to the bed (~100)
     foot = _bisect(lambda f: ends(pose(knee, f))["l_tibia"][1] - ends(pose(knee, f))["l_foot"][1], -90, 90)
-    local = pose(knee, foot)
-    e = ends(local)
+    w0 = pose(knee, foot)
+    e0 = ends(w0)
     for n in ("l_tibia", "r_tibia", "l_foot", "r_foot"):
-        assert abs(e[n][1]) < 0.5, (n, e[n])                                   # feet planted
-    assert e["l_femur"][1] < -2 and e["r_femur"][1] < -2, (e["l_femur"], e["r_femur"])   # knees up
-    _save_pose(ctx, fa, LIE_ANIM_SCENE, root, local)
+        assert abs(e0[n][1]) < 0.5, (n, e0[n])                                 # feet planted
+    assert e0["l_femur"][1] < -2 and e0["r_femur"][1] < -2, (e0["l_femur"], e0["r_femur"])   # knees up
+    frames = []
+    for t in range(POSE_FRAMES):
+        w = list(w0)
+        for side, outward in (("l", -1), ("r", 1)):            # sign checked: the knees move apart
+            h, a = e0[side + "_hip"], e0[side + "_tibia"]                      # hip joint, ankle
+            turn = fa.axis_angle([a[k] - h[k] for k in range(3)], outward * POSE_ROCK * _eased(t))
+            for n in ("_femur", "_tibia", "_foot"):
+                w[idx(side + n)] = fa._mul(turn, w0[idx(side + n)])
+        e = ends(w)
+        for n in ("l_tibia", "r_tibia"):
+            assert all(abs(e[n][k] - e0[n][k]) < 0.05 for k in range(3)), (t, n)   # feet stay put
+        frames.append((root, fa.local_rotations(sk, rr, w)))
+    _save_frames(ctx, fa, LIE_ANIM_SCENE, frames)
 
 
 def _fours(ctx):
-    """dzbf.a: one frame on all fours (FOURS_ANIM), built from BAJB with
-    ff7.fieldanim's forward kinematics on her skeleton (BADD.HRC)."""
-    from ff7 import fieldanim as fa
-    sk = fa.skeleton(ctx.char_file("badd.hrc").decode("latin-1"))
+    """dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
+    forward again over POSE_FRAMES frames; knees, shins and hands stay planted
+    (each arm re-bent by two-bone IK in her front-back plane), body horizontal."""
+    fa, sk, idx, rr, world = _standing(ctx)
     names = [b[0] for b in sk]
-    idx = names.index
-    stand = fa.Anim(ctx.char_file("bajb.a"))
-    rr, rp, rots = stand.frames[0]
-    world = [m for m, _, _ in fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)]
     x = (1, 0, 0)                                    # her left-right axis: pitches turn about it
+    length = {b[0]: b[2] for b in sk}
 
-    def pose(elbows, foot):
+    def pose(rock, arms, foot):                      # world matrices; arms: {side: (upper, fore) angles}
         w = list(world)
         for n in ("hip", "chest", "head", "l_chest", "l_collar", "r_chest", "r_collar"):
             w[idx(n)] = fa._mul(fa.axis_angle(x, 90), world[idx(n)])          # facing down
         w[idx("head")] = fa._mul(fa.axis_angle(x, -FOURS_HEAD_LIFT), w[idx("head")])
-        for side, elbow in zip("lr", elbows):
-            w[idx(side + "_foarm")] = fa._mul(fa.axis_angle(x, -elbow), world[idx(side + "_foarm")])
+        for side in "lr":
+            up, fore = arms[side]
+            w[idx(side + "_uparm")] = fa._mul(fa.axis_angle(x, up), world[idx(side + "_uparm")])
+            w[idx(side + "_foarm")] = fa._mul(fa.axis_angle(x, fore), world[idx(side + "_foarm")])
             w[idx(side + "_hand")] = fa._mul(fa.axis_angle(x, -90), world[idx(side + "_hand")])
+            w[idx(side + "_femur")] = fa._mul(fa.axis_angle(x, rock), world[idx(side + "_femur")])   # - = hips back
             w[idx(side + "_tibia")] = fa._mul(fa.axis_angle(x, 90), world[idx(side + "_tibia")])
             w[idx(side + "_foot")] = fa._mul(fa.axis_angle(x, foot), world[idx(side + "_foot")])
-        return fa.local_rotations(sk, rr, w)
+        return w
 
-    def ends(local, root):
-        return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, local))}
+    def ends(w, root):
+        return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, fa.local_rotations(sk, rr, w)))}
 
-    def solve(f, lo, hi):                            # f(lo) < 0 < f(hi), bisection
-        for _ in range(40):
-            mid = (lo + hi) / 2
-            lo, hi = (mid, hi) if f(mid) < 0 else (lo, mid)
-        return (lo + hi) / 2
-    e = ends(pose((0, 0), 180), [0, 0, 0])
-    root = [0, -(e["l_femur"][1] + e["r_femur"][1]) / 2, 0]                   # knees on the floor
-    elbows = [solve(lambda a, s=s: -ends(pose((a, a), 180), root)[s + "_foarm"][1], 0, 90) for s in "lr"]
-    foot = solve(lambda f: ends(pose(elbows, f), root)["l_tibia"][1] - ends(pose(elbows, f), root)["l_foot"][1], 90, 270)
-    local = pose(elbows, foot)
-    e = ends(local, root)
+    def hang(elbow):
+        return {"l": (0.0, -elbow), "r": (0.0, -elbow)}
+    e = ends(pose(0, hang(0), 180), [0, 0, 0])
+    root0 = [0, -(e["l_femur"][1] + e["r_femur"][1]) / 2, 0]                  # knees on the floor
+    elbows = {s: _bisect(lambda a, s=s: -ends(pose(0, hang(a), 180), root0)[s + "_foarm"][1], 0, 90) for s in "lr"}
+    arms0 = {s: (0.0, -elbows[s]) for s in "lr"}
+    foot = _bisect(lambda f: ends(pose(0, arms0, f), root0)["l_tibia"][1]
+                   - ends(pose(0, arms0, f), root0)["l_foot"][1], 90, 270)
+    e0 = ends(pose(0, arms0, foot), root0)
     for n in ("l_femur", "r_femur", "l_foarm", "r_foarm", "l_tibia", "r_tibia"):
-        assert abs(e[n][1]) < 0.5, (n, e[n])                                  # on the floor
-    out = fa.Anim(ctx.char_file("dzba.a"))                                     # same header (1 frame, 21 bones)
-    out.frames = [([0.0, 0.0, 0.0], [root[0], -root[1], root[2]], local)]
-    ctx.char_file(FOURS_ANIM.split(".")[0].lower() + ".a", out.build())
+        assert abs(e0[n][1]) < 0.5, (n, e0[n])                                 # on the floor
+    knee0, wrist0 = e0["l_femur"], {s: e0[s + "_foarm"] for s in "lr"}
+
+    def reach(rock, root, arms, side):               # (upper, fore) angles putting the wrist back on wrist0:
+        def miss(up, fore):                          # Newton on the real skeleton (y, z of the wrist)
+            e = ends(pose(rock, dict(arms, **{side: (up, fore)}), foot), root)[side + "_foarm"]
+            return e[1] - wrist0[side][1], e[2] - wrist0[side][2]
+        up, fore = arms[side]
+        for _ in range(30):
+            fy, fz = miss(up, fore)
+            if abs(fy) + abs(fz) < 1e-4:
+                break
+            h = 0.01
+            ay, az = [(v - f) / h for v, f in zip(miss(up + h, fore), (fy, fz))]
+            by, bz = [(v - f) / h for v, f in zip(miss(up, fore + h), (fy, fz))]
+            det = ay * bz - by * az
+            du, df = (fy * bz - by * fz) / det, (ay * fz - fy * az) / det
+            cap = max(1.0, abs(du) / 5, abs(df) / 5)                    # at most 5 degrees a step
+            up, fore = up - du / cap, fore - df / cap
+        return up, fore
+    frames, arms = [], dict(arms0)                   # each frame's arm solve starts from the last
+    for t in range(POSE_FRAMES):
+        rock = -POSE_ROCK * _eased(t)                                          # sign checked: hips go back
+        w = pose(rock, arms0, foot)
+        k = ends(w, [0, 0, 0])["l_femur"]
+        root = [knee0[i] - k[i] for i in range(3)]                             # the knees stay planted
+        for side in "lr":
+            arms[side] = reach(rock, root, arms, side)
+        w = pose(rock, arms, foot)
+        e = ends(w, root)
+        for n in ("l_femur", "r_femur", "l_tibia", "r_tibia"):
+            assert abs(e[n][1]) < 0.6, (t, n, e[n])                            # knees and shins down
+        for s in "lr":                                                         # hands planted (y, z exact;
+            assert all(abs(e[s + "_foarm"][i] - wrist0[s][i]) < 0.6 for i in range(3)), (t, s, e[s + "_foarm"])  # x drifts a little)
+        frames.append((root, fa.local_rotations(sk, rr, w)))
+    _save_frames(ctx, fa, FOURS_ANIM, frames)
 
 
 def _ride(ctx):

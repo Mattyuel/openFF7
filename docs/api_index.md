@@ -606,6 +606,7 @@ Honey Bee Girl recruitment.
 
 - `_w(n)` 
 - `_anim(i, hold=False)` 
+- `_loop(i)` Make animation i her default (DFANM: loops while she stands idle) and play it
 - `_canm(i, a, b)` 
 - `_move(x, y)` 
 - `_msped(v)` 
@@ -640,8 +641,10 @@ Honey Bee Girl recruitment.
 - `_standing(ctx)` (fieldanim, skeleton, bone index, BAJB root rotation, its world matrices) for
 - `_bisect(f, lo, hi)` x in [lo, hi] with f(x) = 0 (f changes sign between lo and hi, either way).
 - `_save_pose(ctx, fa, name, root, local)` 
-- `_on_back(ctx)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted.
-- `_fours(ctx)` dzbf.a: one frame on all fours (FOURS_ANIM), built from BAJB with
+- `_eased(t)` 0 -> 1 -> 0 over POSE_FRAMES frames, slow at both ends (frame 0 = rest).
+- `_save_frames(ctx, fa, name, frames)` frames: [(root position as FK uses it (y down), local rotations)].
+- `_on_back(ctx)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
+- `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
 - `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
 - `apply(ctx)` 
 
