@@ -20,6 +20,7 @@ something new, hit a trap, or a feature's status changes.
 | .exe findings | `docs/exe_notes.md`, `docs/research_menu.md`, `docs/research_battle.md` |
 | One-off story scenes outside Midgar (applied / open) | `docs/research_story_scenes.md` |
 | Shared constants (start point, flags, own vars) | `patches/_config.py` |
+| Field animations: names, what they look like, our own poses, limits | `docs/animations.md` (keep it current) |
 | Script dumps of the original game | `work/scripts/<field>.txt` (`ff7tool.py dump --all`) |
 | Script dumps of the last build | `work/scripts_built/` (`ff7tool.py dump --built FIELD...`) |
 
