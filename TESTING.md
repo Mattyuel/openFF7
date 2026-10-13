@@ -313,7 +313,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   "Ask her on a date." -> Gold Saucer gondola / space capsule / water tower. The date depends on
   her affection (0-9 / 10-19 / 20: debug Honey Bee -> All affection 0/10/20); questions (right =
   +1 affection, chime); third date with every answer right -> "Give into your desires." / "Leave
-  it be." (part 2 not made yet: a closing line). Afterwards you're back beside her. Check: the
+  it be." -> part two test scene: fade, then bare Cloud standing and thrusting with Tifa
+  (her own undressed copy) koala-hugging him, bouncing; her lines; closing line. Afterwards you're back beside her. Check: the
   view (gondola: Gold Saucer at night with no cabin; capsule: stars in the round window; tower:
   starry sky), where the two sit and face, sitting poses (tower: legs over the rim), text, music.
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens

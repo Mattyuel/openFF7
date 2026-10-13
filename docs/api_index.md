@@ -712,10 +712,12 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_blank(sec, scripts)` Drop every op; entity e gets scripts[e] ({slot: ops}, each ending in RET),
 - `_hb()` 
 - `_return_spot(ctx, g)` (x, y, tri, dir) beside her in her world field, facing her.
-- `_date(sec, ctx, place, i, g, d)` The date's ops for girl i (in the director's main), ending in the MAPJUMP back.
+- `_date(sec, ctx, place, i, g, d, part2)` The date's ops for girl i (in the director's main), ending in the MAPJUMP back;
 - `_field(ctx, place, group, names)` 
 - `_offer(ctx, i, g, arrive, group)` Her world talk: "Just chat." / "Ask her on a date." first.
 - `_ledge(ctx, name, hrc, stand)` Sitting on a ledge (`name`.a): from the standing pose, each thigh swung forward to
+- `_bare_tifa(ctx)` 
+- `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTE frame): leaning back KOALA_LEAN
 - `apply(ctx)` 
 
 ## `patches/900_phs.py`

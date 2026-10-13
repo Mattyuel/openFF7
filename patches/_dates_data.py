@@ -13,7 +13,9 @@ DATES[name] = {
     close    her last line (first and second dates; the third date when a
              question went wrong)
   lead     third date, every answer right: her line before the choice
-  desire   "Give into your desires.": closing narration (part 2 comes later)
+  part2    "Give into your desires.": part two's lines (("G"|"C", line)), after the switch to
+           the undressed models; part2_music = its track
+  desire   then the closing narration
   leave    "Leave it be.": her line
   music    {place: index} (exe music name table, AKAO 10)
 }
@@ -81,5 +83,10 @@ DATES = {
         "lead": "“We don't have to talk anymore,\n do we?”",
         "desire": "The lights outside melted into a warm blur,\nand for a long while nothing else mattered...",
         "leave": "“…Okay. This is nice too. Just you\n and me, and the view.”",
+        "part2_music": 62,                                    # GEKI (Debut), as her Honey Bee part two
+        "part2": [("G", "“Don't you dare put me down.”"),
+                  ("C", "“…Wasn't planning on it.”"),
+                  ("G", "“Mmh… Cloud… harder…\n …I mean, hold me tighter!”"),
+                  ("G", "“…Okay. I meant both.”")],
     },
 }

@@ -171,4 +171,4 @@ FTIB coloin2.
 | ZDLT | zdlt.a | Tifa (AAGB) the same, from ABCD. | `660_dates._ledge` |
 
 The gondola and capsule seats use the gondola models' own sitting anims (bwhlin: Cloud GDAB, Tifa GDEE).
-
+| ZDKT | zdkt.a | Tifa (bare copy ztfa.hrc, AAGB bones) koala-hugging standing Cloud (ZCTE): leaning back 25 (head upright), thighs 80 forward and 35 apart round his waist, shins swung 100 in behind his back, arms 100 forward-up, 30 in, forearms 70 in behind his neck; one frame per ZCTE frame, her pelvis riding in front of his and bouncing 1.5 with his thrust. Her XYZI = his, DIR + 128. Test scene (user). | `660_dates._koala` |
