@@ -288,7 +288,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   Junon bar (Junon area, Mythril Mine, cargo ship), Costa del Sol bar (Corel
   area, Mt. Corel), Pub Starlet in Cosmo Canyon (canyon lands, Cave of the
   Gi), Nibelheim Inn (Nibel area, Mt. Nibel), Turtle's Paradise (Wutai),
-  Icicle Inn bar (snowfields, Great Glacier). Talk: the spiel names one of
+  Icicle Inn bar (snowfields, Great Glacier,
+  Gaea's Cliff, Forgotten Capital; 16 enemies). Talk: the spiel names one of
   the region's rarer enemies, how many, 30 minutes of play, the gil; "Deal."
   starts it. The Quests screen should list it first as "(Bounty) <enemy>"
   with the kills and "Time left: N min". Kill them, come back to the same

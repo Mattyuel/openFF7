@@ -107,13 +107,23 @@ REGIONS = [
              ("Tail Vault", [171], 28, 3, "the Wutai area"),
          ]),
     dict(key="icicle", field="sninn_b1", at=(169, 479), dir=22, bar="Icicle Inn bar",
-         area="the northern snowfields", pool=[
+         area="the north", pool=[        # Icicle area, Great Glacier, snowfield maze, Gaea's Cliff, Forgotten Capital
              ("Vlakorados", [197], 33, 2, "the snowfields"),
-             ("Trickplay", [198], 24, 2, "the snowfields"),
-             ("Hungry", [203], 33, 2, "the Frostbite Cave"),
+             ("Blue Dragon", [216], 41, 2, "inside Gaea's Cliff"),
+             ("Acrophies", [204], 35, 2, "the Corel Valley Cave"),
+             ("Grimguard", [202], 31, 2, "the Corel Valley Cave"),
              ("Jumping", [209], 24, 2, "the snowfields"),
+             ("Stilva", [219], 40, 2, "inside Gaea's Cliff"),
              ("Tonadu", [188], 30, 2, "the snowfields"),
+             ("Malldancer", [201], 32, 2, "the Corel Valley"),
+             ("Malboro", [215], 44, 2, "Gaea's Cliff"),
+             ("Cuahl", [222], 33, 2, "inside Gaea's Cliff"),
+             ("Evilhead", [221], 28, 2, "inside Gaea's Cliff"),
+             ("Trickplay", [198], 24, 2, "the Forgotten Capital"),
+             ("Boundfat", [200], 27, 3, "the Forgotten Capital"),
              ("Magnade", [212], 35, 3, "the Great Glacier"),
+             ("Hungry", [203], 33, 2, "the Frostbite Cave"),
+             ("Ice Golem", [205], 40, 3, "the Great Glacier"),
          ]),
 ]
 
