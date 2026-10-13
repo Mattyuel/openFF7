@@ -78,11 +78,16 @@ TIFA_TOP, TIFA_SKIN = (204, 204, 204), (167, 190, 248)
 # lower rings (z 0 / z -1.8 along the hip bone, up to x 3.3, y 2.5) pulled in to her hips
 # and thighs (thighs reach x ~2.6, radius 1.15 about x 1.43): (x, y) scale per ring
 TIFA_SKIRT = (25, 25, 25), (76, 76, 76)
+# her thighs (user: the same colour as the rest of her): ABAD/ABBD (abae/abbe.p, 135,167,248)
+# -> ztfd/ztfe.rsd -> ztgd/ztge.p in TIFA_SKIN
+TIFA_THIGHS = {"ABAD": ("ZTFD", "ZTGD"), "ABBD": ("ZTFE", "ZTGE")}
+THIGH_SKIN = (135, 167, 248)
 SKIRT_RINGS = {0.0: (0.8, 0.68), -1.8: (0.86, 0.8)}
 # koala (user's test scene): she clings to standing Cloud (620's ZCTH: ZCTE leaning back,
 # arms bent in round her), legs spread wide and wrapped round him, arms round his neck,
 # bouncing with his thrusts; leaning a little forward onto him (he leans back)
-KOALA_LEAN, KOALA_ARMS, KOALA_THIGH, KOALA_SPREAD, KOALA_KNEE = -10, 85, 85, 45, 90   # (user: arms 85, thighs 85, spread, knees 90)
+KOALA_LEAN, KOALA_ARMS, KOALA_THIGH, KOALA_SPREAD, KOALA_KNEE = -10, 95, 85, 45, 90   # (user: arms 85 then 95, thighs 85, spread, knees 90)
+KOALA_PELVIS = 10                     # then the pelvis tipped up 10 more (user)
 KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 2.0, 1.0, 1.5    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
 GIRL_MODEL = {"Tifa": "main_n_tifa.char"}   # her model entry in both base fields (name suffix)
 RETURN_GAP = 40                        # back beside her: this far from her spot
@@ -382,7 +387,24 @@ def _bare_tifa(ctx):
     import struct
     hrc = ctx.char_file("aagb.hrc").decode("latin-1")
     assert hrc.count("1 AAGE") == 1 and hrc.count("1 AAGC") == 1
-    ctx.char_file("ztfa.hrc", hrc.replace("1 AAGE", "1 ZTFB").replace("1 AAGC", "1 ZTFC").encode("latin-1"))
+    hrc = hrc.replace("1 AAGE", "1 ZTFB").replace("1 AAGC", "1 ZTFC")
+    for old, (rs, ply) in TIFA_THIGHS.items():
+        assert hrc.count("1 %s" % old) == 1, old
+        hrc = hrc.replace("1 %s" % old, "1 %s" % rs)
+        r = ctx.char_file(old.lower() + ".rsd").decode("latin-1")
+        oldp = r.split("PLY=")[1][:4]
+        ctx.char_file(rs.lower() + ".rsd", r.replace("PLY=%s." % oldp, "PLY=%s." % ply).encode("latin-1"))
+        t = bytearray(ctx.char_file(oldp.lower() + ".p"))
+        h = struct.unpack_from("<16I", t, 0)
+        o_c = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6]
+        k = 0
+        for o in [o_c + 4 * i for i in range(h[7])] + [o_c + 4 * h[7] + 4 * i for i in range(h[9])]:
+            if tuple(t[o:o + 3]) == THIGH_SKIN:
+                t[o:o + 3] = bytes(TIFA_SKIN)
+                k += 1
+        assert k >= 8, (old, k)
+        ctx.char_file(ply.lower() + ".p", bytes(t))
+    ctx.char_file("ztfa.hrc", hrc.encode("latin-1"))
     rsd = ctx.char_file("aagc.rsd").decode("latin-1")
     assert "PLY=AAGD." in rsd, rsd
     ctx.char_file("ztfc.rsd", rsd.replace("PLY=AAGD.", "PLY=ZTGC.").encode("latin-1"))
@@ -467,8 +489,13 @@ def _koala(ctx, name, hrc, stand):
         hinge = unit(cross(thigh, up))                                            # the knee's axis
         W = turned(W, {s + "_tibia", s + "_foot"}, hinge, KOALA_KNEE,
                    lambda a, b: b[s + "_tibia"][1] > a[s + "_tibia"][1] + 1)        # shin down (y down)
+    # pelvis tipped up KOALA_PELVIS (user: "rotate her pelvis up a little more"): the pelvis
+    # and both legs turn together, the knees going up; the chest keeps its angle
+    lower = {"hip"} | legs
+    W = turned(W, lower, side, KOALA_PELVIS,
+               lambda a, b: b["l_femur"][1] < a["l_femur"][1] - 0.3 and b["r_femur"][1] < a["r_femur"][1] - 0.3)
     F = fk(W)
-    for s in "lr":                                    # check: thigh ~level, knee at 90
+    for s in "lr":                                    # check: knee at 90
         th = [F[I(s + "_femur")][2][k] - F[I(s + "_femur")][1][k] for k in range(3)]
         sh = [F[I(s + "_tibia")][2][k] - F[I(s + "_tibia")][1][k] for k in range(3)]
         cosk = sum(th[k] * sh[k] for k in range(3)) / math.sqrt(sum(q * q for q in th) * sum(q * q for q in sh))
