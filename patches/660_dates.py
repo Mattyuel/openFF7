@@ -74,11 +74,11 @@ LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # skin colour (167,190,248): new zfta.hrc -> ztfb.rsd -> ztgb.p
 # part two per girl: her undressed copy's skeleton (None: her own model), her poses (the first
 # is where it starts, the last is the "fast" one), Cloud's pose and his fast one (CLOUD_PART2 keys)
-CLOUD_PART2 = ["standk", "stand", "standf"]      # 620's CLOUD_BED: koala hold, head, head x2
+CLOUD_PART2 = ["standk", "stand", "standf", "standa", "standaf"]   # 620's CLOUD_BED: koala, head (x2), Aerith's (x2)
 PART2 = {
     "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
     # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
-    "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKB.tor"], "cloud": "stand", "cloud_fast": "standf"},
+    "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf"},
 }
 TIFA_TOP, TIFA_SKIN = (204, 204, 204), (167, 190, 248)
 # her skirt (user: skin colour, contoured to her body): the hip part AAGC (aagd.p: skirt
@@ -504,7 +504,7 @@ def _bare_tifa(ctx):
 KNEEL_ARMS, KNEEL_TILT, KNEEL_ROCK, KNEEL_FRAMES, KNEEL_FRAMES_FAST = 40, 10, 10, 15, 8
 # sitting back on her heels: thighs KNEEL_SIT forward of straight down (kneeling upright her head
 # was at his chest); placed so her face is KNEEL_FACE in front of his pelvis
-KNEEL_SIT, KNEEL_FACE = 75, 3.0
+KNEEL_SIT, KNEEL_FACE = 75, 9.0     # (FACE 3 -> 9: about a head width further away, user)
 
 
 def _kneel(ctx, name, hrc, stand, nframes):

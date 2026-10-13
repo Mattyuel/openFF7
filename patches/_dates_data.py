@@ -149,12 +149,14 @@ DATES = {
         "part2_music": 49,                                    # DATE, as her Honey Bee part two
         # (user) the "head" scene: she tries to talk and can't; Cloud stops and asks if she's
         # okay, she demands more, he goes twice as fast
-        "part2": [("G", "“Mmf! Mmh mm… mmf-mmh!\n (Yes, sir!…)”"),
-                  ("G", "“Mmh-mmh… mmmf!”"),
+        "part2": [("G", "“Mmmh… mmf…\n (Yes, sir… whatever you want…)”"),
+                  ("C", "“…Look at me, Aerith.”"),
+                  ("G", "“Mmh… mmmh-mmh…\n (Eyes up, hands on me… like this?)”"),
                   ("act", "stop"),
                   ("C", "“…Aerith? Are you okay?”"),
-                  ("G", "“…Pwah! Who said you could stop?\n More. That's an order, mister.”"),
+                  ("G", "“…Pwah. Who said you could stop?\n I was just getting started, sir.”"),
+                  ("G", "“Hands in my hair. Harder.\n …That's not a request.”"),
                   ("act", "fast"),
-                  ("G", "“Mmf!! Mmh-mmh mmf!\n (Ehehe… much better!)”")],
+                  ("G", "“Mmmf!! Mmh… mmmh!\n (Yes… yes, sir…!)”")],
     },
 }

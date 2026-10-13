@@ -267,7 +267,9 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "standl": "ZCTF.tor",  # ours (edge): as stand, arms further forward, left leg raised
              "standlf": "ZCTG.tor",  # ours: standl at twice the speed
              "standk": "ZCTH.tor",   # ours (dates' koala hug): stand leaning back, arms bent in round her
-             "standf": "ZCTI.tor"}   # ours (dates' head scene): stand at twice the speed
+             "standf": "ZCTI.tor",   # ours (dates' head scene): stand at twice the speed
+             "standa": "ZCTJ.tor",   # ours (Aerith's date): stand, arms reaching down to her head
+             "standaf": "ZCTK.tor"}  # ... twice the speed
 # Cloud's own pose (user): AVDD (on his belly, propped on his forearms) with each
 # knee straightened until the shin lies level with the ground, the feet pointed so
 # they're level too, the knees brought within THRUST_KNEE_GAP of the midline (both
@@ -305,6 +307,9 @@ CLOUD_EDGE_FAST = "ZCTG.tor"                   # the same in EDGE_FRAMES_FAST fr
 # KOALA_CLOUD_ARMS forward with the forearms turned KOALA_CLOUD_ELBOW in, round her
 CLOUD_KOALA, KOALA_CLOUD_LEAN, KOALA_CLOUD_ARMS, KOALA_CLOUD_ELBOW = "ZCTH.tor", -15, 55, 75
 KOALA_CLOUD_OUT = 10                           # (user) his arms turned out a little
+# Aerith's head scene (user: his arms turned in to touch her head, kneeling ~9 in front):
+# both arms 45 forward (down towards her head), turned 8 in, forearms 15 in
+AERITH_CLOUD_ARMS, AERITH_CLOUD_IN, AERITH_CLOUD_ELBOW = 45, -8, 15
 LOOPED_C = {"thrust", "pound", "buck", "stand", "standl", "standlf"}
 # Devoted part two plays a fanfare from the fade to the bed (user): the victory fanfare,
 # the chocobo fanfare for dog. AKAO cmd 0x10 = play by music table index (exe 0x9684C8:
@@ -1484,11 +1489,12 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
         hand0 = end(fk(W), s + "_hand")
         angle = arms[s] if isinstance(arms, dict) else arms
         W = signed(W, arm, angle, lambda F: dot(end(F, s + "_hand"), fwd) > dot(hand0, fwd) + 1)  # arms forward
-        if arms_out:                                 # the whole arm turned out (about the vertical)
+        if arms_out:                                 # the whole arm turned out (< 0: in) about the vertical
             hx = end(fk(W), s + "_hand")[0]
+            way = 1 if arms_out > 0 else -1
             for sign in (1, -1):
-                M = rot(W, arm, fa.axis_angle(up, sign * arms_out))
-                if out * end(fk(M), s + "_hand")[0] > out * hx + 0.2:
+                M = rot(W, arm, fa.axis_angle(up, sign * abs(arms_out)))
+                if way * out * end(fk(M), s + "_hand")[0] > way * out * hx + 0.2:
                     W = M
                     break
             else:
@@ -2064,6 +2070,8 @@ def apply(ctx):
     _cloud_buck(ctx)
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8)   # x2 (dates)
+    for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)
+        _cloud_stand(ctx, name, arms=AERITH_CLOUD_ARMS, arms_out=AERITH_CLOUD_IN, elbow_in=AERITH_CLOUD_ELBOW, nframes=n)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE))
     _cloud_stand(ctx, CLOUD_EDGE_FAST, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE), EDGE_FRAMES_FAST)
     _cloud_stand(ctx, CLOUD_KOALA, KOALA_CLOUD_ARMS, elbow_in=KOALA_CLOUD_ELBOW, lean=KOALA_CLOUD_LEAN,
