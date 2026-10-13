@@ -157,7 +157,7 @@ LAYOUT_BEATS = {"mission": (set(), {"thrust"}), "cowgirl": ({"ride"}, {"grea", "
                 "head": ({"sit1", "sit2", "sit3"}, {"eiab", "enjf"})}
 LAYOUT_ANIM = {"beside": "grea", "sit": "eiab", "mission": "thrust", "cowgirl": "grea", "ontop": "grea",
                "dog": "hbgc", "head": "eiab"}       # Cloud's pose each layout starts in
-RIDE_RAISE = 14                              # cowgirl / ontop: she sits a head higher (user)
+RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head higher (user), then slightly more (+4)
 HEAD_CLOUD, HEAD_CLOUD_DOWN = (115, -155), 0  # head: Cloud right and down a bit from CLOUD_SIT
 HEAD_GIRL_FRONT, HEAD_GIRL_DROP = 35, 60      # she: at his x, this much nearer the camera (-y), 2/3 of
                                               # a body (~90) lower than the bed sitter, turned round
