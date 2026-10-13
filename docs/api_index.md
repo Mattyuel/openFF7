@@ -720,6 +720,9 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_kneel(ctx, name, hrc, stand, nframes, look=0, bow=None)` bow: a still bow (one frame where she is, no offset): above the knees tipped `bow`
 - `_scarlet_bare(ctx)` 
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
+- `_bare_elena(ctx)` 
+- `_cloud_seated(ctx, name, thrust)` 
+- `_lap(ctx)` 
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
 - `apply(ctx)` 
 

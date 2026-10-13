@@ -328,6 +328,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   (slap animation + sound from her Junon catfight). Part two: her skirtless model against a
   wall in front of standing Cloud; she stops him ("put it THERE?"), allows it, he goes
   faster. Check the slaps (pose pops while seated?), her sitting, the wall pose.
+- **Dates with Elena** (new; untested in-game): talk to Elena (Shinra Mansion, Nibelheim)
+  -> "Ask her on a date." Third date: she doubts herself and begs to be punished. Part two:
+  bare Cloud seated, her (new model: thighs bare) face down over his lap; spanks with the
+  slap sound in rounds of 1, 2, 3; she asks for more; fade to part three: she sits on his
+  lap bouncing as he thrusts and slaps. Check her placement on his lap, the spank timing.
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens
   One Star Girls (Next page / Never mind), then Two .. Five Star Girls (Next /
   Previous / Never mind; no Next on Five). Girls not hired show as ???? and

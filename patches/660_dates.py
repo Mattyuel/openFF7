@@ -38,7 +38,7 @@ MAX = 20
 WRONG = (5, 246)                       # temp: an answer this date was wrong
 TIERS = (10, 20)                       # affection where the second / third dates start
 # date fields: (place, group) -> new field name (free maplist names, docs/dates_plan.md)
-GROUPS = [["Tifa", "Aerith", "Scarlet"]]
+GROUPS = [["Tifa", "Aerith", "Scarlet", "Elena"]]
 FIELDS = {("gondola", 0): "blackbga", ("capsule", 0): "blackbgf", ("tower", 0): "blackbgg"}
 BASE = {"gondola": "bwhlin", "capsule": "rcktin7", "tower": "nivl_e1"}
 PLACES = ("gondola", "capsule", "tower")
@@ -73,23 +73,32 @@ SIT_KIND = {"gondola": "bench", "capsule": "bench", "tower": "ledge"}
 CLOUD_SIT = {"bench": "GDAB.chi", "ledge": "ZDLC.tor"}       # bwhlin cloud DFANM 03 / ours
 GIRL_SIT = {"Tifa": {"bench": "GDEE.chi", "ledge": "ZDLT.tor"},     # bwhlin tifa DFANM 03 / ours
             "Aerith": {"bench": "GDBE.chi", "ledge": "ZDLA.tor"},   # bwhlin earith DFANM 03 / ours
-            "Scarlet": {"bench": "ZDBS.tor", "ledge": "ZDLS.tor"}}  # ours
+            "Scarlet": {"bench": "ZDBS.tor", "ledge": "ZDLS.tor"},  # ours
+            "Elena": {"bench": "ZDBE.tor", "ledge": "ZDLE.tor"}}    # ours
 # ledge poses to build: anim -> (skeleton .hrc, standing anim it starts from)
 LEDGE = {"ZDLC.tor": ("aaaa.hrc", "acfe.a"), "ZDLT.tor": ("aagb.hrc", "abcd.a"), "ZDLA.tor": ("auff.hrc", "avbf.a"),
-         "ZDLS.tor": ("amcc.hrc", "anae.a")}
-BENCH = {"ZDBS.tor": ("amcc.hrc", "anae.a")}     # Scarlet has no sitting anim: ours, feet on the floor
+         "ZDLS.tor": ("amcc.hrc", "anae.a"), "ZDLE.tor": ("evfe.hrc", "acfe.a")}
+BENCH = {"ZDBS.tor": ("amcc.hrc", "anae.a"), "ZDBE.tor": ("evfe.hrc", "acfe.a"),   # no sitting anims: ours,
+         "ZDBC.tor": ("aaaa.hrc", "acfe.a")}     # feet on the floor (ZDBC: Cloud, for his seated part twos)
 LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # part two: each girl's undressed copy (a NEW skeleton file; her own model is untouched)
 # and her pose; Tifa: AAGB with the chest part's white top (vertex colour B,G,R 204) in her
 # skin colour (167,190,248): new zfta.hrc -> ztfb.rsd -> ztgb.p
 # part two per girl: her undressed copy's skeleton (None: her own model), her poses (the first
 # is where it starts, the last is the "fast" one), Cloud's pose and his fast one (CLOUD_PART2 keys)
-CLOUD_PART2 = ["standk", "stand", "standf", "standa", "standaf"]   # 620's CLOUD_BED: koala, head (x2), Aerith's (x2)
+CLOUD_PART2 = ["standk", "stand", "standf", "standa", "standaf",   # 620's CLOUD_BED: koala, head (x2), Aerith's (x2)
+               "sitspank", "sitthrust"]                              # ours (CLOUD_SEATED): Elena's
+CLOUD_SEATED = {"sitspank": "ZCTL.tor", "sitthrust": "ZCTM.tor"}     # bare Cloud on a bench: spanking / thrusting
 PART2 = {
     "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
     # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
     "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKC.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf",
                "acts": {"look": "ZDKC.tor"}},     # (user) she looks up at him when he tells her to
+    # (user) Elena over bare Cloud's lap (he sits, spanking her: one swing + the slap sound per
+    # "spank"), then (fade, "part3") on his lap, bouncing as he thrusts and slaps ("smack": sound)
+    "Elena": {"bare": "ZELA.HRC", "anims": ["ZDEA.tor", "ZDEB.tor"], "cloud": "sitspank", "cloud_still": True,
+              "same_way": True, "once": {"spank": "sitspank"},
+              "switch": {"part3": ("sitthrust", "ZDEB.tor")}, "sounds": {"smack": 0x76}},
     # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
     "Scarlet": {"bare": "ZSCA.HRC", "anims": ["ZDSW.tor", "ZDSX.tor"], "cloud": "stand", "cloud_fast": "standf",
                 "same_way": True, "at_her_seat": True},   # (user) on the left of the screen: at her seat
@@ -115,8 +124,8 @@ KOALA_PELVIS = 10                     # then the pelvis tipped up 10 more (user)
 KOALA_ARMS_IN, KOALA_NOD = 10, 12     # (user) arms turned in a little; the head nods with her bounce
 KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 1.4, 1.0, 1.5   # (BACK 2.0 -> 1.4: closer, user)    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
 GIRL_MODEL = {"Tifa": "main_n_tifa.char", "Aerith": "main_n_earith.char",   # her model entry (name suffix)
-              "Scarlet": "sub_scarlet.char"}
-GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5)}   # where a base field lacks her model
+              "Scarlet": "sub_scarlet.char", "Elena": "shinra_irena.char"}
+GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5), "Elena": ("datiao_6", 10)}   # where a field lacks her
 # extra anims on her model for the dates (the third date's "stand" and "slap" steps):
 # Scarlet's slap = junone7's (sca script 7: CANM!2 FDID 0-0x1D, SOUND 0x76, CANM!2 0x1D-0x31)
 GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"},
@@ -302,7 +311,7 @@ def _field(ctx, place, group, names):
         bdir = cdir
     elif bdir == "screen-right":
         bdir = facing_screen(cam, cs[0], cs[1], cs[2], (1, 0))
-    poses = [hb.CLOUD_BED[k] for k in CLOUD_PART2]
+    poses = [dict(hb.CLOUD_BED, **CLOUD_SEATED)[k] for k in CLOUD_PART2]
     bare = len(loader.models)
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[0], hb.CLOUD_BARE_HRC,
                                                                      model_names[0][:-5] + "_b.char"), poses))
@@ -313,9 +322,15 @@ def _field(ctx, place, group, names):
     floor = (cs[0], cs[1], cs[2] - SEATS[place]["cloud"][4], cs[3])
     scripts[cb] = {0: [Op(bytes([0xA1, bare])), hb._visi(0), asm.ret(), asm.ret()],
                    3: [hb._xyzi(*floor), Op(bytes([0xB3, 0, bdir])), hb._visi(1), asm.ret()]}
-    for k, pose in enumerate(CLOUD_PART2):     # 4+k: loop pose k; 12+k: hold its frame 0 (stop)
+    for k, pose in enumerate(CLOUD_PART2):     # 4+k: loop pose k; 12+k: hold its frame 0 (stop);
         scripts[cb][4 + k] = [Op(bytes([0xA2, first + k, 1])), Op(bytes([0xAE, first + k, 1])), asm.ret()]
         scripts[cb][12 + k] = [Op(bytes([0xB1, first + k, 0, 0, 1])), asm.ret()]
+        # 24+k: play pose k once with the slap sound at its middle, then hold its frame 0
+        n = SEATED_FRAMES
+        scripts[cb][24 + k] = [Op(bytes([0xBC, first + k, 0, n // 2, 1])), Op(b"\xAC"),
+                               Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
+                               Op(bytes([0xBC, first + k, n // 2, n - 1, 1])), Op(b"\xAC"),
+                               Op(bytes([0xB1, first + k, 0, 0, 1])), asm.ret()]
     part2 = {}
     for gname in names:
         i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
@@ -409,8 +424,16 @@ def _field(ctx, place, group, names):
                 **{k: [hb._req(ge, 5 + p2["anims"].index(a_))] for k, a_ in p2.get("acts", {}).items()},
                 "fast": [hb._req(cb, 4 + CLOUD_PART2.index(p2.get("cloud_fast", p2["cloud"]))),
                          hb._req(ge, 5 + len(ka) - 1)]}
+        for k, pose in p2.get("once", {}).items():
+            acts[k] = [hb._req(cb, 24 + CLOUD_PART2.index(pose)), hb._w(6)]
+        for k, (pose, her) in p2.get("switch", {}).items():                       # fade, both change pose
+            acts[k] = [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(cb, 4 + CLOUD_PART2.index(pose)),
+                       hb._req(ge, 5 + p2["anims"].index(her)), Op(hb.FADE_IN), Op(b"\x6C"), hb._w(20)]
+        for k, snd in p2.get("sounds", {}).items():
+            acts[k] = [Op(bytes([0xF1, 0]) + snd.to_bytes(2, "little") + b"\x40"), hb._w(8)]
+        start = 12 if p2.get("cloud_still") else 4
         part2[i] = (tier_acts, [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(model_ent[0], 3)] + hide_her
-                    + [hb._req(cb, show_cloud), hb._req(cb, 4 + cpose), hb._req(ge, 4),
+                    + [hb._req(cb, show_cloud), hb._req(cb, start + cpose), hb._req(ge, 4),
                        Op(bytes([0xF2, 0, 0, 0, 0x10, DATES[gname]["part2_music"]]) + bytes(8)),
                        Op(hb.FADE_IN), Op(b"\x6C"), hb._w(30)], acts)
     for e, m in chars.items():                   # everyone else: hidden
@@ -769,6 +792,133 @@ def _wall(ctx, name, hrc, stand, cloud="stand"):
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
 
+# bare Elena (user: her upper legs skin coloured and slightly thinner than her lower legs):
+# EVFE with the thigh parts (EVJC/EWAC: navy trousers 35,10,10) in her skin (149,178,255,
+# her face's) and scaled ELENA_THIGH across (0.85: the knee ring 1.39/1.64 < the shin top 1.64/1.93)
+ELENA_BARE = "ZELA.HRC"
+ELENA_THIGHS = {"EVJC": ("ZELB", "ZEMB"), "EWAC": ("ZELC", "ZEMC")}
+ELENA_SUIT, ELENA_SKIN, ELENA_THIGH = (35, 10, 10), (149, 178, 255), 0.85
+
+
+def _bare_elena(ctx):
+    import struct
+    hrc = ctx.char_file("evfe.hrc").decode("latin-1")
+    for old, (rs, ply) in ELENA_THIGHS.items():
+        assert hrc.count("1 %s" % old) == 1, old
+        hrc = hrc.replace("1 %s" % old, "1 %s" % rs)
+        r = ctx.char_file(old.lower() + ".rsd").decode("latin-1")
+        oldp = r.split("PLY=")[1][:4]
+        ctx.char_file(rs.lower() + ".rsd", r.replace("PLY=%s." % oldp, "PLY=%s." % ply).encode("latin-1"))
+        d = bytearray(ctx.char_file(oldp.lower() + ".p"))
+        h = struct.unpack_from("<16I", d, 0)
+        o_c = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6]
+        n = 0
+        for o in [o_c + 4 * i for i in range(h[7])] + [o_c + 4 * h[7] + 4 * i for i in range(h[9])]:
+            if tuple(d[o:o + 3]) == ELENA_SUIT:
+                d[o:o + 3] = bytes(ELENA_SKIN)
+                n += 1
+        assert n >= 10, (old, n)
+        for i in range(h[3]):
+            x, y, z = struct.unpack_from("<3f", d, 128 + 12 * i)
+            struct.pack_into("<3f", d, 128 + 12 * i, x * ELENA_THIGH, y * ELENA_THIGH, z)
+        ctx.char_file(ply.lower() + ".p", bytes(d))
+    ctx.char_file(ELENA_BARE.lower(), hrc.encode("latin-1"))
+
+
+# bare Cloud seated (ZDBC, our bench pose) for Elena's part two: ZCTL spanking (the right arm
+# raised SPANK_UP more and swung down onto her, its lowest at the middle frame), ZCTM thrusting
+# (hips up SEAT_THRUST at the middle frame, feet riding along) with the same right-hand slap;
+# SEATED_FRAMES = 0.5 s
+SEATED_FRAMES, SPANK_UP, SEAT_THRUST = 15, 70, 1.0
+
+
+def _cloud_seated(ctx, name, thrust):
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
+    names = [b[0] for b in sk]
+    I = names.index
+    base = fa.Anim(ctx.char_file("zdbc.a"))
+    rr, rp, rots = base.frames[0]
+    root = [rp[0], -rp[1], rp[2]]
+    W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+    side = [1.0, 0.0, 0.0]
+    fk = lambda W, r=root: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
+    arm = {I(n) for n in ("r_uparm", "r_foarm", "r_hand")}
+    hand0 = fk(W)[I("r_hand")][2]
+    sense = 1 if fk([fa._mul(fa.axis_angle(side, 10), m) if i in arm else m for i, m in enumerate(W)])[I("r_hand")][2][1] \
+        < hand0[1] else -1                               # + sense: the hand goes up (y down)
+    frames = []
+    for t in range(SEATED_FRAMES):
+        e = (1 - math.cos(2 * math.pi * t / SEATED_FRAMES)) / 2            # 0 -> 1 (middle) -> 0
+        up = sense * SPANK_UP * (1 - e)                                   # raised, down at the middle
+        Wt = [fa._mul(fa.axis_angle(side, up), m) if i in arm else m for i, m in enumerate(W)]
+        r = [root[0], root[1] - (SEAT_THRUST * e if thrust else 0.0), root[2]]
+        frames.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, Wt)))
+    base.frames = frames
+    ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
+
+
+# Elena on his lap (same XYZI and DIR as Cloud): ZDEA lying face down across his thighs (her
+# length along his side axis), hips on his lap, upper body LAP_HANG head-down and legs LAP_HANG
+# down over the sides; ZDEB sitting on his lap facing his way (our bench pose's legs), bouncing
+# with his ZCTM thrust plus LAP_BOUNCE
+LAP_HANG, LAP_UP, LAP_SEAT, LAP_BOUNCE = 25, 1.8, 1.4, 1.0
+
+
+def _lap(ctx):
+    from ff7 import fieldanim as fa
+    csk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
+    CI = [b[0] for b in csk].index
+
+    def his(anim, t=0):
+        A = fa.Anim(ctx.char_file(anim))
+        rr, rp, rots = A.frames[t]
+        return fa.forward(csk, rr, [rp[0], -rp[1], rp[2]], rots), len(A.frames), A
+    C, _, _ = his("zctl.a")
+    mids = [[(C[CI(s + "_femur")][1][k] + C[CI(s + "_femur")][2][k]) / 2 for k in range(3)] for s in "lr"]
+    lap = [(mids[0][k] + mids[1][k]) / 2 for k in range(3)]                  # between his thighs' middles
+    sk = fa.skeleton(ctx.char_file("zela.hrc").decode("latin-1"))
+    names = [b[0] for b in sk]
+    I = names.index
+    rr, rp, rots = fa.Anim(ctx.char_file("acfe.a")).frames[0]
+    root = [rp[0], -rp[1], rp[2]]
+    W0 = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+    fk = lambda W, r: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
+    side, up = [1.0, 0.0, 0.0], [0.0, -1.0, 0.0]
+    legs = {n for n in names if n[:2] in ("l_", "r_") and not any(k in n for k in ("chest", "collar", "arm", "hand"))}
+
+    def turned(W, bones, axis, angle, test):
+        for sg in (1, -1):
+            M = [fa._mul(fa.axis_angle(axis, sg * angle), m) if names[i] in bones else m for i, m in enumerate(W)]
+            if test(fk(W, [0, 0, 0]), fk(M, [0, 0, 0])):
+                return M
+        raise AssertionError(bones)
+    # ZDEA: face down, then hanging over his lap, then her length turned across it
+    W = turned(W0, set(names), side, 90, lambda a, b: b[I("head")][2][2] < a[I("head")][2][2] - 3)
+    W = turned(W, set(names) - legs, side, LAP_HANG, lambda a, b: b[I("head")][2][1] > a[I("head")][2][1] + 0.5)
+    W = turned(W, legs, side, LAP_HANG, lambda a, b: b[I("l_tibia")][2][1] > a[I("l_tibia")][2][1] + 0.5)
+    Y = fa.axis_angle(up, 90)
+    W = [fa._mul(Y, m) for m in W]
+    r = [lap[0], lap[1] - LAP_UP, lap[2]]                                     # her pelvis on his lap
+    A = fa.Anim(ctx.char_file("acfe.a"))
+    A.frames = [(rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, W))]
+    ctx.char_file("zdea.a", A.build())
+    # ZDEB: sitting on his lap (her bench pose), bouncing with his thrust
+    br, bp, brots = fa.Anim(ctx.char_file("zdbe.a")).frames[0]
+    Wb = [m for m, _, _ in fa.forward(sk, br, [bp[0], -bp[1], bp[2]], brots)]
+    _, n, HA = his("zctm.a")
+    hy0 = -HA.frames[0][1][1]
+    frames = []
+    for t in range(n):
+        e = (1 - math.cos(2 * math.pi * t / n)) / 2
+        lift = -HA.frames[t][1][1] - hy0                                       # his hips' rise (y down)
+        rt = [lap[0], lap[1] - LAP_SEAT + lift - LAP_BOUNCE * e, lap[2]]
+        frames.append((br, [rt[0], -rt[1], rt[2]], fa.local_rotations(sk, br, Wb)))
+    B = fa.Anim(ctx.char_file("zdbe.a"))
+    B.frames = frames
+    ctx.char_file("zdeb.a", B.build())
+
+
 def _koala(ctx, name, hrc, stand):
     """Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
     leaning KOALA_LEAN onto him (head upright); arms raised KOALA_ARMS forward; each thigh
@@ -856,6 +1006,10 @@ def apply(ctx):
         _ledge(ctx, anim, hrc, stand)
     for anim, (hrc, stand) in BENCH.items():
         _ledge(ctx, anim, hrc, stand, bench=True)
+    _bare_elena(ctx)
+    _cloud_seated(ctx, "ZCTL.tor", False)
+    _cloud_seated(ctx, "ZCTM.tor", True)
+    _lap(ctx)
     _bare_tifa(ctx)
     _koala(ctx, "ZDKT.tor", "ztfa.hrc", "abcd.a")
     _scarlet_bare(ctx)
