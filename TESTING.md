@@ -328,7 +328,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   his left facing him, rocking, her head kept upright (both 0.5 s); edge (Tifa only, new) = she stands
   just left of the bed's left end facing right, bent over 90 at the hips with her
   arms stretched out over the bed, rocking; Cloud stands behind her facing the
-  bed in the same thrusting pose; head reverse (Elena only, new) = she lies on
+  bed in the same thrusting pose (since changed: she's 7 further right (the floor
+  ends there, not a full half step), Cloud 22 right, his arms further forward and
+  his left leg raised; her head tipped back and turned right, arms angled down
+  and dipping as she rocks forward; after "Faster!" both move twice as fast); head reverse (Elena only, new) = she lies on
   her back along the bed, head at its left end tipped back over the edge, arms
   up past her head, bouncing with her knees opening and closing; Cloud as in
   edge. Head / head reverse girls now only manage muffled "Mmf!" lines in part

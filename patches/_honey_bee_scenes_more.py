@@ -428,8 +428,10 @@ DEVOTED = {
         ('bed', 'edge'),
         ('G', "“Wait, is that the VICTORY FANFARE?\n …Did you bring a boombox?!”"),
         ('C', "{CLOUD}\n“…I'm a professional.”"),
-        ('c', 'stand'),
+        ('c', 'standl'),
         ('G', "“Faster! Like a Limit Break!\n Ha… hahaha!”"),
+        ('c', 'standlf'),
+        ('g', 'bendf'),
         ('G', "“Somersault! …Not literally!\n You'll knock the bed over!”"),
     ],
     'Aerith': [
