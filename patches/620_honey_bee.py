@@ -266,7 +266,8 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "stand": "ZCTE.tor",   # ours (_cloud_stand): standing (ACFE), knees bent, leaning, thrusting
              "standl": "ZCTF.tor",  # ours (edge): as stand, arms further forward, left leg raised
              "standlf": "ZCTG.tor",  # ours: standl at twice the speed
-             "standk": "ZCTH.tor"}   # ours (dates' koala hug): stand leaning back, arms bent in round her
+             "standk": "ZCTH.tor",   # ours (dates' koala hug): stand leaning back, arms bent in round her
+             "standf": "ZCTI.tor"}   # ours (dates' head scene): stand at twice the speed
 # Cloud's own pose (user): AVDD (on his belly, propped on his forearms) with each
 # knee straightened until the shin lies level with the ground, the feet pointed so
 # they're level too, the knees brought within THRUST_KNEE_GAP of the midline (both
@@ -2062,6 +2063,7 @@ def apply(ctx):
     _cloud_spread(ctx)
     _cloud_buck(ctx)
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
+    _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8)   # x2 (dates)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE))
     _cloud_stand(ctx, CLOUD_EDGE_FAST, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE), EDGE_FRAMES_FAST)
     _cloud_stand(ctx, CLOUD_KOALA, KOALA_CLOUD_ARMS, elbow_in=KOALA_CLOUD_ELBOW, lean=KOALA_CLOUD_LEAN,

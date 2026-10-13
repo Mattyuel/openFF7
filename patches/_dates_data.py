@@ -89,4 +89,72 @@ DATES = {
                   ("G", "“Mmh… Cloud… harder…\n …I mean, hold me tighter!”"),
                   ("G", "“…Okay. I meant both.”")],
     },
+    "Aerith": {
+        "speaker": "{AERIS}",
+        "greet": "“Oh, Cloud! Did you need something?”",
+        "where": "“A date? Ehehe, yes please!\n Where are we going?”",
+        "music": {"gondola": 49, "capsule": 12, "tower": 12},   # DATE, EARIS (her theme)
+        "tiers": [
+            {   # first date: the flower girl
+                "open": "“A date! With a bodyguard, even.\n Lucky me.”",
+                "steps": [
+                    ("G", "“So, Mr. Bodyguard… how much do\n you actually know about me?”"),
+                    ("Q", "“What do I sell in the slums?”", ["Flowers.", "Potions.", "Materia."], 0,
+                     "“Flowers! Only a gil each.\n A bargain, really.”",
+                     "“Nope! Flowers. You bought one,\n remember?”"),
+                    ("G", "“I grow them in the church. They\n won't grow anywhere else in Midgar.”"),
+                    ("Q", "“And where do I live?”", ["Sector 5 slums.", "Wall Market.", "Upper Midgar."], 0,
+                     "“With my mom, Elmyra. She worries…\n a lot.”",
+                     "“Sector 5! You walked me home,\n silly.”"),
+                ],
+                "close": "“That was fun. Let's do it again,\n okay?”",
+            },
+            {   # second date: the Planet, the past
+                "open": "“A second date! Should I be worried?”",
+                "steps": [
+                    ("G", "“Can I tell you a secret? I hear\n voices. The Planet, talking.”"),
+                    ("C", "“…Does it say anything nice?”"),
+                    ("G", "“Tonight it's very quiet.\n I think it's giving us privacy.”"),
+                    ("Q", "“Do you know what I am?\n The last of the…?”", ["Cetra.", "Turks.", "SOLDIERs."], 0,
+                     "“The Ancients. The last one.\n …It's lonely, sometimes.”",
+                     "“The Cetra, silly. The Ancients.”"),
+                    ("Q", "“Who was the first boy I liked?”",
+                     ["Someone in SOLDIER.", "Reno.", "Barret."], 0,
+                     "“Mm-hm. He looked a little\n like you…”",
+                     "“Reno?! Please. Someone in SOLDIER.”"),
+                ],
+                "close": "“Next time, you pick the place.\n Deal?”",
+            },
+            {   # third date (user): playfully submissive
+                "open": "“Tonight… I'll do whatever you say.\n Ehehe.”",
+                "steps": [
+                    ("G", "“You're the bodyguard. So you give\n the orders tonight, right?”"),
+                    ("Q", "“So, what's your first order?”", ["Come here, Aerith.", "Guard the door.", "Go home."], 0,
+                     "“Yes, sir! …Like this? Closer?”",
+                     "“Hmph. Boring orders. You can do\n better than that.”"),
+                    ("Q", "“What should I call you tonight?”", ["Just Cloud.", "Sir.", "Bodyguard."], 1,
+                     "“Yes, sir. Ehehe… I like that.”",
+                     "“Mmm… I had something else in mind.”"),
+                    ("Q", "“And what do you want me to do?”",
+                     ["Anything I say.", "Sell me a flower.", "Stop teasing."], 0,
+                     "“…Anything. Just say it.”",
+                     "“Ehehe… you're no fun.”"),
+                ],
+                "close": "“Thank you for tonight, Cloud.\n Really.”",
+            },
+        ],
+        "lead": "“Then… give me an order, sir.”",
+        "desire": "Somewhere a flower bloomed out of season,\nand the Planet politely looked away...",
+        "leave": "“…Okay. Just holding hands, then.\n I like that too.”",
+        "part2_music": 49,                                    # DATE, as her Honey Bee part two
+        # (user) the "head" scene: she tries to talk and can't; Cloud stops and asks if she's
+        # okay, she demands more, he goes twice as fast
+        "part2": [("G", "“Mmf! Mmh mm… mmf-mmh!\n (Yes, sir!…)”"),
+                  ("G", "“Mmh-mmh… mmmf!”"),
+                  ("act", "stop"),
+                  ("C", "“…Aerith? Are you okay?”"),
+                  ("G", "“…Pwah! Who said you could stop?\n More. That's an order, mister.”"),
+                  ("act", "fast"),
+                  ("G", "“Mmf!! Mmh-mmh mmf!\n (Ehehe… much better!)”")],
+    },
 }

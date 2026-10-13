@@ -317,6 +317,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   (her own undressed copy) koala-hugging him, bouncing; her lines; closing line. Afterwards you're back beside her. Check: the
   view (gondola: Gold Saucer at night with no cabin; capsule: stars in the round window; tower:
   starry sky), where the two sit and face, sitting poses (tower: legs over the rim), text, music.
+- **Dates with Aerith** (new; untested in-game): talk to Aerith (Temple of the Ancients,
+  by the altar) -> "Ask her on a date." -> any of the three places. Same flow as Tifa's; her
+  third date is playfully submissive ("Sir."). Part two = the head scene in her own model:
+  she kneels before bare Cloud (muffled lines), he stops and asks if she's okay, she demands
+  more, then both go twice as fast. Check her kneeling height/distance, the stop, the speed-up.
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens
   One Star Girls (Next page / Never mind), then Two .. Five Star Girls (Next /
   Previous / Never mind; no Next on Five). Girls not hired show as ???? and
