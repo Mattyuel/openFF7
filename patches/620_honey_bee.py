@@ -145,7 +145,7 @@ MOVES = {"enter", "approach", "mid", "far", "pace"}   # girl beats that walk (no
 # (the raised walkmesh piece, z 76) and fades back in. Layout -> (girl beat,
 # Cloud beat). Afterwards only in-place beats: girl sit1-3, Cloud CLOUD_BED.
 BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "ontop": ("lie", "bedontop"), "sit": ("bedsit", "bedsitc")}
-CLOUD_BESIDE = (136, -155)                   # parallel to the lying girl (BED, BED_DIR)
+CLOUD_BESIDE = (91, -155)                    # parallel to the lying girl (BED)
 ONTOP_RAISE = 4                              # Cloud on top of her: drawn this much higher (12 was too high)
 GIRL_SIT, CLOUD_SIT = (55, -150), (100, -140)   # side by side on the bed's edge, facing the camera
 # Cloud's bed animations (names as the fields that use them spell them; meanings from the user).
@@ -164,7 +164,7 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "eiab": "EIAB.chi"}   # sitting comfortably
 FADE_OUT, FADE_IN = bytes.fromhex("6b0000000000080200"), bytes.fromhex("6b00000000000801ff")   # as the game's own
 ACT = (5, 250)                               # temp: which Cloud action the dispatcher plays
-BED = (136, -199)
+BED = (91, -199)                             # lying girl in the scenes (half a body further from the door than 136)
 BED_DIR = 0xC0                               # lying girl in the scenes (user: 0x40 then turned 180, so
                                              # she lines up with Cloud's lying poses)
 CLOUD_BED_DIR = 0x40                         # Cloud lying on the bed (unchanged)
