@@ -599,7 +599,7 @@ Bounties: Scoop, a roving reporter, sits in a bar in each of 8 regions and
 - `gil(level, kills)` 
 - `bounty_op(cmd, region, dst=RESULT)` 
 - `_text(s)` 
-- `_data()` The BDATA block: header, region table, pools, texts (absolute pointers).
+- `_data()` The BDATA block: header, region table, rank table, pools, texts (absolute pointers).
 - `_talk(i, r)` 
 - `apply(ctx)` 
 

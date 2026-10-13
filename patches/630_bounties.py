@@ -146,18 +146,21 @@ def _text(s):
 
 
 def _data():
-    """The BDATA block: header, region table, pools, texts (absolute pointers)."""
+    """The BDATA block: header, region table, rank table, pools, texts (absolute pointers)."""
     texts = bytearray()
-    text_base = BDATA + 12 + 8 * len(REGIONS) + BENT * sum(len(r["pool"]) for r in REGIONS)
+    text_base = (BDATA + 16 + 4 + 8 * len(RANKS) + 8 * len(REGIONS)
+                 + BENT * sum(len(r["pool"]) for r in REGIONS))
 
     def put(s):
         va = text_base + len(texts)
         texts.extend(_text(s))
         return va
 
-    head = struct.pack("<III", len(REGIONS), put("Time left: "), put(" min"))
+    ranks_va = BDATA + 16 + 8 * len(REGIONS)          # after the region table (asm REGIONS = BDATA + 16)
+    head = struct.pack("<IIII", len(REGIONS), put("Time left: "), put(" min"), ranks_va)
+    ranks = struct.pack("<I", len(RANKS)) + b"".join(struct.pack("<H2xI", at, put(name)) for name, at in RANKS)
     table, pools = bytearray(), bytearray()
-    pool_va = BDATA + 12 + 8 * len(REGIONS)
+    pool_va = ranks_va + len(ranks)
     for r in REGIONS:
         table += struct.pack("<IB3x", pool_va + len(pools), len(r["pool"]))
         for name, ids, level, kills, found in r["pool"]:
@@ -167,7 +170,7 @@ def _data():
                                  put("Report back: " + r["bar"]),
                                  put("Hunt %d %s around %s." % (kills, name, found)),
                                  put("Reward: %d gil" % gil(level, kills)), put(name))
-    blob = head + table + pools
+    blob = head + table + ranks + pools
     assert BDATA + len(blob) == text_base
     return blob + texts
 

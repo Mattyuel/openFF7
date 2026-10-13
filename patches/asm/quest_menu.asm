@@ -29,7 +29,9 @@
 ; section's memory (never saved; cleared when the play clock jumps, i.e. a
 ; game was loaded or started). BDATA (built by 630_bounties.py):
 ;   +0 u32 region count  +4 ptr "Time left: "  +8 ptr " min"
-;   +12 regions, 8 bytes each: +0 ptr pool, +4 u8 pool size
+;   +12 ptr rank table: u32 count, then {u16 points needed, pad, ptr name}...
+;       (ascending; the Quests screen shows "Hunter: <name> (<points>)")
+;   +16 regions, 8 bytes each: +0 ptr pool, +4 u8 pool size
 ;   pool entries, BENT bytes: +0 u16 enemy id, +2 u16 second id (0xFFFF none),
 ;       +4 u8 kills, +5 u8 minutes, +8 title, +12 giver line, +16 where line,
 ;       +20 / +24 description lines, +28 enemy label
@@ -51,6 +53,9 @@ VARS      equ 0xDC08DC        ; field var bank 1, offset 0 (banks 1-5 follow)
 INVENTORY equ 0xDC0234        ; savemap 0x04FC: 320 x u16 (id 9 bits, qty 7 bits)
 BDATA     equ 0xFE0000        ; bounty data (630_bounties.py places it here)
 BENT      equ 32
+REGIONS   equ BDATA + 16
+HUNTER_PTS equ VARS + 245     ; u16 field var[2][245] (630_bounties.py, saved)
+RANK_X    equ 430
 BREGIONS  equ 8               ; at most
 NONE      equ 0xFF
 KIND_BOUNTY equ 2             ; part kind: kills of bounty region (source)
@@ -539,6 +544,8 @@ q_update:
     mov byte [q_done], 0
 
 .windows:
+    call b_ranktext
+    TEXT RANK_X, LIST_H + 13, b_rbuf, 5
     WINDOW q_rect1, 0, 0, 0x1DC, LIST_H
     WINDOW q_rect2, 0, LIST_H, 0x280, 480 - LIST_H
 
@@ -616,7 +623,7 @@ q_update:
 ; +3 last claimed, +4 u16 deadline minute), edi = its pool
 b_region:
     lea esi, [b_state + ebx*8]
-    mov edi, [BDATA + 12 + ebx*8]
+    mov edi, [REGIONS + ebx*8]
     ret
 
 ; esi state, edi pool -> edx = active entry (or 0 when none: ZF set)
@@ -754,7 +761,7 @@ b_cmd:
     movzx eax, byte [esi]
     cmp eax, NONE
     jne .ret
-    movzx ecx, byte [BDATA + 16 + ebx*8]    ; pool size
+    movzx ecx, byte [REGIONS + 4 + ebx*8]   ; pool size
     mov eax, [PLAY_SECONDS]
     add eax, [b_seed]
     add dword [b_seed], 7
@@ -871,6 +878,44 @@ b_timetext:
     pop esi
     ret
 
+; b_rbuf = "Hunter: <rank> (<points>)"
+b_ranktext:
+    push esi
+    push edi
+    push ebx
+    mov edi, b_rbuf
+    mov esi, [BDATA + 12]
+    mov ecx, [esi]                      ; ranks
+    lea ebx, [esi + 4]
+    mov edx, [ebx + 4]                  ; the first (0 points)
+    movzx eax, word [HUNTER_PTS]
+.find:
+    cmp ax, [ebx]
+    jb .found
+    mov edx, [ebx + 4]
+    add ebx, 8
+    loop .find
+.found:
+    push eax
+    mov esi, b_hunter
+    call b_copy
+    mov esi, edx
+    call b_copy
+    mov ax, 0x0800                      ; ' ' '('
+    stosw
+    pop eax
+    cmp eax, 999
+    jbe .num
+    mov eax, 999
+.num:
+    call q_putnum
+    mov ax, 0xFF09                      ; ')' end
+    stosw
+    pop ebx
+    pop edi
+    pop esi
+    ret
+
 ; copy FF7 text esi (0xFF-terminated, without it) to edi
 b_copy:
     lodsb
@@ -895,4 +940,6 @@ b_last:  dd 0xFFFFFFFF
 b_seed:  dd 0
 b_state: times BREGIONS * 8 db NONE
 b_tbuf:  times 32 db 0xFF
+b_rbuf:  times 40 db 0xFF
+b_hunter: db 0x28, 0x55, 0x4E, 0x54, 0x45, 0x52, 0x1A, 0x00, 0xFF   ; "Hunter: " 
 b_recs:  times BREGIONS * REC db 0

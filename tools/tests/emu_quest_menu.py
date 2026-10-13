@@ -182,7 +182,7 @@ def tick(seconds):
     e.u.reg_write(UC_X86_REG_ESP, 0x10F000)
     e.u.emu_start(0x40ABF0, 0x40ABFD)
 def entry(region, k):
-    pool = struct.unpack('<I', bytes(e.u.mem_read(BDATA + 12 + region * 8, 4)))[0]
+    pool = struct.unpack('<I', bytes(e.u.mem_read(BDATA + 16 + region * 8, 4)))[0]
     return struct.unpack('<HHBB', bytes(e.u.mem_read(pool + 32 * k, 6)))
 tick(5999); tick(6000)                     # a fresh game: state reset, minute 100
 assert bounty(0, 0) == 0                   # nothing running
@@ -216,3 +216,12 @@ tick(6001); tick(6002); assert bounty(0, 0) == 1              # the clock tickin
 k3 = bounty(2, 3); assert bounty(0, 3) == 1
 tick(123456); assert bounty(0, 3) == 0 and bounty(4, 3) == 0xFF
 print('bounties ok')
+
+# Hunter rank on the Quests screen: highest threshold reached, with the points
+for pts, want in ((0, 'Hunter: Rookie (0)'), (9, 'Hunter: Rookie (9)'), (10, 'Hunter: Tracker (10)'),
+                  (72, 'Hunter: Veteran (72)'), (250, 'Hunter: Legend (250)'), (1300, 'Hunter: Legend (999)')):
+    e.u.mem_write(0xDC08DC + 245, struct.pack('<H', pts))
+    e.call(CODE + 0); t, h = frame()
+    got = [x for x in t if x[0] == 430]
+    assert got and got[0][2] == want and got[0][3] == 5, (pts, got)
+print('hunter rank ok')
