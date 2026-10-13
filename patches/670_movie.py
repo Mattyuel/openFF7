@@ -15,7 +15,7 @@ the cameraman films beside each spot (FFBC). Her body is the Honey Bee
 dancer's skeleton (same bones and lengths, same stand/walk/run anims), so the
 dancer poses 620 builds (dzbt, dzbl, dzbf, dzbg, dzbh, dzbk) play on her.
 
-Play: press OK (IFKEYON 0x220) as fast as you dare. Every tick (~8 frames) the
+Play: press OK as fast as you dare (counted when IFKEY 0x220, held, goes up -> down). Every tick (~8 frames) the
 director (entity 0) takes the presses since the last tick, P:
     VEL = VEL*5/6 + P*A - B + (POS - 500)/C       (VEL stored + 1000, clamped +-VMAX)
     POS += VEL                                     (0..1000, starts 500)
@@ -56,9 +56,9 @@ CAMERA_AT, RUBY_AT = (310, 378), (386, 314)          # mrkt2: right of the item 
 CAMERA_DONOR, RUBY_DONOR = ("junone2", 6), ("jun_i2", 6)
 CAMERA_IDLE, CAMERA_FILM = "FDCB.yos", "FFBC.yos"    # camera held low / at his eye
 MUSIC = 35                                          # COSTA: Costa del Sol (user; was Turks' Theme, RHYTHM 45)
-OK_KEY = 0x220                                      # OK, as every original script tests it: IFKEYON (0x61225D) with
-                                                    # mask bit 0x200 reads the field header's +0x80 keys, else +0x70;
-                                                    # 0x20 alone (+0x70) never fired in-game (user)
+OK_KEY = 0x220                                      # OK, as every original script tests it: IFKEY (0x61220D) / IFKEYON
+                                                    # (0x61225D) with mask bit 0x200 read the field header's +0x78 held /
+                                                    # +0x80 new keys, else +0x68 / +0x70; 0x20 alone never fired (user)
 MINUTE = 1800                                       # frames per position (30 fps)
 SPEEDS = (20, 15, 11, 8)                            # frames per stroke, slowest to fastest
 RATE_STEPS = (30, 60, 95)                           # smoothed press rate thresholds for steps 1-3
@@ -95,7 +95,7 @@ SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines;
 
 # temp vars (this field only)
 POS, VEL, PR, TOT, FR, RATE, T, S, NEXT, BKT, EARN, EL = ((6, a) for a in range(100, 124, 2))
-P, STEP, NEW, RUN, K = (5, 130), (5, 131), (5, 132), (5, 133), (5, 134)
+P, STEP, NEW, RUN, K, HELD = (5, 130), (5, 131), (5, 132), (5, 133), (5, 134), (5, 135)
 GIL = (6, 140)                                       # mrkt2: the cut (temp word)
 
 # Ruby bare (user, second version: "look like the original, just with bare shoulders, legs,
@@ -435,12 +435,19 @@ def _shoot(ctx, back):
     cur += [idle, hb._visi(0), hb._w(1), asm.goto_back(loop)]
     scripts[ents["cursor"]] = {0: [Op(bytes([0xA1, 6])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret()] + cur
                                + [asm.ret()]}
-    # keys: presses while RUN (one check a frame), and the frame count
-    kl, kn, ks = asm.nop(), asm.nop(), asm.nop()
-    scripts[ents["keys"]] = {0: [asm.ret(), kl, asm.if_byte(RUN, "==", 1, ks),
-                                 Op(bytes([0x31]) + struct.pack("<H", OK_KEY) + b"\x00", target=kn),
-                                 Op(bytes([0x96, PR[0], PR[1]])), Op(bytes([0x96, TOT[0], TOT[1]])),
-                                 kn, Op(bytes([0x96, FR[0], FR[1]])), ks, hb._w(1), asm.goto_back(kl), asm.ret()]}
+    # keys: once a frame while RUN, OK held (IFKEY: the held copy, +0x78 with the 0x200 selector)
+    # going from up to down counts a press, and the frame count. (IFKEYON's "newly pressed" copy
+    # caught only some presses in-game (user): it lasts one input update, and the script looks
+    # once a frame.) TOT is added up by the director.
+    # Jumps land on real ops (no NOP labels) so a pass is at most 7 ops: one per frame. It
+    # counts from field entry; the director zeroes PR and FR at "Action!".
+    wait = hb._w(1)
+    back1, up = asm.goto_back(wait), asm.setbyte(HELD, 0)
+    scripts[ents["keys"]] = {0: [asm.ret(), wait, Op(bytes([0x96, FR[0], FR[1]])),
+                                 Op(bytes([0x30]) + struct.pack("<H", OK_KEY) + b"\x00", target=up),
+                                 asm.if_byte(HELD, "==", 0, back1), asm.setbyte(HELD, 1),
+                                 Op(bytes([0x96, PR[0], PR[1]])), back1,
+                                 up, asm.goto_back(wait), asm.ret()]}
     # voice: a line every SAY_EVERY frames while RUN; hush closes it SAY_FOR frames later
     vl, vdone = asm.nop(), asm.nop()
     voice = [asm.ret(), vl, hb._w(SAY_EVERY), asm.if_byte(RUN, "==", 1, vdone),
@@ -472,7 +479,7 @@ def _shoot(ctx, back):
     main += say("“...And... ACTION!”")
     main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setbyte(RUN, 1)]
     # a tick
-    main += [tick, hb._w(TICK_WAIT), asm.setword(T, PR), asm.setword(PR, 0),
+    main += [tick, hb._w(TICK_WAIT), asm.setword(T, PR), asm.setword(PR, 0), hb._arith(0x86, TOT, T),
              hb._arith(0x8A, VEL, 5), hb._arith(0x8C, VEL, 6),
              hb._arith(0x86, VEL, 1000 - 1000 * 5 // 6 - B - 500 // C),
              asm.setword(S, T), hb._arith(0x8A, S, A), hb._arith(0x86, VEL, S),
