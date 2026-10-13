@@ -1188,6 +1188,35 @@ def _bare_cloud(ctx):
     ctx.char_file(CLOUD_BARE_HRC.lower(), hrc.encode("latin-1"))
 
 
+# Mood lighting (user: "dim the light to about 50%"): the visit rooms' background palette
+# (every tile is paletted; 15-bit colours, bit 15 kept; a colour that would become
+# 0x0000 = transparent becomes 0x8000, opaque black) and every model's light colours
+# (model loader light block: 3 x (RGB + direction) + ambient RGB) scaled by ROOM_LIGHT.
+ROOM_LIGHT = 0.5
+
+
+def _dim(ctx, field):
+    f = ctx.field(field)
+    pal = bytearray(f.section("palette"))
+    for o in range(12, len(pal) - 1, 2):
+        v = struct.unpack_from("<H", pal, o)[0]
+        if v == 0:
+            continue
+        r, g, b = (round((v >> s & 31) * ROOM_LIGHT) for s in (0, 5, 10))
+        n = r | g << 5 | b << 10 | (v & 0x8000)
+        struct.pack_into("<H", pal, o, n if n & 0x7FFF or v & 0x7FFF == 0 else 0x8000)
+    f.set_section("palette", bytes(pal))
+    loader = ModelLoader(f.section("models"))
+    for k, e in enumerate(loader.models):
+        e = bytearray(e)
+        nl = struct.unpack_from("<H", e, 0)[0]
+        light = 2 + nl + 2 + 8 + 4 + 2
+        for o in (0, 9, 18, 27):                                     # light 1-3 colours, ambient
+            e[light + o:light + o + 3] = bytes(round(c * ROOM_LIGHT) for c in e[light + o:light + o + 3])
+        loader.models[k] = bytes(e)
+    f.set_section("models", loader.build())
+
+
 def _cloud_spread(ctx):
     """zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD."""
     import math
@@ -1535,4 +1564,5 @@ def apply(ctx):
         assert set(scenes) == {g["name"] for g in GIRLS}, name
         ctx.new_field(name, base)
         _room(ctx, back, name, [scenes[g["name"]] for g in GIRLS], final)
+        _dim(ctx, name)
     _lounge(ctx)

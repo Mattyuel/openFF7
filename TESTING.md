@@ -322,6 +322,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   zcta animation; dog = she starts on all fours, Cloud starts knelt (HBGC),
   10 left / 15 nearer the camera than the old 'beside' spot. Report what's
   off per position (field units: a body is ~90, a head ~14).
+- **Dim visit rooms** (new; untested in-game): the three Honey Bee visit
+  rooms (all scenes, not the lounges) are drawn at half brightness: the room
+  picture and the characters' lighting. Say if it's too dark / too light.
 - **Bare-legged Cloud** (new; untested in-game): in affection-20 scenes,
   after the fade to the bed Cloud is a second model with skin-coloured legs
   (no pants) and slimmer knees; part one is the normal Cloud. Report a
