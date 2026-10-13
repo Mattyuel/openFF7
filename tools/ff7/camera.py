@@ -50,3 +50,21 @@ def facing_screen(cam, x, y, z, screen_dir):
 def screen_range(triggers):
     """(left, top, right, bottom) camera scroll limits from the triggers header."""
     return struct.unpack_from("<4h", triggers, 12)
+
+
+def flip_x(data):
+    """The camera section for a field mirrored left-right: world x and
+    screen x both negated, R' = Ms R Mw (row 0 and column 0 negated; R[0][0]
+    keeps its sign), T'.x = -T.x. A point (-x, y, z) then lands at (-sx, sy)."""
+    data = bytearray(data)
+    assert len(data) % 38 == 0, len(data)
+    for base in range(0, len(data), 38):                 # every 38-byte camera block
+        v = list(struct.unpack_from("<9h", data, base))
+        for r in range(3):
+            for c in range(3):
+                if (r == 0) != (c == 0):
+                    v[r * 3 + c] = -v[r * 3 + c]
+        struct.pack_into("<9h", data, base, *v)
+        x, = struct.unpack_from("<i", data, base + 20)
+        struct.pack_into("<i", data, base + 20, -x)
+    return bytes(data)

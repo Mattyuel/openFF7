@@ -137,10 +137,11 @@ yours (instead of the original Gold Saucer gift).
   house. Tracker: common gear; Hunter: common gear + the cheaper steal-only
   items; Veteran/Elite/Master/Legend: the rest of the steal-only equipment.
   Prices from 4,000 to 200,000 gil.
-- **Honey Bee Inn lounges.** The two left rooms off the lobby can be walked
-  into freely. Room 1 (upper-left door) has girls 1-10 of the list, room 2
-  (lower-left door) girls 11-20; each girl is only there once hired, standing,
-  sitting, lying on the bed or dancing, and says her own line when talked to.
+- **Honey Bee Inn lounges.** All four side rooms off the lobby can be walked
+  into freely; the two right ones are mirror images of the left bedroom (a new
+  field). 5 girls per room in list order: upper-left = girls 1-5, lower-left
+  6-10, upper-right 11-15, lower-right 16-20; each only once hired, lying or
+  sitting on the bed, sitting, dancing or standing, with her own line.
 - **Honey Bee Girl recruitment.** The Honey Bee Inn's manager (lobby) offers
   a job: recruit girls for the Inn. Then 20 women around the world (Tifa,
   Aerith, Elena, Scarlet and 16 new ones; all adults) can be recruited by

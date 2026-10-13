@@ -159,7 +159,37 @@ def test_asm_bins_current():
             name + ": .bin is stale, reassemble it"
 
 
+def test_mirror():
+    """Background parse/build is byte-exact and a double flip is the identity;
+    a mirrored camera projects (-x, y, z) to (-sx, sy); a mirrored walkmesh
+    keeps every triangle's height and neighbour edges (620's flipped room)."""
+    import ff7tool
+    from ff7 import camera, walkmesh
+    from ff7.background import Background
+    for name in ("onna_52", "md1stin", "elm"):
+        f = ff7tool.load_field(name)[0]
+        sec = f.section("background")
+        bg = Background(sec)
+        assert bg.build() == sec, name
+        bg.flip_horizontal()
+        bg.flip_horizontal()
+        assert bg.build() == sec, name + ": double flip"
+        cam, cam2 = camera.Camera(f.sections[1]), camera.Camera(camera.flip_x(f.sections[1]))
+        m = walkmesh.Walkmesh(f.section("walkmesh"))
+        m2 = walkmesh.Walkmesh(walkmesh.flip_x(f.section("walkmesh")))
+        for i, tri in enumerate(m.tris):
+            for x, y, z in tri:
+                (a, b), (c, d) = cam.project(x, y, z), cam2.project(-x, y, z)
+                assert abs(a + c) < 1e-6 and abs(b - d) < 1e-6, name
+            cx, cy, _ = m.center(i)
+            assert m2.contains(i, -cx, cy) and m2.height(i, -cx, cy) == m.height(i, cx, cy), (name, i)   # (find: overlapping levels)
+            for k, n in enumerate(m2.access[i]):
+                if n >= 0:
+                    edge = {m2.tris[i][k][:2], m2.tris[i][(k + 1) % 3][:2]}
+                    assert edge <= {v[:2] for v in m2.tris[n]}, (name, i, k)
+
+
 if __name__ == "__main__":
-    for fn in [test_api_index_current, test_asm_bins_current, test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches]:
+    for fn in [test_api_index_current, test_asm_bins_current, test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches, test_mirror]:
         fn()
         print("ok", fn.__name__)

@@ -65,28 +65,35 @@ GIRL, CLOUD = "girl2", "cloud"
 WALK = 0x0400                                # 0x0800 ran (MOVE runs above ~0x600)
 DOOR_OPEN, DOOR_CLOSE = 0x7A, 0x11D
 CORRIDOR, CONFERENCE = "blin66_1", "blin66_6"
-# Lounge rooms: the two left doors of the lobby open freely into onna_52 with
-# HB_VISIT = LOUNGE_ROOM + room (1 upper door, 2 lower door); the room's 10
-# spare entities (zax, muki1-9: the original scenes' extras) become Honey Bee
-# girls, girl k (room 1) or 10 + k (room 2), shown only if hired.
+# Lounge rooms: the four side doors of the lobby open freely: the two left
+# ones into onna_52 (as in the original), the two right ones into FLIPPED, a
+# new field (the unused maplist name onna_1) = onna_52 mirrored left-right
+# (background tiles + texture areas, walkmesh, camera, scroll range, exit
+# line). HB_VISIT = LOUNGE_ROOM + room. 5 girls per room (room r: girls
+# 5(r-1) .. 5(r-1)+4), each shown only if hired, on 5 of the room's 10 spare
+# entities (zax, muki1-9: the original scenes' extras).
 LOUNGE_ROOM = 100
 LOUNGE_EXTRAS = ["zax"] + ["muki%d" % k for k in range(1, 10)]
-LOBBY_DOORS = {"border1": 1, "border2": 2}       # onna_4 door lines -> room
-LOBBY_LOCKS = (0x13, 0x1C)                        # the two left doors' triangles (locked until a room was chosen)
-ROOM_EXITS = {1: (-246, -135, 16, 96), 2: (-267, 153, 21, 32)}   # onna_52 border1's own two arrivals in the lobby
-# (x, y, pose): pose = None stand, ("hold", anim) a held pose, ("loop", anim) repeated
+FLIPPED = "onna_1"
+LOBBY_DOORS = {"border1": 1, "border2": 2, "border3": 3, "border4": 4}   # onna_4 door lines -> room
+LOBBY_LOCKS = (0x13, 0x1C, 0x1E, 0x04)            # the side doors' triangles (locked until a room was chosen)
+CHOOSERS = ("border5", "border6", "border7", "border8")   # the "take this room?" lines
+ROOM_EXITS = {1: (-246, -135, 16, 96), 2: (-267, 153, 21, 32),       # onna_52 border1's own two arrivals
+              3: (251, -140, 6, 160), 4: (255, 142, 1, 224)}         # onna_5's two exits to the lobby
+ROOM_ARRIVAL = (263, 163, 5, 220)                 # onna_52 at the door (rooms 3/4: mirrored)
+GIRLS_PER_ROOM = 5
+# (x, y, pose) in onna_52 (mirrored in FLIPPED): pose None = stand,
+# ("hold", anim) a held pose, ("loop", anim) repeated
+# The bed is a separate piece of walkmesh (z 76; the floor is z 25): its girls
+# sit near the floor's edge (<= 31 units) and get a bigger talk radius.
 LOUNGE_SPOTS = [
-    ((136, -199), ("hold", "DZBA.tor")),     # lying on the bed
-    ((90, -235), ("hold", "DXHE.tor")),      # sitting on the bed
-    ((175, -150), ("hold", "DXIB.tor")),     # sitting on the bed's edge
-    ((-40, -230), None),
+    ((80, -250), ("hold", "DZBA.tor")),      # lying on the bed
+    ((70, -140), ("hold", "DXHE.tor")),      # sitting on the bed
+    ((-60, -150), ("hold", "DXIC.tor")),     # sitting
     ((-120, 180), ("loop", "DXJC.tor")),     # dancing
-    ((-240, 4), ("hold", "DXIC.tor")),       # sitting
-    ((-60, -50), None),
-    ((60, 230), None),
-    ((-50, 120), ("loop", "BAJF.tor")),      # squat and twirl
-    ((150, 60), ("loop", "DXIF.tor")),       # checking both sides
+    ((60, 230), None),                       # standing
 ]
+TALK_RADIUS, BED_TALK_RADIUS = 0x46, 0x60
 CONFERENCE_DOOR = (2, "blin66_2")           # blin66_1 gateway slot, its original destination
 CONFERENCE_COPIES = ["scarlet", "hyde", "leave"]   # visible (unplaced) at the pinned moment 998
 HIDE = [b"\x7E\x01", b"\xC7\x01", b"\xA4\x00"]  # TLKON 01, SOLID 01, VISI 00          # the room's own entrance scene's door sounds
@@ -574,49 +581,52 @@ def _room(ctx, back):
 
 
 def _lounge(ctx):
+    from ff7 import background as bgmod, camera as cammod, walkmesh as wmmod
     from ff7.camera import Camera, facing_screen
-    # ---- the room: the 10 extras become girls ----
     f = ctx.field(ROOM)
     mesh, cam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
+    fmesh = Walkmesh(wmmod.flip_x(f.section("walkmesh")))
+    fcam = Camera(cammod.flip_x(f.sections[1]))
     loader = ModelLoader(f.section("models"))
     sec = Script.parse(f.sections[0])
     da = {n: i for i, n in enumerate(DANCER_ANIMS + DANCER_EXTRA)}
-    assert len(LOUNGE_EXTRAS) == len(LOUNGE_SPOTS) == 10 and len(GIRLS) == 20
-    for k, (name, ((x, y), pose)) in enumerate(zip(LOUNGE_EXTRAS, LOUNGE_SPOTS)):
+    assert len(GIRLS) == 4 * GIRLS_PER_ROOM == 20 and len(LOUNGE_SPOTS) == GIRLS_PER_ROOM
+    for k, name in enumerate(LOUNGE_EXTRAS):
         ent = sec.entity_index(name)
         old = sec.script_ops(ent, 0)
         assert old[0].op == 0xA1, (name, old[0].raw.hex())          # CHAR
         model = old[0].raw[1]
         loader.models[model] = loader.models[1]                      # the dancer, all 22 anims
-        t = mesh.find(x, y)
-        assert t is not None, (x, y)
-        z = mesh.height(t, x, y)
-        face = facing_screen(cam, x, y, z, (0, 1))
-        show = [_xyzi(x, y, z, t), Op(bytes([0xB3, 0, face])), _visi(1), Op(b"\x7E\x00"),   # TLKON 00
-                Op(bytes([0xC5, 0x00, 0x46]))]                                              # TALKR
-        if pose and pose[0] == "hold":
-            show.append(_anim(da[pose[1]], hold=True))
         init, done = [Op(bytes([0xA1, model])), Op(b"\x7E\x01"), Op(b"\xC7\x01"), _visi(0)], asm.nop()
         talk, tend = [Op(b"\x33\x01"), Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00")], asm.nop()
-        for room in (1, 2):
-            g = k + 10 * (room - 1)
-            nxt = asm.nop()
-            init += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, nxt),
-                     asm.if_byte(_hired(g)[0], "bit_on", _hired(g)[1], nxt)] + [Op(bytes(o.raw)) for o in show]
-            init += [asm.goto(done), nxt]
-            tnxt = asm.nop()
-            talk += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, tnxt)]
-            talk += _say(sec, GIRLS[g]["name"] + "\n" + LOUNGE[GIRLS[g]["name"]]) + [asm.goto(tend), tnxt]
-        init += [done, asm.ret()]
         main = []
-        if pose and pose[0] == "loop":
-            top = asm.nop()
-            main = [top, _anim(da[pose[1]]), asm.goto_back(top)]
+        if k < GIRLS_PER_ROOM:
+            (x0, y0), pose = LOUNGE_SPOTS[k]
+            for room in (1, 2, 3, 4):
+                g = GIRLS_PER_ROOM * (room - 1) + k
+                m, c, x = (mesh, cam, x0) if room <= 2 else (fmesh, fcam, -x0)   # rooms 3/4: FLIPPED
+                t = m.find(x, y0)
+                assert t is not None, (room, x, y0)
+                z = m.height(t, x, y0)
+                show = [_xyzi(x, y0, z, t), Op(bytes([0xB3, 0, facing_screen(c, x, y0, z, (0, 1))])), _visi(1),
+                        Op(b"\x7E\x00"),                                         # TLKON 00, TALKR
+                        Op(bytes([0xC5, 0x00, BED_TALK_RADIUS if z > 50 else TALK_RADIUS]))]
+                if pose and pose[0] == "hold":
+                    show.append(_anim(da[pose[1]], hold=True))
+                nxt = asm.nop()
+                init += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, nxt),
+                         asm.if_byte(_hired(g)[0], "bit_on", _hired(g)[1], nxt)] + show + [asm.goto(done), nxt]
+                tnxt = asm.nop()
+                talk += [asm.if_byte(HB_VISIT, "==", LOUNGE_ROOM + room, tnxt)]
+                talk += _say(sec, GIRLS[g]["name"] + "\n" + LOUNGE[GIRLS[g]["name"]]) + [asm.goto(tend), tnxt]
+            if pose and pose[0] == "loop":
+                top = asm.nop()
+                main = [top, _anim(da[pose[1]]), asm.goto_back(top)]
+        init += [done, asm.ret()]
         talk += [tend, Op(b"\x33\x00"), asm.ret()]
         sec.remove(old[0])                                           # its old CHAR: no second CHAR
         empty = asm.ret()
-        block = init + main + [asm.ret()] + talk + [empty]
-        sec.ops.extend(block)
+        sec.ops.extend(init + main + [asm.ret()] + talk + [empty])
         sec.entry[ent] = [empty] * 32
         sec.entry[ent][0], sec.entry[ent][1] = init[0], talk[0]
     # menu back on in a lounge (produce's init turns it off for the room's scenes)
@@ -637,7 +647,26 @@ def _lounge(ctx):
     f.sections[0] = sec.build()
     n = struct.unpack_from("<H", sec.tail, 0)[0]
     assert n <= 255, n
-    # ---- the lobby: the two left doors open, each to its room ----
+    # ---- FLIPPED: onna_52 as built, mirrored ----
+    flip = ctx.new_field(FLIPPED, f.build())
+    bg = bgmod.Background(flip.section("background"))
+    bg.flip_horizontal()
+    flip.set_section("background", bg.build())
+    flip.set_section("walkmesh", wmmod.flip_x(flip.section("walkmesh")))
+    flip.sections[1] = cammod.flip_x(flip.sections[1])
+    trig = bytearray(flip.section("triggers"))
+    left, top, right, bottom = struct.unpack_from("<4h", trig, 12)
+    struct.pack_into("<4h", trig, 12, -right, top, -left, bottom)
+    flip.set_section("triggers", bytes(trig))
+    fsec = Script.parse(flip.sections[0])
+    lines = [o for o in fsec.script_ops(fsec.entity_index("border1"), 0) if o.op == 0xD0]
+    assert len(lines) == 1, lines
+    x1, y1, z1, x2, y2, z2 = struct.unpack_from("<6h", bytes(lines[0].raw), 1)
+    lines[0].raw[1:13] = struct.pack("<6h", -x2, y2, z2, -x1, y1, z1)          # mirrored, ends swapped
+    flip.sections[0] = fsec.build()
+    # ---- the lobby: the four side doors open, each to its room ----
+    rx, ry, rtri, rdir = ROOM_ARRIVAL
+    assert mesh.contains(rtri, rx, ry) and fmesh.contains(rtri, -rx, ry)
     lob = ctx.field(LOBBY)
     lmesh = Walkmesh(lob.section("walkmesh"))
     for ex, ey, etri, _ in ROOM_EXITS.values():
@@ -645,15 +674,18 @@ def _lounge(ctx):
     sec = Script.parse(lob.sections[0])
     produce = sec.script_ops(sec.entity_index("produce"), 0)
     locks = [o for o in produce if o.op == 0x6D and o.raw[3] == 1 and (o.raw[1] | o.raw[2] << 8) in LOBBY_LOCKS]
-    assert len(locks) == 2, locks
+    assert len(locks) == len(LOBBY_LOCKS), locks
     for o in locks:
         sec.remove(o)
     for name, room in LOBBY_DOORS.items():
         ent = sec.entity_index(name)
-        jump = [o for o in sec.script_ops(ent, 2) if o.op == 0x60]
-        assert len(jump) == 1 and struct.unpack_from("<H", bytes(jump[0].raw), 1)[0] == ctx.maplist.index(ROOM), name
-        sec.replace_script(ent, 2, [asm.setbyte(HB_VISIT, LOUNGE_ROOM + room), Op(bytes(jump[0].raw)), asm.ret()])
-    for name in ("border7", "border8"):                              # the "take this room?" lines: nothing to choose now
+        assert len([o for o in sec.script_ops(ent, 2) if o.op == 0x60]) == 1, name
+        if room <= 2:
+            jump = asm.mapjump(ctx.maplist.index(ROOM), rx, ry, rtri, rdir)
+        else:
+            jump = asm.mapjump(ctx.maplist.index(FLIPPED), -rx, ry, rtri, (256 - rdir) % 256)
+        sec.replace_script(ent, 2, [asm.setbyte(HB_VISIT, LOUNGE_ROOM + room), jump, asm.ret()])
+    for name in CHOOSERS:                                            # nothing to choose now
         sec.replace_script(sec.entity_index(name), 1, [asm.ret()])
     lob.sections[0] = sec.build()
 

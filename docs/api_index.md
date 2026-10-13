@@ -17,6 +17,7 @@ openFF7 command-line tool.
 - class `BuildContext` Handed to each patch module's apply(ctx). Tracks modified field files.
   - `__init__()` 
   - `field(name)` Return a mutable FieldFile for `name` (cached; saved at the end of the build).
+  - `new_field(name, raw)` Add a field under `name` (a maplist name with no file in
   - `script(name)` 
   - `set_script(name, data)` 
   - `kernel_init()` Editable new-game data (KERNEL.BIN section 3); written by the build.
@@ -84,6 +85,19 @@ Constructors for new field script instructions (returns script.Op objects).
 - `battle(formation)` 
 - `battles_enabled(on)` BTLON: random battles on/off (the opcode's operand is 'disabled').
 
+## `tools/ff7/background.py`
+Field background (section 8, PC): tile layers + texture pages.
+
+- class `Tile` 
+  - `__init__(raw)` 
+  - `_get(fmt, off)` 
+  - `_set(fmt, off, v)` 
+- class `Background` 
+  - `__init__(data)` 
+  - `tiles()` 
+  - `build()` 
+  - `flip_horizontal()` Mirror the picture left-right about the screen centre (x = 0):
+
 ## `tools/ff7/camera.py`
 Field camera (section 1): project field coordinates to screen pixels.
 
@@ -93,6 +107,7 @@ Field camera (section 1): project field coordinates to screen pixels.
 - `facing_vector(direction)` Field (x, y) unit vector an entity with DIR `direction` (0-255) faces:
 - `facing_screen(cam, x, y, z, screen_dir)` DIR value whose facing looks most like `screen_dir` (dx, dy) on screen
 - `screen_range(triggers)` (left, top, right, bottom) camera scroll limits from the triggers header.
+- `flip_x(data)` The camera section for a field mirrored left-right: world x and
 
 ## `tools/ff7/disasm.py`
 Disassemble FF7 field scripts into structured instructions and readable text.
@@ -319,6 +334,7 @@ Field walkmesh (section 4): triangles the player can walk on.
   - `boundary_edges(i)` Edges of triangle i on the mesh boundary: [(p1, p2)].
   - `height(i, x, y)` z of the point (x, y) on triangle i's plane.
   - `nearby(i, depth=4)` Triangles reachable from i within `depth` steps (i first).
+- `flip_x(data)` The walkmesh section mirrored left-right (x -> -x). Each triangle's
 
 ## `tools/ff7/worldmap.py`
 World map scripts (wm0.ev / wm2.ev / wm3.ev in world_us.lgp) and field.tbl.

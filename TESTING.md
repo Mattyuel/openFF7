@@ -283,14 +283,18 @@ Existing saves load, but they keep their own story progress; use a new game.
   took the job), counting at most 4.5 hours; the amount shows in his line.
   Check the number matches the gil you get.
 - **Honey Bee lounges** (new; untested in-game): in the Honey Bee Inn lobby
-  walk straight through either left door (no room menu). Upper-left = room 1
-  (Bambi, Gloria, Dot, Peggy, Candy, Rhonda, Lulu, Raven, Elena, Marisol),
-  lower-left = room 2 (Ruby, Holly, Sakura, Mags, Celeste, Aurora, Tifa,
-  Aerith, Scarlet, Velvet); only hired girls appear (as Honey Bees): one
-  lying on the bed, two sitting on it, one sitting on the floor, dancers,
-  standing ones. Talk to each (her own line). They never block you. The menu
-  works in there; the door line takes you back to the door you used. Check
-  the poses look right and every girl can be reached.
+  walk straight through any of the four side doors (no room menu). Left
+  doors = the original bedroom, right doors = a NEW mirrored copy of it (the
+  bed, door and bath swapped sides; check the picture, the walls you can't
+  walk through and what's drawn in front of you all match). Upper-left:
+  Bambi, Gloria, Dot, Peggy, Candy; lower-left: Rhonda, Lulu, Raven, Elena,
+  Marisol; upper-right: Ruby, Holly, Sakura, Mags, Celeste; lower-right:
+  Aurora, Tifa, Aerith, Scarlet, Velvet. Only hired girls appear (as Honey
+  Bees): one lying on the bed, one sitting on it, one sitting, a dancer, one
+  standing; talk to each (the bed girls from beside the bed). They never block
+  you. The menu works in there; the door line takes you back out by the door
+  you used. If the mirrored room crashes or looks broken, say so: it is the
+  first new field the mod adds.
 - **Bounties: Scoop, roving reporter** (new game; untested in-game; needs the
   new ff7_en.exe AND flevel.lgp). Scoop (a Junon parade reporter) sits in 8
   bars: 7th Heaven (Midgar), Kalm bar (Midgar plains to the Zolom marsh),

@@ -59,3 +59,20 @@ class Walkmesh:
             frontier = list(dict.fromkeys(frontier))
             seen += frontier
         return seen
+
+
+def flip_x(data):
+    """The walkmesh section mirrored left-right (x -> -x). Each triangle's
+    vertices are reversed (v0, v2, v1) to keep the winding, so its edges are
+    (v0-v2, v2-v1, v1-v0) = old edges 2, 1, 0: access entries reversed too."""
+    data = bytearray(data)
+    n, = struct.unpack_from("<I", data, 0)
+    for i in range(n):
+        o = 4 + i * 24
+        v = [struct.unpack_from("<4h", data, o + k * 8) for k in range(3)]
+        for k, (x, y, z, r) in enumerate((v[0], v[2], v[1])):
+            struct.pack_into("<4h", data, o + k * 8, -x, y, z, r)
+        a = 4 + n * 24 + i * 6
+        acc = struct.unpack_from("<3h", data, a)
+        struct.pack_into("<3h", data, a, acc[2], acc[1], acc[0])
+    return bytes(data)

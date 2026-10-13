@@ -269,6 +269,14 @@ class BuildContext:
             self._fields[name] = FieldFile(raw)
         return self._fields[name]
 
+    def new_field(self, name, raw):
+        """Add a field under `name` (a maplist name with no file in
+        flevel.lgp, e.g. onna_1): it is written to flevel.lgp at save."""
+        assert name in self.maplist and name not in self.flevel, name
+        self._orig_raw[name] = None
+        self._fields[name] = FieldFile(raw)
+        return self._fields[name]
+
     def script(self, name):
         return ScriptSection(self.field(name).sections[0])
 
