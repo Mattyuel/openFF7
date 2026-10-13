@@ -82,7 +82,7 @@ SKIRT_RINGS = {0.0: (0.8, 0.68), -1.8: (0.86, 0.8)}
 # koala (user's test scene): she clings to standing Cloud (620's ZCTH: ZCTE leaning back,
 # arms bent in round her), legs spread wide and wrapped round him, arms round his neck,
 # bouncing with his thrusts; leaning a little forward onto him (he leans back)
-KOALA_LEAN, KOALA_THIGH, KOALA_SPREAD, KOALA_WRAP, KOALA_ARMS, KOALA_ARMS_IN, KOALA_ELBOW = -10, 80, 60, 100, 100, 30, 70
+KOALA_LEAN, KOALA_ARMS, KOALA_THIGH, KOALA_SPREAD, KOALA_KNEE = -10, 85, 85, 45, 90   # (user: arms 85, thighs 85, spread, knees 90)
 KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 2.0, 1.0, 1.5    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
 GIRL_MODEL = {"Tifa": "main_n_tifa.char"}   # her model entry in both base fields (name suffix)
 RETURN_GAP = 40                        # back beside her: this far from her spot
@@ -422,11 +422,13 @@ def _bare_tifa(ctx):
 
 
 def _koala(ctx, name, hrc, stand):
-    """Her koala hug on standing Cloud (one frame per ZCTE frame): leaning back KOALA_LEAN
-    (head upright), thighs KOALA_THIGH forward and KOALA_SPREAD apart round his waist, shins
-    swung KOALA_WRAP in behind his back, arms KOALA_ARMS up-forward, KOALA_ARMS_IN in, the
-    forearms KOALA_ELBOW in behind his neck. Her XYZI = his, DIR his + 128, so his model
-    point (x, y, z) is her (-x, y, -z); her pelvis rides at his (bouncing KOALA_BOUNCE)."""
+    """Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
+    leaning KOALA_LEAN onto him (head upright); arms raised KOALA_ARMS forward; each thigh
+    raised KOALA_THIGH forward, then spread KOALA_SPREAD outward (about the vertical), then
+    the knee bent KOALA_KNEE (the shin turned about the knee's own hinge axis, thigh x up).
+    Her XYZI = his, DIR his + 128, so his model point (x, y, z) is her (-x, y, -z); her pelvis
+    rides in front of his (bouncing KOALA_BOUNCE), and her upper body turns forward as her
+    pelvis goes back, so her head keeps its place (user)."""
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
     names = [b[0] for b in sk]
@@ -435,8 +437,11 @@ def _koala(ctx, name, hrc, stand):
     rr, rp, rots = base.frames[0]
     root = [rp[0], -rp[1], rp[2]]
     W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
-    ends = lambda W: {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W)))}
-    side, up, ahead = [1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]      # she faces -z, y down
+    fk = lambda W, r=root: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
+    ends = lambda W: {names[i]: e for i, (_, _, e) in enumerate(fk(W))}
+    side, up = [1.0, 0.0, 0.0], [0.0, -1.0, 0.0]      # she faces -z, y down
+    cross = lambda a, b: [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
 
     def turned(W, bones, axis, angle, test):
         e0 = ends(W)
@@ -452,27 +457,41 @@ def _koala(ctx, name, hrc, stand):
     W = turned(W, {"head"}, side, abs(KOALA_LEAN),
                lambda a, b: sense * b["head"][2] < sense * a["head"][2] - 0.1)                       # head upright
     for s, out in (("l", 1), ("r", -1)):
+        arm = {s + "_uparm", s + "_foarm", s + "_hand"}
+        W = turned(W, arm, side, KOALA_ARMS, lambda a, b: b[s + "_hand"][2] < a[s + "_hand"][2] - 1)  # forward-up
         leg = {s + "_femur", s + "_tibia", s + "_foot"}
         W = turned(W, leg, side, KOALA_THIGH, lambda a, b: b[s + "_femur"][2] < a[s + "_femur"][2] - 1)
         W = turned(W, leg, up, KOALA_SPREAD, lambda a, b: out * b[s + "_femur"][0] > out * a[s + "_femur"][0] + 0.5)
-        W = turned(W, {s + "_tibia", s + "_foot"}, up, KOALA_WRAP,
-                   lambda a, b: abs(b[s + "_tibia"][0]) < abs(a[s + "_tibia"][0]) - 0.5
-                   and b[s + "_tibia"][2] < a[s + "_tibia"][2])                     # in, round him (not back)
-        arm = {s + "_uparm", s + "_foarm", s + "_hand"}
-        W = turned(W, arm, side, KOALA_ARMS, lambda a, b: b[s + "_hand"][2] < a[s + "_hand"][2] - 1)  # forward-up
-        W = turned(W, arm, up, KOALA_ARMS_IN, lambda a, b: out * b[s + "_hand"][0] < out * a[s + "_hand"][0] - 0.3)
-        W = turned(W, {s + "_foarm", s + "_hand"}, up, KOALA_ELBOW,
-                   lambda a, b: out * b[s + "_hand"][0] < out * a[s + "_hand"][0] - 0.3)
-    local = fa.local_rotations(sk, rr, W)
+        F = fk(W)
+        thigh = [F[I(s + "_femur")][2][k] - F[I(s + "_femur")][1][k] for k in range(3)]
+        hinge = unit(cross(thigh, up))                                            # the knee's axis
+        W = turned(W, {s + "_tibia", s + "_foot"}, hinge, KOALA_KNEE,
+                   lambda a, b: b[s + "_tibia"][1] > a[s + "_tibia"][1] + 1)        # shin down (y down)
+    F = fk(W)
+    for s in "lr":                                    # check: thigh ~level, knee at 90
+        th = [F[I(s + "_femur")][2][k] - F[I(s + "_femur")][1][k] for k in range(3)]
+        sh = [F[I(s + "_tibia")][2][k] - F[I(s + "_tibia")][1][k] for k in range(3)]
+        cosk = sum(th[k] * sh[k] for k in range(3)) / math.sqrt(sum(q * q for q in th) * sum(q * q for q in sh))
+        assert abs(math.degrees(math.acos(cosk)) - KOALA_KNEE) < 3, (s, cosk)
+    head0 = F[I("head")][2]
+    pelvis0 = F[I("hip")][1]
+    tilt = 1 if fk([fa._mul(fa.axis_angle(side, 5), m) if names[i] in upper else m
+                    for i, m in enumerate(W)])[I("head")][2][2] < head0[2] else -1   # + this: head forward (-z)
     his = fa.Anim(ctx.char_file(_hb().CLOUD_BED["standk"].split(".")[0].lower() + ".a"))
     frames = []
     n = len(his.frames)
+    r0 = None
     for t, (_, hp, _) in enumerate(his.frames):
         e = (1 - math.cos(2 * math.pi * t / n)) / 2
         hx, hy, hz = hp[0], -hp[1], hp[2]                                        # his pelvis (y down)
         px, py, pz = -hx, hy, -(hz - KOALA_FRONT)                                # in front of it, in her space
         r = [px, py - KOALA_UP - KOALA_BOUNCE * e, pz + KOALA_BACK]
-        frames.append((rr, [r[0], -r[1], r[2]], local))
+        r0 = r0 or r
+        back = r[2] - r0[2]                                                      # her pelvis back (+z) of frame 0
+        length = head0[1] - pelvis0[1]
+        a = math.degrees(math.asin(max(-1.0, min(1.0, back / abs(length))))) if length else 0.0
+        Wt = [fa._mul(fa.axis_angle(side, tilt * a), m) if names[i] in upper else m for i, m in enumerate(W)]
+        frames.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, Wt)))
     base.frames = frames
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
