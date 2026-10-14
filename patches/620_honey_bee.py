@@ -169,8 +169,9 @@ RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head 
 # (user, since) HEAD_FORWARD closer to her; Cloud's pose = the movie minigame's head (ZCTQ, user;
 # was ZCTS: knees bent 70, pelvis low): his left leg cocked HEAD_STEP forward, the foot
 # planted, the pelvic thrust x HEAD_THRUST
-HEAD_STAND, HEAD_GAP = (-20, -180), 41       # (user, since) she slightly closer: was 52 (before that 30);
-                                             # then 46; 41 = 35 from him, as the movie (his hands hold her head)
+HEAD_STAND, HEAD_GAP = (-20, -180), 44       # (user, since) she slightly closer: was 52 (before that 30);
+                                             # then 46; 41 = 35 from him, as the movie (his hands hold her head);
+                                             # (user, since) 44 = 38 from him, slightly further
 HEAD_FORWARD = 6
 TXPOKE = 0x1D                                 # field opcode (quest_menu.asm t_op, CODE+40): see _manager
 HEAD_STEP, HEAD_THRUST = 20, 2.0
@@ -178,7 +179,12 @@ HEAD_STEP, HEAD_THRUST = 20, 2.0
 # thrusting from there; both hands on her head: fingertips HOLD_SIDE either side of her head's middle
 # (the dancer's DZBK, HEAD_HOLD_GAP model units ahead = the movie's 35 field units), fingers down
 # and tipped HOLD_IN inwards
-HEAD_LOW, HOLD_SIDE, HOLD_IN, HEAD_HOLD_GAP = 2 / 3, 1.5, 0.35, 35 / 3.41
+HEAD_LOW, HOLD_SIDE, HOLD_IN, HEAD_HOLD_GAP = 3 / 4, 1.5, 0.35, 38 / 3.41
+# (user, since) Cloud slightly higher (HEAD_LOW 2/3 -> 3/4), she slightly further (35 -> 38), his torso
+# leaning HEAD_LEAN forward (STAND_LEAN 25: tilted back a bit) and his elbows HEAD_ELBOWS_OUT further out;
+# his fingertips HOLD_NEAR to his side of her head's middle so it stays in reach
+HEAD_LEAN, HEAD_ELBOWS_OUT = 20, 2.0              # (15 put her head out of his reach)
+HOLD_NEAR = 0.7                               # the fingertips this far to his side of her head's middle
 HEAD_RIGHT = 6                                # she kneels this far (field units) to his right (as the movie)
 # edge: her feet just left of the bed's left end (screen x ~10), torso and arms out over it;
 # Cloud EDGE_GAP further left, facing the bed (screen-right) like her
@@ -1895,7 +1901,8 @@ def _cloud_buck(ctx):
 
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
-                 lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None):
+                 lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None,
+                 elbows_out=1.0):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
     the left thigh raised to `hip` degrees forward of vertical and turned `out` degrees
     outward, the shin straight down, the foot level; it stays planted while the hips
@@ -1905,7 +1912,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     (the head layout's ZCTS: lower). low: instead of `knee`, the knees bent until the pelvis is at
     this fraction of its height with STAND_KNEE (head: 2/3, user). hold = (her .hrc, her anim, gap,
     right): both hands on the sides of her head (her kneeling `gap` model units ahead and `right` to
-    his right, facing him), or "still" (the hands stay where frame 0 has them: edge, user), held
+    his right, facing him; elbows_out: how far out the elbows point, against down / back), or "still" (the hands stay where frame 0 has them: edge, user), held
     there by two-bone IK on each arm every frame (head, user)."""
     import math
     from ff7 import fieldanim as fa
@@ -2034,7 +2041,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
         grips = {}
         for s, out in (("l", 1), ("r", -1)):
             hd = unit_([-out * HOLD_IN, 1.0, 0.0])                                 # fingers down, tipped in
-            tip = [c[0] + out * HOLD_SIDE, c[1], c[2]]
+            tip = [c[0] + out * HOLD_SIDE, c[1], c[2] + HOLD_NEAR]                # (+z: towards him)
             Lh = math.dist(S0[I(s + "_hand")], E0[I(s + "_hand")])
             grips[s] = ([tip[k] - Lh * hd[k] for k in range(3)], hd, tip)
     frames = []
@@ -2078,7 +2085,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             dd = math.sqrt(dot(D, D))
             assert dd < L1 + L2 - 0.05, ("her head out of reach", s, dd, L1 + L2)
             u = [q / dd for q in D]
-            pole = [out * 1.0, 0.6, 0.4]                                       # elbows out, down, back
+            pole = [out * elbows_out, 0.6, 0.4]                                # elbows out, down, back
             pp = sub(pole, [dot(pole, u) * q for q in u])
             pn = math.sqrt(dot(pp, pp))
             a_ = (L1 * L1 - L2 * L2 + dd * dd) / (2 * dd)
@@ -2658,7 +2665,8 @@ def apply(ctx):
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8)   # x2 (dates)
     _cloud_stand(ctx, CLOUD_BED["standlow"], arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, step=HEAD_STEP,
-                 thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, hold=("badd.hrc", "dzbk.a", HEAD_HOLD_GAP,
+                 thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, lean=HEAD_LEAN, elbows_out=HEAD_ELBOWS_OUT,
+                 hold=("badd.hrc", "dzbk.a", HEAD_HOLD_GAP,
                                                                      HEAD_RIGHT / 3.41))   # head (user): ZCTQ, also the movie's
     for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)
         _cloud_stand(ctx, name, arms=AERITH_CLOUD_ARMS, arms_out=AERITH_CLOUD_IN, elbow_in=AERITH_CLOUD_ELBOW, nframes=n)

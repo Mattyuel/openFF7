@@ -402,7 +402,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   foot looks planted and doesn't vanish into the bed.
 - **Head and edge** (Honey Bee and movie; new, untested in-game, user): in "head" Cloud's knees bend
   until his pelvis is a third lower, thrusting from there, both hands on the sides of her head
-  (Honey Bee: she kneels where the movie has her, 35 from him and 6 to his right); in "edge" (Tifa)
+  (Honey Bee: she kneels where the movie has her, 35 from him and 6 to his right; since (user): Cloud
+  a little higher, torso tilted back 5, elbows further out, she 3 further away); in "edge" (Tifa)
   Cloud stands 3 further back and his hands stay on her behind as he thrusts. Check the hands touch
   her head (other co-stars' heads differ in size), and that nothing clips.
 - **Honey Bee manager's visit menu** (new; untested in-game, user): "Next page." is now the first row;

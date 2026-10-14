@@ -118,7 +118,8 @@ POSITIONS = [
     # (user, since) Cloud: ZCTQ = ZCTE with his left leg cocked HEAD_STEP forward (foot planted) and
     # HEAD_THRUST x the pelvic thrust (built by 620 for its head layout too: HEAD_STEP / HEAD_THRUST)
     # (user, since) she a touch closer (x 42 -> 45)
-    dict(name="head", girl=("ZRTA", (45, -224, 0, 0x40), False), cloud=("ZCTQ", (80, -230, 0, 0xC0), False),
+    # (user, since) then slightly further again (45 -> 42: 38 from him, as 620's HEAD_HOLD_GAP)
+    dict(name="head", girl=("ZRTA", (42, -224, 0, 0x40), False), cloud=("ZCTQ", (80, -230, 0, 0xC0), False),
          camera=(140, -235, 0xC0)),
 ]
 LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
