@@ -197,6 +197,7 @@ pulled in (user's sketch).
 
 | Anim | Pose |
 |---|---|
-| ZM<p><s> / ZN<p><s> | Ruby / bare Cloud: position p (A mission DZBT+ZCTA, B cowgirl DZBL+ZCTD, C dog DZBF+ZCTB, D edge DZBG+ZCTF, E head reverse DZBH+ZCTE, F head DZBK+ZCTE) resampled from 15 frames to 20 / 15 / 11 / 8 (s = 0..3: the thrust speed steps). `670._speeds`. |
+| ZM<p><s> / ZN<p><s> | Ruby / bare Cloud: position p (A mission DZBT+ZCTA, B cowgirl DZBL+ZCTD, C dog DZBF+ZCTB, D edge DZBG+ZCTF, E head reverse DZBH+ZCTE, F head DZBK+ZCTE, G behind ZRWA+ZCTE, H holding ZRKA+ZCTH) resampled from 15 frames to 20 / 15 / 11 / 8 (s = 0..3: the thrust speed steps). `670._speeds`. |
 
 Cameraman (junon_report2, FCGD.HRC from junone2 model 6): FDCB holds the camera low (idle), FFBC films with it at his eye, FDCD films crouching.
+| ZRWA / ZRKA | Ruby (CBFE, from DXID): Scarlet's wall pose (`660._wall`, on ZCTE, same XYZI/DIR as Cloud) / Tifa's koala hug (`660._koala`, on ZCTH, DIR + 128): the minigame's "behind" / "holding" (user). |

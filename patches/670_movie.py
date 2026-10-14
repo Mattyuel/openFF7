@@ -46,7 +46,7 @@ from _recruit import sound
 from _travel import CHOICE, add_npc, beside
 
 from ff7 import asm
-from ff7.camera import Camera, screen_range
+from ff7.camera import Camera, facing_screen, screen_range
 from ff7.models import ModelLoader
 from ff7.script import Op, Script
 from ff7.walkmesh import Walkmesh
@@ -85,6 +85,15 @@ POSITIONS = [
     # on the floor in front of the beds; she (user) half a head further from him (x 50 -> 42)
     dict(name="head", girl=("DZBK", (42, -230, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
          camera=(140, -235, 0xC0)),
+    # (user) Scarlet's date pose, "behind": she leans forward, arms out, right knee up, in front of standing
+    # Cloud facing his way (660 `_wall` on her skeleton: same XYZI and DIR as his ZCTE, her pelvis in the
+    # anim); on the floor in front of the beds, side on (facing screen-right); the cameraman faces them
+    dict(name="behind", girl=("ZRWA", (75, -290, 0, "cloud"), False), cloud=("ZCTE", (75, -290, 0, "screen-right"),
+         False), camera=(140, -235, None)),
+    # (user) Tifa's date pose, "holding": she koala-hugs standing Cloud (660 `_koala`: same XYZI, DIR + 128,
+    # on his ZCTH), between the left and middle beds, side on
+    dict(name="holding", girl=("ZRKA", (-128, -40, 0, "facing"), False), cloud=("ZCTH", (-128, -40, 0, "screen-left"),
+         False), camera=(-130, -180, None)),
 ]
 LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
     "mission": ["Mmm... the camera loves you.", "Kiss my neck... yes, right there...",
@@ -104,6 +113,12 @@ LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user
     "headrev": ["Mmph... mmmh!", "Mmf! Mmmf...", "(She grabs your thighs and pulls you in.)\n Mmmh!",
                 "Hnnh... mmh...", "Gk... mmh! Mmmh...", "(She moans around you.)\n Mmmmh...!",
                 "Mmm... mmm... mmm!", "Hmmf! Mmmh..."],
+    "behind": ["Against the wall... yes!", "Pull my hair back!", "Hold my hips and don't let go...",
+               "Harder! Make the wall shake!", "Mmm, kiss my neck...", "Spank me, star!",
+               "Don't stop... don't stop...", "Oh! Right there!"],
+    "holding": ["Hold me up... don't drop me!", "Mmm, you're so strong...", "Squeeze my ass tighter...",
+                "Bounce me harder!", "I'm all yours, star...", "Kiss me... mmm...",
+                "Oh, I'm slipping... hold on!", "Yes! Yes! Right there!"],
     "head": ["Mmm... mmph!", "(She guides your hand into her hair.)\n Mmmh!", "Mmf... mmh, mmh...",
              "(She looks up at you.) Mmm...", "Hmmm... mmmh!", "Gk... mmf! Mmmh...",
              "(She pulls your hips closer.)\n Mmph!", "Mmph! Mmm..."],
@@ -125,7 +140,7 @@ GIL = (6, 140)                                       # mrkt2: the cut (temp word
 # it) brought in to the thigh (LIMB_TOP).
 # The chest (jacket, red top, belt), the cuffs and the gloves stay. Colours are B, G, R as the
 # .p files store them.
-RUBY_HRC, BARE_HRC = "cbfe.hrc", "ZRHA.HRC"
+RUBY_HRC, BARE_HRC, RUBY_STAND = "cbfe.hrc", "ZRHA.HRC", "dxid.a"   # (the dancer's stand pose)
 SKIN = (153, 204, 255)
 DRESS = {(25, 25, 25), (0, 76, 153), (204, 204, 204), (255, 255, 255)}   # black, brown boots, grey, sleeve trim
 BARE = {"hip", "uparm", "femur", "tibia", "foot"}
@@ -353,11 +368,17 @@ def _shoot(ctx, back):
     for pos in POSITIONS:
         g = _spot(mesh, *pos["girl"][1][:2], pos["girl"][1][2], pos["girl"][2])
         c = _spot(mesh, *pos["cloud"][1][:2], pos["cloud"][1][2], pos["cloud"][2])
-        cx, cy, cdir = pos["camera"]
+        cx, cy, camdir = pos["camera"]
         cm = _spot(mesh, cx, cy)
         focus = _spot(mesh, *pos["girl"][1][:2], 0, pos["girl"][2])
-        places.append(dict(girl=g, gdir=pos["girl"][1][3], cloud=c, cdir=pos["cloud"][1][3], cam=cm, camdir=cdir,
-                           focus=focus))
+        side = {"screen-right": (1, 0), "screen-left": (-1, 0)}
+        cdir = pos["cloud"][1][3]
+        if cdir in side:
+            cdir = facing_screen(cam, *c[:3], side[cdir])
+        gdir = {"cloud": cdir, "facing": (cdir + 128) % 256}.get(pos["girl"][1][3], pos["girl"][1][3])
+        if camdir is None:                                   # the cameraman faces her
+            camdir = _dates()._dir_to(g[0] - cm[0], g[1] - cm[1])
+        places.append(dict(girl=g, gdir=gdir, cloud=c, cdir=cdir, cam=cm, camdir=camdir, focus=focus))
     # gauge per position: the camera centres on the (hidden) player at `focus`, clamped
     # to the scroll range; the bar sits near the top of the view, nearer the camera
     # than any floor point (drawn over everything), the cursor above it
@@ -383,7 +404,6 @@ def _shoot(ctx, back):
             pl["cursor"].append((round(q[0]), round(q[1]), round(q[2]), _nearest_tri(mesh, q[0], q[1])))
         back_x, back_y = cam.project(*g)
         assert abs(back_x - sx) < 2 and abs(back_y - gy) < 2, (back_x, back_y, sx, gy)
-    from ff7.camera import facing_screen
     # the sprites' width runs along the model's x = the field's (cos a, sin a) for DIR d: pick the
     # d whose x axis projects flattest (horizontal) on screen, pointing right, at the bar's spot
     gx, gy_, gz = places[0]["gauge"][:3]
@@ -397,6 +417,8 @@ def _shoot(ctx, back):
     assert tilt(sprite_dir) < 0.05, tilt(sprite_dir)
 
     # models: 2 bare Cloud, 3 Ruby bare, 4 cameraman, 5 gauge, 6 cursor
+    dt._wall(ctx, "ZRWA.tor", RUBY_HRC, RUBY_STAND)          # (user) "behind": Scarlet's date pose on her
+    dt._koala(ctx, "ZRKA.tor", RUBY_HRC, RUBY_STAND)         # (user) "holding": Tifa's koala hug on her
     girl_anims, cloud_anims = _speeds(ctx)
     cl0 = loader.models[0]
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC,
@@ -495,7 +517,7 @@ def _shoot(ctx, back):
     main += say("“Places, everyone! Here's how it works, star:\n tap OK to keep the rhythm going.”")
     main += say("“Faster means more footage, and every push\n is 10 gil in your pocket. But watch the meter:\n"
                 " push too hard and it runs away from you,\n ease off and it all falls flat.”")
-    main += say("“Hit the red at either end and the shoot's\n over. Six positions, a minute each.\n Ready?”")
+    main += say("“Hit the red at either end and the shoot's\n over. Eight positions, a minute each.\n Ready?”")
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“...And... ACTION!”")
     main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setbyte(RUN, 1)]

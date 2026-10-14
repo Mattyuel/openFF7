@@ -343,12 +343,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   (confirm button) repeatedly: the gauge at the top (red | green | red; was off the bottom of the screen) and the cursor
   above it; pressing pushes it right, stopping lets it drift left, it has momentum and runs
   away from the middle. Red at either end = "CUT!" and back to Wall Market, no pay (check: talking to him
-  afterwards should offer a new shoot, not the 'come back later' line). Six
+  afterwards should offer a new shoot, not the 'come back later' line). Eight
   positions, one minute each, moving between the beds (mission left bed, cowgirl middle bed,
-  dog right bed, edge and head reverse at the left bed's foot, head on the floor); the thrust
+  dog right bed, edge and head reverse at the left bed's foot, head on the floor, then "behind"
+  (Scarlet's date pose) on the floor in front and "holding" (Tifa's koala hug) between the left and middle beds); the thrust
   speed follows how fast you press (4 steps). Each position change fades out and in (user). Ruby says a line (window at the bottom; 8 per
   position, e.g. 'Pull my hair!') every ~2.5 s that closes by
-  itself (~2 s; muffled during head / head reverse). Costa del Sol music. After six minutes:
+  itself (~2 s; muffled during head / head reverse). Costa del Sol music. After eight minutes:
   "That's a wrap", back in Wall Market, he says to come back in half an hour; after 30 play
   minutes his talk pays presses x 10 gil. Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
   and cursor visible and on screen at each bed? the self-closing lines? the bed positions on
