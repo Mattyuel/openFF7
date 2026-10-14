@@ -102,7 +102,8 @@ HEAD_RIGHT = 40
 PART2 = {
     "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
     # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
-    "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKC.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf",
+    # (user, since) her undressed copy too: ZAEA.HRC = the standard female body on her AUFF (675)
+    "Aerith": {"bare": "ZAEA.HRC", "anims": ["ZDKA.tor", "ZDKC.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf",
                "acts": {"look": "ZDKC.tor"}},     # (user) she looks up at him when he tells her to
     # (user) Elena standing, in every place: on all fours, Cloud standing behind and to her side,
     # leaning down, spanking her (one swing + the slap sound per "spank"), then (fade, "part3")
@@ -138,6 +139,9 @@ KOALA_ARMS_IN, KOALA_NOD = 10, 12     # (user) arms turned in a little; the head
 KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 1.4, 1.0, 1.5   # (BACK 2.0 -> 1.4: closer, user)    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
 GIRL_MODEL = {"Tifa": "main_n_tifa.char", "Aerith": "main_n_earith.char",   # her model entry (name suffix)
               "Scarlet": "sub_scarlet.char", "Elena": "shinra_irena.char"}
+# date fields at 16 models give a girl's undressed copy one of these unused party models' slots
+SPARE = ("main_vincent.char", "main_ketcy.char", "main_yufi.char", "main_cid.char", "main_red.char",
+         "sub_siera.char", "main_ballet.char")
 GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5), "Elena": ("datiao_6", 10)}   # where a field lacks her
 # extra anims on her model for the dates (the third date's "stand" and "slap" steps):
 # Scarlet's slap = junone7's (sca script 7: CANM!2 FDID 0-0x1D, SOUND 0x76, CANM!2 0x1D-0x31)
@@ -282,6 +286,7 @@ def _field(ctx, place, group, names):
             chars[e] = op.raw[1]
     assert sorted(chars.values()) == list(range(len(loader.models))), chars
     model_ent = {m: e for e, m in chars.items()}
+    spare_used = set()
     assert model_names[0].endswith("main_n_cloud.char"), model_names[0]
 
     def seat(who):
@@ -434,13 +439,19 @@ def _field(ctx, place, group, names):
         p2 = PART2[gname]
         cpose = CLOUD_PART2.index(p2["cloud"])
         if p2.get("bare"):                       # her undressed copy: a second model and entity
-            gb = len(loader.models)
-            loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[m], p2["bare"],
-                                                                             model_names[m][:-5] + "_b.char"),
-                                                        p2["anims"]))
-            ge = len(sec.entity_names)
-            sec.entity_names.append(("%sb" % gname.lower()[:7]).encode("latin-1").ljust(8, b"\0"))
-            sec.entry.append([None] * 32)
+            bare_entry = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[m], p2["bare"],
+                                                                     model_names[m][:-5] + "_b.char"), p2["anims"])
+            if len(loader.models) < 16:
+                gb = len(loader.models)
+                loader.models.append(bare_entry)
+                ge = len(sec.entity_names)
+                sec.entity_names.append(("%sb" % gname.lower()[:7]).encode("latin-1").ljust(8, b"\0"))
+                sec.entry.append([None] * 32)
+            else:                                # (16 models: the capsule) an unused party model's slot
+                gb = next(k for k, n in enumerate(model_names) if n.endswith(SPARE) and k not in spare_used)
+                spare_used.add(gb)
+                loader.models[gb] = bare_entry
+                ge = model_ent[gb]               # (its entity does nothing on a date: blank script)
             scripts[ge] = {0: [Op(bytes([0xA1, gb])), hb._visi(0), asm.ret(), asm.ret()]}
             hide_her = [hb._req(model_ent[m], 3)]
         else:                                    # her own model, more anims

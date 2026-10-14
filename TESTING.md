@@ -356,6 +356,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   elbows when bent, hands and feet still meeting. Since (user): Skye's forearms straight from the elbow (as wide
   as the upper arm) and widening only near the hand, overlapping the upper arm at the elbow; her
   shoulders reach into the arms; a small belly pooch; a bigger bust.
+- **Aerith undressed in her date's part two** (new; untested in-game, user): the standard body
+  with her own head, braid and boots, kneeling as before. In the capsule an undressed copy now uses
+  an unused party model's slot (the field is at 16 models): check the capsule loads.
 - **Honey Bee devoted scenes, undressed girls** (new; untested in-game, user): at the fade to the
   bed the girl is swapped for an undressed copy (the standard body, her dancer head and shoes), as
   Cloud already is. Check the swap is hidden by the fade, she plays every position, and the room
