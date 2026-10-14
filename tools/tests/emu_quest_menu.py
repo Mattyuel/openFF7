@@ -225,3 +225,17 @@ for pts, want in ((0, 'Hunter: Rookie (0)'), (9, 'Hunter: Rookie (9)'), (10, 'Hu
     got = [x for x in t if x[0] == 430]
     assert got and got[0][2] == want and got[0][3] == 5, (pts, got)
 print('hunter rank ok')
+
+# ---- TXPOKE (620_honey_bee.py): field opcode 1D via CODE+40 writes one byte of a field text --
+TEXTS = 0xCB9000
+e.u.mem_write(0xCC08E8, struct.pack('<I', TEXTS))
+e.u.mem_write(TEXTS, struct.pack('<3H', 2, 6, 10) + b'\x21\x22\xff\x00' + b'\x31\x32\x33\x00\x34\xff')
+e.u.mem_write(0xCBF5E8, struct.pack('<I', SCRIPT))
+e.u.mem_write(0xCC0964, b'\x00')
+e.u.mem_write(0xCC0CF8, struct.pack('<H', 0x10))
+e.u.mem_write(SCRIPT + 0x10, bytes([0x1D, 1]) + struct.pack('<H', 3) + b'\x0A')
+e.call(CODE + 40)
+assert bytes(e.u.mem_read(TEXTS + 10, 6)) == b'\x31\x32\x33\x0A\x34\xff'          # text 1, byte 3 = "*"
+assert bytes(e.u.mem_read(TEXTS + 6, 4)) == b'\x21\x22\xff\x00'                  # text 0 untouched
+assert struct.unpack('<H', bytes(e.u.mem_read(0xCC0CF8, 2)))[0] == 0x15
+print('txpoke ok')

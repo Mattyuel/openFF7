@@ -88,7 +88,8 @@ POSITIONS = [
          camera=(-130, -60, 0x40)),
     dict(name="dog", girl=("DZBF", (227, -125, 0, 0x00), True), cloud=("ZCTN", (225, -103, 0, 0x00), True),
          camera=(90, -60, 0x40)),                                           # right bed
-    dict(name="edge", girl=("DZBG", (-225, -150, 0, 0x80), False), cloud=("ZCTF", (-225, -161, 0, 0x80), False),
+    # (user, since) Cloud 3 further from her (y -161 -> -164)
+    dict(name="edge", girl=("DZBG", (-225, -150, 0, 0x80), False), cloud=("ZCTF", (-225, -164, 0, 0x80), False),
          camera=(-130, -180, 0xC0)),                                        # bent over the left bed's foot
     # (user, since) her hanging head rocks back and forth (ZRHN: DZBH + `HEADREV_NOD`)
     dict(name="headrev", girl=("ZRHN", (-225, -54, 0, 0x80), True), cloud=("ZCTE", (-225, -150, 0, 0x80), False),

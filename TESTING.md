@@ -400,6 +400,15 @@ Existing saves load, but they keep their own story progress; use a new game.
   10 out with the shin straight down, the foot against the bed's end and staying there while his
   hips thrust and his upper body leans back to take it (it used to stick out level). Check the
   foot looks planted and doesn't vanish into the bed.
+- **Head and edge** (Honey Bee and movie; new, untested in-game, user): in "head" Cloud's knees bend
+  until his pelvis is a third lower, thrusting from there, both hands on the sides of her head
+  (Honey Bee: she kneels where the movie has her, 35 from him and 6 to his right); in "edge" (Tifa)
+  Cloud stands 3 further back and his hands stay on her behind as he thrusts. Check the hands touch
+  her head (other co-stars' heads differ in size), and that nothing clips.
+- **Honey Bee manager's visit menu** (new; untested in-game, user): "Next page." is now the first row;
+  a girl whose devoted scene you've seen shows a "*" after her name (written into the menu text in
+  memory by a new field opcode, 0x1D: check it appears/disappears correctly and nothing else in the
+  text changes).
 - **Movie minigame, poses and co-stars** (new; untested in-game, user): head: she kneels a touch
   closer; behind: her hands planted on the bed, feet on the floor, only her hips moving with
   Cloud (her back pivots, arms bend); mission: Cloud's shins stay flat and still, his pelvis

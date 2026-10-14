@@ -8,7 +8,11 @@
 ; (snowboard minigame, from 0x737D45 / 0x73C52A), CODE+30 play clock tick
 ; (from 0x40ABF0: keeps the play time in minutes in field var bank 1 247-248,
 ; for the Honey Bee Inn income, 620_honey_bee.py), CODE+35 field opcode 0x1C
-; BOUNTY (630_bounties.py points the opcode table at it). The bike and balloon hooks
+; BOUNTY (630_bounties.py points the opcode table at it), CODE+40 field opcode 0x1D TXPOKE
+; `1D [text id][u16 offset][byte]`: writes the byte into that text of the loaded field
+; (FIELD_TEXTS: u16 count, u16 offsets, as MESSAGE/ASK read it, 0x6316E6), so a menu can
+; change a character before it opens (620_honey_bee.py: the "*" of a girl whose devoted scene
+; was seen). The bike and balloon hooks
 ; count made-up enemy ids (BIKE_ID, BALLOON_ID) through the same kill table,
 ; so those quests are ordinary kill quests in 600_quests.py.
 ;
@@ -88,6 +92,7 @@ HOOK_BACK     equ 0x43153C
 CUR_ENTITY    equ 0xCC0964        ; u8 current entity
 SCRIPT_POS    equ 0xCC0CF8        ; u16 per entity: script offset
 SCRIPT_BASE   equ 0xCBF5E8        ; ptr: script section
+FIELD_TEXTS   equ 0xCC08E8        ; ptr: the field's text table (u16 count, u16 offsets from it)
 SET_VAR_BYTE  equ 0x60FA7D        ; (nibble 1 = high nibble of byte 1, operand offset, value)
 
 ; minigame hooks
@@ -112,6 +117,7 @@ entry_snow_a: jmp near q_snow_a
 entry_snow_b: jmp near q_snow_b
 entry_clock:  jmp near q_clock
 entry_bounty: jmp near b_op
+entry_txpoke: jmp near t_op
 
 %macro TEXT 4                 ; x, y, text ptr, colour
     push Z_TEXT
@@ -698,6 +704,23 @@ b_count:
     ret
 
 ; field opcode 1C [dst bank << 4][dst][cmd][region]
+t_op:
+    movzx eax, byte [CUR_ENTITY]
+    movzx ecx, word [SCRIPT_POS + eax*2]
+    mov edx, [SCRIPT_BASE]
+    add edx, ecx                        ; edx = the op
+    movzx eax, byte [edx + 1]           ; text id
+    mov ecx, [FIELD_TEXTS]
+    movzx eax, word [ecx + eax*2 + 2]
+    add ecx, eax                        ; the text
+    movzx eax, word [edx + 2]           ; offset in it
+    mov dl, [edx + 4]
+    mov [ecx + eax], dl
+    movzx eax, byte [CUR_ENTITY]
+    add word [SCRIPT_POS + eax*2], 5
+    xor eax, eax
+    ret
+
 b_op:
     push ebp
     mov ebp, esp

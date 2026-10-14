@@ -24,6 +24,7 @@
   (unplaced but visible at its pinned moment 998) are hidden, and the
   director no longer hides Cloud (REQ cloud script 3 = VISI 00).
 """
+import importlib
 import struct
 
 from _config import HB_AFFECTION, HB_CAP, HB_KID, HB_HIRED, HB_JOB, HB_LAST, HB_MINUTES, HB_RATE, HB_VISIT
@@ -168,15 +169,23 @@ RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head 
 # (user, since) HEAD_FORWARD closer to her; Cloud's pose = the movie minigame's head (ZCTQ, user;
 # was ZCTS: knees bent 70, pelvis low): his left leg cocked HEAD_STEP forward, the foot
 # planted, the pelvic thrust x HEAD_THRUST
-HEAD_STAND, HEAD_GAP = (-20, -180), 46       # (user, since) she slightly closer: was 52 (before that 30)
+HEAD_STAND, HEAD_GAP = (-20, -180), 41       # (user, since) she slightly closer: was 52 (before that 30);
+                                             # then 46; 41 = 35 from him, as the movie (his hands hold her head)
 HEAD_FORWARD = 6
+TXPOKE = 0x1D                                 # field opcode (quest_menu.asm t_op, CODE+40): see _manager
 HEAD_STEP, HEAD_THRUST = 20, 2.0
+# (user, since) head: Cloud's pelvis down a third of the way to the floor (HEAD_LOW of its height),
+# thrusting from there; both hands on her head: fingertips HOLD_SIDE either side of her head's middle
+# (the dancer's DZBK, HEAD_HOLD_GAP model units ahead = the movie's 35 field units), fingers down
+# and tipped HOLD_IN inwards
+HEAD_LOW, HOLD_SIDE, HOLD_IN, HEAD_HOLD_GAP = 2 / 3, 1.5, 0.35, 35 / 3.41
+HEAD_RIGHT = 6                                # she kneels this far (field units) to his right (as the movie)
 # edge: her feet just left of the bed's left end (screen x ~10), torso and arms out over it;
 # Cloud EDGE_GAP further left, facing the bed (screen-right) like her
 EDGE_GIRL, EDGE_GAP = (-12, -180), 26
 # edge (user): she half a step (15) right, Cloud a step (30): the floor ends at x -5 there (the
 # bed's base), so she moves 7 and Cloud keeps the gap those moves give (26 - 15 = 11)
-EDGE_GIRL_MOVED, EDGE_CLOUD = (-5, -180), (-16, -180)
+EDGE_GIRL_MOVED, EDGE_CLOUD = (-5, -180), (-19, -180)   # (user, since) Cloud 3 further back (was -16)
 # head reverse: her XYZI point (by her feet; the head top is ~94 along her, 27 model units
 # x ~3.4) so that her neck is at the bed's left edge (x ~24 at y -180), the head off it
 HEADREV_GIRL = (88, -180)                     # (94 -> 88: the head now hangs straight down, clear of the edge)
@@ -316,6 +325,9 @@ CLOUD_STAND, STAND_KNEE, STAND_LEAN, STAND_ARMS, STAND_ARMS_IN, STAND_THRUST, ST
 STAND_ARMS_LR, STAND_ELBOW_IN = {"l": 30, "r": 70}, 20
 CLOUD_EDGE, EDGE_CLOUD_ARMS, EDGE_CLOUD_HIP, EDGE_CLOUD_OUT = "ZCTF.tor", 60, 100, 10
 EDGE_THRUST, EDGE_LEAN_BACK = 2.5, 12
+HOLD_STILL_IN = 0.12                          # hold="still": the hands this much nearer the shoulders (bent elbows)
+# (user, since) his hands stay on her behind while he thrusts (the arms turn against his motion:
+# `hold="still"`); and he stands EDGE_BACK further from her
 CLOUD_EDGE_FAST = "ZCTG.tor"                   # the same in EDGE_FRAMES_FAST frames (after "Faster!")
 # the dates' koala hug (user): ZCTE leaning back KOALA_CLOUD_LEAN instead of forward, the arms
 # KOALA_CLOUD_ARMS forward with the forearms turned KOALA_CLOUD_ELBOW in, round her
@@ -563,12 +575,16 @@ def _manager(ctx, back):
         # visit (user): one page per star rating, One Star Girls first. A girl not hired yet
         # is "????" and picking her just shows the page again. The menu text can't change
         # by itself, so each page has a text per combination of its girls hired (16).
+        # (user, since) "Next page." at the top, and a "*" after a girl whose devoted scene was
+        # seen (HB_KID): each hired row ends in a blank that TXPOKE (0x1D) sets to "*" or back
+        # to a blank just before the ASK (3 states a girl would need 81 texts a page)
         pages = [[i for i in range(len(GIRLS)) if GIRLS[i]["stars"] == n] for n in range(1, 6)]
         page_at = [asm.nop() for _ in pages]
         visit_at = {i: asm.nop() for i in range(len(GIRLS))}
         ops += [visit]
         for p, girls in enumerate(pages):
-            nav = (["Next page."] if p < len(pages) - 1 else []) + (["Previous page."] if p else []) + ["Never mind."]
+            top = ["Next page."] if p < len(pages) - 1 else []
+            nav = (["Previous page."] if p else []) + ["Never mind."]
             title = "Manager\n“%s Star Girls”" % ("One", "Two", "Three", "Four", "Five")[p]
             pick = asm.nop()
             first = None
@@ -576,16 +592,36 @@ def _manager(ctx, back):
             def tree(k, mask):
                 nonlocal first
                 if k == len(girls):
-                    rows = ["%s (%s)" % (GIRLS[i]["name"], GIRLS[i]["tag"]) if mask >> n & 1 else "????"
+                    rows = ["%s (%s)~" % (GIRLS[i]["name"], GIRLS[i]["tag"]) if mask >> n & 1 else "????"
                             for n, i in enumerate(girls)]
-                    ask, f = _ask(sec, title, rows + nav)
+                    full = title + "".join("\n{CHOICE}" + c for c in top + rows + nav)     # as `_ask`
+                    f = len(title.split("\n"))
                     assert first in (None, f)
                     first = f
-                    return ask + [asm.goto(pick)]
+                    body = bytearray(encode(full))
+                    marks = [k for k, c in enumerate(body) if c == 0x5E]                    # "~"
+                    assert len(marks) == bin(mask).count("1"), (title, rows)
+                    for k in marks:
+                        body[k] = 0x00                                                     # a blank
+                    tid = sec.add_string(bytes(body))
+                    ask = [_window(full), asm.setbyte(CHOICE, 0),
+                           asm.ask(0, tid, f, f + len(top + rows + nav) - 1, CHOICE)]
+                    pokes = []
+                    for k, n in zip(marks, [n for n in range(len(girls)) if mask >> n & 1]):
+                        seen, done_ = asm.nop(), asm.nop()
+                        kv, kb = HB_KID[girls[n]]
+                        poke = lambda c: Op(bytes([TXPOKE, tid]) + struct.pack("<H", k) + bytes([c]))
+                        pokes += [asm.if_byte(kv, "bit_on", kb, seen), poke(0x0A), asm.goto(done_),
+                                  seen, poke(0x00), done_]
+                    return pokes + ask + [asm.goto(pick)]
                 hv, bit = _hired(girls[k])
                 off = asm.nop()
                 return [asm.if_byte(hv, "bit_on", bit, off)] + tree(k + 1, mask | 1 << k) + [off] + tree(k + 1, mask)
             ops += [page_at[p]] + tree(0, 0) + [pick]
+            first += len(top)                        # (the rows start after "Next page.")
+            if top:
+                other = asm.nop()
+                ops += [asm.if_byte(CHOICE, "==", first - 1, other), asm.goto(page_at[p + 1]), other]
             for n, i in enumerate(girls):            # her row: visit her if hired, else the page again
                 hv, bit = _hired(i)
                 other, unhired = asm.nop(), asm.nop()
@@ -595,9 +631,7 @@ def _manager(ctx, back):
             for label in nav:
                 other = asm.nop()
                 ops += [asm.if_byte(CHOICE, "==", row, other)]
-                if label == "Next page.":
-                    ops += [asm.goto(page_at[p + 1])]
-                elif label == "Previous page.":
+                if label == "Previous page.":
                     ops += [asm.goto_back(page_at[p - 1])]
                 else:
                     ops += [asm.goto(end)]
@@ -770,7 +804,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     rx_, ry_, rz_, rt_ = spot(CLOUD_ONTOP)
     hc = spot(HEAD_CLOUD)
     ks = spot((HEAD_STAND[0] - HEAD_FORWARD, HEAD_STAND[1]))          # (he faces screen-left: -x)
-    kg = spot((HEAD_STAND[0] - HEAD_GAP, HEAD_STAND[1]))
+    kg = spot((HEAD_STAND[0] - HEAD_GAP, HEAD_STAND[1] + HEAD_RIGHT))   # (he faces -x: his right is +y)
     eg = spot(EDGE_GIRL_MOVED)
     hr = spot(HEADREV_GIRL)
     assert abs(hr[2] - 76) < 2, hr                                      # on the bed
@@ -1861,14 +1895,18 @@ def _cloud_buck(ctx):
 
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
-                 lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE):
+                 lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
     the left thigh raised to `hip` degrees forward of vertical and turned `out` degrees
     outward, the shin straight down, the foot level; it stays planted while the hips
     thrust (two-bone IK) and the upper body leans back EDGE_LEAN_BACK (EDGE_CLOUD_*: zctf.a). step: the left leg cocked forward that many
     degrees at the hip, the knee bent back until the foot is down on the floor again
     (670's head). thrust: how far the hips go forward each stroke. knee: the knee bend
-    (the head layout's ZCTS: lower)."""
+    (the head layout's ZCTS: lower). low: instead of `knee`, the knees bent until the pelvis is at
+    this fraction of its height with STAND_KNEE (head: 2/3, user). hold = (her .hrc, her anim, gap,
+    right): both hands on the sides of her head (her kneeling `gap` model units ahead and `right` to
+    his right, facing him), or "still" (the hands stay where frame 0 has them: edge, user), held
+    there by two-bone IK on each arm every frame (head, user)."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -1900,14 +1938,28 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
         ax = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
         si = math.sqrt(dot(ax, ax))
         return fa.axis_angle(ax, math.degrees(math.atan2(si, dot(a, b)))) if si > 1e-9 else fa.euler_matrix(0, 0, 0)
-    for s in "lr":                                   # knee bend: thigh forward half, shin back the other half
-        leg = (s + "_femur", s + "_tibia", s + "_foot")
-        W = signed(W, leg, knee / 2, lambda F: dot(end(F, s + "_femur"), fwd) > dot(feet0[s], fwd))
-        W = signed(W, leg[1:], knee, lambda F: dot(sub(end(F, s + "_tibia"), end(F, s + "_femur")), fwd) < 0)
+    def bend(W, k):                                  # knee bend: thigh forward half, shin back the other half
+        for s in "lr":
+            leg = (s + "_femur", s + "_tibia", s + "_foot")
+            W = signed(W, leg, k / 2, lambda F: dot(end(F, s + "_femur"), fwd) > dot(feet0[s], fwd))
+            W = signed(W, leg[1:], k, lambda F: dot(sub(end(F, s + "_tibia"), end(F, s + "_femur")), fwd) < 0)
+        return W
+    if low:                                          # the pelvis at `low` x its height at STAND_KNEE
+        def pelvis(k):                               # height above the floor (y down, floor 0) with the ankles down
+            F = fk(bend(W, k))
+            return -(root[1] - (max(end(F, s + "_tibia")[1] for s in "lr") - max(feet0[s][1] for s in "lr")))
+        want = low * pelvis(STAND_KNEE)
+        lo_, hi_ = STAND_KNEE, 150.0
+        for _ in range(30):
+            mid = (lo_ + hi_) / 2
+            lo_, hi_ = (mid, hi_) if pelvis(mid) > want else (lo_, mid)
+        knee = (lo_ + hi_) / 2
+        assert abs(pelvis(knee) - want) < 0.05, (pelvis(knee), want)
+    W = bend(W, knee)
     if step:                                         # left leg cocked forward, the foot planted again
         k0 = end(fk(W), "l_femur")
         W = signed(W, ("l_femur", "l_tibia", "l_foot"), step, lambda F: dot(end(F, "l_femur"), fwd) > dot(k0, fwd))
-        floor_y = feet0["l"][1]
+        floor_y = end(fk(W), "r_tibia")[1]          # the standing (right) ankle's height
         down = lambda a: rot(W, ("l_tibia", "l_foot"), fa.axis_angle(side, a))
         a_ = next(sg for sg in (1, -1) if end(fk(down(sg * 5)), "l_tibia")[1] > end(fk(W), "l_tibia")[1])
         # the knee turned until the ankle reaches the floor, or as low as it gets (shin upright)
@@ -1963,6 +2015,28 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     root = [root[0], root[1] - drop, root[2]]                                 # ankles back on the floor
     F0 = fk(W, root)
     S0, E0 = [s for _, s, _ in F0], [e for _, _, e in F0]
+    if hold == "still":                              # hands kept where frame 0 has them (edge, user)
+        grips = {}                                   # (the wrists drawn HOLD_STILL_IN of the way in: elbow slack)
+        for s in "lr":
+            sh, wr = S0[I(s + "_uparm")], E0[I(s + "_foarm")]
+            w_ = [sh[k] + (1 - HOLD_STILL_IN) * (wr[k] - sh[k]) for k in range(3)]
+            hd = bdir(W[I(s + "_hand")])
+            Lh = math.dist(S0[I(s + "_hand")], E0[I(s + "_hand")])
+            grips[s] = (w_, hd, [w_[k] + Lh * hd[k] for k in range(3)])
+    elif hold:                                       # her head in his frame: she faces him `gap` ahead
+        hrc_, anim_, gap, right = hold
+        hsk = fa.skeleton(ctx.char_file(hrc_).decode("latin-1"))
+        hr, hp, hrots = fa.Anim(ctx.char_file(anim_)).frames[0]
+        hF = fa.forward(hsk, hr, [hp[0], -hp[1], hp[2]], hrots)[[b[0] for b in hsk].index("head")]
+        c = [(hF[1][k] + hF[2][k]) / 2 for k in range(3)]
+        c = [-c[0] - right, c[1], -c[2] - gap]                                  # his left is +x
+        unit_ = lambda v: [q / math.sqrt(dot(v, v)) for q in v]
+        grips = {}
+        for s, out in (("l", 1), ("r", -1)):
+            hd = unit_([-out * HOLD_IN, 1.0, 0.0])                                 # fingers down, tipped in
+            tip = [c[0] + out * HOLD_SIDE, c[1], c[2]]
+            Lh = math.dist(S0[I(s + "_hand")], E0[I(s + "_hand")])
+            grips[s] = ([tip[k] - Lh * hd[k] for k in range(3)], hd, tip)
     frames = []
     for t in range(nframes):
         e = (1 - math.cos(2 * math.pi * t / nframes)) / 2
@@ -1994,7 +2068,26 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             h0 = dot(end(fk(Wt, rt), "head"), fwd)
             Wt = next(M for M in (rot(Wt, upper, fa.axis_angle(side, a * EDGE_LEAN_BACK * e)) for a in (1, -1))
                       if dot(end(fk(M, rt), "head"), fwd) < h0)
-        for s, out in (("l", 1), ("r", -1)):                                   # arms close in as he thrusts
+        for s, out in (("l", 1), ("r", -1)) if hold else ():                  # hands on her head
+            wrist, hd, _ = grips[s]
+            Fh = fk(Wt, rt)
+            i, j = I(s + "_uparm"), I(s + "_foarm")
+            Sh = Fh[i][1]
+            L1, L2 = math.dist(Fh[i][1], Fh[i][2]), math.dist(Fh[j][1], Fh[j][2])
+            D = sub(wrist, Sh)
+            dd = math.sqrt(dot(D, D))
+            assert dd < L1 + L2 - 0.05, ("her head out of reach", s, dd, L1 + L2)
+            u = [q / dd for q in D]
+            pole = [out * 1.0, 0.6, 0.4]                                       # elbows out, down, back
+            pp = sub(pole, [dot(pole, u) * q for q in u])
+            pn = math.sqrt(dot(pp, pp))
+            a_ = (L1 * L1 - L2 * L2 + dd * dd) / (2 * dd)
+            K = [Sh[k] + a_ * u[k] + math.sqrt(max(0.0, L1 * L1 - a_ * a_)) * pp[k] / pn for k in range(3)]
+            Wt[i] = fa._mul(align(bdir(Wt[i]), sub(K, Sh)), Wt[i])
+            Wt[j] = fa._mul(align(bdir(Wt[j]), sub(wrist, K)), Wt[j])
+            h_ = I(s + "_hand")
+            Wt[h_] = fa._mul(align(bdir(Wt[h_]), hd), Wt[h_])
+        for s, out in (("l", 1), ("r", -1)) if not hold else ():              # arms close in as he thrusts
             arm = {s + "_uparm", s + "_foarm", s + "_hand"}
             for sign in (1, -1):
                 M = rot(Wt, arm, fa.axis_angle(up, sign * STAND_ARMS_IN * e))
@@ -2006,6 +2099,8 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             top = fa.forward(sk, rr, rt, local)
             for s in "lr":
                 assert math.dist(top[I(s + "_tibia")][2], E0[I(s + "_tibia")]) < 0.6, s       # feet planted
+                if hold:
+                    assert math.dist(top[I(s + "_hand")][2], grips[s][2]) < 0.1, s           # on her head
         frames.append((rr, [rt[0], -rt[1], rt[2]], local))
     base.frames = frames
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
@@ -2559,20 +2654,21 @@ def apply(ctx):
     _cloud_pound(ctx)
     _cloud_spread(ctx)
     _cloud_buck(ctx)
+    _ride(ctx)                                       # (her kneel, dzbk.a: head's hands are placed on it)
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8)   # x2 (dates)
     _cloud_stand(ctx, CLOUD_BED["standlow"], arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, step=HEAD_STEP,
-                 thrust=STAND_THRUST * HEAD_THRUST)   # head (user): ZCTQ, also the movie's
+                 thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, hold=("badd.hrc", "dzbk.a", HEAD_HOLD_GAP,
+                                                                     HEAD_RIGHT / 3.41))   # head (user): ZCTQ, also the movie's
     for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)
         _cloud_stand(ctx, name, arms=AERITH_CLOUD_ARMS, arms_out=AERITH_CLOUD_IN, elbow_in=AERITH_CLOUD_ELBOW, nframes=n)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_OUT),
-                 thrust=EDGE_THRUST)
+                 thrust=EDGE_THRUST, hold="still")
     _cloud_stand(ctx, CLOUD_EDGE_FAST, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_OUT), EDGE_FRAMES_FAST,
-                 thrust=EDGE_THRUST)
+                 thrust=EDGE_THRUST, hold="still")
     _cloud_stand(ctx, CLOUD_KOALA, KOALA_CLOUD_ARMS, elbow_in=KOALA_CLOUD_ELBOW, lean=KOALA_CLOUD_LEAN,
                  arms_out=KOALA_CLOUD_OUT)
     _bare_cloud(ctx)
-    _ride(ctx)
     _bend(ctx)
     _bend(ctx, EDGE_ANIM_FAST, EDGE_FRAMES_FAST, EDGE_BEND - EDGE_FAST_BACK, EDGE_FAST_ARMS_DOWN)
     mesh = Walkmesh(ctx.field(LOBBY).section("walkmesh"))
@@ -2581,6 +2677,10 @@ def apply(ctx):
     back = (*BACK_AT, mesh.height(tri, *BACK_AT), tri)
     _conference(ctx)
     _add_girls(ctx)
+    bounty = importlib.import_module("630_bounties")          # (its exe constants)
+    exe = ctx.exe()
+    assert exe.payload[bounty.CODE + 40 - exe.section_va] == 0xE9      # jmp t_op in quest_menu.bin
+    exe.patch_u32(bounty.OP_TABLE + TXPOKE * 4, bounty.UNUSED_HANDLER, bounty.CODE + 40, "field opcode 1D: TXPOKE")
     _manager(ctx, back)
     _bed_depth(ctx)                                  # every copy of the room (and the mirror) inherits it
     base = ctx.field(ROOM).build()                   # before the visit edits: the tier copies start here
