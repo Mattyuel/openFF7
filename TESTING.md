@@ -353,7 +353,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   Cloud's arms keep their shape but are rounder (6 sides instead of 4; Cloud's shoulder pad and
   bracer kept). Both seats 30% longer, tapering in (dog pose); the open bottom of Skye's pelvis is
   closed; Cloud's pelvis lines up with his torso's bottom edge (it sat forward). Check knees /
-  elbows when bent, hands and feet still meeting.
+  elbows when bent, hands and feet still meeting. Since (user): Skye's forearms straight from the elbow (as wide
+  as the upper arm) and widening only near the hand, overlapping the upper arm at the elbow; her
+  shoulders reach into the arms; a small belly pooch; a bigger bust.
 - **Sculpted buttocks** (new; untested in-game, user): Skye's pelvis now has a rounded seat
   (two cheeks, a cleft, tucked under) and bare Cloud's pelvis too (smaller). Since (user): both
   fuller (more pronounced, chibi-style) and covering the thigh tops (Cloud's thigh tops slimmed). Check from behind and

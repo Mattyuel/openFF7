@@ -1544,13 +1544,18 @@ def _limb(old, rings, n, top=None, bottom=None, rnd=0.85):
     return V, tris
 
 
-def _smooth_arm(old, n=6):
+ELBOW_OVERLAP = 0.35                  # a straight forearm's top ring this far up into the upper arm (user)
+
+
+def _smooth_arm(old, n=6, cylinder=None):
     """(user) an arm part subdivided once and smoothed: each connected piece of the old .p that
     is one tube of skin is remade as rings of n points (the old 4-sided boxes -> n sides),
     its cross-sections measured by slicing that piece (as `_limb`), squared off a little
     (rnd 0.75), as many rings as twice the old triangles allow (the top rounded to the old
     top point, the bottom capped); other pieces (Cloud's shoulder pad, bracer) kept as they
-    are. Returns (vertices, triangles, per-vertex colours)."""
+    are. cylinder = (k, ax, ay): the first k rings that straight tube (half axes), the rest
+    widening from it to the measured bottom (Skye's forearm, user). Returns (vertices,
+    triangles, per-vertex colours, the bottom ring's half axes)."""
     import math
     h = struct.unpack_from("<16I", old, 0)
     nv, npoly = h[3], h[9]
@@ -1596,9 +1601,16 @@ def _smooth_arm(old, n=6):
         return (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, (max(xs) - min(xs)) / 2, (max(ys) - min(ys)) / 2
     base = len(V)
     skin = max(set(C0[i] for i in tube), key=[C0[i] for i in tube].count)
+    bottom = section(zbot + 0.02 * (ztop - zbot))
     for r in range(rings):
         z = ztop + (zbot - ztop) * (0.12 + 0.88 * r / (rings - 1))
-        cx, cy, ax, ay = section(z if r < rings - 1 else zbot + 0.02 * (ztop - zbot))
+        if cylinder:                                      # (user) the top ring up past the elbow joint,
+            z = ztop + ELBOW_OVERLAP + (zbot - ztop - ELBOW_OVERLAP) * r / (rings - 1)   # into the upper arm
+        cx, cy, ax, ay = section(min(z, ztop - 0.12 * (ztop - zbot))) if r < rings - 1 else bottom
+        if cylinder:
+            k_, cax, cay = cylinder
+            w = max(0.0, (r - (k_ - 1)) / (rings - k_))       # 0 along the straight part, 1 at the bottom
+            ax, ay = cax + (bottom[2] - cax) * w, cay + (bottom[3] - cay) * w
         for k in range(n):
             ph = 2 * math.pi * (k + 0.5) / n
             c_, s_ = math.cos(ph), math.sin(ph)
@@ -1608,23 +1620,28 @@ def _smooth_arm(old, n=6):
         for k in range(n):
             a, b = base + r * n + k, base + r * n + (k + 1) % n
             tris += [(a, b, b + n), (a, b + n, a + n)]
-    cx, cy, _, _ = section(ztop - 0.12 * (ztop - zbot))
-    V.append([cx, cy, ztop])                              # the rounded top, at the old top
-    C.append(skin)
-    tris += [(base + k, base + (k + 1) % n, len(V) - 1) for k in range(n)]
+    if cylinder:                                          # a flat top, overlapping the upper arm's end
+        tris += [(base, base + k, base + k + 1) for k in range(1, n - 1)]
+    else:
+        cx, cy, _, _ = section(ztop - 0.12 * (ztop - zbot))
+        V.append([cx, cy, ztop])                          # the rounded top, at the old top
+        C.append(skin)
+        tris += [(base + k, base + (k + 1) % n, len(V) - 1) for k in range(n)]
     last = base + (rings - 1) * n
     tris += [(last, last + k + 1, last + k) for k in range(1, n - 1)]
     assert len(tris) <= 2 * npoly, (len(tris), npoly)
-    return V, tris, C
+    return V, tris, C, bottom[2:]
 
 
-def _smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter):
+def _smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter, straight_forearm=0):
     """Every uparm / foarm part of `hrc` replaced by a `_smooth_arm` copy under new names
     rsd_prefix + letter / ply_prefix + letter (letters counting up; the original parts stay for
-    the dressed models). Returns the new hrc."""
+    the dressed models). straight_forearm = k: each forearm's first k rings a straight tube as
+    wide as its upper arm's bottom (user, Skye). Returns the new hrc."""
     lines = [l.strip() for l in hrc.splitlines()]
     k = lines.index(next(l for l in lines if l.startswith(":BONES"))) + 1
     done = 0
+    elbow = {}
     while k < len(lines):
         if not lines[k]:
             k += 1
@@ -1648,7 +1665,10 @@ def _smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter):
         assert hrc.count("1 %s" % old) == 1, old
         hrc = hrc.replace("1 %s" % old, "1 %s" % new_rs)
         ctx.char_file(new_rs.lower() + ".rsd", r.replace("PLY=%s." % oldp, "PLY=%s." % new_p).encode("latin-1"))
-        V, tris, C = _smooth_arm(d)
+        cyl = (straight_forearm, *elbow[bone[0]]) if straight_forearm and bone[2:] == "foarm" else None
+        V, tris, C, bottom = _smooth_arm(d, cylinder=cyl)
+        if bone[2:] == "uparm":
+            elbow[bone[0]] = bottom                       # (each hrc lists uparm before foarm)
         h = struct.unpack_from("<16I", d, 0)
         op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
         ctx.char_file(new_p.lower() + ".p", _p_file(V, tris, C, d[64:128], struct.unpack_from("<12H", d, op)[10:12]))

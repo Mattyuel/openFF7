@@ -395,7 +395,12 @@ def _skye_limbs(ctx, hrc):
         op = oc + 4 * h[7] + 4 * h[9] + 4 * h[8]
         ctx.char_file(new_p.lower() + ".p", hb._p_file(V, tris, col, d[64:128], struct.unpack_from("<12H", d, op)[10:12]))
     assert letter - ord("E") == 4, letter - ord("E")       # both legs' two parts
-    return _hb()._smooth_arms(ctx, hrc, "ZSK", "ZSL", chr(letter))   # (user) arms subdivided once, smoothed: ZSKI-L
+    # (user) arms subdivided once, smoothed: ZSKI-L; the forearm's first SKYE_FOREARM_STRAIGHT
+    # rings a straight tube as wide as the upper arm's bottom, widening to the hand only after
+    return _hb()._smooth_arms(ctx, hrc, "ZSK", "ZSL", chr(letter), straight_forearm=SKYE_FOREARM_STRAIGHT)
+
+
+SKYE_FOREARM_STRAIGHT = 2
 
 
 # (user) her bare pelvis and torso remade with a woman's shape (620 `_loft`): rings round one
@@ -410,11 +415,16 @@ def _skye_limbs(ctx, hrc):
 # so a fifth ring fits. Triangles at most twice the original's (user): chest 58 -> 116,
 # pelvis 36 -> 72 (its 8 collapsed streamer points dropped).
 SKYE_ANG = (0, 25, 50, 80, 125, 180, -125, -80, -50, -25)
-SKYE_CHEST = [(-14.65, 2.0, 1.3, 1.25, 0.0), (-15.6, 1.95, 1.3, 1.25, 0.13), (-16.5, 2.15, 1.45, 1.35, 0.73),
-              (-17.4, 2.35, 1.65, 1.5, 1.07), (-18.6, 2.85, 1.55, 1.6, 0.22), (-19.75, 2.7, 1.0, 1.4, 0.0)]
+SKYE_CHEST = [(-14.65, 2.0, 1.55, 1.25, 0.0), (-15.6, 1.95, 1.3, 1.25, 0.18), (-16.5, 2.15, 1.45, 1.35, 1.0),
+              (-17.4, 2.35, 1.65, 1.5, 1.5), (-18.6, 3.15, 1.55, 1.6, 0.35),   # bust x1.4 (user)
+              (-19.75, 3.2, 1.0, 1.4, 0.0)]
+# (user, since) a little belly 'pooch': the front depth of the rings below the waist (chest's
+# bottom ring, the pelvis's top three) pushed out, most at -13.85; the waist ring (-15.6) kept
+# (user, since) the shoulders: the top two rings widened (2.85 / 2.7 -> 3.15 / 3.2) so the arms'
+# tops (innermost x 2.99 at y -19.2) sink ~0.25 into them instead of floating
 SKYE_BUST = (1.15, 0.9)
 SKYE_HIP_ANG = (0, 60, 115, 155, 180, -155, -115, -60)
-SKYE_HIP = [(-14.75, 2.0, 1.3, 1.25, 0.0), (-13.85, 2.6, 1.45, 1.55, 1.0), (-12.9, 3.0, 1.5, 1.7, 1.4),
+SKYE_HIP = [(-14.75, 2.0, 1.55, 1.25, 0.0), (-13.85, 2.6, 2.0, 1.55, 1.0), (-12.9, 3.0, 1.75, 1.7, 1.4),
             (-12.05, 3.0, 1.5, 1.6, 1.25), (-11.3, 2.55, 1.15, 1.15, 0.7)]   # (user, since) fuller, lower;
                                                                             # then 30% longer, tapering in
 SKYE_SEAT, SKYE_CLEFT = (1.3, 0.8), 0.45
