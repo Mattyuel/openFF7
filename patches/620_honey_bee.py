@@ -1346,20 +1346,27 @@ def _bare_cloud(ctx):
             for i in moved:
                 struct.pack_into("<3f", d, o_v + 12 * i, *V[i])
         ctx.char_file(newp.lower() + ".p", bytes(d))
+    hrc = _bare_cloud_member(ctx, hrc)             # (placed on the old pelvis, as it was first shown)
     _bare_cloud_seat(ctx, hrc)
-    hrc = _bare_cloud_member(ctx, hrc)
+    hrc = _smooth_arms(ctx, hrc, "ZCL", "ZCM", "G")   # (user) ZCLG-J / ZCMG-J
     ctx.char_file(CLOUD_BARE_HRC.lower(), hrc.encode("latin-1"))
 
 
 # (user) bare Cloud's pelvis remade with sculpted buttocks (`_loft`, as Skye's): rings of
-# CLOUD_SEAT_ANG points (155 = the cheeks' middles, 180 = the cleft) round a centre line fitted
-# to the old part, laid out on his standing pose (ACFE frame 0): the top ring matches his
+# CLOUD_SEAT_ANG points (155 = the cheeks' middles, 180 = the cleft) round a centre line
+# (CLOUD_SEAT_CENTRE), laid out on his standing pose (ACFE frame 0): the top ring matches his
 # chest's bottom (y -15.3, half width 2.24, front 1.94, back 1.39), the seat fullest at
-# -13.7 and tucked under at -12.85, then a fan to CLOUD_CROTCH; a man's seat: smaller and
+# -13.6 and tucked under at -12.45, then a fan to CLOUD_CROTCH (user: 30% longer, tapering); a man's seat: smaller and
 # higher than Skye's. 46 triangles (at most twice the old 24, user).
 CLOUD_SEAT_ANG = (0, 60, 115, 155, 180, -155, -115, -60)
-CLOUD_SEAT_RINGS = [(-15.3, 2.3, 1.95, 1.45, 0.0), (-13.7, 3.2, 2.0, 1.75, 1.05), (-12.8, 3.3, 1.9, 1.65, 0.85)]   # (user, since) fuller, wider: the thighs
-CLOUD_SEAT, CLOUD_CLEFT, CLOUD_CROTCH = (1.4, 0.85), 0.35, (0.0, -12.3)
+CLOUD_SEAT_RINGS = [(-15.3, 2.45, 1.85, 1.85, 0.0), (-13.6, 3.2, 2.0, 1.85, 1.05), (-12.45, 3.15, 1.8, 1.6, 0.75)]   # (user, since) fuller, wider: the thighs
+# (user, since) the pelvis's centre line set, not fitted: from his chest's bottom edge (z -0.28 at
+# y -15.3: front -1.94, back 1.39, half width 2.24; the fitted line sat 0.47 forward, the seat
+# starting too far in) to the old pelvis's bottom middle (z 0 at -12.5); the top ring a little
+# larger than that edge and squarer (CLOUD_SEAT_ROUND), so it covers the chest's corners
+CLOUD_SEAT_CENTRE = ((-15.3, -0.28), (-12.5, 0.0))
+CLOUD_SEAT_ROUND = 0.6
+CLOUD_SEAT, CLOUD_CLEFT, CLOUD_CROTCH = (1.4, 0.85), 0.35, (0.0, -11.85)   # (user, since) the seat 30% longer
 
 
 def _bare_cloud_seat(ctx, hrc):
@@ -1368,12 +1375,10 @@ def _bare_cloud_seat(ctx, hrc):
     assert sk[0][0] == "hip", sk[0]
     rr, rp, rots = fa.Anim(ctx.char_file("acfe.a")).frames[0]
     bone = fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)[0]
-    m, start, _ = bone
     d = ctx.char_file("zcmb.p")
-    old = [[start[j] + fa._vec(m, struct.unpack_from("<3f", d, 128 + 12 * i))[j] for j in range(3)]
-           for i in range(struct.unpack_from("<16I", d, 0)[3])]
-    made = _loft(CLOUD_SEAT_RINGS, CLOUD_SEAT_ANG, _centre_line(old), CLOUD_SEAT, 1, CLOUD_CLEFT,
-                 top=True, bottom=CLOUD_CROTCH)
+    (y0, z0), (y1, z1) = CLOUD_SEAT_CENTRE
+    made = _loft(CLOUD_SEAT_RINGS, CLOUD_SEAT_ANG, lambda y: z0 + (z1 - z0) * (y - y0) / (y1 - y0), CLOUD_SEAT, 1,
+                 CLOUD_CLEFT, rnd=CLOUD_SEAT_ROUND, top=True, bottom=CLOUD_CROTCH)
     _write_part(ctx, "zcmb.p", d, made, bone, SKIN)
 
 
@@ -1535,12 +1540,125 @@ def _limb(old, rings, n, top=None, bottom=None, rnd=0.85):
     return V, tris
 
 
+def _smooth_arm(old, n=6):
+    """(user) an arm part subdivided once and smoothed: each connected piece of the old .p that
+    is one tube of skin is remade as rings of n points (the old 4-sided boxes -> n sides),
+    its cross-sections measured by slicing that piece (as `_limb`), squared off a little
+    (rnd 0.75), as many rings as twice the old triangles allow (the top rounded to the old
+    top point, the bottom capped); other pieces (Cloud's shoulder pad, bracer) kept as they
+    are. Returns (vertices, triangles, per-vertex colours)."""
+    import math
+    h = struct.unpack_from("<16I", old, 0)
+    nv, npoly = h[3], h[9]
+    V0 = [list(struct.unpack_from("<3f", old, 128 + 12 * i)) for i in range(nv)]
+    oc = 128 + 12 * nv + 12 * h[4] + 12 * h[5] + 8 * h[6]
+    C0 = [tuple(old[oc + 4 * i:oc + 4 * i + 3]) for i in range(nv)]
+    op = oc + 4 * h[7] + 4 * npoly + 4 * h[8]
+    P = [struct.unpack_from("<12H", old, op + 24 * j)[1:4] for j in range(npoly)]
+    root = list(range(nv))
+
+    def find(a):
+        while root[a] != a:
+            a = root[a]
+        return a
+    for t in P:
+        for a in t[1:]:
+            root[find(a)] = find(t[0])
+    pieces = {}
+    for i in range(nv):
+        pieces.setdefault(find(i), []).append(i)
+    tube = max(pieces.values(), key=len)                 # the arm itself; the rest kept
+    keep = [c for c in pieces.values() if c is not tube]
+    V, tris, C = [], [], []
+    for c in keep:
+        at = {i: len(V) + k for k, i in enumerate(c)}
+        V += [V0[i] for i in c]
+        C += [C0[i] for i in c]
+        tris += [tuple(at[i] for i in t) for t in P if t[0] in at]
+    budget = 2 * npoly - len(tris)
+    rings = (budget - n - (n - 2)) // (2 * n) + 1        # n-tri top fan + (n-2)-tri bottom cap
+    TP = [t for t in P if t[0] in set(tube)]
+    ztop, zbot = max(V0[i][2] for i in tube), min(V0[i][2] for i in tube)
+
+    def section(z):
+        pts = []
+        for t in TP:
+            for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+                pa, pb = V0[a], V0[b]
+                if (pa[2] - z) * (pb[2] - z) < 0:
+                    f = (z - pa[2]) / (pb[2] - pa[2])
+                    pts.append((pa[0] + f * (pb[0] - pa[0]), pa[1] + f * (pb[1] - pa[1])))
+        xs, ys = [q[0] for q in pts], [q[1] for q in pts]
+        return (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, (max(xs) - min(xs)) / 2, (max(ys) - min(ys)) / 2
+    base = len(V)
+    skin = max(set(C0[i] for i in tube), key=[C0[i] for i in tube].count)
+    for r in range(rings):
+        z = ztop + (zbot - ztop) * (0.12 + 0.88 * r / (rings - 1))
+        cx, cy, ax, ay = section(z if r < rings - 1 else zbot + 0.02 * (ztop - zbot))
+        for k in range(n):
+            ph = 2 * math.pi * (k + 0.5) / n
+            c_, s_ = math.cos(ph), math.sin(ph)
+            V.append([cx + ax * math.copysign(abs(c_) ** 0.75, c_), cy + ay * math.copysign(abs(s_) ** 0.75, s_), z])
+            C.append(skin)
+    for r in range(rings - 1):
+        for k in range(n):
+            a, b = base + r * n + k, base + r * n + (k + 1) % n
+            tris += [(a, b, b + n), (a, b + n, a + n)]
+    cx, cy, _, _ = section(ztop - 0.12 * (ztop - zbot))
+    V.append([cx, cy, ztop])                              # the rounded top, at the old top
+    C.append(skin)
+    tris += [(base + k, base + (k + 1) % n, len(V) - 1) for k in range(n)]
+    last = base + (rings - 1) * n
+    tris += [(last, last + k + 1, last + k) for k in range(1, n - 1)]
+    assert len(tris) <= 2 * npoly, (len(tris), npoly)
+    return V, tris, C
+
+
+def _smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter):
+    """Every uparm / foarm part of `hrc` replaced by a `_smooth_arm` copy under new names
+    rsd_prefix + letter / ply_prefix + letter (letters counting up; the original parts stay for
+    the dressed models). Returns the new hrc."""
+    lines = [l.strip() for l in hrc.splitlines()]
+    k = lines.index(next(l for l in lines if l.startswith(":BONES"))) + 1
+    done = 0
+    while k < len(lines):
+        if not lines[k]:
+            k += 1
+            continue
+        bone, rs = lines[k], lines[k + 3].split()
+        k += 4
+        if bone[2:] not in ("uparm", "foarm") or len(rs) != 2:
+            continue
+        old = rs[1]
+        r = ctx.char_file(old.lower() + ".rsd").decode("latin-1")
+        oldp = r.split("PLY=")[1][:4]
+        d = ctx.char_file(oldp.lower() + ".p")
+        new_rs, new_p = rsd_prefix + chr(ord(letter) + done), ply_prefix + chr(ord(letter) + done)
+        done += 1
+        for name in (new_rs.lower() + ".rsd", new_p.lower() + ".p"):
+            try:
+                ctx.char_file(name)
+                raise AssertionError("%s already in char.lgp" % name)
+            except KeyError:
+                pass
+        assert hrc.count("1 %s" % old) == 1, old
+        hrc = hrc.replace("1 %s" % old, "1 %s" % new_rs)
+        ctx.char_file(new_rs.lower() + ".rsd", r.replace("PLY=%s." % oldp, "PLY=%s." % new_p).encode("latin-1"))
+        V, tris, C = _smooth_arm(d)
+        h = struct.unpack_from("<16I", d, 0)
+        op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
+        ctx.char_file(new_p.lower() + ".p", _p_file(V, tris, C, d[64:128], struct.unpack_from("<12H", d, op)[10:12]))
+    assert done == 4, done
+    return hrc
+
+
 def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375)):
     """A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
     any winding), every vertex colour bgr; laid out as the games' own untextured parts
     (zcmb.p / Skye's zslb.p: header 1,1,1; one group; one normal per vertex, the vertex's
     face normals averaged, pointing out; the triangles wound as there, the cross product
-    pointing inwards, i.e. towards the mesh's centre); `tail` = the 128-byte header's second
+    pointing inwards, i.e. towards the mesh's centre; bgr may be a list, one per vertex: each
+    triangle takes its first vertex's); `tail` = the 128-byte header's second
     half and `poly_tail` each poly's last two words, copied from such a part."""
     import math
     c = [sum(v[k] for v in V) / len(V) for k in range(3)]
@@ -1571,10 +1689,10 @@ def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375)):
         return edges.index(e)
     polys = [(0, *t, *t, edge(t[0], t[1]), edge(t[1], t[2]), edge(t[2], t[0]), *poly_tail) for t in wound]
     nv = len(V)
-    col = bytes(bgr) + b"\xff"
+    vcol = [bytes(c) + b"\xff" for c in (bgr if isinstance(bgr[0], (tuple, list)) else [bgr] * nv)]
     out = bytearray(struct.pack("<16I", 1, 1, 1, nv, nv, 0, 0, nv, len(edges), len(polys), 0, 0, 1, 1, 1, 1)) + tail
     out += b"".join(struct.pack("<3f", *v) for v in V) + b"".join(struct.pack("<3f", *n) for n in normals)
-    out += col * nv + col * len(polys)
+    out += b"".join(vcol) + b"".join(vcol[t[0]] for t in wound)
     out += b"".join(struct.pack("<2H", *e) for e in edges)
     out += b"".join(struct.pack("<12H", *p) for p in polys)
     out += bytes.fromhex("01000000010000000082030002000200000000000000000000000000000000000000000002000000"

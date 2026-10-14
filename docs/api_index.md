@@ -655,6 +655,8 @@ Honey Bee Girl recruitment.
 - `_centre_line(pts)` z on y (least squares) through world points: a body's centre line from its old parts.
 - `_write_part(ctx, ply, old, made, bone_world, bgr)` Replace .p `ply` (old bytes `old`) by the mesh `made` = (world vertices, triangles),
 - `_limb(old, rings, n, top=None, bottom=None, rnd=0.85)` A limb part remade as a loft in its own bone frame (the bone runs down local -z from the
+- `_smooth_arm(old, n=6)` (user) an arm part subdivided once and smoothed: each connected piece of the old .p that
+- `_smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter)` Every uparm / foarm part of `hrc` replaced by a `_smooth_arm` copy under new names
 - `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.

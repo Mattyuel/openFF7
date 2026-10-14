@@ -342,18 +342,18 @@ def _bare_skye(ctx):
     ctx.char_file(SKYE_BARE.lower(), hrc.encode("latin-1"))
 
 
-# (user) her arms and legs remade to match the new torso / pelvis (620 `_limb`: smooth rings
+# (user) her legs remade to match the new torso / pelvis (620 `_limb`: smooth rings
 # sized by slicing the old box-like parts, at most twice their triangles): per bone (rings
 # (t, scale), points a ring, top end, bottom end). Thighs fuller at the top, tapering to a
-# rounded knee (the shin's capped top sits in it); calves, slimmer ankles; the upper arm
-# rounded over the shoulder, slimmer, the forearm narrowing to the wrist. Hands and feet as
-# they were. New parts ZSKE.. / ZSLE.. (her dressed model keeps the old ones).
+# rounded knee (the shin's capped top sits in it); calves, slimmer ankles. (User, since: the
+# arms were done too, then put back as they were.) Hands and feet as they were. New parts
+# ZSKE-H / ZSLE-H (her dressed model keeps the old ones).
 SKYE_LIMBS = {
-    "femur": ([(0.0, 0.95), (0.88, 0.88)], 8, None, ("tip", 0.15)),             # 16 + 8 = 24 (of 12)
-    "tibia": ([(0.0, 0.95), (0.3, 1.0), (1.0, 0.8)], 6, "cap", None),           # 24 + 4 = 28 (of 14)
-    "uparm": ([(0.15, 0.95), (0.45, 0.88), (1.0, 0.9)], 8, ("tip", 0.25), "cap"),   # 8 + 32 + 6 = 46 (of 28)
-    "foarm": ([(0.0, 0.88), (0.45, 0.92), (1.0, 0.78)], 8, "cap", "cap"),        # 32 + 12 = 44 (of 28)
-}
+    # (user, since) the knee closed up: the thigh's last ring lower and its tip further past the
+    # joint, the shin's capped top ring raised above the old shin's top (t < 0)
+    "femur": ([(0.0, 0.95), (0.95, 0.88)], 8, None, ("tip", 0.6)),              # 16 + 8 = 24 (of 12)
+    "tibia": ([(-0.08, 0.92), (0.3, 1.0), (1.0, 0.8)], 6, "cap", None),         # 24 + 4 = 28 (of 14)
+}   # (user, since) the arms back as they were
 
 
 def _skye_limbs(ctx, hrc):
@@ -394,8 +394,8 @@ def _skye_limbs(ctx, hrc):
         col = max(set(cols), key=cols.count)            # its own (skin) colour
         op = oc + 4 * h[7] + 4 * h[9] + 4 * h[8]
         ctx.char_file(new_p.lower() + ".p", hb._p_file(V, tris, col, d[64:128], struct.unpack_from("<12H", d, op)[10:12]))
-    assert letter - ord("E") == 8, letter - ord("E")       # both arms' two parts, both legs' two
-    return hrc
+    assert letter - ord("E") == 4, letter - ord("E")       # both legs' two parts
+    return _hb()._smooth_arms(ctx, hrc, "ZSK", "ZSL", chr(letter))   # (user) arms subdivided once, smoothed: ZSKI-L
 
 
 # (user) her bare pelvis and torso remade with a woman's shape (620 `_loft`): rings round one
@@ -414,10 +414,11 @@ SKYE_CHEST = [(-14.65, 2.0, 1.3, 1.25, 0.0), (-15.6, 1.95, 1.3, 1.25, 0.13), (-1
               (-17.4, 2.35, 1.65, 1.5, 1.07), (-18.6, 2.85, 1.55, 1.6, 0.22), (-19.75, 2.7, 1.0, 1.4, 0.0)]
 SKYE_BUST = (1.15, 0.9)
 SKYE_HIP_ANG = (0, 60, 115, 155, 180, -155, -115, -60)
-SKYE_HIP = [(-14.75, 2.0, 1.3, 1.25, 0.0), (-13.85, 2.6, 1.45, 1.55, 1.0), (-13.1, 3.0, 1.5, 1.7, 1.4),
-            (-12.45, 3.1, 1.55, 1.7, 1.3), (-11.85, 2.8, 1.3, 1.35, 0.8)]   # (user, since) fuller, lower
+SKYE_HIP = [(-14.75, 2.0, 1.3, 1.25, 0.0), (-13.85, 2.6, 1.45, 1.55, 1.0), (-12.9, 3.0, 1.5, 1.7, 1.4),
+            (-12.05, 3.0, 1.5, 1.6, 1.25), (-11.3, 2.55, 1.15, 1.15, 0.7)]   # (user, since) fuller, lower;
+                                                                            # then 30% longer, tapering in
 SKYE_SEAT, SKYE_CLEFT = (1.3, 0.8), 0.45
-SKYE_CROTCH = (0.0, -11.35)
+SKYE_CROTCH = (0.0, -10.6)
 
 
 def _skye_shape(ctx, hrc):
