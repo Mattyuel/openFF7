@@ -1340,7 +1340,89 @@ def _bare_cloud(ctx):
             for i in knee + [tip]:
                 struct.pack_into("<3f", d, o_v + 12 * i, *V[i])
         ctx.char_file(newp.lower() + ".p", bytes(d))
+    hrc = _bare_cloud_member(ctx, hrc)
     ctx.char_file(CLOUD_BARE_HRC.lower(), hrc.encode("latin-1"))
+
+
+# (user) bare Cloud's penis: a plain box (rectangular prism) in his skin colour, a second
+# part (ZCLP -> ZCMP.p) on the pelvis bone (hip: "2 ZCLB ZCLP"; 47 original .hrc have bones
+# with 2+ parts), so it follows the pelvis in every anim. Laid out on his standing pose
+# (ACFE frame 0, y down, facing -z): MEMBER_LEN forward from the pelvis's front-bottom
+# middle (sunk MEMBER_SINK into it), MEMBER_W wide and tall, MEMBER_UP above the pelvis's
+# lowest point; corners taken into the hip bone's own frame.
+MEMBER_LEN, MEMBER_W, MEMBER_UP, MEMBER_SINK = 2.2, 0.65, 0.45, 0.4
+
+
+def _bare_cloud_member(ctx, hrc):
+    from ff7 import fieldanim as fa
+    assert hrc.count("1 ZCLB") == 1, "hip part"
+    hrc = hrc.replace("1 ZCLB", "2 ZCLB ZCLP")
+    rsd = ctx.char_file("zclb.rsd").decode("latin-1")
+    ctx.char_file("zclp.rsd", rsd.replace("PLY=ZCMB.", "PLY=ZCMP.").encode("latin-1"))
+    sk = fa.skeleton(hrc)
+    assert sk[0][0] == "hip", sk[0]
+    rr, rp, rots = fa.Anim(ctx.char_file("acfe.a")).frames[0]
+    m, start, _ = fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)[0]
+    d = ctx.char_file("zcmb.p")
+    nv = struct.unpack_from("<16I", d, 0)[3]
+    world = [[start[j] + fa._vec(m, struct.unpack_from("<3f", d, 128 + 12 * i))[j] for j in range(3)]
+             for i in range(nv)]
+    bottom = max(w[1] for w in world)                             # y down: the pelvis's lowest point
+    front = min(w[2] for w in world)                              # its front (he faces -z)
+    yc = bottom - MEMBER_UP
+    h = MEMBER_W / 2
+    corners = [[x, yc + y, z] for z in (front + MEMBER_SINK, front + MEMBER_SINK - MEMBER_LEN)
+               for y in (-h, h) for x in (-h, h)]
+    mt = [[m[r][c] for r in range(3)] for c in range(3)]           # inverse rotation
+    local = [fa._vec(mt, [p[k] - start[k] for k in range(3)]) for p in corners]
+    back = fa._vec(m, local[0])
+    assert max(abs(start[k] + back[k] - corners[0][k]) for k in range(3)) < 1e-4, "frame"
+    ctx.char_file("zcmp.p", _box_p(local, SKIN, d[64:128]))
+    return hrc
+
+
+def _box_p(V, bgr, tail):
+    """A .p of one untextured box: 8 corners V (z-major, then y, then x), vertex colour bgr;
+    laid out as Cloud's own untextured parts (zcmb.p: header 1,1,1; one group; normals =
+    vertices; the triangles wound as there, the cross product pointing inwards); `tail` = the
+    128-byte header's second half, copied from such a part."""
+    import math
+    faces = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+    c = [sum(v[k] for v in V) / 8 for k in range(3)]
+    sub = lambda a, b: [a[k] - b[k] for k in range(3)]
+    tris = []
+    for q in faces:
+        for t in ((q[0], q[1], q[2]), (q[0], q[2], q[3])):
+            a, b, d_ = (V[i] for i in t)
+            u, w = sub(b, a), sub(d_, a)
+            n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]
+            out = sub([(a[k] + b[k] + d_[k]) / 3 for k in range(3)], c)
+            tris.append(t if sum(n[k] * out[k] for k in range(3)) < 0 else (t[0], t[2], t[1]))
+    edges = []
+    def edge(a, b):
+        e = (min(a, b), max(a, b))
+        if e not in edges:
+            edges.append(e)
+        return edges.index(e)
+    polys = [(0, *t, *t, edge(t[0], t[1]), edge(t[1], t[2]), edge(t[2], t[0]), 55932, 375) for t in tris]
+    normals = []
+    for v in V:
+        n = sub(v, c)
+        L = math.sqrt(sum(x * x for x in n))
+        normals.append([x / L for x in n])
+    col = bytes(bgr) + b"\xff"
+    out = bytearray(struct.pack("<16I", 1, 1, 1, 8, 8, 0, 0, 8, len(edges), len(polys), 0, 0, 1, 1, 1, 1)) + tail
+    out += b"".join(struct.pack("<3f", *v) for v in V) + b"".join(struct.pack("<3f", *n) for n in normals)
+    out += col * 8 + col * len(polys)
+    out += b"".join(struct.pack("<2H", *e) for e in edges)
+    out += b"".join(struct.pack("<12H", *p) for p in polys)
+    out += bytes.fromhex("01000000010000000082030002000200000000000000000000000000000000000000000002000000"
+                         "ffffffff000000000000000002000000010000000200000000000000040000000000000000000000"
+                         "000000000000000000000000ff00000000000000")                 # zcmb.p's 'hundreds'
+    out += struct.pack("<14I", 1, 0, len(polys), 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    out += struct.pack("<I6f", 0, *(max(v[k] for v in V) for k in range(3)), *(min(v[k] for v in V) for k in range(3)))
+    out += struct.pack("<8I", *range(8))
+    return bytes(out)
 
 
 # Mood lighting (user: "dim the light to about 50%"): the visit rooms' background palette
