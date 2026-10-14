@@ -352,7 +352,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   torso (thighs fuller at the top, rounded knees and shoulders, slimmer wrists and ankles). Check
   the knees and elbows when bent (no holes) and that the hands and feet still meet the limbs.
 - **Sculpted buttocks** (new; untested in-game, user): Skye's pelvis now has a rounded seat
-  (two cheeks, a cleft, tucked under) and bare Cloud's pelvis too (smaller). Check from behind and
+  (two cheeks, a cleft, tucked under) and bare Cloud's pelvis too (smaller). Since (user): both
+  fuller (more pronounced, chibi-style) and covering the thigh tops (Cloud's thigh tops slimmed). Check from behind and
   the side in the movie / dates / Honey Bee scenes: no holes, no gap at the waist or the thigh tops.
 - **Skye's body** (new; untested in-game, user): in the movie minigame Skye's bare torso and pelvis
   are remade (narrower waist, wider hips, bust, rounded seat; twice the triangles at most). Check

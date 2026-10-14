@@ -1284,6 +1284,7 @@ def _bed_depth(ctx):
 # in to the size of the thigh's hip ring (~1.6) about its own centre. New files:
 # zcla.hrc (bones as AAAA) -> new .rsd for the five changed parts -> new .p.
 CLOUD_BARE_HRC = "ZCLA.HRC"
+THIGH_TOP_IN = 0.75                                  # bare Cloud's thigh tops (the hip ring) x this (user)
 BARE_PARTS = {"AAAB": "ZCLB", "AADE": "ZCLC", "AAEA": "ZCLD", "AAEE": "ZCLE", "AAFA": "ZCLF"}   # rsd -> rsd
 PANTS, SKIN = (119, 73, 97), (135, 167, 248)        # vertex colours (B, G, R) of the pants / the arms
 
@@ -1337,7 +1338,12 @@ def _bare_cloud(ctx):
                 V[i][0], V[i][1] = kx + (V[i][0] - kx) * target / r, ky + (V[i][1] - ky) * target / r
                 V[i][2] = kz
             V[tip][2] = kz + (V[tip][2] - kz) * target / old_r
-            for i in knee + [tip]:
+            moved = knee + [tip]
+            if thigh:                                               # (user, since) the hip ring pulled in so
+                for i in hip:                                       # the thigh's top stays inside the pelvis
+                    V[i][0], V[i][1] = cx + (V[i][0] - cx) * THIGH_TOP_IN, cy + (V[i][1] - cy) * THIGH_TOP_IN
+                moved += hip
+            for i in moved:
                 struct.pack_into("<3f", d, o_v + 12 * i, *V[i])
         ctx.char_file(newp.lower() + ".p", bytes(d))
     _bare_cloud_seat(ctx, hrc)
@@ -1352,8 +1358,8 @@ def _bare_cloud(ctx):
 # -13.7 and tucked under at -12.85, then a fan to CLOUD_CROTCH; a man's seat: smaller and
 # higher than Skye's. 46 triangles (at most twice the old 24, user).
 CLOUD_SEAT_ANG = (0, 60, 115, 155, 180, -155, -115, -60)
-CLOUD_SEAT_RINGS = [(-15.3, 2.3, 1.95, 1.45, 0.0), (-13.7, 2.95, 1.95, 1.6, 0.8), (-12.85, 2.6, 1.75, 1.3, 0.45)]
-CLOUD_SEAT, CLOUD_CLEFT, CLOUD_CROTCH = (1.3, 0.8), 0.3, (0.0, -12.45)
+CLOUD_SEAT_RINGS = [(-15.3, 2.3, 1.95, 1.45, 0.0), (-13.7, 3.2, 2.0, 1.75, 1.05), (-12.8, 3.3, 1.9, 1.65, 0.85)]   # (user, since) fuller, wider: the thighs
+CLOUD_SEAT, CLOUD_CLEFT, CLOUD_CROTCH = (1.4, 0.85), 0.35, (0.0, -12.3)
 
 
 def _bare_cloud_seat(ctx, hrc):
