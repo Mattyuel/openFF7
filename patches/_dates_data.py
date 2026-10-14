@@ -28,7 +28,7 @@ DATES = {
         "speaker": "{TIFA}",
         "greet": "“Hey, Cloud. Need something?”",
         "where": "“A date? Me? …Okay! Where to?”",
-        "music": {"gondola": 49, "capsule": 34, "tower": 34},   # DATE (Interrupted by Fireworks), TIFA (her theme)
+        "music": {"gondola": 49, "capsule": 34, "cannon": 34},   # DATE (Interrupted by Fireworks), TIFA (her theme)
         "tiers": [
             {   # first date: getting to know her
                 "open": "“So… this is a date, huh?\n I'm a little nervous.”",
@@ -94,7 +94,7 @@ DATES = {
         "speaker": "{AERIS}",
         "greet": "“Oh, Cloud! Did you need something?”",
         "where": "“A date? Ehehe, yes please!\n Where are we going?”",
-        "music": {"gondola": 49, "capsule": 12, "tower": 12},   # DATE, EARIS (her theme)
+        "music": {"gondola": 49, "capsule": 12, "cannon": 12},   # DATE, EARIS (her theme)
         "tiers": [
             {   # first date: the flower girl
                 "open": "“A date! With a bodyguard, even.\n Lucky me.”",
@@ -166,7 +166,7 @@ DATES = {
     "Scarlet": {
         "greet": "“Well, well. Spiky.\n You want something?”",
         "where": "“A date? With ME? Kyahaha!\n Fine. Impress me.”",
-        "music": {"gondola": 49, "capsule": 16, "tower": 16},   # DATE, PARADE (Rufus' Welcoming Ceremony)
+        "music": {"gondola": 49, "capsule": 16, "cannon": 16},   # DATE, PARADE (Rufus' Welcoming Ceremony)
         "tiers": [
             {   # first date: the executive
                 "open": "“Don't get the wrong idea. I only\n came for the view.”",
@@ -236,7 +236,7 @@ DATES = {
     "Elena": {
         "greet": "“Oh! C-Cloud! I'm on duty…\n sort of. What is it?”",
         "where": "“A date?! Tseng can't know.\n …Okay! Where?”",
-        "music": {"gondola": 49, "capsule": 29, "tower": 29},   # DATE, SINRA (Shinra, Inc.)
+        "music": {"gondola": 49, "capsule": 29, "cannon": 29},   # DATE, SINRA (Shinra, Inc.)
         "tiers": [
             {   # first date: the rookie
                 "open": "“Is this a stakeout? It feels like\n a stakeout. …Sorry. Habit.”",

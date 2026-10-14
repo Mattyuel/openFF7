@@ -39,27 +39,26 @@ WRONG = (5, 246)                       # temp: an answer this date was wrong
 TIERS = (10, 20)                       # affection where the second / third dates start
 # date fields: (place, group) -> new field name (free maplist names, docs/dates_plan.md)
 GROUPS = [["Tifa", "Aerith", "Scarlet", "Elena"]]
-FIELDS = {("gondola", 0): "blackbga", ("capsule", 0): "blackbgf", ("tower", 0): "blackbgg"}
-BASE = {"gondola": "bwhlin", "capsule": "rcktin7", "tower": "nivl_e1"}
-PLACES = ("gondola", "capsule", "tower")
+FIELDS = {("gondola", 0): "blackbga", ("capsule", 0): "blackbgf", ("cannon", 0): "blackbgg"}
+BASE = {"gondola": "bwhlin", "capsule": "rcktin7", "cannon": "junone7"}   # (user) the cannon replaced the water tower
+PLACES = ("gondola", "capsule", "cannon")
 PLACE_NAMES = {"gondola": "The Gold Saucer gondola.", "capsule": "The space capsule.",
-               "tower": "The water tower in Nibelheim."}
+               "cannon": "The Junon cannon."}
 # seats: (x, y, tri, dir) for Cloud and her (tri None: found; dir None: facing each other)
 SEATS = {
     # the original date's XYZIs and DIRs (Cloud is the player: the MAPJUMP's direction
     # overrode his DIR, so he faced 0 = the wrong way (user); the jump now carries it)
     "gondola": {"cloud": (-5175, -6999, 4, 0x80, 0), "girl": (-5150, -6903, 5, 0x00, 0)},
     "capsule": {"cloud": (-45, 209, None, None, 0), "girl": (45, 209, None, None, 0)},  # floor before the benches
-    # nivl_e1 (the promise flashback): near where young Cloud and Tifa end up sitting on the
-    # rim (cloud MOVE to (547,-415), TURNGEN 0x18; tifa7 MOVE to (517,-451), TURNGEN 0xE8), then
-    # (user) she 15 left and 15 towards the camera and TOWER_RAISE up, Cloud 15 towards the
-    # camera and facing her direction mirrored on screen
-    "tower": {"cloud": (547, -400, None, "mirror", 0), "girl": (502, -436, None, 0xE8, 3)},
+    # junone7 (the top of the cannon, user): where Tifa and Scarlet stand for their slap fight
+    # (ti MOVE to (3,447), sca MOVE to (-17,720)): Cloud in Tifa's place, she in Scarlet's,
+    # standing, facing each other
+    "cannon": {"cloud": (3, 447, None, None, 0), "girl": (-17, 720, None, None, 0)},
 }
 # part two (user's test scene): Cloud standing (bare, ZCTE thrusting) at his seat, she
 # koala-hugging him (same XYZI, turned round; her height is in the anim): his DIR there
-STAND_DIR = {"gondola": 0x80, "capsule": None, "tower": "screen-right"}
-SCALE = {"tower": 0.85}               # the water tower: both a little big (user)
+STAND_DIR = {"gondola": 0x80, "capsule": None, "cannon": None}
+SCALE = {}                            # per place model scale (the water tower had 0.85)
 GIRL_SCALE = {}                        # per-girl model scale (Scarlet 1.12 was tried; user: keep her size)
 # a girl's own seat in a place (x, y): Scarlet further left and nearer the camera in the gondola (user)
 GIRL_SEAT = {("gondola", "Scarlet"): (-5198, -6900), ("capsule", "Scarlet"): (52, 227),   # (user: the capsule too)
@@ -68,17 +67,17 @@ WALK_TO = 0.35                        # "stand": she walks over to Cloud, this f
 # places whose near background tiles (draw depth < 4093: the capsule's benches and rails, ids
 # 52-87) drew over the characters (user): pushed back just in front of the base layer
 TILES_BACK = {"capsule"}
-# sitting: "bench" = the gondola models' own sitting anims (feet on the floor);
-# "ledge" = ours (_ledge): hips on the floor, thighs level, shins hanging over the edge
-SIT_KIND = {"gondola": "bench", "capsule": "bench", "tower": "ledge"}
-CLOUD_SIT = {"bench": "GDAB.chi", "ledge": "ZDLC.tor"}       # bwhlin cloud DFANM 03 / ours
-GIRL_SIT = {"Tifa": {"bench": "GDEE.chi", "ledge": "ZDLT.tor"},     # bwhlin tifa DFANM 03 / ours
-            "Aerith": {"bench": "GDBE.chi", "ledge": "ZDLA.tor"},   # bwhlin earith DFANM 03 / ours
-            "Scarlet": {"bench": "ZDBS.tor", "ledge": "ZDLS.tor"},  # ours
-            "Elena": {"bench": "ZDBE.tor", "ledge": "ZDLE.tor"}}    # ours
-# ledge poses to build: anim -> (skeleton .hrc, standing anim it starts from)
-LEDGE = {"ZDLC.tor": ("aaaa.hrc", "acfe.a"), "ZDLT.tor": ("aagb.hrc", "abcd.a"), "ZDLA.tor": ("auff.hrc", "avbf.a"),
-         "ZDLS.tor": ("amcc.hrc", "anae.a"), "ZDLE.tor": ("evfe.hrc", "acfe.a")}
+# original entities kept as they were (scripts 0 and 1): the cannon's SEA cycles the sea's
+# background states (param 1 states 1-7, then param 2 states 0-2)
+KEEP = {"cannon": ("SEA",)}
+# "bench" = sitting: the gondola models' own sitting anims (feet on the floor), or ours;
+# "stand" (user: on the cannon they stand) = each model's own anim 0 (its standing idle)
+SIT_KIND = {"gondola": "bench", "capsule": "bench", "cannon": "stand"}
+CLOUD_SIT = {"bench": "GDAB.chi", "stand": None}             # bwhlin cloud DFANM 03
+GIRL_SIT = {"Tifa": {"bench": "GDEE.chi"},                    # bwhlin tifa DFANM 03
+            "Aerith": {"bench": "GDBE.chi"},                  # bwhlin earith DFANM 03
+            "Scarlet": {"bench": "ZDBS.tor"},                 # ours
+            "Elena": {"bench": "ZDBE.tor"}}                   # ours
 BENCH = {"ZDBS.tor": ("amcc.hrc", "anae.a"), "ZDBE.tor": ("evfe.hrc", "acfe.a"),   # no sitting anims: ours,
          "ZDBC.tor": ("aaaa.hrc", "acfe.a")}     # feet on the floor (ZDBC: Cloud, for his seated part twos)
 LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
@@ -282,6 +281,8 @@ def _field(ctx, place, group, names):
         return x, y, mesh.height(tri, x, y) + dz, tri
 
     def sit_anim(m, anim):
+        if anim is None:                         # standing: the model's own idle
+            return 0
         anims = ModelLoader.anims(loader.models[m])
         if anim not in anims:
             loader.models[m] = ModelLoader.with_anims(loader.models[m], [anim])
@@ -292,15 +293,7 @@ def _field(ctx, place, group, names):
     cdir, gdir = _dir_to(gs[0] - cs[0], gs[1] - cs[1]), _dir_to(cs[0] - gs[0], cs[1] - gs[1])
     gdir = SEATS[place]["girl"][3] if SEATS[place]["girl"][3] is not None else gdir
     cam = Camera(f.sections[1])
-
-    def on_screen(x, y, z, d):                   # DIR d's direction on screen
-        a = d * 2 * math.pi / 256
-        p0, p1 = cam.project(x, y, z), cam.project(x + 20 * math.sin(a), y - 20 * math.cos(a), z)
-        return p1[0] - p0[0], p1[1] - p0[1]
-    if SEATS[place]["cloud"][3] == "mirror":     # her direction mirrored left-right on screen
-        sx, sy = on_screen(gs[0], gs[1], gs[2], gdir)
-        cdir = facing_screen(cam, cs[0], cs[1], cs[2], (-sx, sy))
-    elif SEATS[place]["cloud"][3] is not None:
+    if SEATS[place]["cloud"][3] is not None:
         cdir = SEATS[place]["cloud"][3]
     # girls whose model the base field lacks: copied from GIRL_DONOR, with a new entity
     for gname in names:
@@ -362,7 +355,7 @@ def _field(ctx, place, group, names):
     for gname in names:
         i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
         m = next(k for k, n in enumerate(model_names) if n.endswith(GIRL_MODEL[gname]))
-        ga = sit_anim(m, GIRL_SIT[gname][kind])
+        ga = sit_anim(m, GIRL_SIT[gname].get(kind))
         hide, end = asm.nop(), asm.nop()
         my = gs
         if (place, gname) in GIRL_SEAT:
@@ -481,6 +474,10 @@ def _field(ctx, place, group, names):
     for e, m in chars.items():                   # everyone else: hidden
         if e not in scripts:
             scripts[e] = {0: [Op(bytes([0xA1, m])), hb._visi(0), asm.ret(), asm.ret()]}
+    for keep in KEEP.get(place, ()):
+        e = sec.entity_index(keep)
+        assert e not in scripts and e not in chars, keep
+        scripts[e] = {k: sec.script_ops(e, k) for k in (0, 1)}
     assert 0 not in chars, "entity 0 has a model"
     init = [asm.ret()]
     if place == "capsule":                       # space through the window
@@ -1120,8 +1117,6 @@ def _koala(ctx, name, hrc, stand):
 
 
 def apply(ctx):
-    for anim, (hrc, stand) in LEDGE.items():
-        _ledge(ctx, anim, hrc, stand)
     for anim, (hrc, stand) in BENCH.items():
         _ledge(ctx, anim, hrc, stand, bench=True)
     _bare_elena(ctx)

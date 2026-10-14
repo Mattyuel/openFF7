@@ -310,13 +310,16 @@ Existing saves load, but they keep their own story progress; use a new game.
   (Kalm bar, disc 2 Midgar, a few dungeons). Opening it during a cutscene
   can leave the scene without player control; use it while walking around.
 - **Dates with Tifa** (new; untested in-game): talk to Tifa in her house in Nibelheim ->
-  "Ask her on a date." -> Gold Saucer gondola / space capsule / water tower. The date depends on
+  "Ask her on a date." -> Gold Saucer gondola / space capsule / Junon cannon. The date depends on
   her affection (0-9 / 10-19 / 20: debug Honey Bee -> All affection 0/10/20); questions (right =
   +1 affection, chime); third date with every answer right -> "Give into your desires." / "Leave
   it be." -> part two test scene: fade, then bare Cloud standing and thrusting with Tifa
   (her own undressed copy) koala-hugging him, bouncing; her lines; closing line. Afterwards you're back beside her. Check: the
-  view (gondola: Gold Saucer at night with no cabin; capsule: stars in the round window; tower:
-  starry sky), where the two sit and face, sitting poses (tower: legs over the rim), text, music.
+  view (gondola: Gold Saucer at night with no cabin; capsule: stars in the round window; cannon:
+  the top of the Junon cannon where Tifa and Scarlet had their slap fight, the sea animating),
+  where the two sit and face (cannon: both standing, Cloud in Tifa's slap spot, she in Scarlet's),
+  sitting poses, text, music. Part two/three on the cannon use the same poses (Elena's lap scene:
+  Cloud sits on nothing there; say if you want something else).
 - **Dates with Aerith** (new; untested in-game): talk to Aerith (Temple of the Ancients,
   by the altar) -> "Ask her on a date." -> any of the three places. Same flow as Tifa's; her
   third date is playfully submissive ("Sir."). Part two = the head scene in her own model:
