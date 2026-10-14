@@ -36,6 +36,7 @@ from ff7.walkmesh import Walkmesh
 
 MAX = 20
 WRONG = (5, 246)                       # temp: an answer this date was wrong
+SLAPS = (5, 244)                       # temp: cloudb's main sounds a slap every stroke while 1
 TIERS = (10, 20)                       # affection where the second / third dates start
 # date fields: (place, group) -> new field name (free maplist names, docs/dates_plan.md)
 GROUPS = [["Tifa", "Aerith", "Scarlet", "Elena"]]
@@ -336,7 +337,14 @@ def _field(ctx, place, group, names):
     sec.entity_names.append(b"cloudb\0\0")
     sec.entry.append([None] * 32)
     floor = (cs[0], cs[1], cs[2] - SEATS[place]["cloud"][4], cs[3])
-    scripts[cb] = {0: [Op(bytes([0xA1, bare])), hb._visi(0), asm.ret(), asm.ret()],
+    # main: the slap sound every SEATED_FRAMES (0.5 s) while SLAPS is set (a part three's switch,
+    # "slap_loop"). It was a priority 7 REQSW of a looping slot 31, which never started (the main
+    # holds priority 7): the director waited there and the screen stayed black (user)
+    snd = Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40")
+    tick, quiet = hb._w(1), asm.nop()
+    scripts[cb] = {0: [Op(bytes([0xA1, bare])), hb._visi(0), asm.setbyte(SLAPS, 0), asm.ret(),
+                       tick, asm.if_byte(SLAPS, "==", 1, quiet), snd, hb._w(SEATED_FRAMES - 1), quiet,
+                       asm.goto_back(tick), asm.ret()],
                    3: [hb._xyzi(*floor), Op(bytes([0xB3, 0, bdir])), hb._visi(1), asm.ret()]}
     for k, pose in enumerate(CLOUD_PART2):     # 4+k: loop pose k; 12+k: hold its frame 0 (stop);
         scripts[cb][4 + k] = [Op(bytes([0xA2, first + k, 1])), Op(bytes([0xAE, first + k, 1])), asm.ret()]
@@ -347,10 +355,6 @@ def _field(ctx, place, group, names):
                                Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
                                Op(bytes([0xBC, first + k, n // 2, n - 1, 1])), Op(b"\xAC"),
                                Op(bytes([0xB1, first + k, 0, 0, 1])), asm.ret()]
-    # 31: the slap sound every SEATED_FRAMES (0.5 s), from the middle of the stroke (where his
-    # hand comes down), forever (REQ'd at priority 7 by a part three's switch: "slap_loop")
-    snd = Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40")
-    scripts[cb][31] = [hb._w(SEATED_FRAMES // 2), snd, hb._w(SEATED_FRAMES), asm.goto_back(snd), asm.ret()]
     part2 = {}
     for gname in names:
         i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
@@ -461,9 +465,10 @@ def _field(ctx, place, group, names):
         for k, (pose, her) in p2.get("switch", {}).items():                       # fade, both change pose
             acts[k] = [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(cb, 4 + CLOUD_PART2.index(pose)),
                        hb._req(ge, 5 + p2["anims"].index(her))]
-            if p2.get("slap_loop"):                  # (user) a slap every stroke from here: cloudb slot 31 at
-                acts[k].append(Op(bytes([0x02, cb, 0xE0 | 31])))   # priority 7 (anything else interrupts it)
-            acts[k] += [Op(hb.FADE_IN), Op(b"\x6C"), hb._w(20)]
+            acts[k] += [Op(hb.FADE_IN), Op(b"\x6C")]
+            if p2.get("slap_loop"):                  # (user) a slap every stroke from here (cloudb's main),
+                acts[k] += [hb._w(SEATED_FRAMES // 2), asm.setbyte(SLAPS, 1)]   # from mid-stroke
+            acts[k] += [hb._w(20)]
         for k, snd in p2.get("sounds", {}).items():
             acts[k] = [Op(bytes([0xF1, 0]) + snd.to_bytes(2, "little") + b"\x40"), hb._w(8)]
         start = 12 if p2.get("cloud_still") else 4
@@ -942,26 +947,64 @@ def _align(fa, a, b):
 # straight down, shins flat behind, torso FOURS_PITCH head-up, arms straight and angled forward
 # so hands and knees rest on his floor, head FOURS_LOOK up), her hips SPANK_SIDE to his right and
 # SPANK_FRONT in front of him (he stands behind and to her side, facing her way; her place is
-# in her anim, same XYZI and DIR); Cloud (ZCTP) from 620's ZCTE frame 0 (knees bent) with the
-# upper body leaned SPANK_LEAN further forward, his right arm as the seated spank (one bend,
+# in her anim, same XYZI and DIR); Cloud (ZCTP) beside her on one knee (user; was standing,
+# leaning down: see _elena_fours), his right arm as the seated spank (one bend,
 # swung at the shoulder, landing on the top of her behind at the middle frame). Part three:
 # Tifa's koala hug on her (ZDEK), turned round inside the anim (both keep one DIR).
-FOURS_LOOK, FOURS_PAD, SPANK_LEAN, SPANK_SIDE, SPANK_FRONT, FOURS_BUTT = 25, 0.6, 55, 4.5, 6.0, 2.0
+FOURS_LOOK, FOURS_PAD, SPANK_SIDE, SPANK_FRONT, FOURS_BUTT = 25, 0.6, 4.5, 7.0, 2.0
 FOURS_PITCH = 15
+KNEEL_THIGH, KNEEL_LEAN, KNEEL_PAD = 110, 20, 0.5   # (user) Cloud on one knee: front thigh 20 above level;
+                                                    # leaning; the back knee's centre above the floor
 
 
 def _elena_fours(ctx):
-    """ZDEF (Elena on all fours) and ZCTP (Cloud spanking her, standing); see SPANK_*."""
+    """ZDEF (Elena on all fours) and ZCTP (Cloud on one knee beside her, spanking); see SPANK_*, KNEEL_*."""
     from ff7 import fieldanim as fa
     csk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
     CI = [b[0] for b in csk].index
-    cbase = fa.Anim(ctx.char_file("zcte.a"))
-    crr, crp, crots = cbase.frames[0]
-    croot = [crp[0], -crp[1], crp[2]]
-    cfk = lambda W, r=croot: fa.forward(csk, crr, list(r), fa.local_rotations(csk, crr, W))
-    CW = [m for m, _, _ in fa.forward(csk, crr, croot, crots)]
-    floor = max(e[1] for n, (_, _, e) in zip([b[0] for b in csk], cfk(CW)) if n[2:] in ("tibia", "foot"))
+    cn = [b[0] for b in csk]
     side = [1.0, 0.0, 0.0]
+    # (user) Cloud on one knee: his standing pose (ACFE) with the left (back) thigh straight down,
+    # its shin flat behind on the floor; the right (front) thigh raised KNEEL_THIGH forward, its
+    # shin angled back down until the ankle reaches the floor (his shins are longer than his
+    # thighs: a level thigh and an upright shin would sink the foot), the foot as standing (flat);
+    # the root lowered so the left knee rests where his standing ankles were; leaning KNEEL_LEAN
+    cbase = fa.Anim(ctx.char_file("zcte.a"))            # (a 15-frame container: frames replaced)
+    crr, crp, crots = fa.Anim(ctx.char_file("acfe.a")).frames[0]
+    r0 = [crp[0], -crp[1], crp[2]]
+    cfk = lambda W, r: fa.forward(csk, crr, list(r), fa.local_rotations(csk, crr, W))
+    cend = lambda W, n, r=r0: cfk(W, r)[CI(n)][2]
+    CW = [m for m, _, _ in fa.forward(csk, crr, r0, crots)]
+    floor = max(cend(CW, s + n)[1] for s in "lr" for n in ("_tibia", "_foot"))      # his standing floor (y down)
+    ankle = max(cend(CW, s + "_tibia")[1] for s in "lr")                            # his standing ankles
+    rot = lambda W, bones, a: [fa._mul(fa.axis_angle(side, a), m) if cn[i] in bones else m for i, m in enumerate(W)]
+    fwd = 1 if cend(rot(CW, {"r_femur", "r_tibia", "r_foot"}, 10), "r_femur")[2] < cend(CW, "r_femur")[2] else -1
+    lt = CI("l_tibia")                                                              # back shin flat behind
+    CW[lt] = fa._mul(_align(fa, fa._vec(CW[lt], [0, 0, -1]), [0.0, 0.0, 1.0]), CW[lt])
+    CW[CI("l_foot")] = CW[lt]
+    assert cend(CW, "l_tibia")[2] > cend(CW, "l_femur")[2] + 5, "back shin not behind"
+    foot0 = CW[CI("r_foot")]
+    CW = rot(CW, {"r_femur", "r_tibia", "r_foot"}, fwd * KNEEL_THIGH)                # front thigh up
+
+    def shin(a):                                     # the front shin turned back down by a, foot flat
+        M = rot(CW, {"r_tibia"}, -fwd * a)
+        M[CI("r_foot")] = foot0
+        return M
+    knee_y = floor - KNEEL_PAD                                                      # the back knee's centre
+    miss = lambda a: cend(shin(a), "r_tibia")[1] - cend(CW, "l_femur")[1] - (ankle - knee_y)   # ankle as standing
+    lo, hi = 0.0, float(KNEEL_THIGH)
+    assert miss(lo) < 0 < miss(hi), (miss(lo), miss(hi))
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if miss(mid) < 0 else (lo, mid)
+    CW = shin(lo)
+    croot = [r0[0], r0[1] + knee_y - cend(CW, "l_femur")[1], r0[2]]                # back knee on the floor
+    for n, y in (("l_femur", knee_y), ("l_tibia", knee_y), ("r_tibia", ankle)):
+        assert abs(cend(CW, n, croot)[1] - y) < 0.3, (n, cend(CW, n, croot), y)
+    assert cend(CW, "r_femur", croot)[2] < cend(CW, "l_femur", croot)[2] - 4, "front knee not forward"
+    crp = [croot[0], -croot[1], croot[2]]
+    cfk_ = cfk
+    cfk = lambda W, r=croot: cfk_(W, r)
     # her pose
     sk = fa.skeleton(ctx.char_file("zela.hrc").decode("latin-1"))
     names = [b[0] for b in sk]
@@ -1013,12 +1056,14 @@ def _elena_fours(ctx):
     # his spank: lean, then the arm onto the top of her behind (above her pelvis, a little back)
     cl_legs = {CI(s + n) for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
     for sg in (1, -1):
-        M = [fa._mul(fa.axis_angle(side, sg * SPANK_LEAN), m) if i not in cl_legs else m for i, m in enumerate(CW)]
+        M = [fa._mul(fa.axis_angle(side, sg * KNEEL_LEAN), m) if i not in cl_legs else m for i, m in enumerate(CW)]
         if cfk(M)[CI("head")][2][2] < cfk(CW)[CI("head")][2][2]:
             break
     CW = M
     target = [r[0], r[1] - FOURS_BUTT, r[2] + 0.5]
     CW, csense, arm = _spank_arm(fa, csk, crr, CW, croot, target, "ZCTP")
+    hit = cend(CW, "r_hand", croot)
+    assert math.dist(hit, target) < 1.0, ("ZCTP hand off her", hit, target)   # (the elbow limit moves it out)
     frames = []
     for t in range(SEATED_FRAMES):
         e = (1 - math.cos(2 * math.pi * t / SEATED_FRAMES)) / 2            # 0 -> 1 (middle) -> 0

@@ -333,12 +333,14 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Dates with Elena** (new; untested in-game): talk to Elena (Shinra Mansion, Nibelheim)
   -> "Ask her on a date." Third date: she doubts herself and begs to be punished. Part two
   (user, since: standing, in every place): she on all fours (her new model: thighs bare), bare
-  Cloud standing beside her hips, a little behind, leaning down, spanking with his right hand
+  Cloud beside her hips, a little behind, on one knee (user, since: back knee down, front knee up),
+  spanking with his right hand
   (one swing + the slap sound per spank, in rounds of 1, 2, 3); she asks for more; fade to part
-  three: Tifa's koala hug ("holding") on Elena, a slap sound every 0.5 s. Both on the left of the
+  three: Tifa's koala hug ("holding") on Elena, a slap sound every 0.5 s (it stayed black there:
+  fixed, the slaps now run from Cloud's own loop). Both on the left of the
   screen (at her seat), turned as before (DIR -21 from "the other way"). Elena sits on the left
   gondola seat in part one. Check: his hand meeting her behind at the slap, the two not overlapping
-  (her hips are 4.5 to his right and 6 ahead in model units), her all-fours on the floor.
+  (her hips are 4.5 to his right and 7 ahead in model units), her all-fours on the floor.
 - **Movie minigame** (new; untested in-game): needs all 20 Honey Bee kids (debug menu:
   Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
   cameraman (the Junon reporter with the camera) and Ruby (red hair, black jacket). Talk to
