@@ -334,13 +334,16 @@ Existing saves load, but they keep their own story progress; use a new game.
   -> "Ask her on a date." Third date: she doubts herself and begs to be punished. Part two
   (user, since: standing, in every place): she on all fours (her new model: thighs bare), bare
   Cloud beside her hips, a little behind, on one knee (user, since: back knee down, front knee up),
-  spanking with his right hand
+  spanking with his right hand (user, since: arm kept straight, swung from out at the shoulder
+  quickly in onto her; the old bent elbow went the wrong way)
   (one swing + the slap sound per spank, in rounds of 1, 2, 3); she asks for more; fade to part
   three: Tifa's koala hug ("holding") on Elena, a slap sound every 0.5 s (it stayed black there:
   fixed, the slaps now run from Cloud's own loop). Both on the left of the
   screen (at her seat), turned as before (DIR -21 from "the other way"). Elena sits on the left
-  gondola seat in part one. Check: his hand meeting her behind at the slap, the two not overlapping
-  (her hips are 4.5 to his right and 7 ahead in model units), her all-fours on the floor.
+  gondola seat in part one. In the capsule part two/three are now further from the camera (the far
+  end of her floor strip; they were off the bottom of the screen). Check: his hand meeting her
+  behind at the slap, the two not overlapping (her hips 7 ahead, and to his right as far as his
+  straight arm reaches), her all-fours on the floor.
 - **Honey Bee rescue** (new; untested in-game): with at least one girl hired, entering Wall
   Market by the Honey Bee Inn has a 1 in 10 chance of a customer slapping one of your girls (never
   Tifa, Aerith, Elena or Scarlet; a

@@ -15,7 +15,7 @@ The girl is the Honey Bee dancer (the inn's uniform: the girls' own world
 models can't all fit in one field), named in the lines. Her cowering pose
 (ZCWA: sitting on the floor, knees drawn up, leaning in, arms up over her head,
 trembling) and each thug's slap (ZTS<k>: leaning in, the right arm bent once
-and swung at the shoulder onto her head, 660's `_spank_arm`) are built here;
+and swung at the shoulder onto her head, 660's old `_spank_arm`, since removed) are built here;
 each thug is placed where his hand lands on her head.
 
 Models: mrkt3 was at 14. Three thugs take over the hidden party copies

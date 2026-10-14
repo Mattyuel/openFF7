@@ -64,6 +64,9 @@ GIRL_SCALE = {}                        # per-girl model scale (Scarlet 1.12 was 
 # a girl's own seat in a place (x, y): Scarlet further left and nearer the camera in the gondola (user)
 GIRL_SEAT = {("gondola", "Scarlet"): (-5198, -6900), ("capsule", "Scarlet"): (52, 227),   # (user: the capsule too)
              ("gondola", "Elena"): (-5198, -6900)}       # (user) Elena too, left onto the seat
+# (user) part two/three somewhere else than her seat: Elena's capsule seat (45,209) put her (ahead
+# of him, towards the camera) off the bottom of the screen: the far end of that floor strip
+PART2_SPOT = {("capsule", "Elena"): (50, 130)}
 WALK_TO = 0.35                        # "stand": she walks over to Cloud, this far from him along the way
 # places whose near background tiles (draw depth < 4093: the capsule's benches and rails, ids
 # 52-87) drew over the characters (user): pushed back just in front of the base layer
@@ -448,6 +451,11 @@ def _field(ctx, place, group, names):
         show_cloud = 3
         if p2.get("at_her_seat"):                    # both at her seat (cloudb gets a slot 20+ for it)
             spot = (my[0], my[1], my[2] - SEATS[place]["girl"][4], my[3])
+            if (place, gname) in PART2_SPOT:         # (user) her seat put them off screen
+                px_, py_ = PART2_SPOT[(place, gname)]
+                pt_ = mesh.find(px_, py_)
+                assert pt_ is not None, (place, gname)
+                spot = (px_, py_, mesh.height(pt_, px_, py_), pt_)
             show_cloud = 20 + names.index(gname)
             scripts[cb][show_cloud] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, pdir])), hb._visi(1), asm.ret()]
         scripts[ge][4] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, gface])), hb._visi(1),
@@ -869,70 +877,11 @@ def _bare_elena(ctx):
     ctx.char_file(ELENA_BARE.lower(), hrc.encode("latin-1"))
 
 
-# Cloud's spank (Elena's part two, ZCTP): the right arm raised SPANK_UP more and swung down onto
-# her, its lowest at the middle frame; SEATED_FRAMES = 0.5 s (was a seated spank over his lap)
-SEATED_FRAMES, SPANK_UP = 15, 70
-ELBOW_MAX = 90                        # (user) the spanking elbow bends this much at most
-ELBOW_POLE = (-0.3, -1.0, 0.2)        # the bent elbow points up (y down), a little out (his right = -x) and back
-
-
-def _spank_arm(fa, sk, rr, W, root, target, name, hand_up=None):
-    """Cloud's right arm bent once (two-bone IK at the lowest point: the wrist HAND_UP above
-    `target`, the elbow up and a little out, like a hammer; ELBOW_MAX at most) so the hand lands
-    on `target` (hand_up: that wrist height, for a hand bone other than Cloud's); returns
-    (W, sense, arm bones): + sense about his side axis raises the arm."""
-    names = [b[0] for b in sk]
-    I = names.index
-    side = [1.0, 0.0, 0.0]
-    fk = lambda W, r=root: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
-    arm = {I(n) for n in ("r_uparm", "r_foarm", "r_hand")}
-    # (user: "a simple shoulder rotation") one fixed bend at the elbow (two-bone IK at the lowest
-    # point: the wrist HAND_UP above her behind, the elbow up and a little out, like a hammer),
-    # then the whole arm only swings at the shoulder about his side axis (SPANK_UP up and back)
-    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
-    dotp = lambda a, b: sum(a[k] * b[k] for k in range(3))
-    F = fk(W)
-    S = F[I("r_uparm")][1]
-    L1 = math.dist(F[I("r_uparm")][1], F[I("r_uparm")][2])
-    L2 = math.dist(F[I("r_foarm")][1], F[I("r_foarm")][2])
-    T = [target[0], target[1] - (HAND_UP if hand_up is None else hand_up), target[2]]
-    d = math.dist(S, T)
-    assert d < L1 + L2 - 0.1, (name, d, L1 + L2, [T[k] - S[k] for k in range(3)])   # in reach
-    # (user) the elbow bends ELBOW_MAX at most: a nearer wrist would need more, so it moves out
-    # level (away from his shoulder) until that bend reaches it; the hand lands that much further
-    # across her
-    reach = math.sqrt(L1 * L1 + L2 * L2 - 2 * L1 * L2 * math.cos(math.radians(180 - ELBOW_MAX)))
-    if d < reach:
-        D = [T[k] - S[k] for k in range(3)]
-        h = unit([D[0], 0.0, D[2]])
-        dh = dotp(D, h)
-        t = -dh + math.sqrt(dh * dh - dotp(D, D) + reach * reach)
-        T = [T[k] + h[k] * t for k in range(3)]
-        target = [target[k] + h[k] * t for k in range(3)]
-        d = math.dist(S, T)
-    u = unit([T[k] - S[k] for k in range(3)])
-    P = unit(ELBOW_POLE)
-    pp = unit([P[k] - dotp(P, u) * u[k] for k in range(3)])
-    a_ = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
-    E = [S[k] + a_ * u[k] + math.sqrt(max(0.0, L1 * L1 - a_ * a_)) * pp[k] for k in range(3)]
-    bdir = lambda m: fa._vec(m, [0, 0, -1])
-    W = list(W)
-    W[I("r_uparm")] = fa._mul(_align(fa, bdir(W[I("r_uparm")]), [E[k] - S[k] for k in range(3)]), W[I("r_uparm")])
-    W[I("r_foarm")] = fa._mul(_align(fa, bdir(W[I("r_foarm")]), [T[k] - E[k] for k in range(3)]), W[I("r_foarm")])
-    W[I("r_hand")] = fa._mul(_align(fa, bdir(W[I("r_hand")]), [0.0, 1.0, 0.0]), W[I("r_hand")])
-    hit = fk(W)[I("r_hand")][2]
-    assert math.dist(hit, target) < 1.0, (name, hit, target)    # the hand on her
-    Fb = fk(W)
-    ua, fa_ = ([Fb[I(n)][2][k] - Fb[I(n)][1][k] for k in range(3)] for n in ("r_uparm", "r_foarm"))
-    bend = math.degrees(math.acos(dotp(ua, fa_) / math.sqrt(dotp(ua, ua) * dotp(fa_, fa_))))
-    assert bend <= ELBOW_MAX + 0.5, (name, bend)                 # (user) no more than 90 at the elbow
-    hand0 = fk(W)[I("r_hand")][2]
-    sense = 1 if fk([fa._mul(fa.axis_angle(side, 10), m) if i in arm else m for i, m in enumerate(W)])[I("r_hand")][2][1] \
-        < hand0[1] else -1                               # + sense: the hand goes up (y down)
-    return W, sense, arm
-
-
-HAND_UP = 2.0                         # his wrist this far above where the hand lands (the hand's length)
+# Cloud's spank (Elena's part two, ZCTP): (user) his right arm straight, swung at the shoulder from
+# out (SWING_OUT back about the vertical, SWING_RAISE up) quickly in onto her (SWING_IN frames),
+# the hit at the middle frame; SEATED_FRAMES = 0.5 s
+SEATED_FRAMES = 15
+SWING_OUT, SWING_RAISE, SWING_IN = 60, 20, 3   # (user) straight arm: out this far, raised, in over 3 frames
 
 
 def _align(fa, a, b):
@@ -946,13 +895,13 @@ def _align(fa, a, b):
 
 # (user) Elena's part two, standing, in every place: she on all fours (ZDEF, held: thighs
 # straight down, shins flat behind, torso FOURS_PITCH head-up, arms straight and angled forward
-# so hands and knees rest on his floor, head FOURS_LOOK up), her hips SPANK_SIDE to his right and
+# so hands and knees rest on his floor, head FOURS_LOOK up), her hips (at least SPANK_SIDE_MIN) to his right and
 # SPANK_FRONT in front of him (he stands behind and to her side, facing her way; her place is
 # in her anim, same XYZI and DIR); Cloud (ZCTP) beside her on one knee (user; was standing,
-# leaning down: see _elena_fours), his right arm as the seated spank (one bend,
-# swung at the shoulder, landing on the top of her behind at the middle frame). Part three:
+# leaning down: see _elena_fours), his right arm straight, swung in at the shoulder onto the top
+# of her behind at the middle frame (SWING_*; her hips as far right as it reaches). Part three:
 # Tifa's koala hug on her (ZDEK), turned round inside the anim (both keep one DIR).
-FOURS_LOOK, FOURS_PAD, SPANK_SIDE, SPANK_FRONT, FOURS_BUTT = 25, 0.6, 4.5, 7.0, 2.0
+FOURS_LOOK, FOURS_PAD, SPANK_SIDE_MIN, SPANK_FRONT, FOURS_BUTT = 25, 0.6, 3.0, 7.0, 2.0
 FOURS_PITCH = 15
 KNEEL_THIGH, KNEEL_LEAN, KNEEL_PAD = 110, 20, 0.5   # (user) Cloud on one knee: front thigh 20 above level;
                                                     # leaning; the back knee's centre above the floor
@@ -1037,8 +986,25 @@ def _elena_fours(ctx):
     probe = [fa._mul(fa.axis_angle(side, 5), m) if names[i] in upper else m for i, m in enumerate(W)]
     sense = 1 if end(probe, "head")[1] < end(W, "head")[1] else -1
     W = [fa._mul(fa.axis_angle(side, sense * FOURS_PITCH), m) if names[i] in upper else m for i, m in enumerate(W)]
+    # his lean first: with a straight arm (user) his shoulder decides where she is
+    cl_legs = {CI(s + n) for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
+    for sg in (1, -1):
+        M = [fa._mul(fa.axis_angle(side, sg * KNEEL_LEAN), m) if i not in cl_legs else m for i, m in enumerate(CW)]
+        if cfk(M)[CI("head")][2][2] < cfk(CW)[CI("head")][2][2]:
+            break
+    CW = M
+    # her hips SPANK_FRONT ahead of him and as far to his right as his straight arm (shoulder to
+    # fingertips) reaches the top of her behind (FOURS_BUTT above her pelvis, a little back)
+    S = cfk(CW)[CI("r_uparm")][1]
+    L = sum(csk[CI(n)][2] for n in ("r_uparm", "r_foarm", "r_hand"))
     knee = end(W, "l_femur")
-    r = [-SPANK_SIDE, floor - FOURS_PAD - knee[1], -SPANK_FRONT]                    # her pelvis, in his space
+    ry = floor - FOURS_PAD - knee[1]
+    target = [None, ry - FOURS_BUTT, -SPANK_FRONT + 0.5]
+    dx2 = L * L - (target[1] - S[1]) ** 2 - (target[2] - S[2]) ** 2
+    assert dx2 > 0, ("ZCTP: her behind out of his reach", L, S, target)
+    target[0] = S[0] - math.sqrt(dx2)                                                 # his right = -x
+    r = [target[0], ry, -SPANK_FRONT]                                                 # her pelvis, in his space
+    assert -r[0] >= SPANK_SIDE_MIN, ("ZCTP: she'd be inside him", r)
     F = fk(W, r)
     for s in "lr":
         L = sum(sk[I(s + n)][2] for n in ("_uparm", "_foarm", "_hand"))
@@ -1054,21 +1020,32 @@ def _elena_fours(ctx):
     A = fa.Anim(ctx.char_file("acfe.a"))
     A.frames = [(rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, W))]
     ctx.char_file("zdef.a", A.build())
-    # his spank: lean, then the arm onto the top of her behind (above her pelvis, a little back)
-    cl_legs = {CI(s + n) for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
-    for sg in (1, -1):
-        M = [fa._mul(fa.axis_angle(side, sg * KNEEL_LEAN), m) if i not in cl_legs else m for i, m in enumerate(CW)]
-        if cfk(M)[CI("head")][2][2] < cfk(CW)[CI("head")][2][2]:
-            break
-    CW = M
-    target = [r[0], r[1] - FOURS_BUTT, r[2] + 0.5]
-    CW, csense, arm = _spank_arm(fa, csk, crr, CW, croot, target, "ZCTP")
+    # (user) his arm straight (shoulder, elbow, wrist, hand in one line) onto her at the hit, the
+    # swing only at the shoulder: out (about the vertical, the hand going back) and raised, then
+    # quickly in (SWING_IN frames) to the hit at the middle frame (the 'once' slap sound), and
+    # back out slowly
+    arm = {CI(n) for n in ("r_uparm", "r_foarm", "r_hand")}
+    u = [target[k] - S[k] for k in range(3)]
+    for n in ("r_uparm", "r_foarm", "r_hand"):
+        CW[CI(n)] = fa._mul(_align(fa, fa._vec(CW[CI(n)], [0, 0, -1]), u), CW[CI(n)])
     hit = cend(CW, "r_hand", croot)
-    assert math.dist(hit, target) < 1.0, ("ZCTP hand off her", hit, target)   # (the elbow limit moves it out)
+    assert math.dist(hit, target) < 0.3, ("ZCTP hand off her", hit, target)
+    up = [0.0, -1.0, 0.0]
+    fwd_ax = [0.0, 0.0, -1.0]
+    turn = lambda W_, ax, a_: [fa._mul(fa.axis_angle(ax, a_), m) if i in arm else m for i, m in enumerate(W_)]
+    out = SWING_OUT if cend(turn(CW, up, 10), "r_hand", croot)[2] > hit[2] else -SWING_OUT       # hand back
+    lift = SWING_RAISE if cend(turn(CW, fwd_ax, 10), "r_hand", croot)[1] < hit[1] else -SWING_RAISE  # hand up
+    mid = SEATED_FRAMES // 2
     frames = []
     for t in range(SEATED_FRAMES):
-        e = (1 - math.cos(2 * math.pi * t / SEATED_FRAMES)) / 2            # 0 -> 1 (middle) -> 0
-        Wt = [fa._mul(fa.axis_angle(side, csense * SPANK_UP * (1 - e)), m) if i in arm else m for i, m in enumerate(CW)]
+        if t <= mid - SWING_IN:
+            k = 1.0
+        elif t <= mid:
+            k = (mid - t) / SWING_IN                                  # in, quickly
+        else:
+            q = (t - mid) / (SEATED_FRAMES - mid)                     # back out, eased
+            k = q * q * (3 - 2 * q)
+        Wt = turn(turn(CW, up, out * k), fwd_ax, lift * k)
         frames.append((crr, crp, fa.local_rotations(csk, crr, Wt)))
     cbase.frames = frames
     ctx.char_file("zctp.a", cbase.build())
