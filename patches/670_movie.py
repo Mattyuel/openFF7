@@ -351,7 +351,7 @@ def _bare_skye(ctx):
 SKYE_LIMBS = {
     # (user, since) the knee closed up: the thigh's last ring lower and its tip further past the
     # joint, the shin's capped top ring raised above the old shin's top (t < 0)
-    "femur": ([(0.0, 0.95), (0.95, 0.88)], 8, None, ("tip", 0.6)),              # 16 + 8 = 24 (of 12)
+    "femur": ([(0.0, 0.8), (0.95, 0.88)], 8, None, ("tip", 0.6)),               # 16 + 8 = 24 (of 12); top narrower (user)
     "tibia": ([(-0.08, 0.92), (0.3, 1.0), (1.0, 0.8)], 6, "cap", None),         # 24 + 4 = 28 (of 14)
 }   # (user, since) the arms back as they were
 

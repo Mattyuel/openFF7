@@ -1455,14 +1455,18 @@ def _loft(rings, angles, centre, bulge_x=(1.2, 0.85), side=1, cleft=0.0, rnd=0.7
         for k in range(n):
             a, b = r * n + k, r * n + (k + 1) % n
             tris += [(a, b, b + n), (a, b + n, a + n)]
-    last = (len(rings) - 1) * n
+    # the ends by height, not list order (y down: the top ring has the smallest y); the pelvis
+    # lists its rings downwards, the chest upwards (a fan once went to the wrong ring and left
+    # Skye's lowest pelvis ring open, user)
+    ys = [r[0] for r in rings]
+    hi, lo = n * ys.index(min(ys)), n * ys.index(max(ys))
     if top:
-        tris += [(last, last + k, last + k + 1) for k in range(1, n - 1)]
+        tris += [(hi, hi + k, hi + k + 1) for k in range(1, n - 1)]
     if bottom == "cap":
-        tris += [(0, k + 1, k) for k in range(1, n - 1)]
+        tris += [(lo, lo + k + 1, lo + k) for k in range(1, n - 1)]
     elif bottom:
         V.append([bottom[0], bottom[1], centre(bottom[1])])
-        tris += [(k, (k + 1) % n, len(V) - 1) for k in range(n)]
+        tris += [(lo + k, lo + (k + 1) % n, len(V) - 1) for k in range(n)]
     return V, tris
 
 

@@ -348,10 +348,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   gondola and capsule Elena sits half a body width further left (in the gondola just past the
   floor's edge: check she still sits on the seat). Since (user): Cloud kneels upright, so she is a little closer
   to him (part two, every place).
-- **Skye's legs** (new; untested in-game, user): remade as smooth limbs like her new torso
-  (thighs fuller at the top, rounded knees, slimmer ankles; since (user): arms back as they were,
-  the knee gap closed). Check the knees when bent (no holes) and that the feet still meet the legs.
-  Bare Cloud's pelvis now lines up with his torso's bottom edge (it sat forward).
+- **Skye's legs, both bare models' arms** (new; untested in-game, user): Skye's legs remade as
+  smooth limbs (thigh tops narrower, rounded knees with no gap, slimmer ankles); Skye's and bare
+  Cloud's arms keep their shape but are rounder (6 sides instead of 4; Cloud's shoulder pad and
+  bracer kept). Both seats 30% longer, tapering in (dog pose); the open bottom of Skye's pelvis is
+  closed; Cloud's pelvis lines up with his torso's bottom edge (it sat forward). Check knees /
+  elbows when bent, hands and feet still meeting.
 - **Sculpted buttocks** (new; untested in-game, user): Skye's pelvis now has a rounded seat
   (two cheeks, a cleft, tucked under) and bare Cloud's pelvis too (smaller). Since (user): both
   fuller (more pronounced, chibi-style) and covering the thigh tops (Cloud's thigh tops slimmed). Check from behind and
