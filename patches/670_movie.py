@@ -41,7 +41,9 @@ import math
 import struct
 
 import _marker_models as mm
-from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_STATE
+from _config import HB_AFFECTION, HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_STATE
+from _honey_bee_data import GIRLS as HB_GIRLS
+import _movie_girls as MG
 from _recruit import sound
 from _travel import CHOICE, add_npc, beside, screen_step
 
@@ -894,19 +896,52 @@ def _place(ctx, pos):
                          pos["cloud"][2])
 
 
-def _shoot(ctx, back):
+def _retarget(ctx, names, prefix, hrc, stand):
+    """(user: the four more co-stars) Ruby's position anims (`names`, on RUBY_HRC) copied onto
+    another skeleton `hrc` by bone name (Ruby's non_1 / non_2 are the l_ / r_chest bones); bones
+    she lacks (hair, skirt, Tifa's armer) keep their pose in `stand` (frame 0); the root height
+    scaled by her legs (thigh + shin) / Ruby's. New names: prefix + the old name's last two."""
+    from ff7 import fieldanim as fa
+    src = [{"non_1": "l_chest", "non_2": "r_chest"}.get(b[0], b[0])
+           for b in fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1"))]
+    dst = fa.skeleton(ctx.char_file(hrc.lower()).decode("latin-1"))
+    leg = lambda sk: sum(b[2] for b in sk if b[0] in ("l_femur", "l_tibia"))
+    scale = leg(dst) / leg(fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1")))
+    still = fa.Anim(ctx.char_file(stand)).frames[0][2]
+    assert len(still) >= len(dst), (hrc, stand, len(still), len(dst))
+    out = []
+    for n in names:
+        a = fa.Anim(ctx.char_file(n.split(".")[0].lower() + ".a"))
+        a.frames = [(rr, [c * scale for c in rp],
+                     [rots[src.index(b[0])] if b[0] in src else still[i] for i, b in enumerate(dst)])
+                    for rr, rp, rots in a.frames]
+        struct.pack_into("<I", a.head, 8, len(dst))
+        name = prefix + n.split(".")[0][2:]
+        ctx.char_file(name.lower() + ".a", a.build())
+        out.append(name + ".tor")
+    return out
+
+
+_BUILT = {}                                          # the poses, built once for every set
+
+
+def _shoot(ctx, back, cast=None):
+    """The movie set: FIELD with Ruby / Skye, or (cast = a _movie_girls entry) her own set."""
     hb, dt = _hb(), _dates()
-    _bob(ctx)
-    _prone(ctx)
-    _head_back(ctx)
-    _cloud_dog(ctx)
-    _cloud_prone(ctx)
-    hb_ = _hb()
-    hb_._cloud_stand(ctx, "ZCTQ.tor", arms=hb_.STAND_ARMS_LR, elbow_in=hb_.STAND_ELBOW_IN, step=HEAD_STEP,
-                     thrust=hb_.STAND_THRUST * HEAD_THRUST)
-    for pos in POSITIONS:
-        _place(ctx, pos)
-    f = ctx.new_field(FIELD, ctx.field(BASE).build())
+    if not _BUILT:
+        _bob(ctx)
+        _prone(ctx)
+        _head_back(ctx)
+        _cloud_dog(ctx)
+        _cloud_prone(ctx)
+        hb._cloud_stand(ctx, "ZCTQ.tor", arms=hb.STAND_ARMS_LR, elbow_in=hb.STAND_ELBOW_IN, step=HEAD_STEP,
+                        thrust=hb.STAND_THRUST * HEAD_THRUST)
+        for pos in POSITIONS:
+            _place(ctx, pos)
+        dt._wall(ctx, "ZRWA.tor", RUBY_HRC, RUBY_STAND)          # (user) "behind": Scarlet's date pose on her
+        dt._koala(ctx, "ZRKA.tor", RUBY_HRC, RUBY_STAND)         # (user) "holding": Tifa's koala hug on her
+        _BUILT["anims"] = _speeds(ctx)
+    f = ctx.new_field(cast["field"] if cast else FIELD, ctx.field(BASE).build())
     sec = Script.parse(f.sections[0])
     dt._clear_texts(sec)
     mesh = Walkmesh(f.section("walkmesh"))
@@ -969,36 +1004,55 @@ def _shoot(ctx, back):
     sprite_dir = min(range(256), key=tilt)
     assert tilt(sprite_dir) < 0.05, tilt(sprite_dir)
 
-    # models: 2 bare Cloud, 3 Ruby bare, 4 cameraman, 5 gauge, 6 cursor
-    dt._wall(ctx, "ZRWA.tor", RUBY_HRC, RUBY_STAND)          # (user) "behind": Scarlet's date pose on her
-    dt._koala(ctx, "ZRKA.tor", RUBY_HRC, RUBY_STAND)         # (user) "holding": Tifa's koala hug on her
-    girl_anims, cloud_anims = _speeds(ctx)
+    # models: 2 bare Cloud, 3 Ruby bare (or this set's girl), 4 cameraman, 5 gauge, 6 cursor (, 7 Skye)
+    girl_anims, cloud_anims = _BUILT["anims"]
     cl0 = loader.models[0]
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC,
                                                                      ModelLoader.name(cl0)[:-5] + "_b.char"), cloud_anims))
     cfirst = len(ModelLoader.anims(loader.models[2])) - len(cloud_anims)
-    rd = ModelLoader(ctx.field(RUBY_DONOR[0]).section("models"))
-    r = loader.add_from(rd, RUBY_DONOR[1])
-    loader.models[r] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[r], BARE_HRC,
-                                                                   ModelLoader.name(loader.models[r])[:-5] + "_b.char"),
-                                              girl_anims)
-    gfirst = len(ModelLoader.anims(loader.models[r])) - len(girl_anims)
+    if cast:                                     # her undressed model, Ruby's poses retargeted onto her
+        dfield, dmodel, dhrc = cast["donor"]
+        donor = ModelLoader(ctx.field(dfield).section("models"))
+        assert ModelLoader.hrc(donor.models[dmodel]).upper() == dhrc, (cast["name"], ModelLoader.hrc(donor.models[dmodel]))
+        r = loader.add_from(donor, dmodel)
+        her_anims = _retarget(ctx, girl_anims, cast["prefix"], dhrc,
+                              ModelLoader.anims(donor.models[dmodel])[0].split(".")[0].lower() + ".a")
+        loader.models[r] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[r], cast["hrc"],
+                                                                       ModelLoader.name(loader.models[r])[:-5] + "_b.char"),
+                                                  her_anims)
+        gfirst = len(ModelLoader.anims(loader.models[r])) - len(her_anims)
+    else:
+        rd = ModelLoader(ctx.field(RUBY_DONOR[0]).section("models"))
+        r = loader.add_from(rd, RUBY_DONOR[1])
+        loader.models[r] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[r], BARE_HRC,
+                                                                       ModelLoader.name(loader.models[r])[:-5] + "_b.char"),
+                                                  girl_anims)
+        gfirst = len(ModelLoader.anims(loader.models[r])) - len(girl_anims)
+    assert r == 3, r
     cd = ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models"))
     cm = loader.add_from(cd, CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
-    sprites = _sprites(ctx, half, half_cursor)
+    if "sprites" not in _BUILT:                  # (the same base field: the same sizes for every set)
+        _BUILT["sprites"] = _sprites(ctx, half, half_cursor)
+    sprites = _BUILT["sprites"]
     for hrc in ("QGAA", "QCUA"):
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
-    # 7: Skye bare (user: the new girl after a full shoot), Ruby's anims
-    sk = loader.add_from(ModelLoader(ctx.field(SKYE_DONOR[0]).section("models")), SKYE_DONOR[1])
-    loader.models[sk] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[sk], SKYE_BARE,
-                                                                    ModelLoader.name(loader.models[sk])[:-5] + "_b.char"),
-                                               girl_anims)
-    sfirst = len(ModelLoader.anims(loader.models[sk])) - len(girl_anims)
-    assert len(loader.models) == 8 and sk == 7
+    if cast:
+        girls = [(cast["key"], 3, gfirst, None)]
+        assert len(loader.models) == 7
+    else:
+        # 7: Skye bare (user: the new girl after a full shoot), Ruby's anims
+        sk = loader.add_from(ModelLoader(ctx.field(SKYE_DONOR[0]).section("models")), SKYE_DONOR[1])
+        loader.models[sk] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[sk], SKYE_BARE,
+                                                                        ModelLoader.name(loader.models[sk])[:-5] + "_b.char"),
+                                                   girl_anims)
+        sfirst = len(ModelLoader.anims(loader.models[sk])) - len(girl_anims)
+        assert len(loader.models) == 8 and sk == 7
+        girls = [("ruby", 3, gfirst, "ruby"), ("skye", 7, sfirst, "skye")]
 
     ents = {}
-    for name in ("cloudb", "ruby", "camera", "gauge", "cursor", "keys", "voice", "hush", "skye", "shout", "hush2"):
+    for name in ("cloudb", girls[0][0], "camera", "gauge", "cursor", "keys", "voice", "hush") + \
+            tuple(g[0] for g in girls[1:]) + ("shout", "hush2"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -1025,10 +1079,9 @@ def _shoot(ctx, back):
         return head + by_p(make) + [asm.ret()] + ([off, hb._visi(0), asm.ret()] if girl else [])
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: pose(cfirst, "cloud", "cdir")}
-    scripts[ents["ruby"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                             2: pose(gfirst, "girl", "gdir", "ruby")}
-    scripts[ents["skye"]] = {0: [Op(bytes([0xA1, 7])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                             2: pose(sfirst, "girl", "gdir", "skye")}
+    for key, model, first, test in girls:
+        scripts[ents[key]] = {0: [Op(bytes([0xA1, model])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
+                              2: pose(first, "girl", "gdir", test)}
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide()
                                + [Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret(), asm.ret()],
                                2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1), asm.ret()]}
@@ -1066,7 +1119,7 @@ def _shoot(ctx, back):
         def line(p, pl):
             out = []
             lines = table[POSITIONS[p]["name"]]
-            assert len(lines) in (8, LINES_EACH), (who, POSITIONS[p]["name"], len(lines))
+            assert len(lines) in (6, 8, LINES_EACH), (who, POSITIONS[p]["name"], len(lines))
             for k_ in range(LINES_EACH):
                 text = lines[k_ % len(lines)]
                 if text.startswith("C:"):            # Cloud's line (user: he asks her things)
@@ -1082,9 +1135,12 @@ def _shoot(ctx, back):
                            + ([sound(SLAP_SOUND)] if _slaps(text) else []))   # (user) a slap after such lines
             return _chain(K, out)
         return line
-    skye_says = asm.nop()
-    voice += [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_says)]          # bit 1 set: Skye's lines
-    voice += by_p(lines_of("Ruby", LINES)) + [asm.goto(vdone), skye_says] + by_p(lines_of("Skye", SKYE_LINES))
+    if cast:
+        voice += by_p(lines_of(cast["name"], cast["lines"]))
+    else:
+        skye_says = asm.nop()
+        voice += [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_says)]          # bit 1 set: Skye's lines
+        voice += by_p(lines_of("Ruby", LINES)) + [asm.goto(vdone), skye_says] + by_p(lines_of("Skye", SKYE_LINES))
     voice += [vdone, asm.goto_back(vl), asm.ret()]
     scripts[ents["voice"]] = {0: voice}
     scripts[ents["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(SAY_FOR), Op(b"\x54\x01"), asm.ret()]}
@@ -1100,7 +1156,7 @@ def _shoot(ctx, back):
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
-    place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], ents["ruby"], ents["skye"], ents["camera"],
+    place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], *(ents[g[0]] for g in girls), ents["camera"],
                                                  ents["gauge"])]
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
@@ -1108,7 +1164,8 @@ def _shoot(ctx, back):
            [hb._w(20)]
     main += [Op(hb.FADE_IN), Op(b"\x6C")]            # (user: the first position showed the models move too)
     main += say("“Places, everyone! Here's how it works, star:\n tap OK to keep the rhythm going.”")
-    main += say("“Faster means more footage, and every push\n is 10 gil in your pocket. But watch the meter:\n"
+    main += say("“Faster means more footage, and every push\n is %d gil in your pocket. But watch the meter:\n"
+                % (cast["rate"] if cast else PAY_RATE) +
                 " push too hard and it runs away from you,\n ease off and it all falls flat.”")
     main += say("“Hit the red at either end and the shoot's\n over. Ten positions, half a minute each.\n Ready?”")
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
@@ -1141,8 +1198,7 @@ def _shoot(ctx, back):
     for s, th in enumerate(RATE_STEPS):
         main += [asm.if_word(RATE, ">=", th, done), asm.setbyte(NEW, s + 1)]
     main += [done, asm.if_byte(NEW, "!=", STEP, same), asm.setbyte(STEP, NEW),
-             hb._req(ents["cloudb"], 2, wait=False), hb._req(ents["ruby"], 2, wait=False),
-             hb._req(ents["skye"], 2, wait=False), same]
+             hb._req(ents["cloudb"], 2, wait=False)] + [hb._req(ents[g[0]], 2, wait=False) for g in girls] + [same]
     # the next position each minute
     stay = asm.nop()
     main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, MINUTE),
@@ -1165,13 +1221,16 @@ def _shoot(ctx, back):
     main += [hi_red, asm.if_byte(FIN, "==", 1, lost), asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(b"\x54\x02"),
              Op(bytes([0xF2, 0, 0, 0, 0x10, FANFARE]) + bytes(8)), hb._w(45)]      # (a pause: they're mashing OK)
     main += say("“WOW! What a FINISHER!\n That's going straight on the poster!”")
-    main += [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_bonus)]                    # bit 1 set: Skye
-    for rate, label in ((PAY_RATE, None), (PAY_RATE * SKYE_PAY, skye_bonus)):
+    bonuses = [(cast["rate"], None, cast["aftermath"])] if cast else \
+        [(PAY_RATE, None, AFTERMATH[0]), (PAY_RATE * SKYE_PAY, skye_bonus, AFTERMATH[1])]
+    if not cast:
+        main += [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_bonus)]                # bit 1 set: Skye
+    for k_, (rate, label, after) in enumerate(bonuses):
         gil = rate * FINISH_BONUS
         main += ([label] if label else []) + [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil)), sound(0x168)]
         main += say("“Here's a bonus, on the spot:\n {:,} gil. You earned it, star!”".format(gil))
-        main += hb._say(sec, AFTERMATH[label is not None])                   # (user) the girl, after it
-        main += [asm.goto(bonus_done)] if label is None else [bonus_done]
+        main += hb._say(sec, after)                                         # (user) the girl, after it
+        main += [asm.goto(bonus_done)] if k_ + 1 < len(bonuses) else [bonus_done]
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              asm.biton(MOVIE_GIRL, 0), Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     # a CUT (user): he still sells what was shot (the presses so far: a low score), same wait for
@@ -1281,9 +1340,13 @@ def _wall_market(ctx, focus):
             capped = asm.nop()
             return [asm.if_word(GIL, ">", 65535 // rate, capped), asm.setword(GIL, 65535 // rate), capped,
                     hb._arith(0x8A, GIL, rate)]
-        ruby, paid_ = asm.nop(), asm.nop()
-        ops += [asm.setword(GIL, MOVIE_PRESSES), asm.if_byte(MOVIE_GIRL, "bit_on", 1, ruby)]   # bit off -> ruby
-        ops += pay(PAY_RATE * SKYE_PAY) + [asm.goto(paid_), ruby] + pay(PAY_RATE) + [paid_]
+        # (user, since) each co-star 10 gil a press more: Ruby 10, Skye 20, Elena .. Aerith 30 .. 60
+        paid_ = asm.nop()
+        ops += [asm.setword(GIL, MOVIE_PRESSES)]
+        for bit, rate in [(1, PAY_RATE * SKYE_PAY)] + [(g["bit"], g["rate"]) for g in MG.GIRLS]:
+            other = asm.nop()
+            ops += [asm.if_byte(MOVIE_GIRL, "bit_on", bit, other)] + pay(rate) + [asm.goto(paid_), other]
+        ops += pay(PAY_RATE) + [paid_]
         ops += [Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), sound(0x168)]
         paid = say("“The film's flying off the shelves!\n Here's your cut, star: {VAR} gil.”")
         paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
@@ -1303,15 +1366,29 @@ def _wall_market(ctx, focus):
                              ["Lights, camera, action!", "Not now."])
         no = asm.nop()
         ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.bitoff(MOVIE_GIRL, 1)]
-        # (user) once Skye is on, Ruby is still on the list
+        ops += [asm.bitoff(MOVIE_GIRL, g["bit"]) for g in MG.GIRLS]
+        # (user) once Skye is on, Ruby is still on the list; (user, since) and four more co-stars,
+        # each once she's devoted (HB_AFFECTION 20), else he says she'd need to be
         only_ruby, pick_done = asm.nop(), asm.nop()
-        ask2, first2 = hb._ask(sec, "Cameraman\n“Who's your co-star today?”", ["Skye", "Ruby"])
+        ask2, first2 = hb._ask(sec, "Cameraman\n“Who's your co-star today?”",
+                               ["Skye", "Ruby"] + [g["name"] for g in MG.GIRLS])
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, only_ruby)] + ask2
-        ops += [asm.if_byte(CHOICE, "==", first2, pick_done), asm.biton(MOVIE_GIRL, 1), pick_done, only_ruby]
+        skye_ = asm.nop()
+        ops += [asm.if_byte(CHOICE, "!=", first2, skye_), asm.biton(MOVIE_GIRL, 1), asm.goto(pick_done), skye_]
+        for k_, g in enumerate(MG.GIRLS):
+            nxt, ok = asm.nop(), asm.nop()
+            aff = HB_AFFECTION[next(i for i, h in enumerate(HB_GIRLS) if h["name"] == g["name"])]
+            ops += [asm.if_byte(CHOICE, "==", first2 + 2 + k_, nxt), asm.if_byte(aff, "<", 20, ok)]
+            ops += say(g["refuse"]) + [asm.goto(end), ok, asm.biton(MOVIE_GIRL, g["bit"]), asm.goto(pick_done), nxt]
+        ops += [pick_done, only_ruby]
         ops += say("“That's my man! To the set!”")
         x, y, z, t = focus
-        ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0),
-                asm.mapjump(ctx.maplist.index(FIELD), x, y, t, 0), asm.ret()]
+        ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0)]
+        for g in MG.GIRLS:                       # her own set
+            nxt = asm.nop()
+            ops += [asm.if_byte(MOVIE_GIRL, "bit_on", g["bit"], nxt),
+                    asm.mapjump(ctx.maplist.index(g["field"]), x, y, t, 0), asm.ret(), nxt]
+        ops += [asm.mapjump(ctx.maplist.index(FIELD), x, y, t, 0), asm.ret()]
         ops += [no] + say("“Suit yourself. The offer stands.”") + [asm.goto(end)]
         ops += [scout] + say("“I'm looking for a man with a way with\n the ladies. A real charmer, the kind\n"
                              " every girl in town knows by name.”")
@@ -1355,5 +1432,9 @@ def apply(ctx):
     _bare_ruby(ctx)
     _bare_skye(ctx)
     focus = _spot(Walkmesh(ctx.field(BASE).section("walkmesh")), *POSITIONS[0]["girl"][1][:2], 0, True)
+    for g in MG.GIRLS:                           # (their sets are new fields: the maplist names first)
+        assert g["field"] in ctx.maplist, g["field"]
     back = _wall_market(ctx, focus)
     _shoot(ctx, back)
+    for g in MG.GIRLS:                           # (user) four more co-stars, each on her own set
+        _shoot(ctx, back, g)

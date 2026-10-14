@@ -778,7 +778,8 @@ The movie minigame (user's design).
 - `_joints(ctx, hrc, anim)` Model-space joint ends of frame 0 (y down), plus 'root'.
 - `_off(m, d)` Field (dx, dy, dz) of model point m for an entity with DIR d (faces -z, +x = its left).
 - `_place(ctx, pos)` Spots worked out from both poses: "69" her (head over his pelvis, facing from his head to it),
-- `_shoot(ctx, back)` 
+- `_retarget(ctx, names, prefix, hrc, stand)` (user: the four more co-stars) Ruby's position anims (`names`, on RUBY_HRC) copied onto
+- `_shoot(ctx, back, cast=None)` The movie set: FIELD with Ruby / Skye, or (cast = a _movie_girls entry) her own set.
 - `_slaps(text)` A line about slapping / spanking (user: a slap sound after it).
 - `_encode(t)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
@@ -842,6 +843,10 @@ Quest marker models: battle-effect sprites shown in the field.
 - `keyed(sprite, template)` The sprite as a field texture: header copied from a char.lgp field
 - `mesh(donor, crop, half=HALF)` `half`: half size of the longer side. The donor quad (4 vertices, 5 edges, 2 triangles: same layout as every
 - `install(ctx, game_dir)` Add both marker models to char.lgp. Returns {hrc: model loader entry}
+
+## `patches/_movie_girls.py`
+(user) The movie minigame's four more co-stars: Elena, Scarlet, Tifa, Aerith, each 10 gil a
+
 
 ## `patches/_quest_data.py`
 Quest data for 600_quests.py: who gives which quests, where, and what they say.
