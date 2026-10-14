@@ -1382,46 +1382,61 @@ def _bare_cloud_member(ctx, hrc):
 
 
 def _box_p(V, bgr, tail):
-    """A .p of one untextured box: 8 corners V (z-major, then y, then x), vertex colour bgr;
-    laid out as Cloud's own untextured parts (zcmb.p: header 1,1,1; one group; normals =
-    vertices; the triangles wound as there, the cross product pointing inwards); `tail` = the
-    128-byte header's second half, copied from such a part."""
-    import math
+    """A .p of one untextured box: 8 corners V (z-major, then y, then x), vertex colour bgr
+    (see _p_file)."""
     faces = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
-    c = [sum(v[k] for v in V) / 8 for k in range(3)]
+    tris = [t for q in faces for t in ((q[0], q[1], q[2]), (q[0], q[2], q[3]))]
+    return _p_file(V, tris, bgr, tail)
+
+
+def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375)):
+    """A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
+    any winding), every vertex colour bgr; laid out as the games' own untextured parts
+    (zcmb.p / Skye's zslb.p: header 1,1,1; one group; one normal per vertex, the vertex's
+    face normals averaged, pointing out; the triangles wound as there, the cross product
+    pointing inwards, i.e. towards the mesh's centre); `tail` = the 128-byte header's second
+    half and `poly_tail` each poly's last two words, copied from such a part."""
+    import math
+    c = [sum(v[k] for v in V) / len(V) for k in range(3)]
     sub = lambda a, b: [a[k] - b[k] for k in range(3)]
-    tris = []
-    for q in faces:
-        for t in ((q[0], q[1], q[2]), (q[0], q[2], q[3])):
-            a, b, d_ = (V[i] for i in t)
-            u, w = sub(b, a), sub(d_, a)
-            n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]
-            out = sub([(a[k] + b[k] + d_[k]) / 3 for k in range(3)], c)
-            tris.append(t if sum(n[k] * out[k] for k in range(3)) < 0 else (t[0], t[2], t[1]))
+    cross = lambda u, w: [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]
+    wound, acc = [], [[0.0, 0.0, 0.0] for _ in V]
+    for t in tris:
+        a, b, d_ = (V[i] for i in t)
+        n = cross(sub(b, a), sub(d_, a))
+        out = sub([(a[k] + b[k] + d_[k]) / 3 for k in range(3)], c)
+        if sum(n[k] * out[k] for k in range(3)) > 0:
+            t, n = (t[0], t[2], t[1]), [-x for x in n]
+        wound.append(t)
+        for i in t:                                   # n points inwards: the outward normal is -n
+            acc[i] = [acc[i][k] - n[k] for k in range(3)]
+    normals = []
+    for i, n in enumerate(acc):
+        L = math.sqrt(sum(x * x for x in n))
+        if L < 1e-12:
+            n, L = sub(V[i], c), max(1e-12, math.sqrt(sum(x * x for x in sub(V[i], c))))
+        normals.append([x / L for x in n])
     edges = []
+
     def edge(a, b):
         e = (min(a, b), max(a, b))
         if e not in edges:
             edges.append(e)
         return edges.index(e)
-    polys = [(0, *t, *t, edge(t[0], t[1]), edge(t[1], t[2]), edge(t[2], t[0]), 55932, 375) for t in tris]
-    normals = []
-    for v in V:
-        n = sub(v, c)
-        L = math.sqrt(sum(x * x for x in n))
-        normals.append([x / L for x in n])
+    polys = [(0, *t, *t, edge(t[0], t[1]), edge(t[1], t[2]), edge(t[2], t[0]), *poly_tail) for t in wound]
+    nv = len(V)
     col = bytes(bgr) + b"\xff"
-    out = bytearray(struct.pack("<16I", 1, 1, 1, 8, 8, 0, 0, 8, len(edges), len(polys), 0, 0, 1, 1, 1, 1)) + tail
+    out = bytearray(struct.pack("<16I", 1, 1, 1, nv, nv, 0, 0, nv, len(edges), len(polys), 0, 0, 1, 1, 1, 1)) + tail
     out += b"".join(struct.pack("<3f", *v) for v in V) + b"".join(struct.pack("<3f", *n) for n in normals)
-    out += col * 8 + col * len(polys)
+    out += col * nv + col * len(polys)
     out += b"".join(struct.pack("<2H", *e) for e in edges)
     out += b"".join(struct.pack("<12H", *p) for p in polys)
     out += bytes.fromhex("01000000010000000082030002000200000000000000000000000000000000000000000002000000"
                          "ffffffff000000000000000002000000010000000200000000000000040000000000000000000000"
-                         "000000000000000000000000ff00000000000000")                 # zcmb.p's 'hundreds'
-    out += struct.pack("<14I", 1, 0, len(polys), 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                         "000000000000000000000000ff00000000000000")                 # the parts' 'hundreds'
+    out += struct.pack("<14I", 1, 0, len(polys), 0, nv, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     out += struct.pack("<I6f", 0, *(max(v[k] for v in V) for k in range(3)), *(min(v[k] for v in V) for k in range(3)))
-    out += struct.pack("<8I", *range(8))
+    out += struct.pack("<%dI" % nv, *range(nv))
     return bytes(out)
 
 

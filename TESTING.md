@@ -348,6 +348,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   gondola and capsule Elena sits half a body width further left (in the gondola just past the
   floor's edge: check she still sits on the seat). Since (user): Cloud kneels upright, so she is a little closer
   to him (part two, every place).
+- **Skye's body** (new; untested in-game, user): in the movie minigame Skye's bare torso and pelvis
+  are remade (narrower waist, wider hips, bust, rounded seat; twice the triangles at most). Check
+  she shows with no holes or see-through patches (inside-out faces) and no gap at the waist when she bends.
 - **Bare Cloud's box** (new; untested in-game, user): every undressed Cloud (Honey Bee devoted
   rooms, dates part two/three, the movie) now has a simple skin-coloured box at the crotch. Check it
   shows (not invisible / see-through: if it is inside-out, the triangle winding needs flipping) and

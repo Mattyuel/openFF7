@@ -337,7 +337,91 @@ def _bare_skye(ctx):
                 d[o:o + 3] = bytes(SKYE_SKIN)
         ctx.char_file(ply.lower() + ".p", bytes(d))
     assert n >= 2, n                                 # at least the hip and chest
+    _skye_shape(ctx, hrc)
     ctx.char_file(SKYE_BARE.lower(), hrc.encode("latin-1"))
+
+
+# (user) her bare pelvis and torso remade with a woman's shape: each a loft of rings round
+# the body (SKYE_ANG: degrees from the front, + = her left = +x), laid out in her standing
+# pose (DXID frame 0; model units, y down, she faces -z) and taken into the bone's own frame.
+# A ring = (y, half width, front depth, back depth) about the body's centre line (z from the
+# original part's vertices at that height); SKYE_ROUND < 1 squares the ellipse off a little.
+# Bust and seat = (x, y, out, x spread, y spread): two gaussian bulges forward (front points)
+# / backward (back points), mirrored. The chest is capped at both ends, the pelvis only at
+# the bottom (a fan to SKYE_CROTCH; its top is inside the chest). Triangles at most twice
+# the original's (user): chest 58 -> 116, pelvis 36 -> 70 (its 8 collapsed streamer points
+# dropped).
+SKYE_ANG = (0, 25, 50, 80, 125, 180, -125, -80, -50, -25)
+SKYE_ROUND = 0.75
+SKYE_CHEST = [(-14.65, 2.0, 1.3, 1.25), (-15.6, 1.95, 1.3, 1.25), (-16.5, 2.15, 1.45, 1.35),
+              (-17.4, 2.35, 1.65, 1.5), (-18.6, 2.85, 1.55, 1.6), (-19.75, 2.7, 1.0, 1.4)]
+SKYE_HIP = [(-14.75, 2.0, 1.3, 1.25), (-13.85, 2.6, 1.45, 1.7), (-13.0, 3.0, 1.6, 2.2), (-12.25, 2.75, 1.4, 2.1)]
+SKYE_BUST = (1.15, -17.2, 1.1, 0.9, 1.1)
+SKYE_SEAT = (1.15, -12.7, 0.8, 0.85, 0.75)
+SKYE_CROTCH = (0.0, -11.65)
+
+
+def _skye_shape(ctx, hrc):
+    import math
+    from ff7 import fieldanim as fa
+    hb = _hb()
+    sk = fa.skeleton(hrc)
+    names = [b[0] for b in sk]
+    rr, rp, rots = fa.Anim(ctx.char_file("dxid.a")).frames[0]
+    W = fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)
+    lines = [l.strip() for l in hrc.splitlines()]
+    part = {lines[k]: lines[k + 3].split()[1] for k in range(len(lines) - 3)
+            if lines[k] in ("hip", "chest") and lines[k + 1] in ("root", "hip")}
+    gauss = lambda d, s: math.exp(-(d / s) ** 2)
+    # one centre line for both parts (z on y, least squares over both old parts' vertices), so
+    # the pelvis meets the chest at the waist
+    old = []
+    for bone in ("hip", "chest"):
+        rsd = ctx.char_file(part[bone].lower() + ".rsd").decode("latin-1")
+        d = ctx.char_file(rsd.split("PLY=")[1][:4].lower() + ".p")
+        m, start, _ = W[names.index(bone)]
+        old += [[start[j] + fa._vec(m, struct.unpack_from("<3f", d, 128 + 12 * i))[j] for j in range(3)]
+                for i in range(struct.unpack_from("<16I", d, 0)[3])]
+    my_, mz_ = sum(w[1] for w in old) / len(old), sum(w[2] for w in old) / len(old)
+    slope = sum((w[1] - my_) * (w[2] - mz_) for w in old) / sum((w[1] - my_) ** 2 for w in old)
+    centre = lambda y: mz_ + slope * (y - my_)
+    for bone, rings, bulge, sign, cap_top, limit in (("chest", SKYE_CHEST, SKYE_BUST, -1, True, 116),
+                                                    ("hip", SKYE_HIP, SKYE_SEAT, 1, False, 72)):
+        rsd = ctx.char_file(part[bone].lower() + ".rsd").decode("latin-1")
+        ply = rsd.split("PLY=")[1][:4].lower() + ".p"
+        d = ctx.char_file(ply)
+        h = struct.unpack_from("<16I", d, 0)
+        m, start, _ = W[names.index(bone)]
+        V, tris = [], []
+        n = len(SKYE_ANG)
+        for y, hw, front, back in rings:
+            cz = centre(y)
+            for a in SKYE_ANG:
+                sa, ca = math.sin(math.radians(a)), math.cos(math.radians(a))
+                x = hw * math.copysign(abs(sa) ** SKYE_ROUND, sa)
+                z = -(front if ca > 0 else back) * math.copysign(abs(ca) ** SKYE_ROUND, ca)
+                bx, by, out, sx, sy = bulge
+                if sign * z > 0:                     # bust: front points; seat: back points
+                    z += sign * out * gauss(abs(x) - bx, sx) * gauss(y - by, sy) * abs(ca)
+                V.append([x, y, cz + z])
+        for r in range(len(rings) - 1):
+            for k in range(n):
+                a, b = r * n + k, r * n + (k + 1) % n
+                tris += [(a, b, b + n), (a, b + n, a + n)]
+        if cap_top:
+            top = (len(rings) - 1) * n
+            tris += [(top, top + k, top + k + 1) for k in range(1, n - 1)]
+            tris += [(0, k + 1, k) for k in range(1, n - 1)]
+        else:                                        # the pelvis: a fan down to the crotch
+            last = (len(rings) - 1) * n
+            V.append([SKYE_CROTCH[0], SKYE_CROTCH[1], centre(SKYE_CROTCH[1])])
+            tris += [(last + k, last + (k + 1) % n, len(V) - 1) for k in range(n)]
+        assert len(tris) <= min(limit, 2 * h[9]), (bone, len(tris), h[9])
+        mt = [[m[r][c] for r in range(3)] for c in range(3)]
+        local = [fa._vec(mt, [p[k] - start[k] for k in range(3)]) for p in V]
+        o = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
+        poly_tail = struct.unpack_from("<12H", d, o)[10:12]
+        ctx.char_file(ply, hb._p_file(local, tris, SKYE_SKIN, d[64:128], poly_tail))
 
 
 # her lines (user: "a little more dirty"), by position; head / head reverse / 69 muffled

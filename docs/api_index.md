@@ -649,7 +649,8 @@ Honey Bee Girl recruitment.
 - `_bed_depth(ctx)` 
 - `_bare_cloud(ctx)` 
 - `_bare_cloud_member(ctx, hrc)` 
-- `_box_p(V, bgr, tail)` A .p of one untextured box: 8 corners V (z-major, then y, then x), vertex colour bgr;
+- `_box_p(V, bgr, tail)` A .p of one untextured box: 8 corners V (z-major, then y, then x), vertex colour bgr
+- `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.
 - `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
@@ -750,6 +751,7 @@ The movie minigame (user's design).
 - `_dates()` 
 - `_bare_ruby(ctx)` ZRHA.HRC: cbfe.hrc with the BARE parts copied (rsd ZRHB.., p ZRIB..).
 - `_bare_skye(ctx)` 
+- `_skye_shape(ctx, hrc)` 
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `_gauge_pixels()` 
 - `_cursor_pixels()` 
