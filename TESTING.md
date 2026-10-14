@@ -356,6 +356,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   elbows when bent, hands and feet still meeting. Since (user): Skye's forearms straight from the elbow (as wide
   as the upper arm) and widening only near the hand, overlapping the upper arm at the elbow; her
   shoulders reach into the arms; a small belly pooch; a bigger bust.
+- **Standard female body on Ruby, Elena, Scarlet, Tifa** (new; untested in-game, user): their
+  undressed models (movie, dates) now use Skye's body with their own heads, feet and face skin
+  tones; Scarlet keeps her stockings. Check their poses still line up (Elena's head sits lower),
+  no shin through the shoes.
 - **Sculpted buttocks** (new; untested in-game, user): Skye's pelvis now has a rounded seat
   (two cheeks, a cleft, tucked under) and bare Cloud's pelvis too (smaller). Since (user): both
   fuller (more pronounced, chibi-style) and covering the thigh tops (Cloud's thigh tops slimmed). Check from behind and

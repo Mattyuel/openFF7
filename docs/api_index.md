@@ -787,6 +787,11 @@ The movie minigame (user's design).
 - `_wall_market(ctx, focus)` 
 - `apply(ctx)` 
 
+## `patches/675_standard_bodies.py`
+(user) The standard female body (`_female_body`, built by 670) on the undressed
+
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -805,9 +810,12 @@ Dates with the Honey Bee girls (docs/dates_plan.md): data.
 ## `patches/_female_body.py`
 The standard female body (user): Skye's bare body from the neck down, built by
 
+- `_hb()` 
+- `_part(d)` (vertices, triangles, vertex colours) of a one-group untextured .p.
+- `_banded(d, bands, length)` .p bytes d recoloured in bands down the bone (Scarlet's stockings): bands = [(t, colour)]
 - `bones(hrc)` {bone name: (length, [rsd names], parent)} in an .hrc text.
-- `_scaled(d, sxy, sz, skin)` A copy of .p bytes d: vertices (x, y) x sxy, z (along the bone) x sz, normals kept;
-- `apply(ctx, hrc, tag, skin=None)` 
+- `_scaled(d, sxy, sz, skin, sole=None)` A copy of .p bytes d: vertices (x, y) x sxy, z (along the bone) x sz, normals kept;
+- `apply(ctx, hrc, tag, skin=None, legs=None)` See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
