@@ -1,7 +1,7 @@
 """A customer abusing a Honey Bee girl outside the inn (user's design).
 
 Each time you enter mrkt3 (Wall Market by the Honey Bee Inn) with at least one
-girl hired, there is a 1 in 10 chance (`CHANCE`) that, in the lower right
+girl hired, there is a 1 in 5 chance (`CHANCE`) that, in the lower right
 corner, a customer (one of four `THUGS`, picked at random) stands over one of
 your hired girls (picked at random, never `SPARED`), slapping her while she
 cowers on the ground. Talk to him: "Leave her alone!" / "Walk away.". The
@@ -30,6 +30,7 @@ from _config import HB_AFFECTION, HB_HIRED
 from _honey_bee_data import GIRLS
 from _recruit import sound
 from _travel import CHOICE
+from _travel import screen_step as _travel_screen_step
 
 from ff7 import asm
 from ff7 import fieldanim as fa
@@ -40,7 +41,7 @@ from ff7.text import decode, encode
 from ff7.walkmesh import Walkmesh
 
 FIELD = "mrkt3"
-CHANCE = 10                                     # 1 in CHANCE entries
+CHANCE = 5                                      # 1 in CHANCE entries
 SPARED = {"Tifa", "Aerith", "Elena", "Scarlet"}  # (user) never the girl in this scene
 # (user) the four customers, one picked at random each time; all on Cloud's skeleton layout (AAFE /
 # ACFE anims), so one slap recipe fits each. Two fight ("battle": formation, no escape, no game
@@ -71,6 +72,7 @@ TAKEN = ["earith", "tifa", "cid", None]         # hidden party copies the first 
 DANCER = ("onna_52", 1)                         # market_dancer, BADD.HRC
 GIRL_AT = (-180, -168)                          # (user, since) 4 body widths left, 2 steps down: the pillar
                                                 # left of the door blocks those exact spots, so the nearest floor (screen ~(-30,61))
+GIRL_RIGHT = 2                                  # (user, since) she is this many paces right of GIRL_AT
 THUG_GAP = 40                                   # (user: the girl halfway closer) him this far from her (screen ~(-25,54))
 THUG_STEP = (6, 40)                             # him THUG_GAP from her this way
 GIRL_FRAMES = 8                                 # her tremble loop
@@ -108,7 +110,9 @@ def _turned(fa, sk, rr, W, root, bones, axis, angle, test):
 # her pose: from the dancer's stand (DXID), thighs swung COWER_THIGH up and forward, shins turned back
 # down until the ankles reach the floor (knees drawn up), the upper body leaned in, head ducked, both arms raised over her head
 # and the forearms turned in; the pelvis on the floor; a small tremble (the upper body turning)
-COWER_THIGH, COWER_LEAN, COWER_HEAD, COWER_ARMS, COWER_IN, COWER_TREMBLE = 115, 25, 25, 140, 50, 3
+COWER_THIGH, COWER_LEAN, COWER_HEAD, COWER_TREMBLE = 115, 25, 25, 3
+COWER_UPARM = (0.3, 0.15, -1.0)               # (inward, up (y down), forward (-z)), model space
+COWER_FOARM = (0.5, -0.8, -1.0)
 PELVIS = 1.2                                    # the root this far above her floor (the seat)
 
 
@@ -147,15 +151,19 @@ def _cower(ctx):
         W = shin(lo)
     W = T(W, upper, side, COWER_LEAN, lambda a, b: b["head"][2] < a["head"][2] - 0.5)       # leaning in
     W = T(W, {"head"}, side, COWER_HEAD, lambda a, b: b["head"][1] > a["head"][1])          # head ducked
+    # (user, since: the arms bent backwards) each upper arm forward and a little up, the forearm
+    # up and in, so the hands shield her face from the front
     for s, out in (("l", 1), ("r", -1)):
-        arm = {s + "_uparm", s + "_foarm", s + "_hand"}
-        W = T(W, arm, side, COWER_ARMS, lambda a, b: b[s + "_hand"][1] < a[s + "_hand"][1] - 2)   # arms up
-        W = T(W, {s + "_foarm", s + "_hand"}, up, COWER_IN,
-              lambda a, b: out * b[s + "_hand"][0] < out * a[s + "_hand"][0] - 0.3)              # in over her head
+        for n, d in (("_uparm", COWER_UPARM), ("_foarm", COWER_FOARM), ("_hand", COWER_FOARM)):
+            i = names.index(s + n)
+            W[i] = fa._mul(_dates()._align(fa, fa._vec(W[i], [0, 0, -1]), [-out * d[0], d[1], d[2]]), W[i])
     E = ends(W, root)
     for s in "lr":                                                                            # feet on the floor
         assert abs(E[s + "_tibia"][1] - floor) < 0.1, (s, E[s + "_tibia"], floor)
     assert E["head"][1] < root[1], "head above the seat"
+    for s in "lr":                                                                            # hands before her face
+        assert E[s + "_hand"][2] < E["head"][2] - 1, (s, E[s + "_hand"], E["head"])
+        assert abs(E[s + "_hand"][1] - E["head"][1]) < 4, (s, E[s + "_hand"], E["head"])
     frames = []
     for t in range(GIRL_FRAMES):
         a = COWER_TREMBLE * math.sin(2 * math.pi * t / GIRL_FRAMES)
@@ -229,15 +237,14 @@ def apply(ctx):
     cam = Camera(f.sections[1])
     # her spot and pose
     _cower(ctx)
-    gt = mesh.find(*GIRL_AT)
-    assert gt is not None, GIRL_AT
-    gz = mesh.height(gt, *GIRL_AT)
+    # (user, since) she GIRL_RIGHT paces (25 each) right on screen from GIRL_AT; he stays where he was
+    gx, gy, gz, gt = _travel_screen_step(ctx, FIELD, *GIRL_AT, (1, 0), 25 * GIRL_RIGHT)
     tdir = _dates()._dir_to(-THUG_STEP[0], -THUG_STEP[1])           # he faces her
     # (her legs pointed at him tangled with his) she sits side-on to him, turned the way that faces
     # the camera more
     def down(d):
         a_ = d * 2 * math.pi / 256
-        p0, p1 = cam.project(*GIRL_AT, gz), cam.project(GIRL_AT[0] + 20 * math.sin(a_), GIRL_AT[1] - 20 * math.cos(a_), gz)
+        p0, p1 = cam.project(gx, gy, gz), cam.project(gx + 20 * math.sin(a_), gy - 20 * math.cos(a_), gz)
         return p1[1] - p0[1]
     gdir = max(((tdir + 64) % 256, (tdir - 64) % 256), key=down)
     dancer = ModelLoader(ctx.field(DANCER[0]).section("models")).models[DANCER[1]]
@@ -301,7 +308,7 @@ def apply(ctx):
 
         def ask(i, g):
             a_, first = hb._ask(sec, who + "\n" + spec["taunt"] % g["name"], ["Leave her alone!", "Walk away."])
-            return a_ + [asm.if_byte(CHOICE, "!=", first, walk)]
+            return a_ + [asm.if_byte(CHOICE, "==", first, walk)]   # 1st interferes, 2nd walks (was swapped)
         ops += by_girl(ask)
         for line in spec["lines"]:
             ops += say(who + "\n" + line)
@@ -341,7 +348,9 @@ def apply(ctx):
                 Op(bytes([0xA2, th["idle"], 1])), Op(bytes([0xAE, th["idle"], 1])), hb._w(SLAP_PAUSE),
                 asm.goto_back(loop),
                 quiet, idle_top, hb._w(30), asm.goto_back(idle_top), asm.ret()]
-        init = [Op(bytes([0xA1, th["model"]])), hb._xyzi(x, y, z, t), Op(bytes([0xB3, 0, tdir])),
+        # (user, since) turned 45 to his left from facing her: facing down-right on screen
+        sdir = facing_screen(cam, x, y, z, (1, 1))
+        init = [Op(bytes([0xA1, th["model"]])), hb._xyzi(x, y, z, t), Op(bytes([0xB3, 0, sdir])),
                 Op(bytes([0xC5, 0x00, 0x46]))] + hidden() + [asm.ret()]
         body = talk(th["spec"])
         if th["ent"] is None:
@@ -355,7 +364,7 @@ def apply(ctx):
 
     # the girl
     gloop, gquiet = hb._w(30), asm.nop()
-    ginit = [Op(bytes([0xA1, gm])), hb._xyzi(*GIRL_AT, gz, gt), Op(bytes([0xB3, 0, gdir])),
+    ginit = [Op(bytes([0xA1, gm])), hb._xyzi(gx, gy, gz, gt), Op(bytes([0xB3, 0, gdir])),
              Op(bytes([0xC5, 0x00, 0x46])), Op(bytes([0xA2, cower, 1])), Op(bytes([0xAE, cower, 1]))] + hidden() + \
         [asm.ret(), asm.if_byte(EV, "==", 1, gquiet)] + shown() + [gquiet, gloop, asm.goto_back(gloop), asm.ret()]
     gtalk = [hb._uc(1)] + hb._say(sec, "(She's shaking too hard to speak.)") + [hb._uc(0), asm.ret()]
@@ -379,7 +388,8 @@ def apply(ctx):
              asm.setbyte(EV, 1), done, asm.ret(), asm.ret()]
     sec.add_entity("hbrescue", {0: roll})
     f.sections[0] = sec.build()
-    print("  626: thugs at %s, girl at %s (dir %d)" % ([t["at"][:2] for t in thugs], GIRL_AT, gdir))
+    print("  626: thugs at %s (dir %d), girl at %s (dir %d)" % ([t["at"][:2] for t in thugs],
+          facing_screen(cam, *thugs[0]["at"][:3], (1, 1)), (gx, gy), gdir))
 
 
 def _chain(var, blocks):

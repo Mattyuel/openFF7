@@ -343,9 +343,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   gondola seat in part one. In the capsule part two/three are now further from the camera (the far
   end of her floor strip; they were off the bottom of the screen). Check: his hand meeting her
   behind at the slap, the two not overlapping (her hips 7 ahead, and to his right as far as his
-  straight arm reaches), her all-fours on the floor.
+  straight arm reaches), her all-fours on the floor. Since (user): gondola part two/three further
+  from the camera and a bit right, Cloud's head turned to his right there; in part one of the
+  gondola and capsule Elena sits half a body width further left (in the gondola just past the
+  floor's edge: check she still sits on the seat).
 - **Honey Bee rescue** (new; untested in-game): with at least one girl hired, entering Wall
-  Market by the Honey Bee Inn has a 1 in 10 chance of a customer slapping one of your girls (never
+  Market by the Honey Bee Inn has a 1 in 5 chance of a customer slapping one of your girls (never
   Tifa, Aerith, Elena or Scarlet; a
   Honey Bee dancer, named in the dialogue) cowering on the ground below the hearts, left of the inn's door (debug
   build: Honey Bee / Hunter -> "Rescue scene: always"). One of four customers, at random (user): a
@@ -354,10 +357,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   alone!"; fights have no escape and losing doesn't end the game. Done: her affection +1, her thanks,
   fade, both gone. Since (user): Madam M back in the lower right; the customer stands further from
   the girl, is Cloud's height, and slaps by swinging his raised arm out then quickly in. Since (user): both moved left and down
-  (left of the pillar by the door) and closer together. Check the
-  slap timing/sound, that the door path stays clear, talking to him, the battle and the fade.
+  (left of the pillar by the door) and closer together. Since (user): he faces down-right (45 to
+  his left), she sits 2 paces further right, her arms forward with the hands in front of her face;
+  the first choice "Leave her alone!" now interferes and "Walk away." walks (they were swapped).
+  Check the slap timing/sound, that the door path stays clear, talking to him, the battle and the fade.
 - **Movie minigame** (new; untested in-game): the cameraman now stands in Wall Market from the
-  start (user); before all 20 Honey Bee kids he only asks whether you know a man with a way with
+  start (user), still, camera at his side (user, since: still there, filming again in the shoot); before all 20 Honey Bee kids he only asks whether you know a man with a way with
   the ladies. The shoot needs all 20 kids (debug menu: Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
   cameraman (the Junon reporter with the camera) and Ruby (red hair, black jacket). Talk to
   him -> "Lights, camera, action!" -> the Sector 7 room with three beds. Press OK
@@ -418,7 +423,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   of seven positions: edge (Tifa), mission (Marisol, Bambi), cowgirl (Velvet, Ruby,
   Peggy), ontop = cowgirl facing the other way (Aerith, Holly, Lulu,
   Gloria), dog (Scarlet, Mags, Rhonda, Dot), head reverse (Elena, Celeste), head (Sakura, Aurora,
-  Candy, Raven). Starting points, to tweak: head (new version) = both on the
+  Candy, Raven). (User, since: in head Cloud's knees are bent much more, pelvis low, and he stands
+  a little closer to her.) Starting points, to tweak: head (new version) = both on the
   floor left of the bed, bare-legged Cloud standing facing left (knees bent,
   leaning forward, thrusting, arms swinging in and out), she kneels a step to
   his left facing him, rocking, her head kept upright (both 0.5 s); edge (Tifa only, new) = she stands

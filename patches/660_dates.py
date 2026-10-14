@@ -62,11 +62,16 @@ STAND_DIR = {"gondola": 0x80, "capsule": None, "cannon": None}
 SCALE = {}                            # per place model scale (the water tower had 0.85)
 GIRL_SCALE = {}                        # per-girl model scale (Scarlet 1.12 was tried; user: keep her size)
 # a girl's own seat in a place (x, y): Scarlet further left and nearer the camera in the gondola (user)
+# (user, since) Elena half a body width further left on screen in the gondola and capsule (~15 px):
+# in the gondola that is just off the floor's edge (a seated girl never walks: the nearest triangle)
 GIRL_SEAT = {("gondola", "Scarlet"): (-5198, -6900), ("capsule", "Scarlet"): (52, 227),   # (user: the capsule too)
-             ("gondola", "Elena"): (-5198, -6900)}       # (user) Elena too, left onto the seat
+             ("gondola", "Elena"): (-5198, -6884), ("capsule", "Elena"): (57, 209)}
+NEAR_FLOOR = 20                       # a seat may be this far off the floor's edge (field units)
 # (user) part two/three somewhere else than her seat: Elena's capsule seat (45,209) put her (ahead
 # of him, towards the camera) off the bottom of the screen: the far end of that floor strip
-PART2_SPOT = {("capsule", "Elena"): (50, 130)}
+PART2_SPOT = {("capsule", "Elena"): (50, 130),
+              # (user) the gondola: further from the camera and a bit right (screen ~(-19,81), was (-48,105))
+              ("gondola", "Elena"): (-5150, -6925)}
 WALK_TO = 0.35                        # "stand": she walks over to Cloud, this far from him along the way
 # places whose near background tiles (draw depth < 4093: the capsule's benches and rails, ids
 # 52-87) drew over the characters (user): pushed back just in front of the base layer
@@ -92,6 +97,8 @@ LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 CLOUD_PART2 = ["standk", "stand", "standf", "standa", "standaf",   # 620's CLOUD_BED: koala, head (x2), Aerith's (x2)
                "standspank"]                                         # ours: Elena's
 CLOUD_SEATED = {"standspank": "ZCTP.tor"}                            # bare Cloud standing, spanking her (_elena_fours)
+CLOUD_SEATED_AT = {"gondola": {"standspank": "ZCTR.tor"}}           # (user) there his head turned to his right
+HEAD_RIGHT = 40
 PART2 = {
     "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
     # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
@@ -331,7 +338,7 @@ def _field(ctx, place, group, names):
         bdir = cdir
     elif bdir == "screen-right":
         bdir = facing_screen(cam, cs[0], cs[1], cs[2], (1, 0))
-    poses = [dict(hb.CLOUD_BED, **CLOUD_SEATED)[k] for k in CLOUD_PART2]
+    poses = [{**hb.CLOUD_BED, **CLOUD_SEATED, **CLOUD_SEATED_AT.get(place, {})}[k] for k in CLOUD_PART2]
     bare = len(loader.models)
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[0], hb.CLOUD_BARE_HRC,
                                                                      model_names[0][:-5] + "_b.char"), poses))
@@ -367,8 +374,7 @@ def _field(ctx, place, group, names):
         my = gs
         if (place, gname) in GIRL_SEAT:
             x, y = GIRL_SEAT[(place, gname)]
-            t = mesh.find(x, y)
-            assert t is not None, (place, gname)
+            t = _find_near(mesh, x, y, (place, gname))
             my = (x, y, mesh.height(t, x, y) + SEATS[place]["girl"][4], t)
         tier_acts = {}
         extra = GIRL_EXTRA.get(gname, {})
@@ -453,8 +459,7 @@ def _field(ctx, place, group, names):
             spot = (my[0], my[1], my[2] - SEATS[place]["girl"][4], my[3])
             if (place, gname) in PART2_SPOT:         # (user) her seat put them off screen
                 px_, py_ = PART2_SPOT[(place, gname)]
-                pt_ = mesh.find(px_, py_)
-                assert pt_ is not None, (place, gname)
+                pt_ = _find_near(mesh, px_, py_, (place, gname))
                 spot = (px_, py_, mesh.height(pt_, px_, py_), pt_)
             show_cloud = 20 + names.index(gname)
             scripts[cb][show_cloud] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, pdir])), hb._visi(1), asm.ret()]
@@ -884,6 +889,19 @@ SEATED_FRAMES = 15
 SWING_OUT, SWING_RAISE, SWING_IN = 60, 20, 3   # (user) straight arm: out this far, raised, in over 3 frames
 
 
+def _find_near(mesh, x, y, what):
+    """The triangle under (x, y), else the nearest one within NEAR_FLOOR (its plane gives the height)."""
+    t = mesh.find(x, y)
+    if t is not None:
+        return t
+    for r in range(2, NEAR_FLOOR + 1, 2):
+        for dx, dy in ((r, 0), (-r, 0), (0, r), (0, -r), (r, r), (-r, r), (r, -r), (-r, -r)):
+            t = mesh.find(x + dx, y + dy)
+            if t is not None:
+                return t
+    raise AssertionError(("off the floor", what, x, y))
+
+
 def _align(fa, a, b):
     """The smallest rotation turning direction a into b."""
     unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
@@ -1036,7 +1054,9 @@ def _elena_fours(ctx):
     out = SWING_OUT if cend(turn(CW, up, 10), "r_hand", croot)[2] > hit[2] else -SWING_OUT       # hand back
     lift = SWING_RAISE if cend(turn(CW, fwd_ax, 10), "r_hand", croot)[1] < hit[1] else -SWING_RAISE  # hand up
     mid = SEATED_FRAMES // 2
-    frames = []
+    frames, frames_r = [], []
+    # ZCTR (the gondola, user): the same with his head turned HEAD_RIGHT to his right (-x)
+    hsense = 1 if fa._vec(fa.axis_angle(up, 10), [0.0, 0.0, -1.0])[0] < 0 else -1
     for t in range(SEATED_FRAMES):
         if t <= mid - SWING_IN:
             k = 1.0
@@ -1047,8 +1067,13 @@ def _elena_fours(ctx):
             k = q * q * (3 - 2 * q)
         Wt = turn(turn(CW, up, out * k), fwd_ax, lift * k)
         frames.append((crr, crp, fa.local_rotations(csk, crr, Wt)))
+        Wt = list(Wt)
+        Wt[CI("head")] = fa._mul(fa.axis_angle(up, hsense * HEAD_RIGHT), Wt[CI("head")])
+        frames_r.append((crr, crp, fa.local_rotations(csk, crr, Wt)))
     cbase.frames = frames
     ctx.char_file("zctp.a", cbase.build())
+    cbase.frames = frames_r
+    ctx.char_file("zctr.a", cbase.build())
 
 
 def _turn_round(ctx, name, hrc):

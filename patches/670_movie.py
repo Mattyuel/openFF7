@@ -11,7 +11,7 @@ upstairs with three beds) with a blank script. Bare Cloud (620's zcla.hrc) and
 Ruby's bare copy (`_bare_ruby`: jacket, skirt, stockings, gloves and boots in
 her skin colour, sleeves / skirt / boots shrunk to the limbs) go through all
 six `POSITIONS`, one minute each (6 minutes), moving between the beds (user);
-the cameraman stands beside each spot, holding the camera at his side (FDCB frame 0, user). Her body is the Honey Bee
+the cameraman films beside each spot (FFBC; user: animated here, still in Wall Market). Her body is the Honey Bee
 dancer's skeleton (same bones and lengths, same stand/walk/run anims), so the
 dancer poses 620 builds (dzbt, dzbl, dzbf, dzbg, dzbh, dzbk) play on her.
 
@@ -55,6 +55,7 @@ FIELD, BASE, WALL = "whitebg1", "mds7_w3", "mrkt2"
 CAMERA_AT, RUBY_AT = (310, 378), (386, 314)          # mrkt2: right of the item shop (rendered)
 CAMERA_DONOR, RUBY_DONOR = ("junone2", 6), ("jun_i2", 6)
 CAMERA_IDLE, CAMERA_FILM = "FDCB.yos", "FFBC.yos"    # camera held low / at his eye
+CAMERA_STILL = "ZCFA.tor"                            # (user) Wall Market: FDCB frame 0 only, held
 MUSIC = 35                                          # COSTA: Costa del Sol (user; was Turks' Theme, RHYTHM 45)
 OK_KEY = 0x220                                      # OK, as every original script tests it: IFKEY (0x61220D) / IFKEYON
                                                     # (0x61225D) with mask bit 0x200 read the field header's +0x78 held /
@@ -865,7 +866,7 @@ def _shoot(ctx, back):
     gfirst = len(ModelLoader.anims(loader.models[r])) - len(girl_anims)
     cd = ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models"))
     cm = loader.add_from(cd, CAMERA_DONOR[1])
-    held = ModelLoader.anims(loader.models[cm]).index(CAMERA_IDLE)    # (user) still: the camera at his side
+    film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
     sprites = _sprites(ctx, half, half_cursor)
     for hrc in ("QGAA", "QCUA"):
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
@@ -910,8 +911,8 @@ def _shoot(ctx, back):
     scripts[ents["skye"]] = {0: [Op(bytes([0xA1, 7])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                              2: pose(sfirst, "girl", "gdir", "skye")}
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide()
-                               + [Op(bytes([0xA2, held, 1])), asm.ret(), asm.ret()],
-                               2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1), hb._canm(held, 0, 0), asm.ret()]}   # (user) still, frame 0 (not in the init: CANM may wait)
+                               + [Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret(), asm.ret()],
+                               2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1), asm.ret()]}
     scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 5])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
                               2: by_p(lambda p, pl: [xyzi(*pl["gauge"])]) + [hb._visi(1), asm.ret()]}
     # cursor: every frame while RUN, bucket = POS / 50 -> its spot for the position
@@ -1118,7 +1119,14 @@ def _wall_market(ctx, focus):
     mesh = Walkmesh(f.section("walkmesh"))
     loader = ModelLoader(f.section("models"))
     cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
-    idle = ModelLoader.anims(loader.models[cm]).index(CAMERA_IDLE)
+    # (user) still here, the camera at his side: a one-frame copy of FDCB's first frame as his
+    # default anim (a held CANM would end when he turns to talk)
+    from ff7 import fieldanim as fa
+    still = fa.Anim(ctx.char_file(CAMERA_IDLE.split(".")[0].lower() + ".a"))
+    still.frames = still.frames[:1]
+    ctx.char_file(CAMERA_STILL.split(".")[0].lower() + ".a", still.build())
+    loader.models[cm] = ModelLoader.with_anims(loader.models[cm], [CAMERA_STILL])
+    idle = ModelLoader.anims(loader.models[cm]).index(CAMERA_STILL)
     ru = loader.add_from(ModelLoader(ctx.field(RUBY_DONOR[0]).section("models")), RUBY_DONOR[1])
     sy = loader.add_from(ModelLoader(ctx.field(SKYE_DONOR[0]).section("models")), SKYE_DONOR[1])
     # (user: she sat) her donor's default anim is a sitting pose: the dancer's stand (same skeleton)

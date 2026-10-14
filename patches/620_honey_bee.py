@@ -158,14 +158,16 @@ BED_LAYOUTS = {"beside": ("lie", "bedbeside"), "sit": ("bedsit", "bedsitc"),    
 # Beats allowed after each layout's fade (girl, Cloud); beside/sit: any sit / bed pose.
 LAYOUT_BEATS = {"mission": (set(), {"thrust"}), "cowgirl": ({"ride"}, {"buck"}),
                 "ontop": ({"ride"}, {"buck"}), "dog": ({"fours"}, {"pound"}),
-                "head": (set(), {"stand"}), "edge": ({"bendf"}, {"standl", "standlf"}),
+                "head": (set(), {"standlow"}), "edge": ({"bendf"}, {"standl", "standlf"}),
                 "headrev": (set(), {"stand"})}
 LAYOUT_ANIM = {"beside": "grea", "sit": "eiab", "mission": "thrust", "cowgirl": "buck", "ontop": "buck",
-               "dog": "pound", "head": "stand", "edge": "standl", "headrev": "stand"}       # Cloud's pose each layout starts in
+               "dog": "pound", "head": "standlow", "edge": "standl", "headrev": "stand"}       # Cloud's pose each layout starts in
 RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head higher (user), then slightly more (+4)
 # head (second version, user): on the floor left of the bed (z 25), Cloud facing screen-left,
 # the girl HEAD_GAP further left facing him.
+# (user, since) Cloud lower in head: knees bent HEAD_KNEE (ZCTS, "standlow"), HEAD_FORWARD closer to her
 HEAD_STAND, HEAD_GAP = (-20, -180), 30
+HEAD_KNEE, HEAD_FORWARD = 70, 6
 # edge: her feet just left of the bed's left end (screen x ~10), torso and arms out over it;
 # Cloud EDGE_GAP further left, facing the bed (screen-right) like her
 EDGE_GIRL, EDGE_GAP = (-12, -180), 26
@@ -269,7 +271,8 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "standk": "ZCTH.tor",   # ours (dates' koala hug): stand leaning back, arms bent in round her
              "standf": "ZCTI.tor",   # ours (dates' head scene): stand at twice the speed
              "standa": "ZCTJ.tor",   # ours (Aerith's date): stand, arms reaching down to her head
-             "standaf": "ZCTK.tor"}  # ... twice the speed
+             "standaf": "ZCTK.tor",  # ... twice the speed
+             "standlow": "ZCTS.tor"}  # ours (head, user): stand with the knees bent HEAD_KNEE, pelvis low
 # Cloud's own pose (user): AVDD (on his belly, propped on his forearms) with each
 # knee straightened until the shin lies level with the ground, the feet pointed so
 # they're level too, the knees brought within THRUST_KNEE_GAP of the midline (both
@@ -310,7 +313,7 @@ KOALA_CLOUD_OUT = 10                           # (user) his arms turned out a li
 # Aerith's head scene (user: his arms turned in to touch her head, kneeling ~9 in front):
 # both arms 45 forward (down towards her head), turned 8 in, forearms 15 in
 AERITH_CLOUD_ARMS, AERITH_CLOUD_IN, AERITH_CLOUD_ELBOW = 45, -8, 15
-LOOPED_C = {"thrust", "pound", "buck", "stand", "standl", "standlf"}
+LOOPED_C = {"thrust", "pound", "buck", "stand", "standl", "standlf", "standlow"}
 # Devoted part two plays a fanfare from the fade to the bed (user): the victory fanfare,
 # the chocobo fanfare for dog. AKAO cmd 0x10 = play by music table index (exe 0x9684C8:
 # 5 FANFARE, 46 FAN2), as 250 does for md1stin.
@@ -751,7 +754,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     bx_, by_, bz_, bt_ = spot(CLOUD_ONTOP)
     rx_, ry_, rz_, rt_ = spot(CLOUD_ONTOP)
     hc = spot(HEAD_CLOUD)
-    ks = spot(HEAD_STAND)
+    ks = spot((HEAD_STAND[0] - HEAD_FORWARD, HEAD_STAND[1]))          # (he faces screen-left: -x)
     kg = spot((HEAD_STAND[0] - HEAD_GAP, HEAD_STAND[1]))
     eg = spot(EDGE_GIRL_MOVED)
     hr = spot(HEADREV_GIRL)
@@ -788,9 +791,10 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     if "thrust" in ca:
         mx_, my_, mz_, mt_ = spot(MISSION_CLOUD)
         cloud_beats["bedmission"] = [_xyzi(mx_, my_, mz_ + MISSION_RAISE, mt_), Op(bytes([0xB3, 0, CLOUD_BED_DIR]))] + _loop(ca["thrust"])
-    if "stand" in ca:                                # standing on the floor left of the bed (layout "head")
+    if "standlow" in ca:                             # standing on the floor left of the bed (layout "head")
         cloud_beats["standfloor"] = [_xyzi(*ks), Op(bytes([0xB3, 0, facing_screen(cam, *ks[:3], (-1, 0))]))] \
-            + _loop(ca["stand"])
+            + _loop(ca["standlow"])
+    if "stand" in ca:
         cloud_beats["standedge"] = [_xyzi(*hc_), Op(bytes([0xB3, 0, facing_screen(cam, *hc_[:3], (1, 0))]))] \
             + _loop(ca["stand"])                     # (layout "headrev"): at the bed's left end, facing it
     if "standl" in ca:                               # (layout "edge"): behind her, facing the bed, left leg up
@@ -1436,12 +1440,13 @@ def _cloud_buck(ctx):
 
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
-                 lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST):
+                 lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
     the left thigh raised to `hip` degrees forward of vertical, the left knee bent
     only `knee` (EDGE_CLOUD_*: zctf.a). step: the left leg cocked forward that many
     degrees at the hip, the knee bent back until the foot is down on the floor again
-    (670's head). thrust: how far the hips go forward each stroke."""
+    (670's head). thrust: how far the hips go forward each stroke. knee: the knee bend
+    (the head layout's ZCTS: lower)."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -1467,8 +1472,8 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     feet0 = {s: end(fk(W), s + "_tibia") for s in "lr"}
     for s in "lr":                                   # knee bend: thigh forward half, shin back the other half
         leg = (s + "_femur", s + "_tibia", s + "_foot")
-        W = signed(W, leg, STAND_KNEE / 2, lambda F: dot(end(F, s + "_femur"), fwd) > dot(feet0[s], fwd))
-        W = signed(W, leg[1:], STAND_KNEE, lambda F: dot(sub(end(F, s + "_tibia"), end(F, s + "_femur")), fwd) < 0)
+        W = signed(W, leg, knee / 2, lambda F: dot(end(F, s + "_femur"), fwd) > dot(feet0[s], fwd))
+        W = signed(W, leg[1:], knee, lambda F: dot(sub(end(F, s + "_tibia"), end(F, s + "_femur")), fwd) < 0)
     if step:                                         # left leg cocked forward, the foot planted again
         k0 = end(fk(W), "l_femur")
         W = signed(W, ("l_femur", "l_tibia", "l_foot"), step, lambda F: dot(end(F, "l_femur"), fwd) > dot(k0, fwd))
@@ -1545,7 +1550,23 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
                                                                                # (a raised leg rides with the hips)
             i = I(n)
             start = [S0[i][k] + fwd[k] * d for k in range(3)]
-            Wt[i] = fa._mul(align(bdir(W[i]), sub(E0[i], start)), W[i])
+            if knee == STAND_KNEE:
+                Wt[i] = fa._mul(align(bdir(W[i]), sub(E0[i], start)), W[i])
+                continue
+            # deeper knees (ZCTS): two-bone, thigh and shin re-aimed so the ankle stays, knee forward
+            j = I(n[0] + "_tibia")
+            A = E0[j]
+            L1, L2 = math.dist(S0[i], E0[i]), math.dist(E0[i], A)
+            D = sub(A, start)
+            dd = math.sqrt(dot(D, D))
+            u = [c / dd for c in D]
+            pp = sub(fwd, [dot(fwd, u) * c for c in u])
+            pn = math.sqrt(dot(pp, pp))
+            pp = [c / pn for c in pp]
+            a_ = (L1 * L1 - L2 * L2 + dd * dd) / (2 * dd)
+            K = [start[k] + a_ * u[k] + math.sqrt(max(0.0, L1 * L1 - a_ * a_)) * pp[k] for k in range(3)]
+            Wt[i] = fa._mul(align(bdir(W[i]), sub(K, start)), W[i])
+            Wt[j] = fa._mul(align(bdir(W[j]), sub(A, K)), W[j])
         for s, out in (("l", 1), ("r", -1)):                                   # arms close in as he thrusts
             arm = {s + "_uparm", s + "_foarm", s + "_hand"}
             for sign in (1, -1):
@@ -2085,6 +2106,7 @@ def apply(ctx):
     _cloud_buck(ctx)
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8)   # x2 (dates)
+    _cloud_stand(ctx, CLOUD_BED["standlow"], arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, knee=HEAD_KNEE)   # head (user)
     for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)
         _cloud_stand(ctx, name, arms=AERITH_CLOUD_ARMS, arms_out=AERITH_CLOUD_IN, elbow_in=AERITH_CLOUD_ELBOW, nframes=n)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_KNEE))

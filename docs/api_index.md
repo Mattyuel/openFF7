@@ -650,7 +650,7 @@ Honey Bee Girl recruitment.
 - `_bare_cloud(ctx)` 
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.
-- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
+- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
 - `_cloud_thrust(ctx)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
@@ -734,6 +734,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_scarlet_bare(ctx)` 
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
 - `_bare_elena(ctx)` 
+- `_find_near(mesh, x, y, what)` The triangle under (x, y), else the nearest one within NEAR_FLOOR (its plane gives the height).
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_elena_fours(ctx)` ZDEF (Elena on all fours) and ZCTP (Cloud on one knee beside her, spanking); see SPANK_*, KNEEL_*.
 - `_turn_round(ctx, name, hrc)` `name`.a turned 180 about the vertical: for a pose laid out facing Cloud (DIR + 128)
