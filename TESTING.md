@@ -346,7 +346,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   straight arm reaches), her all-fours on the floor. Since (user): gondola part two/three further
   from the camera and a bit right, Cloud's head turned to his right there; in part one of the
   gondola and capsule Elena sits half a body width further left (in the gondola just past the
-  floor's edge: check she still sits on the seat).
+  floor's edge: check she still sits on the seat). Since (user): Cloud kneels upright, so she is a little closer
+  to him (part two, every place).
 - **Honey Bee rescue** (new; untested in-game): with at least one girl hired, entering Wall
   Market by the Honey Bee Inn has a 1 in 5 chance of a customer slapping one of your girls (never
   Tifa, Aerith, Elena or Scarlet; a

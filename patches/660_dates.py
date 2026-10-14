@@ -921,8 +921,11 @@ def _align(fa, a, b):
 # Tifa's koala hug on her (ZDEK), turned round inside the anim (both keep one DIR).
 FOURS_LOOK, FOURS_PAD, SPANK_SIDE_MIN, SPANK_FRONT, FOURS_BUTT = 25, 0.6, 3.0, 7.0, 2.0
 FOURS_PITCH = 15
-KNEEL_THIGH, KNEEL_LEAN, KNEEL_PAD = 110, 20, 0.5   # (user) Cloud on one knee: front thigh 20 above level;
-                                                    # leaning; the back knee's centre above the floor
+KNEEL_THIGH, KNEEL_LEAN, KNEEL_PAD = 110, 0, 0.5    # (user) Cloud on one knee: front thigh 20 above level;
+                                                    # upright (user, since: closer to her; leaning 20 put her
+                                                    # hips 12.2 to his right, upright 9.9: the straight arm
+                                                    # reaches less far sideways from a higher, further-back
+                                                    # shoulder); the back knee's centre above the floor
 
 
 def _elena_fours(ctx):
