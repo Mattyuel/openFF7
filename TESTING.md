@@ -344,13 +344,14 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Honey Bee rescue** (new; untested in-game): with at least one girl hired, entering Wall
   Market by the Honey Bee Inn has a 1 in 10 chance of a customer slapping one of your girls (never
   Tifa, Aerith, Elena or Scarlet; a
-  Honey Bee dancer, named in the dialogue) cowering on the ground in the lower right corner (debug
+  Honey Bee dancer, named in the dialogue) cowering on the ground below the hearts, left of the inn's door (debug
   build: Honey Bee / Hunter -> "Rescue scene: always"). One of four customers, at random (user): a
   drunk sailor (gives a Speed Drink), a Shinra soldier (battle: a Grunt), a mohawk punk (battle:
   three of Corneo's lackeys) or a grey-suited manager (a 500 gil bribe). Talk to him: "Leave her
   alone!"; fights have no escape and losing doesn't end the game. Done: her affection +1, her thanks,
-  fade, both gone. Madam M moved to the lower left. Check: the slap timing/sound, the two not
-  overlapping, that you can reach him to talk (he stands behind her), the battle and the fade.
+  fade, both gone. Since (user): Madam M back in the lower right; the customer stands further from
+  the girl, is Cloud's height, and slaps by swinging his raised arm out then quickly in. Check the
+  slap timing/sound, that the door path stays clear, talking to him, the battle and the fade.
 - **Movie minigame** (new; untested in-game): the cameraman now stands in Wall Market from the
   start (user); before all 20 Honey Bee kids he only asks whether you know a man with a way with
   the ladies. The shoot needs all 20 kids (debug menu: Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a

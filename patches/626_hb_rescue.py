@@ -32,6 +32,7 @@ from _recruit import sound
 from _travel import CHOICE
 
 from ff7 import asm
+from ff7 import fieldanim as fa
 from ff7.camera import Camera, facing_screen
 from ff7.models import ModelLoader
 from ff7.script import Op, Script
@@ -68,9 +69,10 @@ THUGS = [
 ]
 TAKEN = ["earith", "tifa", "cid", None]         # hidden party copies the first three take over; the 4th: a new entity
 DANCER = ("onna_52", 1)                         # market_dancer, BADD.HRC
-GIRL_AT = (100, -268)                           # her spot (the lower right corner, on screen ~(80,92))
-THUG_FACING = (0.3, 1)                          # he stands behind her (up the screen), facing the camera
-GIRL_FRAMES, THUG_FRAMES = 8, 15                # her tremble loop; his slap (lowest = the hit at the middle)
+GIRL_AT = (-72, -44)                            # (user) below the hearts, left of the inn's door (screen ~(19,42))
+THUG_GAP = 120                                  # (user: further apart) him this far from her (field units; ~20 px on screen)
+THUG_STEP = (0.15, 1)                           # him THUG_GAP from her this way (up the floor strip, left of the door path)
+GIRL_FRAMES = 8                                 # her tremble loop
 SLAP_SOUND, SLAP_PAUSE = 0x76, 45               # the slap; frames between slaps
 EV, GI, TI, R, TRY = (5, 160), (5, 161), (5, 162), (5, 163), (5, 164)   # event on, girl, thug, scratch
 RES = (6, 166)                                  # battle result (BTRLD): bit 0 set = lost
@@ -163,49 +165,54 @@ def _cower(ctx):
     return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W)))}
 
 
-SLAP_LEAN, SLAP_LEANS = 20, (20, 35, 50, 65, 80)  # a taller thug leans further to reach her
+# his slap (user): the right arm raised SLAP_RAISE out to the side, swung SLAP_OUT outwards (back)
+# over SLAP_WIND frames, then quickly SLAP_IN inwards (across, in front) in SLAP_STRIKE frames (the
+# hit: SOUND at THUG_HIT), held, and back down to his side; the elbow bent SLAP_ELBOW throughout
+SLAP_RAISE, SLAP_OUT, SLAP_IN, SLAP_ELBOW = 30, 50, 60, 25
+SLAP_WIND, SLAP_STRIKE, SLAP_HOLD, SLAP_BACK = 8, 3, 3, 6
 
 
-def _slap(ctx, hrc, name, target, lean=SLAP_LEAN):
-    """`name`.a on skeleton `hrc` (Cloud's layout): his stand (AAFE frame 0) leaned SLAP_LEAN in, the
-    right arm bent once so the hand lands on `target` (model space) at the middle frame, swung there
-    from 660's SPANK_UP raised (THUG_FRAMES)."""
+def _slap(ctx, hrc, name):
+    """`name`.a on skeleton `hrc` (Cloud's layout), from his stand (AAFE frame 0): see SLAP_*."""
     from ff7 import fieldanim as fa
-    dt = _dates()
     sk = fa.skeleton(ctx.char_file(hrc.lower()).decode("latin-1"))
     names = [b[0] for b in sk]
-    base = fa.Anim(ctx.char_file("zcte.a"))                # a 15-frame container on Cloud's layout
+    I = names.index
+    base = fa.Anim(ctx.char_file("zcte.a"))                # a container on Cloud's layout (frames replaced)
     rr, rp, rots = fa.Anim(ctx.char_file("aafe.a")).frames[0]
     root = [rp[0], -rp[1], rp[2]]
     W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
-    side = [1.0, 0.0, 0.0]
-    legs = {s + n for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
-    W = _turned(fa, sk, rr, W, root, set(names) - legs, side, lean, lambda a, b: b["head"][2] < a["head"][2])
-    hand = next(b[2] for b in sk if b[0] == "r_hand")                  # the wrist this far above her head
-    W, sense, arm = dt._spank_arm(fa, sk, rr, W, root, list(target), name, hand_up=hand * 0.9)
+    hand = lambda M: fa.forward(sk, rr, root, fa.local_rotations(sk, rr, M))[I("r_hand")][2]
+    arm = {"r_uparm", "r_foarm", "r_hand"}
+    side, fwd_axis, up = [1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]
+    T = lambda W, bones, axis, a, test: _turned(fa, sk, rr, W, root, bones, axis, a, test)
+    W = T(W, {"r_foarm", "r_hand"}, side, SLAP_ELBOW, lambda a, b: b["r_hand"][2] < a["r_hand"][2])   # elbow bent
+    h0 = hand(W)
+    raise_sense = 1 if hand([fa._mul(fa.axis_angle(fwd_axis, 10), m) if names[i] in arm else m
+                             for i, m in enumerate(W)])[0] < h0[0] else -1       # + = out to his right (-x), up
+    in_sense = 1 if hand([fa._mul(fa.axis_angle(up, 10), m) if names[i] in arm else m
+                          for i, m in enumerate(W)])[2] < h0[2] else -1          # + = forward / in
+    ease = lambda u: (1 - math.cos(math.pi * max(0.0, min(1.0, u)))) / 2
+    keys = []                                                                    # (raise, swing) per frame
+    for t in range(SLAP_WIND):
+        u = ease((t + 1) / SLAP_WIND)
+        keys.append((SLAP_RAISE * u, -SLAP_OUT * u))
+    for t in range(SLAP_STRIKE):
+        u = (t + 1) / SLAP_STRIKE                                                # fast: linear
+        keys.append((SLAP_RAISE, -SLAP_OUT + (SLAP_OUT + SLAP_IN) * u))
+    keys += [(SLAP_RAISE, SLAP_IN)] * SLAP_HOLD
+    for t in range(SLAP_BACK):
+        u = 1 - ease((t + 1) / SLAP_BACK)
+        keys.append((SLAP_RAISE * u, SLAP_IN * u))
+    keys = [(0.0, 0.0)] + keys
     frames = []
-    for t in range(THUG_FRAMES):
-        e = (1 - math.cos(2 * math.pi * t / THUG_FRAMES)) / 2
-        Wt = [fa._mul(fa.axis_angle(side, sense * dt.SPANK_UP * (1 - e)), m) if i in arm else m for i, m in enumerate(W)]
+    for r_, sw in keys:
+        R = fa._mul(fa.axis_angle(up, in_sense * sw), fa.axis_angle(fwd_axis, raise_sense * r_))
+        Wt = [fa._mul(R, m) if names[i] in arm else m for i, m in enumerate(W)]
         frames.append((rr, [root[0], -root[1], root[2]], fa.local_rotations(sk, rr, Wt)))
     base.frames = frames
     ctx.char_file(name.lower() + ".a", base.build())
-
-
-def _off(m, d, unit):
-    """Field (dx, dy, dz) of model point m for DIR d (models face -z, +x = their left)."""
-    a = d * 2 * math.pi / 256
-    F = (math.sin(a), -math.cos(a))
-    L = (-F[1], F[0])
-    return unit * (m[0] * L[0] - m[2] * F[0]), unit * (m[0] * L[1] - m[2] * F[1]), -unit * m[1]
-
-
-def _model_point(dx, dy, dz, d, unit):
-    """The inverse of _off: field offset -> model point for DIR d."""
-    a = d * 2 * math.pi / 256
-    F = (math.sin(a), -math.cos(a))
-    L = (-F[1], F[0])
-    return [(dx * L[0] + dy * L[1]) / unit, -dz / unit, -(dx * F[0] + dy * F[1]) / unit]
+    return len(frames), 1 + SLAP_WIND + SLAP_STRIKE - 1                          # frames, the hit frame
 
 
 def _text(sec, t):
@@ -220,11 +227,11 @@ def apply(ctx):
     mesh = Walkmesh(f.section("walkmesh"))
     cam = Camera(f.sections[1])
     # her spot and pose
-    head = _cower(ctx)["head"]
+    _cower(ctx)
     gt = mesh.find(*GIRL_AT)
     assert gt is not None, GIRL_AT
     gz = mesh.height(gt, *GIRL_AT)
-    tdir = facing_screen(cam, *GIRL_AT, gz, THUG_FACING)
+    tdir = _dates()._dir_to(-THUG_STEP[0], -THUG_STEP[1])           # he faces her
     # (her legs pointed at him tangled with his) she sits side-on to him, turned the way that faces
     # the camera more
     def down(d):
@@ -233,13 +240,14 @@ def apply(ctx):
         return p1[1] - p0[1]
     gdir = max(((tdir + 64) % 256, (tdir - 64) % 256), key=down)
     dancer = ModelLoader(ctx.field(DANCER[0]).section("models")).models[DANCER[1]]
-    gunit = UNIT * ModelLoader.entry_scale(dancer) / 512
-    hx, hy, hz = _off(head, gdir, gunit)
-    head_f = (GIRL_AT[0] + hx, GIRL_AT[1] + hy, gz + hz)            # her head top, in the field
-    # each thug: his model in a taken-over slot, placed back along his facing until his slap reaches her head
+    # each thug: his model (Cloud's height in this field, user) in a taken-over slot (or a new one), standing
+    # THUG_GAP behind her along his facing (up the screen), facing her
     a = tdir * 2 * math.pi / 256
     fwd = (math.sin(a), -math.cos(a))
-    left = (-fwd[1], fwd[0])                                            # his left (model +x)
+    cloud = loader.models[0]
+    tall = lambda e: fa.height(ctx.char_file(ModelLoader.hrc(e).lower()).decode("latin-1"),
+                               ctx.char_file(ModelLoader.anims(e)[0].split(".")[0].lower() + ".a"))
+    cloud_h = tall(cloud) * ModelLoader.entry_scale(cloud)
     thugs = []
     for k, (spec, ent_name) in enumerate(zip(THUGS, TAKEN)):
         dfield, di = spec["model"]
@@ -251,34 +259,23 @@ def apply(ctx):
             init = sec.script_ops(ent, 0)
             assert init[0].op == 0xA1 and any(o.op == 0xA0 for o in init), (ent_name, [o.raw.hex() for o in init])  # CHAR, PC
             m, old_char = init[0].raw[1], init[0]
-        src = ModelLoader(ctx.field(dfield).section("models"))
-        entry = src.models[di]
-        entry = ModelLoader.with_scale(entry, round(ModelLoader.entry_scale(entry) * loader.scale / src.scale))
-        unit = UNIT * ModelLoader.entry_scale(entry) / 512
-        hrc = ModelLoader.hrc(entry)
+        entry = ModelLoader(ctx.field(dfield).section("models")).models[di]
+        entry = ModelLoader.with_scale(entry, round(cloud_h / tall(entry)))
         anim = "ZTS" + "ABCD"[k]
+        nframes, hit = _slap(ctx, ModelLoader.hrc(entry), anim)
         placed = None
-        # least lean, then least sideways step (to his left, so her head comes in front of his right
-        # hand: broad shoulders put it out of reach), then nearest
-        for lean, lat, dist in ((le, la, di) for le in SLAP_LEANS for la in range(0, 26, 2) for di in range(0, 80)):
-            tx = head_f[0] - fwd[0] * dist + left[0] * lat
-            ty = head_f[1] - fwd[1] * dist + left[1] * lat
-            tt = mesh.find(round(tx), round(ty))
-            if tt is None:
-                continue
-            tz = mesh.height(tt, round(tx), round(ty))
-            target = _model_point(head_f[0] - round(tx), head_f[1] - round(ty), head_f[2] - tz - 0.3 * gunit, tdir, unit)
-            try:
-                _slap(ctx, hrc, anim, target, lean)
-            except AssertionError:
-                continue
-            placed = (round(tx), round(ty), tz, tt)
-            break
-        thug_lean = lean
-        assert placed is not None, (spec["who"], hrc)
+        for dist in list(range(THUG_GAP, THUG_GAP + 30, 2)) + list(range(THUG_GAP - 2, 10, -2)):
+            n = math.hypot(*THUG_STEP)
+            tx, ty = round(GIRL_AT[0] + THUG_STEP[0] / n * dist), round(GIRL_AT[1] + THUG_STEP[1] / n * dist)
+            tt = mesh.find(tx, ty)
+            if tt is not None:
+                placed = (tx, ty, mesh.height(tt, tx, ty), tt)
+                break
+        assert placed is not None, (spec["who"],)
         loader.models[m] = ModelLoader.with_anims(entry, [anim + ".tor"])
         slap = len(ModelLoader.anims(loader.models[m])) - 1
-        thugs.append(dict(ent=ent, model=m, at=placed, slap=slap, idle=0, old_char=old_char, spec=spec))
+        thugs.append(dict(ent=ent, model=m, at=placed, slap=slap, idle=0, old_char=old_char, spec=spec,
+                          frames=nframes, hit=hit))
     # her model: a new entity at the end (the next model index)
     gm = len(loader.models)
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_scale(dancer, ModelLoader.entry_scale(dancer)),
@@ -338,8 +335,8 @@ def apply(ctx):
         main = [asm.if_byte(EV, "==", 1, quiet), asm.if_byte(TI, "==", k, quiet)] + shown() + \
                [Op(bytes([0xA2, th["idle"], 1])), Op(bytes([0xAE, th["idle"], 1])),
                 loop, asm.if_byte(EV, "==", 1, quiet),
-                Op(bytes([0xBC, th["slap"], 0, THUG_FRAMES // 2, 1])), Op(b"\xAC"),
-                sound(SLAP_SOUND), Op(bytes([0xBC, th["slap"], THUG_FRAMES // 2, THUG_FRAMES - 1, 1])), Op(b"\xAC"),
+                Op(bytes([0xBC, th["slap"], 0, th["hit"], 1])), Op(b"\xAC"),
+                sound(SLAP_SOUND), Op(bytes([0xBC, th["slap"], th["hit"], th["frames"] - 1, 1])), Op(b"\xAC"),
                 Op(bytes([0xA2, th["idle"], 1])), Op(bytes([0xAE, th["idle"], 1])), hb._w(SLAP_PAUSE),
                 asm.goto_back(loop),
                 quiet, idle_top, hb._w(30), asm.goto_back(idle_top), asm.ret()]

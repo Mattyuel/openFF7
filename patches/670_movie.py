@@ -11,7 +11,7 @@ upstairs with three beds) with a blank script. Bare Cloud (620's zcla.hrc) and
 Ruby's bare copy (`_bare_ruby`: jacket, skirt, stockings, gloves and boots in
 her skin colour, sleeves / skirt / boots shrunk to the limbs) go through all
 six `POSITIONS`, one minute each (6 minutes), moving between the beds (user);
-the cameraman films beside each spot (FFBC). Her body is the Honey Bee
+the cameraman stands beside each spot, holding the camera at his side (FDCB frame 0, user). Her body is the Honey Bee
 dancer's skeleton (same bones and lengths, same stand/walk/run anims), so the
 dancer poses 620 builds (dzbt, dzbl, dzbf, dzbg, dzbh, dzbk) play on her.
 
@@ -857,7 +857,7 @@ def _shoot(ctx, back):
     gfirst = len(ModelLoader.anims(loader.models[r])) - len(girl_anims)
     cd = ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models"))
     cm = loader.add_from(cd, CAMERA_DONOR[1])
-    film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
+    held = ModelLoader.anims(loader.models[cm]).index(CAMERA_IDLE)    # (user) still: the camera at his side
     sprites = _sprites(ctx, half, half_cursor)
     for hrc in ("QGAA", "QCUA"):
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
@@ -902,8 +902,8 @@ def _shoot(ctx, back):
     scripts[ents["skye"]] = {0: [Op(bytes([0xA1, 7])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                              2: pose(sfirst, "girl", "gdir", "skye")}
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide()
-                               + [Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret(), asm.ret()],
-                               2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1), asm.ret()]}
+                               + [Op(bytes([0xA2, held, 1])), asm.ret(), asm.ret()],
+                               2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1), hb._canm(held, 0, 0), asm.ret()]}   # (user) still, frame 0 (not in the init: CANM may wait)
     scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 5])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
                               2: by_p(lambda p, pl: [xyzi(*pl["gauge"])]) + [hb._visi(1), asm.ret()]}
     # cursor: every frame while RUN, bucket = POS / 50 -> its spot for the position

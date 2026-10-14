@@ -685,9 +685,7 @@ A customer abusing a Honey Bee girl outside the inn (user's design).
 - `_dates()` 
 - `_turned(fa, sk, rr, W, root, bones, axis, angle, test)` W with `bones` turned `angle` about `axis` (world), the sense passing test(old ends, new ends).
 - `_cower(ctx)` 
-- `_slap(ctx, hrc, name, target, lean=SLAP_LEAN)` `name`.a on skeleton `hrc` (Cloud's layout): his stand (AAFE frame 0) leaned SLAP_LEAN in, the
-- `_off(m, d, unit)` Field (dx, dy, dz) of model point m for DIR d (models face -z, +x = their left).
-- `_model_point(dx, dy, dz, d, unit)` The inverse of _off: field offset -> model point for DIR d.
+- `_slap(ctx, hrc, name)` `name`.a on skeleton `hrc` (Cloud's layout), from his stand (AAFE frame 0): see SLAP_*.
 - `_text(sec, t)` 
 - `apply(ctx)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
