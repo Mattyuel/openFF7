@@ -518,6 +518,34 @@ SKYE_LINES = {
 }
 
 
+PAUSE_POS = ["headrev", "69", "head"]               # (user) where she may need a moment (`_pause_ops`)
+PCNT, RND2 = (5, 144), (5, 145)                     # the pause lines' turn; the pause roll
+
+
+def _pause_ops(hb, sec, actors, hush, lines, cond):
+    """(user) A rare pause (`_movie_group.PAUSES`): ops for the director's tick. cond = ops jumping to
+    their argument unless a pause may happen here; actors = entities whose slot 4 holds the pulled-
+    back pose and slot 2 resumes; lines(t_block) = ops picking her line block by the shoot's girl
+    (t_block(key) = the ops showing her line PCNT). Meter frozen (RUN 0) and the position's time
+    (NEXT) extended by the pause, so it costs nothing."""
+    no = asm.nop()
+    w0, w1, w2 = GR.PAUSE_FRAMES
+
+    def block(key):
+        out = []
+        for j, t in enumerate(GR.PAUSES[key]):
+            out.append([Op(b"\x52\x03\x00\x01"), hb._window(GR.NAMES[key] + "\n" + t, 3, 8, LINE_Y),
+                        hb._req(hush, 2, wait=False),
+                        asm.message(3, sec.add_string(_encode(GR.NAMES[key] + "\n" + t)))])
+        return _chain(PCNT, out)
+    return cond(no) + [Op(bytes([0x99, RND2[0], RND2[1]])), asm.if_byte(RND2, "<", GR.PAUSE_ODDS, no),
+                       asm.setbyte(RUN, 0), Op(b"\x54\x01")] + [hb._req(e, 4) for e in actors] + \
+        [hb._w(w0), Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
+        lines(block) + [hb._w(w2), hb._arith(0x86, NEXT, w0 + w1 + w2 + 10)] + \
+        [hb._req(e, 2) for e in actors] + [asm.setword(PR, 0), asm.setword(NT, FR), hb._arith(0x86, NT, TICK),
+                                           asm.setbyte(RUN, 1), no]
+
+
 def _speeds(ctx):
     """Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
     Cloud ZN<p><s> (p = A.., s = 0..3). Returns ([girl names], [Cloud names]) in
@@ -535,6 +563,16 @@ def _speeds(ctx):
                 a.frames = [frames[i * len(frames) // n] for i in range(n)]
                 ctx.char_file(name.lower() + ".a", a.build())
                 out.append(name + ".tor")
+    # (user) the pauses: each pause position's frame 0 (pulled back), held: ZM<p>9 / ZN<p>9, after the rest
+    names = [p_["name"] for p_ in POSITIONS]
+    for pn in PAUSE_POS:
+        p = names.index(pn)
+        for who, base, out in (("girl", POSITIONS[p]["girl"][0], girl), ("cloud", POSITIONS[p]["cloud"][0], cloud)):
+            a = fa.Anim(ctx.char_file(base.lower() + ".a"))
+            a.frames = a.frames[:1]
+            name = ("ZM" if who == "girl" else "ZN") + chr(ord("A") + p) + "9"
+            ctx.char_file(name.lower() + ".a", a.build())
+            out.append(name + ".tor")
     return girl, cloud
 
 
@@ -1233,7 +1271,7 @@ def _shoot(ctx, back, cast=None):
 
     ents = {}
     for name in ("cloudb", girls[0][0], "camera", "gauge", "cursor", "keys", "voice", "hush") + \
-            tuple(g[0] for g in girls[1:]) + ("shout", "hush2"):
+            tuple(g[0] for g in girls[1:]) + ("shout", "hush2", "hush3"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -1258,11 +1296,15 @@ def _shoot(ctx, back, cast=None):
         if girl:
             head = [asm.if_byte(MOVIE_GIRL, "bit_off" if girl == "ruby" else "bit_on", 1, off)]
         return head + by_p(make) + [asm.ret()] + ([off, hb._visi(0), asm.ret()] if girl else [])
+    pnames = [p_["name"] for p_ in POSITIONS]
+    hold = lambda first: by_p(lambda p, pl: ([Op(bytes([0xA2, first + 4 * len(POSITIONS) + PAUSE_POS.index(pnames[p]), 1])),
+                                              Op(bytes([0xAE, first + 4 * len(POSITIONS) + PAUSE_POS.index(pnames[p]), 1]))]
+                                             if pnames[p] in PAUSE_POS else [])) + [asm.ret()]
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                               2: pose(cfirst, "cloud", "cdir")}
+                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst)}
     for key, model, first, test in girls:
         scripts[ents[key]] = {0: [Op(bytes([0xA1, model])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                              2: pose(first, "girl", "gdir", test)}
+                              2: pose(first, "girl", "gdir", test), 4: hold(first)}
     imesh, icam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
     ispot = {k: _spot(imesh, *xy) for k, xy in INTRO.items()}
     idir = {k: facing_screen(icam, *v[:3], (0, 1)) for k, v in ispot.items()}
@@ -1350,12 +1392,26 @@ def _shoot(ctx, back, cast=None):
                                   hb._req(ents["hush2"], 2, wait=False), asm.message(2, sec.add_string(_encode(shout))),
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
+    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
     place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], *(ents[g[0]] for g in girls), ents["camera"],
                                                  ents["gauge"])]
+
+    def pause_cond(no):                              # only in PAUSE_POS
+        doit = asm.nop()
+        return [asm.if_byte(P, "!=", pnames.index(n), doit) for n in PAUSE_POS] + [asm.goto(no), doit]
+
+    def pause_lines(block):
+        if cast:
+            return block(cast["key"])
+        skye_, done_ = asm.nop(), asm.nop()
+        return [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_)] + block("ruby") + [asm.goto(done_), skye_] + \
+            block("skye") + [done_]
+    pause = _pause_ops(hb, sec, [ents["cloudb"]] + [ents[g[0]] for g in girls], ents["hush3"], pause_lines,
+                       pause_cond)
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
             asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE), asm.setbyte(FIN, 0)] + \
@@ -1400,6 +1456,7 @@ def _shoot(ctx, back, cast=None):
         main += [asm.if_word(RATE, ">=", th, done), asm.setbyte(NEW, s + 1)]
     main += [done, asm.if_byte(NEW, "!=", STEP, same), asm.setbyte(STEP, NEW),
              hb._req(ents["cloudb"], 2, wait=False)] + [hb._req(ents[g[0]], 2, wait=False) for g in girls] + [same]
+    main += pause                                    # (user) now and then she needs a moment
     # the next position each minute
     stay = asm.nop()
     main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, MINUTE),
@@ -1694,7 +1751,7 @@ def _group(ctx, back):
     assert len(loader.models) == 12 and cm == 9, len(loader.models)
 
     ents = {}
-    for name in ("cloudb", *GR.ORDER, "camera", "gauge", "cursor", "keys", "voice", "hush", "shout", "hush2"):
+    for name in ("cloudb", *GR.ORDER, "camera", "gauge", "cursor", "keys", "voice", "hush", "shout", "hush2", "hush3"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -1714,7 +1771,9 @@ def _group(ctx, back):
         0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: by_q(lambda q: [xyzi(*cloud_at[q]), d_(cdirs[q]), hb._visi(1)] +
                 steps(cfirst, HEAD_P if q < n_g else HEADREV_P)) + [asm.ret()],
-        3: [xyzi(*centre), d_(facing_screen(cam, *centre[:3], (0, 1))), hb._visi(1)] + loop_(0) + [asm.ret()]}
+        3: [xyzi(*centre), d_(facing_screen(cam, *centre[:3], (0, 1))), hb._visi(1)] + loop_(0) + [asm.ret()],
+        4: _chain(PH, [loop_(cfirst + 4 * len(POSITIONS) + PAUSE_POS.index(n)) for n in ("head", "headrev")]) +
+        [asm.ret()]}
     for k, key in enumerate(GR.ORDER):
         first = gfirst[key]
         b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
@@ -1726,8 +1785,12 @@ def _group(ctx, back):
             return [xyzi(*girl_at[q]), d_(gdirs[q]), hb._visi(1), asm.if_byte(E, "==", k, idle)] + \
                 steps(first, HEAD_P if ph == 0 else HEADREV_P) + [asm.ret(), idle] + \
                 loop_(still_kneel if ph == 0 else still_lie) + [asm.ret()]
+        idle4 = asm.nop()
         scripts[ents[key]] = {0: [Op(bytes([0xA1, 3 + k])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: _chain(PH, [place(0), place(1)]) + [asm.ret()],
+                              4: [asm.if_byte(E, "==", k, idle4)] +
+                              _chain(PH, [loop_(first + 4 * len(POSITIONS) + PAUSE_POS.index(n))
+                                          for n in ("head", "headrev")]) + [idle4, asm.ret()],
                               3: [xyzi(*girl_at[k]), d_(gdirs[k]), hb._visi(1)] + loop_(still_kneel) + [asm.ret()]}
     scripts[ents["camera"]] = {
         0: [Op(bytes([0xA1, 9]))] + hide() + [xyzi(*cam_at[0][:4]), d_(cam_at[0][4])] + loop_(film) + [asm.ret(), asm.ret()],
@@ -1779,11 +1842,14 @@ def _group(ctx, back):
                                   hb._req(ents["hush2"], 2, wait=False), asm.message(2, sec.add_string(_encode(shout))),
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
+    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
     girl_ents = [ents[key] for key in GR.ORDER]
+    pause = _pause_ops(hb, sec, [ents["cloudb"]] + girl_ents, ents["hush3"],
+                       lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [])
     place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"], ents["gauge"])]
 
     def pick():                                       # E = a girl not yet used this part, at random; P = q
@@ -1834,6 +1900,7 @@ def _group(ctx, back):
         main += [asm.if_word(RATE, ">=", th, done), asm.setbyte(NEW, s_ + 1)]
     main += [done, asm.if_byte(NEW, "!=", STEP, same), asm.setbyte(STEP, NEW),
              hb._req(ents["cloudb"], 2, wait=False)] + [hb._req(e, 2, wait=False) for e in girl_ents] + [same]
+    main += pause                                    # (user) now and then she needs a moment
     # the next girl every TURN frames; after six, part two; after twelve, the wrap
     stay, part2 = asm.nop(), asm.nop()
     main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, GR.TURN),

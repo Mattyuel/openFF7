@@ -760,6 +760,7 @@ The movie minigame (user's design).
 - `_bare_skye(ctx)` 
 - `_skye_limbs(ctx, hrc)` 
 - `_skye_shape(ctx, hrc)` 
+- `_pause_ops(hb, sec, actors, hush, lines, cond)` (user) A rare pause (`_movie_group.PAUSES`): ops for the director's tick. cond = ops jumping to
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `_gauge_pixels()` 
 - `_cursor_pixels()` 

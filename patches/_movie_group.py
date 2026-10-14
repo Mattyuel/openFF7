@@ -82,3 +82,29 @@ INTRO = ["“The whole gang's here! Ladies, take your places.\n Star... you know
 AFTERMATH = "(The six of them collapse on the beds in a\n giggling, breathless heap. Someone asks for water.)"
 NEWS = ["“Star, you've been with every girl on my books.\n You know what that means? A group shoot!”",
         "“Ruby, Skye, Elena, Scarlet, Tifa and Aerith,\n all on one set. Pick 'Everyone' next time.”"]
+
+# (user) "a small chance the girl needs to stop for a second, to catch her breath or a reflex":
+# Cloud and she pull back and wait, then she tells him to go on, in character, keen. Head, head
+# reverse and 69, in every shoot (670 `_pause_ops`); one of three a girl, in turn
+PAUSES = {
+    "ruby": ["(She pulls off, gasping, and wipes her chin.)\n“Whew... okay. Don't you dare go easy now.”",
+             "(She gags, pulls back, laughs.)\n“My bad. Again. Harder this time.”",
+             "(She catches her breath, eyes on him.)\n“Mmm... where were we? Oh, right.”"],
+    "skye": ["(She pops off, coughing.)\n“Wow! Okay! Wait, no, don't wait. Go!”",
+             "(She gulps for air, grinning.)\n“That was SO deep. Do that again!”",
+             "(She pulls back, giggling.)\n“Brain freeze! ...Kidding. More, please!”"],
+    "elena": ["(She pulls back, red-faced, coughing.)\n“I-I'm fine! Turks don't quit. Continue!”",
+              "(She takes a deep breath.)\n“Okay... okay. I can take more. Go on.”",
+              "(She gags, wipes her mouth.)\n“That's... not in the manual. Do it again.”"],
+    "scarlet": ["(She pulls off and licks her lips.)\n“Kyahaha! Did I say stop? Get back in here.”",
+                "(She catches her breath, smirking.)\n“A little breather, darling. Now ravage me.”",
+                "(She coughs, then glares up.)\n“Don't you DARE slow down. Again.”"],
+    "tifa": ["(She pulls back, panting.)\n“Phew... I just need a second. ...Okay, go.”",
+             "(She gags, laughs, wipes her eyes.)\n“Sorry! Again, Cloud. I want it.”",
+             "(She catches her breath, smiling.)\n“You're not getting off that easy. More.”"],
+    "aerith": ["(She pulls back, giggling, breathless.)\n“Hehe, ooh, that tickled my throat! More!”",
+               "(She coughs softly, then beams.)\n“Okay! Ready again. Don't hold back, okay?”",
+               "(She catches her breath.)\n“Wow... I almost saw the Planet. Keep going!”"],
+}
+PAUSE_FRAMES = (30, 75, 15)        # pulled back before her line; the line; after it
+PAUSE_ODDS = 1                     # a pause when RANDOM (0-255) < this, checked every physics tick
