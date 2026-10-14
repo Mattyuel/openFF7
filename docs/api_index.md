@@ -660,7 +660,7 @@ Honey Bee Girl recruitment.
 - `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.
-- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
+- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
 - `_cloud_thrust(ctx)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
@@ -695,7 +695,7 @@ A customer abusing a Honey Bee girl outside the inn (user's design).
 - `_dates()` 
 - `_turned(fa, sk, rr, W, root, bones, axis, angle, test)` W with `bones` turned `angle` about `axis` (world), the sense passing test(old ends, new ends).
 - `_cower(ctx)` 
-- `_slap(ctx, hrc, name)` `name`.a on skeleton `hrc` (Cloud's layout), from his stand (AAFE frame 0): see SLAP_*.
+- `_slap(ctx, hrc, name, idle)` `name`.a on skeleton `hrc` (Cloud's layout), from his stand (AAFE frame 0): see SLAP_*,
 - `_text(sec, t)` 
 - `apply(ctx)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
@@ -819,6 +819,9 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail)` A rounded bar along a bone (local -z): rings of radius r at z0 and z1, pointed to tip0 /
 - `face_skin(ctx, hrc)` Her face's skin colour (B, G, R): the head part's most common skin-like vertex colour
 - `apply(ctx, hrc, tag, skin=None, legs=None)` See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
+- `_bust_tips(ctx)` The standard torso's tip vertex indices (left, right) (see NIPPLE_*).
+- `_chest_p(ctx, hrc)` 
+- `nipples(ctx, hrc, tag, tips=None)` `hrc` (an undressed girl's .hrc text, the standard torso on her chest bone) with a pink
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).

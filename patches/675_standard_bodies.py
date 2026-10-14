@@ -5,7 +5,8 @@ vertex-coloured, their textures only hold eyes and mouth); Scarlet's legs keep h
 stockings' colours (her own thigh: skin to 0.88 down, a white band to 1.63, dark below;
 her shin dark) as sharp bands. The models' fields already use these .hrc names; the
 poses built for them in 660 / 670 stay (Elena's chest bone is shortened to the torso's
-shoulders, so her head sits ~1.4 lower)."""
+shoulders, so her head sits ~1.4 lower). Then (user) pink nipples (`_female_body.nipples`) on
+each of them and on Skye."""
 import _female_body as fb
 
 STOCKING, BAND = (22, 22, 32), (204, 204, 204)
@@ -29,3 +30,8 @@ def apply(ctx):
         skin = fb.face_skin(ctx, text)
         ctx.char_file(out.lower(), fb.apply(ctx, text, tag, skin, legs).encode("latin-1"))
     assert fb.face_skin(ctx, ctx.char_file("zsca.hrc").decode("latin-1")) == SCARLET_SKIN
+    # (user) pink nipples on all of them and on Skye (the standard itself), after every `apply`
+    tips = fb._bust_tips(ctx)
+    for out, tag in [(g[0], g[2]) for g in GIRLS] + [(fb.STANDARD, "K")]:
+        ctx.char_file(out.lower(), fb.nipples(ctx, ctx.char_file(out.lower()).decode("latin-1"), tag, tips)
+                      .encode("latin-1"))

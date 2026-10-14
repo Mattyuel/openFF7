@@ -391,9 +391,21 @@ Existing saves load, but they keep their own story progress; use a new game.
   (left of the pillar by the door) and closer together. Since (user): he faces down-right (45 to
   his left), she sits 2 paces further right, her arms forward with the hands in front of her face;
   the first choice "Leave her alone!" now interferes and "Walk away." walks (they were swapped).
+  Since (user): he faces screen-right, his upper body bent 20 forward (standing and slapping).
   Check the slap timing/sound, that the door path stays clear, talking to him, the battle and the fade.
 - **Honey Bee devoted scenes** (user, since): in "head" the girl kneels 3/4 of a head further from
-  Cloud; in "dog" Cloud uses the movie's dog (his hips thrust, upper body steady).
+  Cloud; in "dog" Cloud uses the movie's dog (his hips thrust, upper body steady). Since (user):
+  "head" uses the movie's head too (Cloud upright, left leg cocked forward, a bigger thrust) and
+  she kneels a little closer again; in Tifa's "edge" Cloud's left thigh is raised 100 and turned
+  10 out with the shin straight down, the foot against the bed's end and staying there while his
+  hips thrust and his upper body leans back to take it (it used to stick out level). Check the
+  foot looks planted and doesn't vanish into the bed.
+- **Movie minigame: Bio sound** (new; untested in-game, user): reaching the right red zone (a CUT,
+  or the finisher in the last 5 s) plays the Bio spell's sound (id 0x3F, read from the exe: check
+  it's the one you mean).
+- **Nipples** (new; untested in-game, user): every undressed girl (Ruby, Skye, Elena, Scarlet,
+  Tifa, Aerith, the Honey Bee girls) has small pink nipples on the bust. Check they sit on the
+  skin (not floating, not sunk) and their size.
 - **Movie minigame, four more co-stars** (new; untested in-game, user): after the first wrap the
   co-star menu lists Skye, Ruby, Elena, Scarlet, Tifa, Aerith; the four need full affection (20),
   else the cameraman says so. Each shoots on her own copy of the set with her own lines and pays 10

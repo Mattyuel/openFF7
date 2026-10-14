@@ -22,6 +22,7 @@ director (entity 0) takes the presses since the last tick, P:
 so pressing pushes the cursor right, stopping lets it fall left, it keeps its
 momentum, and the further it is from the middle the harder it runs away.
 Below DANGER or above 1000 - DANGER = CUT: the shoot ends, but (user) he still sells what was shot (a low score).
+Reaching the right red (CUT or finisher) plays the Bio spell's sound (RED_SOUND, user).
 The thrusting speed follows a smoothed press rate in 4 steps: each pose is
 resampled to `SPEEDS` frames. The gauge (a red | green | red bar) and the cursor are
 sprite models (as the quest markers) floated in front of the camera: per
@@ -113,7 +114,7 @@ POSITIONS = [
     # on the floor in front of the beds; she (user) half a head further from him (x 50 -> 42)
     # (user, since) y -230 -> -224: to her left (his right)
     # (user, since) Cloud: ZCTQ = ZCTE with his left leg cocked HEAD_STEP forward (foot planted) and
-    # HEAD_THRUST x the pelvic thrust (620 `_cloud_stand` step / thrust)
+    # HEAD_THRUST x the pelvic thrust (built by 620 for its head layout too: HEAD_STEP / HEAD_THRUST)
     dict(name="head", girl=("ZRTA", (42, -224, 0, 0x40), False), cloud=("ZCTQ", (80, -230, 0, 0xC0), False),
          camera=(140, -235, 0xC0)),
 ]
@@ -161,6 +162,8 @@ SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines;
 # right (high) red is a finisher, not a CUT: fanfare, a bonus on the spot of the girl's gil per
 # press x FINISH_BONUS (Ruby 1,000, Skye 2,000), and the shoot ends as a wrap
 FINISH_FRAMES, FINISH_BONUS, FINISH_SAY_FOR, FANFARE = 150, 100, 120, 5     # FANFARE: AKAO index (620's part twos)
+RED_SOUND = 0x3F                                    # (user) the Bio spell's sound on reaching the right red (finisher
+                                                    # or CUT); exe: Bio's effect 0x5A6730 plays 0x3F (static reading)
 AFTERMATH = ("Ruby\n(Ruby swallows, wipes her lips with her\n thumb and sinks back, breathless.)",
              "Skye\n(Skye licks her lips clean, sighs happily\n and blows a kiss at the camera.)")   # (user) Ruby, Skye
 
@@ -729,7 +732,6 @@ def _head_back(ctx):
     ctx.char_file("zrta.a", base.build())
 
 
-HEAD_STEP, HEAD_THRUST = 20, 2.0                   # (user) "head": left leg forward, a bigger thrust
 
 
 # Cloud's bones: the pelvis ("hip") carries the chest and both shoulder bones; the legs hang off the root
@@ -959,8 +961,6 @@ def _shoot(ctx, back, cast=None):
         _head_back(ctx)
         _cloud_dog(ctx)
         _cloud_prone(ctx)
-        hb._cloud_stand(ctx, "ZCTQ.tor", arms=hb.STAND_ARMS_LR, elbow_in=hb.STAND_ELBOW_IN, step=HEAD_STEP,
-                        thrust=hb.STAND_THRUST * HEAD_THRUST)
         for pos in POSITIONS:
             _place(ctx, pos)
         dt._wall(ctx, "ZRWA.tor", RUBY_HRC, RUBY_STAND)          # (user) "behind": Scarlet's date pose on her
@@ -1244,7 +1244,7 @@ def _shoot(ctx, back, cast=None):
                 asm.goto_back(stop), asm.ret()]
     # into the right red: a finisher in the last FINISH_FRAMES (user), else a CUT
     skye_bonus, bonus_done = asm.nop(), asm.nop()
-    main += [hi_red, asm.if_byte(FIN, "==", 1, lost), asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(b"\x54\x02"),
+    main += [hi_red, sound(RED_SOUND), asm.if_byte(FIN, "==", 1, lost), asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(b"\x54\x02"),
              Op(bytes([0xF2, 0, 0, 0, 0x10, FANFARE]) + bytes(8)), hb._w(45)]      # (a pause: they're mashing OK)
     main += say("“WOW! What a FINISHER!\n That's going straight on the poster!”")
     bonuses = [(cast["rate"], None, cast["aftermath"])] if cast else \

@@ -179,10 +179,12 @@ def _cower(ctx):
 # hit: SOUND at THUG_HIT), held, and back down to his side; the elbow bent SLAP_ELBOW throughout
 SLAP_RAISE, SLAP_OUT, SLAP_IN, SLAP_ELBOW = 30, 50, 60, 25
 SLAP_WIND, SLAP_STRIKE, SLAP_HOLD, SLAP_BACK = 8, 3, 3, 6
+THUG_BEND = 20                                  # (user) his upper body bent forward (down) this far, idle and slapping
 
 
-def _slap(ctx, hrc, name):
-    """`name`.a on skeleton `hrc` (Cloud's layout), from his stand (AAFE frame 0): see SLAP_*."""
+def _slap(ctx, hrc, name, idle):
+    """`name`.a on skeleton `hrc` (Cloud's layout), from his stand (AAFE frame 0): see SLAP_*,
+    THUG_BEND; `idle`.a = its first frame (bent over, the arm down)."""
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file(hrc.lower()).decode("latin-1"))
     names = [b[0] for b in sk]
@@ -195,6 +197,10 @@ def _slap(ctx, hrc, name):
     arm = {"r_uparm", "r_foarm", "r_hand"}
     side, fwd_axis, up = [1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]
     T = lambda W, bones, axis, a, test: _turned(fa, sk, rr, W, root, bones, axis, a, test)
+    upper = {n for n in names if not n.startswith(("l_hip", "l_femur", "l_tibia", "l_foot", "r_hip", "r_femur", "r_tibia", "r_foot"))
+             and n != "root"}
+    assert {"hip", "chest", "head"} <= upper, names
+    W = T(W, upper, side, THUG_BEND, lambda a, b: b["head"][2] < a["head"][2])       # bent forward (-z)
     W = T(W, {"r_foarm", "r_hand"}, side, SLAP_ELBOW, lambda a, b: b["r_hand"][2] < a["r_hand"][2])   # elbow bent
     h0 = hand(W)
     raise_sense = 1 if hand([fa._mul(fa.axis_angle(fwd_axis, 10), m) if names[i] in arm else m
@@ -221,6 +227,8 @@ def _slap(ctx, hrc, name):
         frames.append((rr, [root[0], -root[1], root[2]], fa.local_rotations(sk, rr, Wt)))
     base.frames = frames
     ctx.char_file(name.lower() + ".a", base.build())
+    base.frames = frames[:1]                                                     # idle: bent, arm down
+    ctx.char_file(idle.lower() + ".a", base.build())
     return len(frames), 1 + SLAP_WIND + SLAP_STRIKE - 1                          # frames, the hit frame
 
 
@@ -269,8 +277,8 @@ def apply(ctx):
             m, old_char = init[0].raw[1], init[0]
         entry = ModelLoader(ctx.field(dfield).section("models")).models[di]
         entry = ModelLoader.with_scale(entry, round(cloud_h / tall(entry)))
-        anim = "ZTS" + "ABCD"[k]
-        nframes, hit = _slap(ctx, ModelLoader.hrc(entry), anim)
+        anim, idle = "ZTS" + "ABCD"[k], "ZTB" + "ABCD"[k]
+        nframes, hit = _slap(ctx, ModelLoader.hrc(entry), anim, idle)
         placed = None
         for dist in list(range(THUG_GAP, THUG_GAP + 30, 2)) + list(range(THUG_GAP - 2, 10, -2)):
             n = math.hypot(*THUG_STEP)
@@ -280,9 +288,9 @@ def apply(ctx):
                 placed = (tx, ty, mesh.height(tt, tx, ty), tt)
                 break
         assert placed is not None, (spec["who"],)
-        loader.models[m] = ModelLoader.with_anims(entry, [anim + ".tor"])
-        slap = len(ModelLoader.anims(loader.models[m])) - 1
-        thugs.append(dict(ent=ent, model=m, at=placed, slap=slap, idle=0, old_char=old_char, spec=spec,
+        loader.models[m] = ModelLoader.with_anims(entry, [anim + ".tor", idle + ".tor"])
+        slap = len(ModelLoader.anims(loader.models[m])) - 2
+        thugs.append(dict(ent=ent, model=m, at=placed, slap=slap, idle=slap + 1, old_char=old_char, spec=spec,
                           frames=nframes, hit=hit))
     # her model: a new entity at the end (the next model index)
     gm = len(loader.models)
@@ -348,8 +356,8 @@ def apply(ctx):
                 Op(bytes([0xA2, th["idle"], 1])), Op(bytes([0xAE, th["idle"], 1])), hb._w(SLAP_PAUSE),
                 asm.goto_back(loop),
                 quiet, idle_top, hb._w(30), asm.goto_back(idle_top), asm.ret()]
-        # (user, since) turned 45 to his left from facing her: facing down-right on screen
-        sdir = facing_screen(cam, x, y, z, (1, 1))
+        # (user, since) facing screen-right (was down-right, before that her)
+        sdir = facing_screen(cam, x, y, z, (1, 0))
         init = [Op(bytes([0xA1, th["model"]])), hb._xyzi(x, y, z, t), Op(bytes([0xB3, 0, sdir])),
                 Op(bytes([0xC5, 0x00, 0x46]))] + hidden() + [asm.ret()]
         body = talk(th["spec"])
@@ -389,7 +397,7 @@ def apply(ctx):
     sec.add_entity("hbrescue", {0: roll})
     f.sections[0] = sec.build()
     print("  626: thugs at %s (dir %d), girl at %s (dir %d)" % ([t["at"][:2] for t in thugs],
-          facing_screen(cam, *thugs[0]["at"][:3], (1, 1)), (gx, gy), gdir))
+          facing_screen(cam, *thugs[0]["at"][:3], (1, 0)), (gx, gy), gdir))
 
 
 def _chain(var, blocks):

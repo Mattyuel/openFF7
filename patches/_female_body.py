@@ -13,7 +13,10 @@ no change is shared, the others are written as new parts "ZW<tag><letter>" (.rsd
 colour (B, G, R) for the body's skin (Skye's SKIN) if given. Use it only from patches that
 run after 670 (the standard body is built there).
 
-Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675)
+Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675), K Skye (ZSKA: only `nipples`)
+
+`nipples(ctx, hrc, tag)` adds pink nipples (NIPPLE_*) to a girl with the standard torso (675 adds
+them to every one, Skye included, after all `apply` calls: `apply` wants one part per body bone).
 """
 import importlib
 import struct
@@ -233,4 +236,90 @@ def apply(ctx, hrc, tag, skin=None, legs=None):
     part = lines[i + 3].split()
     assert part[0] == "1", part
     lines[i + 3] = lines[i + 3].replace(lines[i + 3].strip(), "2 %s %s" % (part[1], new_r))
+    return "".join(lines)
+
+
+# (user) pink nipples on every undressed girl: a small pink dome on each breast of the standard
+# torso, a part of its own on the chest bone (one per side, so `_p_file` winds each round its own
+# centre). The bust's tip = the torso vertex furthest forward on that side in the standard's own
+# stance (Skye's DXID frame 0: she faces -z); the standard's chest part is copied vertex for vertex
+# into every girl's (`_scaled`), so the same vertex is her tip. The dome sits on the vertex's normal:
+# a ring of NIPPLE_N points NIPPLE_R (x her figure) wide NIPPLE_LIFT out, its tip NIPPLE_TIP out and
+# its back NIPPLE_SINK in (inside the breast).
+NIPPLE_BGR = (150, 130, 228)                   # pink (R 228, G 130, B 150)
+NIPPLE_R, NIPPLE_N, NIPPLE_LIFT, NIPPLE_TIP, NIPPLE_SINK = 0.3, 8, 0.04, 0.12, 0.2
+
+
+def _bust_tips(ctx):
+    """The standard torso's tip vertex indices (left, right) (see NIPPLE_*)."""
+    from ff7 import fieldanim as fa
+    hrc = ctx.char_file(STANDARD.lower()).decode("latin-1")
+    sk = fa.skeleton(hrc)
+    rr, rp, rots = fa.Anim(ctx.char_file("dxid.a")).frames[0]
+    m = fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)[[b[0] for b in sk].index("chest")][0]
+    local = lambda w: [sum(m[r][c] * w[r] for r in range(3)) for c in range(3)]   # world dir -> the bone's
+    front, left = local([0.0, 0.0, -1.0]), local([1.0, 0.0, 0.0])
+    V, _, _ = _part(_chest_p(ctx, hrc))
+    dot = lambda a, b: sum(a[k] * b[k] for k in range(3))
+    tips = []
+    for s in (1, -1):
+        i = max((i for i, v in enumerate(V) if s * dot(v, left) > 0.5), key=lambda i: dot(V[i], front))
+        assert 0.6 < s * dot(V[i], left) < 2.0, ("bust tip", V[i])
+        tips.append(i)
+    return tips
+
+
+def _chest_p(ctx, hrc):
+    rsd = bones(hrc)["chest"][1][0]
+    return ctx.char_file(ctx.char_file(rsd.lower() + ".rsd").decode("latin-1").split("PLY=")[1][:4].lower() + ".p")
+
+
+def nipples(ctx, hrc, tag, tips=None):
+    """`hrc` (an undressed girl's .hrc text, the standard torso on her chest bone) with a pink
+    nipple part per side added to the chest bone ("ZK<tag>L"/"R" .rsd -> "ZJ<tag>L"/"R" .p);
+    see NIPPLE_*. tips = `_bust_tips` (found again if not given)."""
+    import math
+    tips = tips or _bust_tips(ctx)
+    V, P, _ = _part(_chest_p(ctx, hrc))
+    sub = lambda a, b: [a[k] - b[k] for k in range(3)]
+    cross = lambda u, w: [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]
+    unit = lambda a: [c / math.sqrt(sum(x * x for x in a)) for c in a]
+    centre = [sum(v[k] for v in V) / len(V) for k in range(3)]
+    std_n = len(_part(_chest_p(ctx, ctx.char_file(STANDARD.lower()).decode("latin-1")))[0])
+    assert len(V) == std_n, ("not the standard torso", len(V), std_n)
+    fig = math.dist(V[tips[0]], V[tips[1]]) / math.dist(*(_part(_chest_p(ctx, ctx.char_file(STANDARD.lower())
+                                                                          .decode("latin-1")))[0][i] for i in tips))
+    tmpl_r = ctx.char_file(bones(ctx.char_file(STANDARD.lower()).decode("latin-1"))["l_uparm"][1][0].lower()
+                           + ".rsd").decode("latin-1")
+    tmpl_p = ctx.char_file(tmpl_r.split("PLY=")[1][:4].lower() + ".p")
+    h = struct.unpack_from("<16I", tmpl_p, 0)
+    op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
+    names = []
+    for i, side in zip(tips, "LR"):
+        n = [0.0, 0.0, 0.0]
+        for t in P:
+            if i in t:
+                fn = cross(sub(V[t[1]], V[t[0]]), sub(V[t[2]], V[t[0]]))
+                if sum(fn[k] * (V[i][k] - centre[k]) for k in range(3)) < 0:
+                    fn = [-c for c in fn]
+                n = [n[k] + fn[k] for k in range(3)]
+        n = unit(n)                                          # out of the breast
+        u = unit(cross(n, [0.0, 0.0, 1.0] if abs(n[2]) < 0.9 else [1.0, 0.0, 0.0]))
+        w = cross(n, u)
+        at = lambda d, r=0.0, a=0.0: [V[i][k] + n[k] * d + r * fig * (math.cos(a) * u[k] + math.sin(a) * w[k])
+                                      for k in range(3)]
+        ring = [at(NIPPLE_LIFT, NIPPLE_R, 2 * math.pi * k / NIPPLE_N) for k in range(NIPPLE_N)]
+        pts = ring + [at(NIPPLE_TIP * fig), at(-NIPPLE_SINK * fig)]
+        tris = [(k, (k + 1) % NIPPLE_N, NIPPLE_N) for k in range(NIPPLE_N)] + \
+               [(k, (k + 1) % NIPPLE_N, NIPPLE_N + 1) for k in range(NIPPLE_N)]
+        r_, p_ = "ZK" + tag + side, "ZJ" + tag + side
+        ctx.char_file(r_.lower() + ".rsd", tmpl_r.replace("PLY=%s." % tmpl_r.split("PLY=")[1][:4], "PLY=%s." % p_)
+                      .encode("latin-1"))
+        ctx.char_file(p_.lower() + ".p", _hb()._p_file(pts, tris, NIPPLE_BGR, tmpl_p[64:128],
+                                                       struct.unpack_from("<12H", tmpl_p, op)[10:12]))
+        names.append(r_)
+    lines = hrc.splitlines(True)
+    k = next(k for k in range(len(lines) - 3) if lines[k].strip() == "chest" and lines[k + 1].strip() == "hip")
+    part = lines[k + 3].split()
+    lines[k + 3] = lines[k + 3].replace(lines[k + 3].strip(), " ".join([str(int(part[0]) + 2)] + part[1:] + names))
     return "".join(lines)
