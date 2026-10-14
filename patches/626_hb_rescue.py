@@ -38,6 +38,7 @@ from ff7.walkmesh import Walkmesh
 
 FIELD = "mrkt3"
 CHANCE = 10                                     # 1 in CHANCE entries
+SPARED = {"Tifa", "Aerith", "Elena", "Scarlet"}  # (user) never the girl in this scene
 # (user: "I can choose") the three thugs, one picked at random each time: (field, model index).
 # All on Cloud's skeleton layout (AAFE / ACFE anims), so one slap recipe fits each.
 THUGS = [("colne_2", 4),                        # Corneo's lackey (market_buka: suit, red hair)
@@ -322,7 +323,10 @@ def apply(ctx):
             asm.if_byte(R, "==", 0, done), always, loop, Op(bytes([0x95, TRY[0], TRY[1]])),
             asm.if_byte(TRY, "<=", 60, done),                                                 # nobody hired: give up
             Op(bytes([0x99, GI[0], GI[1]])), Op(bytes([0x8D, GI[0] << 4, GI[1], len(GIRLS)]))]
+    assert SPARED <= {g["name"] for g in GIRLS}, SPARED
     for i in range(len(GIRLS)):
+        if GIRLS[i]["name"] in SPARED:
+            continue                                # never picked: GI == i falls through to the retry
         nxt = asm.nop()
         var, bit = (HB_HIRED[0], HB_HIRED[1] + i // 8), i % 8
         roll += [asm.if_byte(GI, "==", i, nxt), asm.if_byte(var, "bit_on", bit, nxt), asm.goto(found), nxt]

@@ -342,7 +342,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   gondola seat in part one. Check: his hand meeting her behind at the slap, the two not overlapping
   (her hips are 4.5 to his right and 7 ahead in model units), her all-fours on the floor.
 - **Honey Bee rescue** (new; untested in-game): with at least one girl hired, entering Wall
-  Market by the Honey Bee Inn has a 1 in 10 chance of a customer slapping one of your girls (a
+  Market by the Honey Bee Inn has a 1 in 10 chance of a customer slapping one of your girls (never
+  Tifa, Aerith, Elena or Scarlet; a
   Honey Bee dancer, named in the dialogue) cowering on the ground in the lower right corner (debug
   build: Honey Bee / Hunter -> "Rescue scene: always"). Talk to him: "Leave her alone!" -> a battle
   (Bullmotor for now; no escape, losing doesn't end the game). Win: her affection +1, her thanks,
