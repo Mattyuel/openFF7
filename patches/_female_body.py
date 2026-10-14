@@ -21,7 +21,6 @@ import struct
 STANDARD = "ZSKA.HRC"
 BODY = ("hip", "chest", "l_uparm", "l_foarm", "l_hand", "r_uparm", "r_foarm", "r_hand",
         "l_femur", "l_tibia", "r_femur", "r_tibia")
-FIGURE = ("hip", "chest", "l_femur", "l_tibia")
 SKIN = (166, 194, 247)
 SOLE = 0.35                    # the shin's part reaches at most this far past her ankle (user:
                                # Skye's ran ~0.9 into her heel, through Elena's soles)
@@ -123,42 +122,104 @@ def _scaled(d, sxy, sz, skin, sole=None):
     return bytes(d)
 
 
+TORSO_BONES = ("hip", "chest", "l_hip", "r_hip", "l_collar", "r_collar")     # + both shoulder bones (found)
+LIMBS = ("l_femur", "l_tibia", "l_uparm", "l_foarm")
+COLLAR_R, COLLAR_N = 0.85, 6   # the shoulder bridge: radius (x her figure), points a ring
+NECK_R, NECK_FROM, NECK_TO = 0.55, 0.85, 0.35   # the neck: radius (x figure), from this fraction of the
+                                                # chest bone (inside the torso's top) to this far past its end
+
+
+def _bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail):
+    """A rounded bar along a bone (local -z): rings of radius r at z0 and z1, pointed to tip0 /
+    tip1 beyond them. The shoulder bridge on each collar bone (it moves with the shoulder and
+    joins the torso and the arm's top in any pose: Scarlet's own stance pulls her shoulders
+    back, behind the torso, user) and the neck on the chest bone (from inside the torso's top
+    into the head: Tifa's neck stopped short of it, user)."""
+    import math
+    V, tris = [], []
+    for z in (z0, z1):
+        for k in range(n):
+            a = 2 * math.pi * (k + 0.5) / n
+            V.append([r * math.cos(a), r * math.sin(a), z])
+    for k in range(n):
+        a, b = k, (k + 1) % n
+        tris += [(a, b, b + n), (a, b + n, a + n)]
+    V += [[0.0, 0.0, tip0], [0.0, 0.0, tip1]]
+    tris += [(k, (k + 1) % n, len(V) - 2) for k in range(n)]
+    tris += [(n + k, n + (k + 1) % n, len(V) - 1) for k in range(n)]
+    return _hb()._p_file(V, tris, bgr, tail, poly_tail)
+
+
 def apply(ctx, hrc, tag, skin=None, legs=None):
     """See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
-    colours (Scarlet's stockings)."""
+    colours (Scarlet's stockings). Her torso bones (pelvis, chest, both shoulder and collar
+    bones, the hip joints) are set to the standard's x her figure (user: Tifa's long pelvis
+    bone stretched the pelvis and her neck floated; Elena's long chest bone lifted the torso's
+    shoulders above her arms); her arm and leg bones stay hers. Figure = her limbs (thigh,
+    shin, upper arm, forearm) / the standard's."""
     assert len(tag) == 1 and tag.isalpha(), tag
     std = bones(ctx.char_file(STANDARD.lower()).decode("latin-1"))
     her = bones(hrc)
-    # the torso: scaled by her shoulder height (the bone from the hip to her left collar), not her
-    # chest bone, whose end (her head) may sit much higher (Elena 6.1 vs 4.74: the torso's
-    # shoulders rose far above her arms, user); her chest bone is shortened to match, so her
-    # head sits on the torso (anims hold rotations only)
-    shoulder = lambda bs: next(n for n, v in bs.items() if v[2] == "hip" and bs.get("l_collar", (0, 0, ""))[2] == n)
-    lengths = {b: her[b][0] for b in BODY}
-    lengths["chest"] = std["chest"][0] * her[shoulder(her)][0] / std[shoulder(std)][0]
-    fig = sum(lengths[b] for b in FIGURE) / sum(std[b][0] for b in FIGURE)
-    n = 0
+    fig = sum(her[b][0] for b in LIMBS) / sum(std[b][0] for b in LIMBS)
+    side = lambda bs, s_: bs[s_ + "_collar"][2]            # the shoulder bone: the collar's parent
+    torso = {b: b for b in TORSO_BONES}
+    torso.update({side(her, s_): side(std, s_) for s_ in "lr"})
+    lengths = {b: her[b][0] for b in her}
+    for hb_, sb in torso.items():
+        lengths[hb_] = std[sb][0] * fig
+    skin_c = skin or SKIN
     lines = hrc.splitlines(True)
+    n = 0
+
+    def at(b):                                            # her bone's name line
+        return next(k for k in range(len(lines) - 3) if lines[k].strip() == b and lines[k + 1].strip() == her[b][2])
+
+    def new_names():
+        nonlocal n
+        r_, p_ = "ZW" + tag.upper() + chr(65 + n), "ZX" + tag.upper() + chr(65 + n)
+        n += 1
+        return r_, p_
     for b in BODY:
         assert b in her, (b, "not in her skeleton")
         assert len(std[b][1]) == 1 and len(her[b][1]) == 1, (b, std[b][1], her[b][1])
         sz = lengths[b] / std[b][0]
-        rsd = std[b][1][0]
-        if True:                                       # (every woman gets her own copies: shin / colours)
-            r = ctx.char_file(rsd.lower() + ".rsd").decode("latin-1")
-            ply = r.split("PLY=")[1][:4]
-            new_r, new_p = "ZW" + tag.upper() + chr(65 + n), "ZX" + tag.upper() + chr(65 + n)
-            n += 1
-            ctx.char_file(new_r.lower() + ".rsd", r.replace("PLY=%s." % ply, "PLY=%s." % new_p).encode("latin-1"))
-            part = _scaled(ctx.char_file(ply.lower() + ".p"), fig, sz, skin, lengths[b] if b.endswith("tibia") else None)
-            if legs and b[2:] in legs:
-                part = _banded(part, legs[b[2:]], lengths[b])
-            ctx.char_file(new_p.lower() + ".p", part)
-            rsd = new_r
-        # her bone's part line (the line after the bone's name, parent and length)
-        i = next(k for k in range(len(lines) - 3) if lines[k].strip() == b and
-                 lines[k + 3].strip() == "1 %s" % her[b][1][0])
-        lines[i + 3] = lines[i + 3].replace(her[b][1][0], rsd)
-        if lengths[b] != her[b][0]:
+        r = ctx.char_file(std[b][1][0].lower() + ".rsd").decode("latin-1")
+        ply = r.split("PLY=")[1][:4]
+        new_r, new_p = new_names()
+        ctx.char_file(new_r.lower() + ".rsd", r.replace("PLY=%s." % ply, "PLY=%s." % new_p).encode("latin-1"))
+        part = _scaled(ctx.char_file(ply.lower() + ".p"), fig, sz, skin, lengths[b] if b.endswith("tibia") else None)
+        if legs and b[2:] in legs:
+            part = _banded(part, legs[b[2:]], lengths[b])
+        ctx.char_file(new_p.lower() + ".p", part)
+        i = at(b)
+        lines[i + 3] = lines[i + 3].replace(her[b][1][0], new_r)
+    for b in her:                                          # her torso bones' lengths
+        if abs(lengths[b] - her[b][0]) > 1e-6:
+            i = at(b)
             lines[i + 2] = lines[i + 2].replace(lines[i + 2].strip(), "%.6f" % lengths[b])
+    tmpl_r = ctx.char_file(std["l_uparm"][1][0].lower() + ".rsd").decode("latin-1")
+    tmpl_p = ctx.char_file(tmpl_r.split("PLY=")[1][:4].lower() + ".p")
+    for s_ in "lr":                                        # the shoulder bridges
+        b = s_ + "_collar"
+        assert her[b][1] == [], (b, her[b][1])
+        new_r, new_p = new_names()
+        ctx.char_file(new_r.lower() + ".rsd", tmpl_r.replace("PLY=%s." % tmpl_r.split("PLY=")[1][:4], "PLY=%s." % new_p).encode("latin-1"))
+        h = struct.unpack_from("<16I", tmpl_p, 0)
+        op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
+        L = lengths[b]
+        ctx.char_file(new_p.lower() + ".p", _bar(-0.1 * L, -0.9 * L, 0.35 * L, -1.2 * L, COLLAR_R * fig, COLLAR_N,
+                                                 skin_c, tmpl_p[64:128], struct.unpack_from("<12H", tmpl_p, op)[10:12]))
+        i = at(b)
+        lines[i + 3] = lines[i + 3].replace(lines[i + 3].strip(), "1 %s" % new_r)
+    # the neck: a second part on the chest bone
+    new_r, new_p = new_names()
+    ctx.char_file(new_r.lower() + ".rsd", tmpl_r.replace("PLY=%s." % tmpl_r.split("PLY=")[1][:4], "PLY=%s." % new_p).encode("latin-1"))
+    L = lengths["chest"]
+    ctx.char_file(new_p.lower() + ".p", _bar(-NECK_FROM * L, -L - 0.6 * NECK_TO, -(NECK_FROM - 0.1) * L, -L - NECK_TO,
+                                             NECK_R * fig, COLLAR_N, skin_c, tmpl_p[64:128],
+                                             struct.unpack_from("<12H", tmpl_p, op)[10:12]))
+    i = at("chest")
+    part = lines[i + 3].split()
+    assert part[0] == "1", part
+    lines[i + 3] = lines[i + 3].replace(lines[i + 3].strip(), "2 %s %s" % (part[1], new_r))
     return "".join(lines)
