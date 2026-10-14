@@ -87,7 +87,8 @@ POSITIONS = [
     dict(name="headrev", girl=("DZBH", (-225, -54, 0, 0x80), True), cloud=("ZCTE", (-225, -150, 0, 0x80), False),
          camera=(-130, -180, 0xC0)),                                        # on her back, head over the foot
     # on the floor in front of the beds; she (user) half a head further from him (x 50 -> 42)
-    dict(name="head", girl=("DZBK", (42, -230, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
+    # (user, since) y -230 -> -224: to her left (his right)
+    dict(name="head", girl=("DZBK", (42, -224, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
          camera=(140, -235, 0xC0)),
     # (user) Scarlet's date pose, "behind": she leans forward, arms out, right knee up, in front of standing
     # Cloud facing his way (660 `_wall` on her skeleton: same XYZI and DIR as his ZCTE, her pelvis in the
@@ -123,26 +124,30 @@ LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user
     "edge": ["Ah... the whole bed's shaking...", "Pull my hair back... yes!", "Grip my hips... don't let go.",
              "Faster... faster!", "Spank me! Again!", "Bend me over further...", "Mmm, hold on to me...",
              "Oh, yes... yes!"],
-    "headrev": ["Mmph... mmmh!", "Mmf! Mmmf...", "(She grabs your thighs and pulls you in.)\n Mmmh!",
-                "Hnnh... mmh...", "Gk... mmh! Mmmh...", "(She moans around you.)\n Mmmmh...!",
-                "Mmm... mmm... mmm!", "Hmmf! Mmmh..."],
+    # muffled ones (user, since): Cloud asks her things ("C:" = his line) and she answers as she can
+    "headrev": ["Mmph... mmmh!", "C:Comfortable down there?", "Mmf! Mmmf... (She gives a thumbs up.)",
+                "(She grabs your thighs and pulls you in.)\n Mmmh!", "C:Was that a yes or a no?",
+                "Mmmh! Mmh-hmm!", "Hnnh... mmh...", "C:Should I keep going?",
+                "(She nods as best she can.)\n Mmmmh!", "C:Sorry, what was that?", "Mmf! Mmmf...!", "Hmmf! Mmmh..."],
     "behind": ["Against the wall... yes!", "Pull my hair back!", "Hold my hips and don't let go...",
                "Harder! Make the wall shake!", "Mmm, kiss my neck...", "Spank me, star!",
                "Don't stop... don't stop...", "Oh! Right there!"],
     "holding": ["Hold me up... don't drop me!", "Mmm, you're so strong...", "Squeeze my ass tighter...",
                 "Bounce me harder!", "I'm all yours, star...", "Kiss me... mmm...",
                 "Oh, I'm slipping... hold on!", "Yes! Yes! Right there!"],
-    "69": ["Mmph... mmmh!", "(She pushes her hips down onto you.)\n Mmmf!", "Mmf... mmh, mmh...",
-           "(She squeezes your thighs.) Mmmh!", "Hnnh... mmph!", "(Her hips grind against you.)\n Mmmmh...!",
-           "Mmm... mmm... mmm!", "Gk... mmh! Mmmh..."],
+    "69": ["Mmph... mmmh!", "C:Mmf... you taste good.", "(She pushes her hips down onto you.)\n Mmmf!",
+           "C:Is this okay for the camera?", "Mmf... mmh, mmh!", "(She squeezes your thighs.) Mmmh!",
+           "C:Do you want me to stop?", "(She shakes her head hard.)\n Mmh-mmh!", "Hnnh... mmph!",
+           "C:I'll take that as a no.", "(Her hips grind against you.)\n Mmmmh...!", "Gk... mmh! Mmmh..."],
     "prone": ["Mmm... pin me down...", "Pull my hair!", "Harder... push me into the bed!",
               "Grab my ass... yes!", "Don't stop, star... don't stop...", "Spank me! Again!",
               "Ah! Deeper... deeper!", "Oh, I can't move... I love it!"],
-    "head": ["Mmm... mmph!", "(She guides your hand into her hair.)\n Mmmh!", "Mmf... mmh, mmh...",
-             "(She looks up at you.) Mmm...", "Hmmm... mmmh!", "Gk... mmf! Mmmh...",
-             "(She pulls your hips closer.)\n Mmph!", "Mmph! Mmm..."],
+    "head": ["Mmm... mmph!", "C:You okay down there?", "(She looks up at you.) Mmm-hmm!",
+             "(She guides your hand into her hair.)\n Mmmh!", "C:Like that?", "Mmf! (She nods.) Mmh, mmh...",
+             "C:Do you need a break?", "(She pulls your hips closer.)\n Mmph!", "Hmmm... mmmh!",
+             "C:What's your favourite colour?", "Mmf... mmh mmf? (She glares.)", "Mmph! Mmm..."],
 }
-LINES_EACH = 8
+LINES_EACH = 12                                      # 12 for the muffled ones; the others' 8 repeat (one text each)
 SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines; frames each stays up
 
 # temp vars (this field only)
@@ -336,21 +341,24 @@ SKYE_LINES = {
     "edge": ["Bend me over and take me!", "Pull my hair back... harder!", "Fuck me till the bed breaks!",
              "Spank me! Again! Again!", "Oh god, you're splitting me!", "Hold me down... yes!",
              "Faster! Fuck me faster!", "Mmm, I'm dripping..."],
-    "headrev": ["Mmph... mmmh!", "(She gags and moans for more.)\n Ghk! Mmmh!", "Mmf! Mmmf...",
-                "(She grabs your ass and pulls you deeper.)", "Hnnh... mmph!", "(Tears in her eyes, she grins.)\n Mmmh!",
-                "Mmm... mmm... mmm!", "Gk... mmh! Mmmh..."],
-    "head": ["Mmm... mmph!", "(She looks up at you, eyes watering.)\n Mmmh!", "Ghk! Mmf... mmh...",
-             "(She pulls your hand to the back of her head.)", "Hmmm... mmmh!", "(She takes you all the way.)\n Mmmph!",
-             "Mmph! Mmm...", "(She moans, wanting more.)\n Mmmh!"],
+    "headrev": ["Mmph... mmmh!", "C:You like it rough, huh?", "(She gags and moans for more.)\n Ghk! Mmmh!",
+                "C:Too much?", "(She grabs your ass and pulls you deeper.)", "Mmf! Mmmf...",
+                "C:Say please.", "Mmmf-mmh! (Something like 'please'.)", "Hnnh... mmph!",
+                "C:Dirty girl.", "(Tears in her eyes, she grins.)\n Mmmh!", "Gk... mmh! Mmmh..."],
+    "head": ["Mmm... mmph!", "C:You've done this before, haven't you?", "(She winks up at you.)\n Mmmh!",
+             "(She pulls your hand to the back of her head.)", "C:Want it all?", "(She takes you all the way.)\n Mmmph!",
+             "C:Look at the camera.", "(She looks up at you, eyes watering.)\n Mmmh!", "Ghk! Mmf... mmh...",
+             "C:Good girl.", "(She moans, wanting more.)\n Mmmh!", "Mmph! Mmm..."],
     "behind": ["Fuck me against the wall, star!", "Pull my hair! Harder!", "Spank my ass red!",
                "Pin me to the wall... don't stop!", "Oh fuck, I can't stand up!", "Bite my neck...",
                "Harder! Make the whole building hear!", "Yes! Yes! Fuck yes!"],
     "holding": ["Hold me up and fuck me!", "Squeeze my ass while you bounce me!", "Don't drop me... deeper!",
                 "Mmm, you're so strong... harder!", "I'm gonna wrap round you all night...",
                 "Fuck me in the air!", "Oh god, I'm slipping onto you...", "Yes! Bounce me harder!"],
-    "69": ["Mmph... mmmh!", "(She grinds her hips onto your face.)\n Mmmf!", "Mmf... mmh, mmh...",
-           "(She moans around you, eager.)\n Mmmmh!", "Hnnh... mmph!", "(She digs her nails into your thighs.)",
-           "Mmm... mmm... mmm!", "(She shudders.)\n Gk... mmh! Mmmh..."],
+    "69": ["Mmph... mmmh!", "C:Mmf... you're soaking.", "(She grinds her hips onto your face.)\n Mmmf!",
+           "C:Who's gonna finish first?", "(She moans around you, eager.)\n Mmmmh!", "Mmf... mmh, mmh...",
+           "C:Don't you dare stop.", "(She digs her nails into your thighs.)", "Hnnh... mmph!",
+           "C:Again? Already?", "(She shudders.)\n Gk... mmh! Mmmh...", "Mmm... mmm... mmm!"],
     "prone": ["Pin me down and fuck me!", "Pull my hair! Pull it!", "Spank me while you pound me!",
               "Push me into the bed... harder!", "Oh fuck, I can't move...", "Call me your slut!",
               "Deeper! Don't you dare stop!", "Fuck... I'm gonna come!"],
@@ -476,6 +484,7 @@ def _nearest_tri(mesh, x, y):
 BOB_DOWN, BOB, PRONE_LIFT, PRONE_FWD, PRONE_PAD = 25, 20, 1.6, 0.8, 0.8
 UNIT = 3.41                                         # field units per model unit at entry scale 512 (renders)
 SIX9_RAISE, SIX9_DOWN = 6, 10                       # (user) "69": her raised a bit, further down his body
+PRONE_BACK, PRONE_LEFT = 5, 4                       # (user) "prone": Cloud towards her feet, to his left
 
 
 def _align(fa, a, b):
@@ -599,7 +608,12 @@ def _place(ctx, pos):
         Pg = [c + o for c, o in zip((x, y), _off(hers["root"], gd))]
         his = _joints(ctx, cl_hrc, pos["cloud"][0].lower() + ".a")
         o = _off(his["root"], gd)
-        pos["cloud"] = (pos["cloud"][0], (round(Pg[0] - o[0]), round(Pg[1] - o[1]), 0, gd), pos["cloud"][2])
+        a = gd * 2 * math.pi / 256
+        F = (math.sin(a), -math.cos(a))                   # (user) a little towards her feet (-F), to his left (L)
+        L = (-F[1], F[0])
+        sx = -F[0] * PRONE_BACK + L[0] * PRONE_LEFT
+        sy = -F[1] * PRONE_BACK + L[1] * PRONE_LEFT
+        pos["cloud"] = (pos["cloud"][0], (round(Pg[0] - o[0] + sx), round(Pg[1] - o[1] + sy), 0, gd), pos["cloud"][2])
 
 
 def _shoot(ctx, back):
@@ -762,14 +776,25 @@ def _shoot(ctx, back):
     voice = [asm.ret(), vl, hb._w(SAY_EVERY), asm.if_byte(RUN, "==", 1, vdone),
              Op(bytes([0x95, K[0], K[1]])), Op(bytes([0x8D, K[0] << 4, K[1], LINES_EACH]))]   # INC K, MOD K
 
+    texts = {}                                       # one text id per distinct line (8-line positions repeat)
+
     def lines_of(who, table):
         def line(p, pl):
             out = []
-            assert len(table[POSITIONS[p]["name"]]) == LINES_EACH, (who, POSITIONS[p]["name"])
-            for k_, text in enumerate(table[POSITIONS[p]["name"]]):
-                t = "%s\n“%s”" % (who, text) if not text.startswith("(") else "%s\n%s" % (who, text)
+            lines = table[POSITIONS[p]["name"]]
+            assert len(lines) in (8, LINES_EACH), (who, POSITIONS[p]["name"], len(lines))
+            for k_ in range(LINES_EACH):
+                text = lines[k_ % len(lines)]
+                if text.startswith("C:"):            # Cloud's line (user: he asks her things)
+                    t = "{CLOUD}\n“%s”" % text[2:]
+                elif text.startswith("("):
+                    t = "%s\n%s" % (who, text)
+                else:
+                    t = "%s\n“%s”" % (who, text)
+                if t not in texts:
+                    texts[t] = sec.add_string(_encode(t))
                 out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y),
-                            hb._req(ents["hush"], 2, wait=False), asm.message(1, sec.add_string(_encode(t)))])
+                            hb._req(ents["hush"], 2, wait=False), asm.message(1, texts[t])])
             return _chain(K, out)
         return line
     skye_says = asm.nop()
