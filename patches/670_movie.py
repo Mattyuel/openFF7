@@ -1090,10 +1090,11 @@ def _wall_market(ctx, focus):
         assert t is not None, (key, x, y)
         spots[key] = (x, y, mesh.height(t, x, y), t)
 
-    def hidden(extra=(), girl=None):
-        """girl "ruby": hidden once Skye is unlocked (she retired); "skye": shown only then."""
+    def hidden(girl, extra=()):
+        """Shown once every kid is born; "ruby": hidden once Skye is unlocked (she retired); "skye":
+        shown only then."""
         shown, hide = asm.nop(), asm.nop()
-        who = {None: [], "ruby": [asm.if_byte(MOVIE_GIRL, "bit_off", 0, hide)],
+        who = {"ruby": [asm.if_byte(MOVIE_GIRL, "bit_off", 0, hide)],
                "skye": [asm.if_byte(MOVIE_GIRL, "bit_on", 0, hide)]}[girl]
         return _unlocked_or(hide) + who + list(extra) + [asm.goto(shown), hide, Op(b"\x7E\x01"), Op(b"\xC7\x01"),
                                                           hb._visi(0), shown]
@@ -1117,9 +1118,12 @@ def _wall_market(ctx, focus):
         paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
         ops += paid + [asm.setbyte(MOVIE_STATE, 0), asm.goto(end)]
         ops += [wait_] + say("“Still selling the footage. Come back\n a little later for your cut.”") + [asm.goto(end)]
-        told, fresh = asm.nop(), asm.nop()
-        ops += [pitch, asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
-        ops += say("“Bad news, star: Ruby's retired. Hung up\n her heels for good.”")             # (user) once
+        # (user) he stands here from the start; until every Honey Bee kid is born he's only
+        # scouting for a man with a way with the ladies
+        told, fresh, scout = asm.nop(), asm.nop(), asm.nop()
+        ops += [pitch] + _unlocked_or(scout)
+        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
+        ops += say("“Bad news, star: Ruby just turned 19 and\n retired. Hung up her heels for good.”")   # (user) once
         ops += say("“But meet Skye, my new discovery.\n She's... enthusiastic. You'll see.”")
         ops += [asm.biton(MOVIE_GIRL, 2), told, fresh]
         ops += say("“Well, well... I've heard rumours about\n a man who can handle sexy women.\n"
@@ -1137,7 +1141,11 @@ def _wall_market(ctx, focus):
         x, y, z, t = focus
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0),
                 asm.mapjump(ctx.maplist.index(FIELD), x, y, t, 0), asm.ret()]
-        ops += [no] + say("“Suit yourself. The offer stands.”")
+        ops += [no] + say("“Suit yourself. The offer stands.”") + [asm.goto(end)]
+        ops += [scout] + say("“I'm looking for a man with a way with\n the ladies. A real charmer, the kind\n"
+                             " every girl in town knows by name.”")
+        ops += say("“You wouldn't happen to know someone\n like that, would you?”")
+        ops += say("“No? Well, if you hear of him, send him\n my way. I'll be right here.”")
         return ops + [end, hb._uc(0), asm.ret()]
 
     # back from the shoot: he tells you to come back for your cut
@@ -1151,20 +1159,20 @@ def _wall_market(ctx, focus):
                asm.message(0, tid), asm.setbyte(MOVIE_STATE, 1), hb._menu(0), hb._uc(0), skip]
     cdir = facing_screen(cam, *spots["cam"][:3], (0, 1))
     add_npc(ctx, WALL, "filmman", cm, spots["cam"], cdir, talk,
-            init_extra=hidden([Op(bytes([0xA2, idle, 1])), Op(bytes([0xAE, idle, 1]))]), main=debrief)
+            init_extra=[Op(bytes([0xA2, idle, 1])), Op(bytes([0xAE, idle, 1]))], main=debrief)   # (user) always there
 
     def ruby_talk(sec):
         return [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + \
             hb._say(sec, "Ruby\n“So you're my co-star? Don't disappoint\n me, handsome.”") + [hb._uc(0), asm.ret()]
     add_npc(ctx, WALL, "ruby", ru, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)), ruby_talk,
-            init_extra=hidden(girl="ruby"))
+            init_extra=hidden("ruby"))
 
     def skye_talk(sec):
         return [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + \
             hb._say(sec, "Skye\n“So you're the famous star? Mmm...\n I hope you can keep up with me.”") + \
             [hb._uc(0), asm.ret()]
     add_npc(ctx, WALL, "skye", sy, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)), skye_talk,
-            init_extra=hidden([Op(bytes([0xA2, stand, 1])), Op(bytes([0xAE, stand, 1]))], girl="skye"))     # (user) Ruby's place once she has retired
+            init_extra=hidden("skye", [Op(bytes([0xA2, stand, 1])), Op(bytes([0xAE, stand, 1]))]))     # (user) Ruby's place once she has retired
     # where the shoot sends you back: beside him, facing him
     x, y, z, t = spots["cam"]
     bx, by, bz, bt = beside(ctx, WALL, x, y, t, 40)

@@ -341,8 +341,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   screen (at her seat), turned as before (DIR -21 from "the other way"). Elena sits on the left
   gondola seat in part one. Check: his hand meeting her behind at the slap, the two not overlapping
   (her hips are 4.5 to his right and 7 ahead in model units), her all-fours on the floor.
-- **Movie minigame** (new; untested in-game): needs all 20 Honey Bee kids (debug menu:
-  Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
+- **Movie minigame** (new; untested in-game): the cameraman now stands in Wall Market from the
+  start (user); before all 20 Honey Bee kids he only asks whether you know a man with a way with
+  the ladies. The shoot needs all 20 kids (debug menu: Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
   cameraman (the Junon reporter with the camera) and Ruby (red hair, black jacket). Talk to
   him -> "Lights, camera, action!" -> the Sector 7 room with three beds. Press OK
   (confirm button) repeatedly: the gauge at the top (red | green | red; was off the bottom of the screen) and the cursor
@@ -362,7 +363,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   itself (~2 s; muffled during head / head reverse / 69). Costa del Sol music. After five minutes:
   "That's a wrap", back in Wall Market, he says to come back in half an hour. The first full shoot
   unlocks Skye (blue hair; her bare model: bikini skin-coloured, the yellow streamers removed): she
-  stands where Ruby was, the cameraman says once that Ruby retired, and after accepting he asks
+  stands where Ruby was, the cameraman says once that Ruby just turned 19 and retired, and after accepting he asks
   "Skye" / "Ruby". Skye plays the same positions with her own, dirtier lines. After 30 play
   minutes his talk pays presses x 10 gil (x 20 for a shoot with Skye: user). Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
   and cursor visible and on screen at each bed? the self-closing lines? the bed positions on
