@@ -420,6 +420,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   in front of the bed, "finisher" (Cloud on his back, still; she astride facing his feet, leaning back on
   straight arms, bouncing). Check: placement on the bed (does the bed's background draw over them?), her
   pose, his hips meeting hers, the gauge's size and spot in this room, the pay and the return.
+- **Special scenes: staged intro** (new; untested in-game, user): the clothed role-play now moves: Cloud
+  walks in or paces, the girl crosses to the bed posts, both turn to each other, and each line comes
+  with a gesture (Cloud: point, nod, shake head, formal, lean in, stretch...; her: bow, present, twirl,
+  check sides, shocked, spin...); Skye starts lying on the floor and gets up; a short pause between
+  lines. The cameraman stands still in this part (no animation) and films from the first position.
+  Check: the girls' gestures (Elena / Scarlet / Tifa / Aerith get the Honey Bee dancer's gestures copied
+  onto their skeletons: watch for odd hands or hair), walks ending in place, nobody overlapping.
 - **Special scenes, mission, pauses** (new; untested in-game, user): the special insert lines now go
   "there" in the role-play, with a little pain at first; insert: Cloud lower and leaning further forward;
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every

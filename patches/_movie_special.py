@@ -188,3 +188,59 @@ AFTERMATH = {
 
 # Insert (user): four stroke lengths, in even steps over its minute
 INSERT_FRAMES = (120, 90, 60, 15)          # 4 s, 3 s, 2 s, 0.5 s
+
+# (user) "pace out and animate the characters on the first part of the role-play": the intro is staged.
+# SPOTS: named floor points in front of Corneo's bed (colne_6 field units; the bed's foot is at y ~95,
+# +x = screen right, +y = towards the bed). START[key]: where each stands first (C Cloud, G her; "lie":
+# she starts lying there). STAGE[key][i] for INTRO[key][i]: actions `pre` (before the line, one after
+# the other, waited for) and `with` (started as the line appears): ("C"|"G", act); acts: ("walk", spot)
+# (then turns to the other), "face" (turn to the other), "bed" (turn to the bed), "lie", "stand", or a
+# gesture: Cloud's from 620 CLOUD_EXTRA (shrug nod point laugh shakehead impatient lookaround formal coy
+# leanin stretch warmup cheer ...), hers from `GESTURES`. PACE frames pass after every line.
+PACE = 24
+GESTURES = {"bow": "DIEF.chi", "present": "DXJD.tor", "point": "BYAD.aki", "shocked": "AVJE.aki",
+            "checksides": "DXIF.tor", "twirl": "BAJF.tor", "sexy": "DXJC.tor", "spin": "BAJD.tor"}
+SPOTS = {"door": (105, 35), "centre": (0, 40), "left": (-35, 30), "right": (35, 30), "near_l": (-15, 45),
+         "near_r": (15, 45), "post_l": (-45, 75), "post_r": (45, 75), "front": (0, 15), "far_l": (-150, 70)}
+START = {"ruby": {"C": "door", "G": "post_l"}, "skye": {"C": "door", "G": ("lie", "centre")},
+         "elena": {"C": "door", "G": "near_l"}, "scarlet": {"C": "left", "G": "right"},
+         "tifa": {"C": "right", "G": "left"}, "aerith": {"C": "near_r", "G": "far_l"}}
+STAGE = {
+    "ruby": [dict(pre=[("C", ("walk", "near_r"))], with_=[("C", "point")]),
+             dict(with_=[("G", "twirl")]),
+             dict(with_=[("C", "impatient")]),
+             dict(pre=[("G", ("walk", "post_r")), ("G", "bed")], with_=[("G", "spin")]),
+             dict(pre=[("C", ("walk", "right"))], with_=[("C", "shakehead")]),
+             dict(pre=[("G", "face")], with_=[("G", "present")])],
+    "skye": [dict(),
+             dict(pre=[("C", ("walk", "near_r"))], with_=[("C", "formal")]),
+             dict(),
+             dict(with_=[("C", "shakehead")]),
+             dict(pre=[("G", "stand"), ("G", "face")], with_=[("G", "present")]),
+             dict(with_=[("C", "point")])],
+    "elena": [dict(pre=[("C", ("walk", "near_r"))], with_=[("C", "formal")]),
+              dict(with_=[("G", "bow")]),
+              dict(pre=[("C", ("walk", "front")), ("C", ("walk", "right"))], with_=[("C", "lookaround")]),
+              dict(with_=[("G", "checksides")]),
+              dict(with_=[("C", "point")]),
+              dict(with_=[("G", "shocked")])],
+    "scarlet": [dict(pre=[("G", ("walk", "near_r"))], with_=[("G", "point")]),
+                dict(with_=[("C", "coy")]),
+                dict(pre=[("G", ("walk", "front")), ("G", ("walk", "near_l"))], with_=[("G", "twirl")]),
+                dict(with_=[("C", "nod")]),
+                dict(with_=[("G", "present")]),
+                dict(pre=[("G", ("walk", "post_l"))], with_=[("G", "point")])],
+    "tifa": [dict(pre=[("G", ("walk", "near_l"))], with_=[("G", "checksides")]),
+             dict(with_=[("C", "warmup")]),
+             dict(pre=[("G", ("walk", "front")), ("G", ("walk", "left"))], with_=[("G", "twirl")]),
+             dict(with_=[("C", "nod")]),
+             dict(with_=[("G", "sexy"), ("C", "stretch")]),
+             dict(pre=[("G", ("walk", "post_l"))], with_=[("G", "present")])],
+    "aerith": [dict(pre=[("G", ("walk", "near_l"))], with_=[("G", "checksides")]),
+               dict(with_=[("C", "shakehead")]),
+               dict(with_=[("G", "twirl")]),
+               dict(pre=[("C", ("walk", "right"))], with_=[("C", "leanin")]),
+               dict(with_=[("G", "bow")]),
+               dict(pre=[("C", "face")], with_=[("C", "point")])],
+}
+assert all(len(STAGE[k]) == len(INTRO[k]) for k in INTRO)

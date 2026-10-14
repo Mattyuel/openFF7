@@ -44,7 +44,7 @@ KEEP = ("switch", "hole", "ball", "bed")     # colne_6's background-state entiti
 BED_AT = (0, 190, 0xC0)                      # insert / finisher: both entities here, side on (DIR 0xC0: -x)
 HEAD_GIRL, HEAD_CLOUD = (-21, 30, 0x40), (17, 29, 0xC0)      # the floor in front of the bed (670's head: 38 apart)
 CAM_AT = {"insert": (75, 45), "head": (-95, 45), "finisher": (75, 45)}
-INTRO_AT = {"girl": (-25, 45, 0x40), "cloud": (15, 45, 0xC0), "cam": (-95, 45)}
+INTRO_AT = {"cam": (-110, 60)}                # the cameraman during the intro (the two: `_movie_special.START`)
 
 # insert, her (Ruby's skeleton, model units, y down, she faces -z): knees KNEE_PAD above the bed,
 # shoulders SHOULDER_PAD above it (the torso's slope solved for that), the pelvis PELVIS_LAG degrees
@@ -456,9 +456,35 @@ def _special(ctx, key, back):
     if stand_extra:
         loader.models[rc] = ModelLoader.with_anims(loader.models[rc], [stand_extra])
         stand = len(ModelLoader.anims(loader.models[rc])) - 1
+    # (user) the staged intro: Cloud's gestures (620 CLOUD_EXTRA) on the player's model; hers (the dancer's
+    # gestures, `SP.GESTURES`; Ruby and Skye have the dancer's skeleton, the others get them retargeted)
+    acts = [(who, a) for st in SP.STAGE[key] for part in ("pre", "with_") for who, a in st.get(part, [])]
+    c_g = sorted({a for who, a in acts if who == "C" and isinstance(a, str) and a in hb.CLOUD_EXTRA})
+    g_g = sorted({a for who, a in acts if who == "G" and isinstance(a, str) and a in SP.GESTURES})
+    loader.models[0] = ModelLoader.with_anims(loader.models[0], [hb.CLOUD_EXTRA[g] for g in c_g])
+    c_anim = {g: ModelLoader.anims(loader.models[0]).index(hb.CLOUD_EXTRA[g]) for g in c_g}
+    files = {g: SP.GESTURES[g] for g in g_g}
+    if isinstance(SP.START[key]["G"], tuple):                        # she starts lying (the dancer's DZBA)
+        assert key in ("ruby", "skye"), key
+        files["lie"] = "DZBA.tor"
+    if key not in ("ruby", "skye") and files:
+        g_ = next(g for g in MG.GIRLS if g["key"] == key)
+        stand_a = ModelLoader.anims(donor.models[dmodel])[0].split(".")[0].lower() + ".a"
+        batches = [{}, {}]                                           # (retargeted names end in the source's
+        for g, f_ in files.items():                                  # last two letters: no two alike a batch)
+            batches[any(f_[2:4] == o[2:4] for o in batches[0].values())][g] = f_
+        for b, batch in enumerate(batches):
+            if batch:
+                out = mv._retarget(ctx, list(batch.values()), ("W", "V")[b] + key[0].upper(), g_["donor"][2], stand_a)
+                files.update(dict(zip(batch, out)))
+    loader.models[rc] = ModelLoader.with_anims(loader.models[rc], list(files.values()))
+    g_anim = {g: ModelLoader.anims(loader.models[rc]).index(f_) for g, f_ in files.items()}
     cm = loader.add_from(ModelLoader(ctx.field(mv.CAMERA_DONOR[0]).section("models")), mv.CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_FILM)
-    idle_cam = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_IDLE)
+    # (user) "stop the animation of the cameraman in the first part": in the intro he holds 670's one-frame
+    # still pose (ZCFA = FDCB's first frame), filming (FFBC) only from the first position
+    loader.models[cm] = ModelLoader.with_anims(loader.models[cm], [mv.CAMERA_STILL])
+    idle_cam = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_STILL)
     if "sprites" not in _BUILT:
         mv.SPRITES = SPRITES
         _BUILT["sprites"] = mv._sprites(ctx, half, half_cursor)
@@ -479,12 +505,18 @@ def _special(ctx, key, back):
     by_p = lambda make: mv._chain(P, [make(p, pl) for p, pl in enumerate(places)])
     xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
     anim = lambda i: [mv._animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]   # (ANIMB: at once, see 670)
-    ispot = {k: spot(*v[:2]) for k, v in INTRO_AT.items()}
+    sp_ = {k: spot(*v) for k, v in SP.SPOTS.items()}                # (asserted on the floor)
+    for k, v in sp_.items():
+        assert abs(v[2] + 237) < 1, ("intro spot on the floor", k, v)
+    st_ = SP.START[key]
+    g_start = st_["G"][1] if isinstance(st_["G"], tuple) else st_["G"]
+    ispot = {"cloud": sp_[st_["C"]], "girl": sp_[g_start], "cam": spot(*INTRO_AT["cam"])}
+    to = lambda a, b: _dates()._dir_to(ispot[b][0] - ispot[a][0], ispot[b][1] - ispot[a][1])
     scripts = {e: {0: ops} for e, ops in keep.items()}
-    scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*ispot["cloud"]), d_(INTRO_AT["cloud"][2]),
+    scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*ispot["cloud"]), d_(to("cloud", "girl")),
                        hb._visi(0), asm.ret(), asm.ret()],
                    2: by_p(lambda p, pl: [xyzi(*pl["focus"])]) + [hb._visi(0), asm.ret()],
-                   3: [xyzi(*ispot["cloud"]), d_(INTRO_AT["cloud"][2]), hb._visi(1)] + anim(0) + [asm.ret()]}
+                   3: [xyzi(*ispot["cloud"]), d_(to("cloud", "girl")), hb._visi(1)] + anim(0) + [asm.ret()]}
 
     def pose(first, who, wdir):
         def make(p, pl):
@@ -497,7 +529,33 @@ def _special(ctx, key, back):
                              2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst)}
     scripts[ents["girlc"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: [hb._visi(0), asm.ret()],
-                              3: [xyzi(*ispot["girl"]), d_(INTRO_AT["girl"][2]), hb._visi(1)] + anim(stand) + [asm.ret()]}
+                              3: [xyzi(*ispot["girl"]), d_(to("girl", "cloud")), hb._visi(1)] +
+                              anim(g_anim["lie"] if isinstance(st_["G"], tuple) else stand) + [asm.ret()]}
+    # (user) the staged intro: one script slot per action, from slot 4 (walks: MOVE, then face the other)
+    actor = {"C": CL, "G": ents["girlc"]}
+    other = {"C": ents["girlc"], "G": CL}
+    slot_of = {}
+
+    def act_ops(who, a):
+        if isinstance(a, tuple):
+            assert a[0] == "walk", a
+            x_, y_ = SP.SPOTS[a[1]]
+            return [hb._move(x_, y_), hb._tura(other[who])]
+        if a == "face":
+            return [hb._tura(other[who])]
+        if a == "bed":
+            return [d_(0x80)]                                        # +y: towards the bed's foot
+        if a == "stand":
+            return anim(stand)
+        if a == "lie":
+            return anim(g_anim["lie"])
+        return [mv._animb(), Op(bytes([0xAE, (c_anim if who == "C" else g_anim)[a], 1]))]   # once, then the idle
+    for who, a in acts:
+        if (who, a) not in slot_of:
+            n_ = 4 + sum(1 for w_, _ in slot_of if w_ == who)
+            assert n_ < 32, n_
+            slot_of[(who, a)] = n_
+            scripts.setdefault(actor[who], {})[n_] = act_ops(who, a) + [asm.ret()]
     icd = _dates()._dir_to((ispot["girl"][0] + ispot["cloud"][0]) / 2 - ispot["cam"][0],
                            (ispot["girl"][1] + ispot["cloud"][1]) / 2 - ispot["cam"][1])
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide() + anim(film) + [asm.ret(), asm.ret()],
@@ -578,9 +636,14 @@ def _special(ctx, key, back):
     for t_ in SP.OPENING:
         main += say(t_)
     main += say("“Today's scene:\n %s.\n Places! And... roll it!”" % SP.SCENARIO[key])
-    for who, t_ in SP.INTRO[key]:
+    for (who, t_), st in zip(SP.INTRO[key], SP.STAGE[key]):     # (user) staged: moves, gestures, pauses
+        for w_, a in st.get("pre", []):
+            main += [hb._req(actor[w_], slot_of[(w_, a)])]                    # (waited for)
+        for w_, a in st.get("with_", []):
+            main += [hb._req(actor[w_], slot_of[(w_, a)], wait=False)]
         main += hb._say(sec, ("{CLOUD}" if who == "C" else name) + "\n" +
                         (t_ if t_.startswith("(") else "“%s”" % t_.replace("\n", "\n ").replace("\n  ", "\n ")))
+        main += [hb._w(SP.PACE)]
     main += [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(4), Op(hb.FADE_IN), Op(b"\x6C")]
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, mv.MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“Same rules as always: tap OK, mind the\n meter. Three positions, a minute each.\n ...And... ACTION!”")
