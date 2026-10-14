@@ -151,10 +151,15 @@ LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user
 }
 LINES_EACH = 12                                      # 12 for the muffled ones; the others' 8 repeat (one text each)
 SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines; frames each stays up
+# (user) 5 s before the end of the last position the cameraman calls for a finisher: from then the
+# right (high) red is a finisher, not a CUT: fanfare, a bonus on the spot of the girl's gil per
+# press x FINISH_BONUS (Ruby 1,000, Skye 2,000), and the shoot ends as a wrap
+FINISH_FRAMES, FINISH_BONUS, FINISH_SAY_FOR, FANFARE = 150, 100, 120, 5     # FANFARE: AKAO index (620's part twos)
 
 # temp vars (this field only)
 POS, VEL, PR, TOT, FR, RATE, T, S, NEXT, BKT, EARN, EL, NT = ((6, a) for a in range(100, 126, 2))
 P, STEP, NEW, RUN, K, HELD = (5, 130), (5, 131), (5, 132), (5, 133), (5, 134), (5, 135)
+FIN, FT = (5, 136), (6, 126)                         # finisher on (last 5 s of the last position); scratch word
 GIL = (6, 140)                                       # mrkt2: the cut (temp word)
 
 # Ruby bare (user, second version: "look like the original, just with bare shoulders, legs,
@@ -862,7 +867,7 @@ def _shoot(ctx, back):
     assert len(loader.models) == 8 and sk == 7
 
     ents = {}
-    for name in ("cloudb", "ruby", "camera", "gauge", "cursor", "keys", "voice", "hush", "skye"):
+    for name in ("cloudb", "ruby", "camera", "gauge", "cursor", "keys", "voice", "hush", "skye", "shout", "hush2"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -952,15 +957,24 @@ def _shoot(ctx, back):
     voice += [vdone, asm.goto_back(vl), asm.ret()]
     scripts[ents["voice"]] = {0: voice}
     scripts[ents["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(SAY_FOR), Op(b"\x54\x01"), asm.ret()]}
+    # the cameraman's call for a finisher: window 2 near the top (below the gauge) that the player
+    # can't close (they're mashing OK), shut by hush2; its own entity so the director never waits
+    shout = "Cameraman\n“Five seconds left! Go all out, star!\n Give me a FINISHER!”"
+    scripts[ents["shout"]] = {0: [asm.ret(), asm.ret()],
+                              2: [Op(b"\x52\x02\x00\x01"), hb._window(shout, 2, 8, 56),
+                                  hb._req(ents["hush2"], 2, wait=False), asm.message(2, sec.add_string(_encode(shout))),
+                                  asm.ret()]}
+    scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
 
     # director
-    lost, wrap, tick = asm.nop(), asm.nop(), asm.nop()
+    lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
     place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], ents["ruby"], ents["skye"], ents["camera"],
                                                  ents["gauge"])]
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
-            asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE)] + place_all() + [hb._w(20)]
+            asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE), asm.setbyte(FIN, 0)] + place_all() + \
+           [hb._w(20)]
     main += [Op(hb.FADE_IN), Op(b"\x6C")]            # (user: the first position showed the models move too)
     main += say("“Places, everyone! Here's how it works, star:\n tap OK to keep the rhythm going.”")
     main += say("“Faster means more footage, and every push\n is 10 gil in your pocket. But watch the meter:\n"
@@ -983,7 +997,12 @@ def _shoot(ctx, back):
              asm.setword(S, POS), hb._arith(0x86, S, VEL),
              asm.if_word(S, ">=", 1000 + DANGER, lost),                       # into the left red
              asm.setword(POS, S), hb._arith(0x88, POS, 1000),
-             asm.if_word(POS, "<=", 1000 - DANGER, lost)]                     # into the right red
+             asm.if_word(POS, "<=", 1000 - DANGER, hi_red)]                   # into the right red
+    # the last position's final FINISH_FRAMES: the call for a finisher (once)
+    no_call = asm.nop()
+    main += [asm.if_byte(P, "==", len(POSITIONS) - 1, no_call), asm.if_byte(FIN, "==", 0, no_call),
+             asm.setword(FT, FR), hb._arith(0x86, FT, FINISH_FRAMES), asm.if_word(FT, ">=", NEXT, no_call),
+             asm.setbyte(FIN, 1), hb._req(ents["shout"], 2, wait=False), no_call]
     # thrusting speed: RATE = RATE * 3/4 + presses * 16 -> step 0-3
     done, same = asm.nop(), asm.nop()
     main += [hb._arith(0x8A, RATE, 3), hb._arith(0x8C, RATE, 4), asm.setword(S, T), hb._arith(0x8A, S, 16),
@@ -1010,6 +1029,19 @@ def _shoot(ctx, back):
         stop = hb._w(30)
         return [hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(WALL), rx, ry, rt, rdir), stop,
                 asm.goto_back(stop), asm.ret()]
+    # into the right red: a finisher in the last FINISH_FRAMES (user), else a CUT
+    skye_bonus, bonus_done = asm.nop(), asm.nop()
+    main += [hi_red, asm.if_byte(FIN, "==", 1, lost), asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(b"\x54\x02"),
+             Op(bytes([0xF2, 0, 0, 0, 0x10, FANFARE]) + bytes(8)), hb._w(45)]      # (a pause: they're mashing OK)
+    main += say("“WOW! What a FINISHER!\n That's going straight on the poster!”")
+    main += [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_bonus)]                    # bit 1 set: Skye
+    for rate, label in ((PAY_RATE, None), (PAY_RATE * SKYE_PAY, skye_bonus)):
+        gil = rate * FINISH_BONUS
+        main += ([label] if label else []) + [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil)), sound(0x168)]
+        main += say("“Here's a bonus, on the spot:\n {:,} gil. You earned it, star!”".format(gil))
+        main += [asm.goto(bonus_done)] if label is None else [bonus_done]
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             asm.biton(MOVIE_GIRL, 0), Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     # a CUT (user): he still sells what was shot (the presses so far: a low score), same wait for
     # the cut; only a full shoot raises the star rank
     main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
