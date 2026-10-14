@@ -371,7 +371,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   Finisher (user, new): 5 s before the end of the last position the cameraman shouts (top window,
   closes itself) "Go all out, star! Give me a FINISHER!"; hitting the right red then plays the
   victory fanfare, "WOW! What a FINISHER!", pays 1,000 gil on the spot (Skye 2,000) and ends the
-  shoot as a wrap. The left red still cuts. Check the shout window doesn't cover the gauge.
+  shoot as a wrap; then the girl comments on it. The left red still cuts. Head is now the last
+  position (the finisher), prone takes its old place (6th). Check the shout window doesn't cover the gauge.
   Since (user): the shoot opens on black and fades in once everyone is placed (no visible model
   moves at the first position); back in Wall Market Cloud lands 4 paces further down (he was stuck
   beside the cameraman); Skye stands (her donor's default pose was sitting); "head": Ruby's head

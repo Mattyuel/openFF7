@@ -88,10 +88,10 @@ POSITIONS = [
          camera=(-130, -180, 0xC0)),                                        # bent over the left bed's foot
     dict(name="headrev", girl=("DZBH", (-225, -54, 0, 0x80), True), cloud=("ZCTE", (-225, -150, 0, 0x80), False),
          camera=(-130, -180, 0xC0)),                                        # on her back, head over the foot
-    # on the floor in front of the beds; she (user) half a head further from him (x 50 -> 42)
-    # (user, since) y -230 -> -224: to her left (his right)
-    dict(name="head", girl=("ZRTA", (42, -224, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
-         camera=(140, -235, 0xC0)),
+    # (user) "prone": flat on her stomach on the right bed, hips lifting and rocking forward (ZRPA, `_prone`);
+    # Cloud knelt over her pelvis facing her head (ZCTB); his spot from both poses (`_place`)
+    dict(name="prone", girl=("ZRPA", (227, -110, 0, 0x00), True), cloud=("ZCTO", "prone", True),
+         camera=(90, -60, None)),
     # (user) Scarlet's date pose, "behind": she leans forward, arms out, right knee up, in front of standing
     # Cloud facing his way (660 `_wall` on her skeleton: same XYZI and DIR as his ZCTE, her pelvis in the
     # anim); (user) at the foot of the leftmost bed, by the left wall, facing the bed (+y: she leans over
@@ -106,10 +106,11 @@ POSITIONS = [
     # other way, knees by his head, her head over his pelvis, bobbing (ZR6A: dzbf + a head bob, `_bob`). Her
     # spot and DIR come from both poses (`_place`); muffled
     dict(name="69", girl=("ZR6A", "69", True), cloud=("ZCTD", (18, -95, 0, 0x80), True), camera=(-130, -60, None)),
-    # (user) "prone": flat on her stomach on the right bed, hips lifting and rocking forward (ZRPA, `_prone`);
-    # Cloud knelt over her pelvis facing her head (ZCTB); his spot from both poses (`_place`)
-    dict(name="prone", girl=("ZRPA", (227, -110, 0, 0x00), True), cloud=("ZCTO", "prone", True),
-         camera=(90, -60, None)),
+    # (user) "head" last: the finisher position
+    # on the floor in front of the beds; she (user) half a head further from him (x 50 -> 42)
+    # (user, since) y -230 -> -224: to her left (his right)
+    dict(name="head", girl=("ZRTA", (42, -224, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
+         camera=(140, -235, 0xC0)),
 ]
 LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
     "mission": ["Mmm... the camera loves you.", "Kiss my neck... yes, right there...",
@@ -154,7 +155,9 @@ SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines;
 # (user) 5 s before the end of the last position the cameraman calls for a finisher: from then the
 # right (high) red is a finisher, not a CUT: fanfare, a bonus on the spot of the girl's gil per
 # press x FINISH_BONUS (Ruby 1,000, Skye 2,000), and the shoot ends as a wrap
-FINISH_FRAMES, FINISH_BONUS, FINISH_SAY_FOR, FANFARE = 150, 100, 120, 5     # FANFARE: AKAO index (620's part twos)
+FINISH_FRAMES, FINISH_BONUS, FINISH_SAY_FOR, FANFARE = 150, 100, 120, 5
+AFTERMATH = ("Ruby\n“Mmh... *gulp*... Well. That's one way\n to end a scene. Give me a minute to\n catch my breath, handsome.”",
+             "Skye\n“Mmm... every last drop. Best finish\n of my career, star. Same time tomorrow?”")   # (user) Ruby, Skye     # FANFARE: AKAO index (620's part twos)
 
 # temp vars (this field only)
 POS, VEL, PR, TOT, FR, RATE, T, S, NEXT, BKT, EARN, EL, NT = ((6, a) for a in range(100, 126, 2))
@@ -1039,6 +1042,7 @@ def _shoot(ctx, back):
         gil = rate * FINISH_BONUS
         main += ([label] if label else []) + [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil)), sound(0x168)]
         main += say("“Here's a bonus, on the spot:\n {:,} gil. You earned it, star!”".format(gil))
+        main += hb._say(sec, AFTERMATH[label is not None])                   # (user) the girl, after it
         main += [asm.goto(bonus_done)] if label is None else [bonus_done]
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              asm.biton(MOVIE_GIRL, 0), Op(hb.FADE_OUT), Op(b"\x6C")] + out()
