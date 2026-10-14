@@ -23,7 +23,7 @@ import csv
 import os
 import struct
 
-from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL
+from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL, MOVIE_RANK, MOVIE_STATE
 from _recruit import sound
 from _travel import CHOICE, window
 import _honey_bee_gifts as gifts
@@ -154,8 +154,15 @@ def _menu(sec, dests):
     ops += [asm.goto(done)]
     ops += [kids] + [asm.biton(*k) for k in HB_KID] + [asm.goto(done)]
     ops += [hunt, Op(bytes([0x86, HUNTER_PTS[0] << 4, HUNTER_PTS[1]]) + struct.pack("<H", 50)), asm.goto(done)]
-    # the movie's star rank (670: a girl retires -> the next co-star): rank 1 = Skye
-    ops += [star, asm.biton(MOVIE_GIRL, 0), asm.goto(done)]
+    # the movie's star rank (670: a girl retires -> the next co-star): rank 1 = Skye, then Elena,
+    # Scarlet, Tifa, Aerith; nothing owed: the cameraman tells the news on the next Wall Market visit
+    # (MOVIE_STATE 4)
+    up_, owed_ = asm.nop(), asm.nop()
+    ops += [star]
+    for v, b in MOVIE_RANK:
+        nxt = asm.nop()
+        ops += [asm.if_byte(v, "bit_off", b, nxt), asm.biton(v, b), asm.goto(up_), nxt]
+    ops += [up_, asm.if_byte(MOVIE_STATE, "==", 0, owed_), asm.setbyte(MOVIE_STATE, 4), owed_, asm.goto(done)]
     # +30 minutes: the play clock can't be reached from a field, so the times waited from move back
     # 30 (wrapping: the elapsed difference still comes out +30): the movie cut and the Honey Bee takings
     ops += [later] + [Op(bytes([0x88, v[0] << 4, v[1]]) + struct.pack("<H", 30)) for v in (MOVIE_AT, HB_LAST)]

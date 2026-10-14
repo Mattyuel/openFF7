@@ -663,8 +663,8 @@ Honey Bee Girl recruitment.
 - `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
-- `_cloud_thrust(ctx)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
-- `_on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0, head_down=False)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
+- `_cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
+- `_on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0, head_down=False, head_nod=0, leg_raise=LEG_RAISE)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
 - `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
 - `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
 - `_bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=EDGE_ARMS_DOWN)` dzbg.a (EDGE_ANIM): standing, knees bent EDGE_KNEE, bent EDGE_BEND forward at
@@ -771,6 +771,7 @@ The movie minigame (user's design).
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_bob(ctx)` 
 - `_prone(ctx)` 
+- `_behind_bed(ctx, name, hrc=RUBY_HRC, stand=RUBY_STAND)` 
 - `_head_back(ctx)` 
 - `_keep_upper(fa, sk, rr, Wt, r, target, tol, also=())` Re-aim UPPER (+ `also`) so each bone's end goes back to `target` (a bone keeps its length:
 - `_cloud_dog(ctx)` 
@@ -784,6 +785,8 @@ The movie minigame (user's design).
 - `_encode(t)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
 - `_tree(var, lo, hi, leaf)` Binary search on word var in lo..hi (values past hi take hi's leaf).
+- `_advance(state=3)` Ops raising the star rank one step (`MOVIE_RANK`) and setting MOVIE_STATE to `state` (None:
+- `_by_rank(blocks)` Ops running blocks[r] (lists of ops, r = 1..5) for the current star rank (none at rank 0).
 - `_unlocked_or(skip)` Ops jumping to `skip` unless all 20 HB_KID bits are set.
 - `_wall_market(ctx, focus)` 
 - `apply(ctx)` 

@@ -197,6 +197,9 @@ ONTOP_RAISE = 4                              # Cloud on top of her: drawn this m
 # sides; hips where DZBA (the game's lying pose) has them. A new animation dzbt.a,
 # built from her standing pose BAJB like the all-fours one.
 LIE_ANIM_SCENE, LEG_RAISE, LEG_SPREAD = "DZBT.tor", 45, 45
+# (user, since) mission (every one: Honey Bee, dates, the movie; the lounges' lying girls share it):
+# her knees straighter: the thighs raised only MISSION_LEG_RAISE, the feet still flat on the bed
+MISSION_LEG_RAISE = 28
 # On all fours (user): from her standing pose BAJB, the upper body pitched 90 degrees
 # forward (facing down), thighs hanging (hip 90), shins and feet folded back flat
 # (knee 90), upper arms hanging (shoulder 90 forward), hands flat forward; each
@@ -2094,8 +2097,11 @@ def _cloud_pound(ctx):
     ctx.char_file(CLOUD_POUND.split(".")[0].lower() + ".a", base.build())
 
 
-def _cloud_thrust(ctx):
-    """zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST."""
+def _cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0):
+    """zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
+    pivot: instead of the hips rising, the thighs swing `pivot` degrees about the line through
+    both knees, so knees, shins and feet don't move at all and the pelvis thrusts forward and
+    down along that arc (670's mission, user)."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -2148,24 +2154,45 @@ def _cloud_thrust(ctx):
     for n in ("l_tibia", "r_tibia", "l_foot", "r_foot"):
         assert abs(E0[I(n)][1] - S0[I(n)][1]) < 0.05, n               # level
     frames = []
+    kl, kr = E0[I("l_femur")], E0[I("r_femur")]
+    knees = unit(sub(kl, kr))
+    if pivot:                                        # the sense that brings the pelvis towards her (head-wards)
+        turn = lambda a: fa.axis_angle(knees, a)
+        hip0 = S0[I("hip")]
+        sg = 1 if dot(sub(add(kr, fa._vec(turn(5), sub(hip0, kr))), hip0), along) < 0 else -1
     for t in range(THRUST_FRAMES):
-        h = THRUST_RISE * (1 - math.cos(2 * math.pi * t / THRUST_FRAMES)) / 2
-        rt = [root[0], root[1] - h, root[2]]
-        Wt = list(W0)
-        for n in ("chest", "l_chest", "r_chest", "l_femur", "r_femur"):   # aimed back at where they ended
-            i = I(n)
-            Wt[i] = fa._mul(align(bdir(W0[i]), sub(E0[i], [S0[i][0], S0[i][1] - h, S0[i][2]])), W0[i])
+        e = (1 - math.cos(2 * math.pi * t / THRUST_FRAMES)) / 2
+        if pivot:
+            R = turn(sg * pivot * e)
+            rt = add(kr, fa._vec(R, sub(root, kr)))
+            Wt = [fa._mul(R, m) if names[i] in ("hip", "l_hip", "r_hip", "l_femur", "r_femur") else m
+                  for i, m in enumerate(W0)]
+            moved_ = fa.forward(sk, rr, rt, fa.local_rotations(sk, rr, Wt))
+            for n in ("chest", "l_chest", "r_chest"):  # the upper body aimed back at where it ended
+                i = I(n)
+                Wt[i] = fa._mul(align(bdir(Wt[i]), sub(E0[i], moved_[i][1])), Wt[i])
+        else:
+            h = THRUST_RISE * e
+            rt = [root[0], root[1] - h, root[2]]
+            Wt = list(W0)
+            for n in ("chest", "l_chest", "r_chest", "l_femur", "r_femur"):   # aimed back at where they ended
+                i = I(n)
+                Wt[i] = fa._mul(align(bdir(W0[i]), sub(E0[i], [S0[i][0], S0[i][1] - h, S0[i][2]])), W0[i])
         local = fa.local_rotations(sk, rr, Wt)
         if t == THRUST_FRAMES // 2:
             top = fa.forward(sk, rr, rt, local)
             assert all(math.dist(top[I(n)][2], E0[I(n)]) < 0.8 for n in ("l_hand", "r_hand", "head")), "shoulders moved"
+            if pivot:
+                for n in ("l_femur", "r_femur", "l_tibia", "r_tibia", "l_foot", "r_foot"):
+                    assert math.dist(top[I(n)][2], E0[I(n)]) < 0.05, ("legs moved", n)
+                assert math.dist(top[I("hip")][1], S0[I("hip")]) > 0.5, "pelvis still"
         frames.append((rr, [rt[0], -rt[1], rt[2]], local))
     base.frames = frames
-    ctx.char_file(CLOUD_THRUST.split(".")[0].lower() + ".a", base.build())
+    ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
 
 def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0,
-             head_down=False):
+             head_down=False, head_nod=0, leg_raise=LEG_RAISE):
     """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
     the knees fall open POSE_ROCK and close again (each leg turns about its
     hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames.
@@ -2173,7 +2200,9 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
     head: degrees chin to chest (< 0: tipped back), rocking head_rock (> 0: further
     forward as she comes down). hip_lift: her hips held this much higher throughout (the
     shoulders stay down, so her body slopes back to them); head_down: the head
-    hangs straight down every frame (face upright: head reverse)."""
+    hangs straight down every frame (face upright: head reverse); head_nod: that hanging head
+    rocks this many degrees back and forth (about her side axis) with each stroke (670's head
+    reverse, user)."""
     fa, sk, idx, rr, world = _standing(ctx)
     names = [b[0] for b in sk]
     x, z = (1, 0, 0), (0, 0, 1)
@@ -2184,7 +2213,7 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
     def pose(knee, foot):                            # world matrices
         w = [fa._mul(back, m) for m in world]
         for side, out in (("l", LEG_SPREAD), ("r", -LEG_SPREAD)):
-            thigh = fa._mul(fa.axis_angle(z, out), fa.axis_angle(x, -LEG_RAISE))   # up, then out to her side
+            thigh = fa._mul(fa.axis_angle(z, out), fa.axis_angle(x, -leg_raise))   # up, then out to her side
             for n in ("_hip", "_femur", "_tibia", "_foot"):
                 w[idx(side + n)] = fa._mul(thigh, w[idx(side + n)])
             kneebend = fa.axis_angle(x, knee)
@@ -2258,6 +2287,8 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
         tilt = head - head_rock * v                                           # (mission) forward coming down, back going up
         if head_down:
             w[idx("head")] = fa._mul(align(bdir(w[idx("head")]), [0.0, 1.0, 0.0]), w[idx("head")])   # y down
+            if head_nod:
+                w[idx("head")] = fa._mul(fa.axis_angle(x, head_nod * v), w[idx("head")])
         else:
             w[idx("head")] = fa._mul(fa.axis_angle(x, sense * tilt), w[idx("head")])
         frames.append((lift, fa.local_rotations(sk, rr, w)))
@@ -2521,7 +2552,7 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=ED
 
 
 def apply(ctx):
-    _on_back(ctx)
+    _on_back(ctx, leg_raise=MISSION_LEG_RAISE)
     _on_back(ctx, HEADREV_ANIM, HEADREV_ARMS, hip_lift=HEADREV_LIFT, head_down=True)
     _fours(ctx)
     _cloud_thrust(ctx)

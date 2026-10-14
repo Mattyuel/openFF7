@@ -400,6 +400,16 @@ Existing saves load, but they keep their own story progress; use a new game.
   10 out with the shin straight down, the foot against the bed's end and staying there while his
   hips thrust and his upper body leans back to take it (it used to stick out level). Check the
   foot looks planted and doesn't vanish into the bed.
+- **Movie minigame, poses and co-stars** (new; untested in-game, user): head: she kneels a touch
+  closer; behind: her hands planted on the bed, feet on the floor, only her hips moving with
+  Cloud (her back pivots, arms bend); mission: Cloud's shins stay flat and still, his pelvis
+  thrusting; head reverse: her hanging head rocks back and forth; mission everywhere (Honey Bee,
+  movie, the lounges' lying girls): her knees straighter. **Co-stars now come one at a time**:
+  each wrap (a full shoot) brings the next (Ruby, Skye, Elena, Scarlet, Tifa, Aerith; no pick list,
+  no affection needed); back in Wall Market the cameraman explains where the last one went. Debug
+  "Star rank +1" raises the rank one step and he tells the news on your next Wall Market visit (the
+  old menu's Skye check was inverted: every other pick shot with Skye). Check every girl's set
+  starts, her pay rate, and each news line.
 - **Movie minigame: Bio sound** (new; untested in-game, user): reaching the right red zone (a CUT,
   or the finisher in the last 5 s) plays the Bio spell's sound (id 0x3F, read from the exe: check
   it's the one you mean).

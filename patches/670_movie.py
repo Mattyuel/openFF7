@@ -42,8 +42,7 @@ import math
 import struct
 
 import _marker_models as mm
-from _config import HB_AFFECTION, HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_STATE
-from _honey_bee_data import GIRLS as HB_GIRLS
+from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_RANK, MOVIE_STATE
 import _movie_girls as MG
 from _recruit import sound
 from _travel import CHOICE, add_npc, beside, screen_step
@@ -79,7 +78,8 @@ SKYE_PAY = 2                                        # (user) Skye's videos: doub
 # Offsets from 620's user-tuned layouts, turned to each bed's long axis (y).
 POSITIONS = [
     # (user) she slightly right and down on screen: (-225, -60) -> (-215, -59)
-    dict(name="mission", girl=("DZBT", (-215, -59, 0, 0x00), True), cloud=("ZCTA", (-220, -25, -4, 0x80), True),
+    # (user, since) Cloud's shins stay flat and still, his pelvis thrusting (ZCTU: 620 `_cloud_thrust(pivot=)`)
+    dict(name="mission", girl=("DZBT", (-215, -59, 0, 0x00), True), cloud=("ZCTU", (-220, -25, -4, 0x80), True),
          camera=(-130, -60, 0xC0)),                                         # left bed, she lies, head to the pillow
     # middle bed, Cloud's head on the pillow; she (user) a body width to her right (x 0 -> 18): over his line;
     # then (user) slightly lower onto him (raise 18 -> 14) and slightly back (y -87 -> -91: she faces +y);
@@ -90,7 +90,8 @@ POSITIONS = [
          camera=(90, -60, 0x40)),                                           # right bed
     dict(name="edge", girl=("DZBG", (-225, -150, 0, 0x80), False), cloud=("ZCTF", (-225, -161, 0, 0x80), False),
          camera=(-130, -180, 0xC0)),                                        # bent over the left bed's foot
-    dict(name="headrev", girl=("DZBH", (-225, -54, 0, 0x80), True), cloud=("ZCTE", (-225, -150, 0, 0x80), False),
+    # (user, since) her hanging head rocks back and forth (ZRHN: DZBH + `HEADREV_NOD`)
+    dict(name="headrev", girl=("ZRHN", (-225, -54, 0, 0x80), True), cloud=("ZCTE", (-225, -150, 0, 0x80), False),
          camera=(-130, -180, 0xC0)),                                        # on her back, head over the foot
     # (user) "prone": flat on her stomach on the right bed, hips lifting and rocking forward (ZRPA, `_prone`);
     # Cloud knelt over her pelvis facing her head (ZCTB); his spot from both poses (`_place`)
@@ -115,7 +116,8 @@ POSITIONS = [
     # (user, since) y -230 -> -224: to her left (his right)
     # (user, since) Cloud: ZCTQ = ZCTE with his left leg cocked HEAD_STEP forward (foot planted) and
     # HEAD_THRUST x the pelvic thrust (built by 620 for its head layout too: HEAD_STEP / HEAD_THRUST)
-    dict(name="head", girl=("ZRTA", (42, -224, 0, 0x40), False), cloud=("ZCTQ", (80, -230, 0, 0xC0), False),
+    # (user, since) she a touch closer (x 42 -> 45)
+    dict(name="head", girl=("ZRTA", (45, -224, 0, 0x40), False), cloud=("ZCTQ", (80, -230, 0, 0xC0), False),
          camera=(140, -235, 0xC0)),
 ]
 LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
@@ -704,8 +706,133 @@ def _prone(ctx):
     ctx.char_file("zrpa.a", base.build())
 
 
+# (user, since) "behind" with her hands planted on the bed and both feet on the floor; only her
+# hips move (following Cloud's pelvis in his ZCTE), her upper body pivoting so her shoulders stay
+# put and her arms re-bending (two-bone IK) to keep the hands where they are; legs likewise.
+# From her stand: upper body leaned BEHIND_LEAN forward, knees bent BEHIND_KNEE, each wrist
+# BEHIND_REACH of her arm's full length from the shoulder, down to the mattress (BEHIND_BED_TOP
+# field units above the floor, the left bed), the hands flat pointing forward; her pelvis
+# WALL_GAP (660) in front of his at frame 0.
+BEHIND_LEAN, BEHIND_KNEE, BEHIND_REACH, BEHIND_BED_TOP, BEHIND_PALM = 40, 30, 0.92, 54, 0.4
+
+
+def _behind_bed(ctx, name, hrc=RUBY_HRC, stand=RUBY_STAND):
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
+    names = [b[0] for b in sk]
+    I = names.index
+    base = fa.Anim(ctx.char_file(stand))
+    rr, rp, rots = base.frames[0]
+    root = [rp[0], -rp[1], rp[2]]                     # y down, floor 0, she faces -z, her left +x
+    W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+    fk = lambda W, r: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
+    sub = lambda a, b: [a[k] - b[k] for k in range(3)]
+    add = lambda a, b: [a[k] + b[k] for k in range(3)]
+    dot = lambda a, b: sum(a[k] * b[k] for k in range(3))
+    unit = lambda v: [c / math.sqrt(dot(v, v)) for c in v]
+    cross = lambda a, b: [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+    bdir = lambda m: fa._vec(m, [0, 0, -1])
+    side, up, fwd = [1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]
+
+    def align(a, b):
+        a, b = unit(a), unit(b)
+        ax = cross(a, b)
+        si = math.sqrt(dot(ax, ax))
+        return fa.axis_angle(ax, math.degrees(math.atan2(si, dot(a, b)))) if si > 1e-9 else fa.euler_matrix(0, 0, 0)
+
+    def turned(W, bones, angle, test):
+        e0 = {names[i]: e for i, (_, _, e) in enumerate(fk(W, root))}
+        for sg in (1, -1):
+            M = [fa._mul(fa.axis_angle(side, sg * angle), m) if names[i] in bones else m for i, m in enumerate(W)]
+            e1 = {names[i]: e for i, (_, _, e) in enumerate(fk(M, root))}
+            if test(e0, e1):
+                return M
+        raise AssertionError((name, sorted(bones)))
+
+    def ik(W, F, top, low, target, pole):           # two-bone: `top`/`low` re-aimed so low's end = target
+        i, j = I(top), I(low)
+        S = F[i][1]
+        L1, L2 = math.dist(F[i][1], F[i][2]), math.dist(F[j][1], F[j][2])
+        D = sub(target, S)
+        dd = math.sqrt(dot(D, D))
+        assert dd < L1 + L2 - 1e-3, (name, top, dd, L1 + L2)
+        u = unit(D)
+        pp = unit(sub(pole, [dot(pole, u) * c for c in u]))
+        a = (L1 * L1 - L2 * L2 + dd * dd) / (2 * dd)
+        K = add(S, [a * u[k] + math.sqrt(max(0.0, L1 * L1 - a * a)) * pp[k] for k in range(3)])
+        W = list(W)
+        W[i] = fa._mul(align(bdir(W[i]), sub(K, S)), W[i])
+        W[j] = fa._mul(align(bdir(W[j]), sub(target, K)), W[j])
+        return W
+    legs = {n for n in names if n[:2] in ("l_", "r_") and not any(k in n for k in ("chest", "collar", "arm", "hand"))}
+    upper = set(names) - legs
+    feet0 = {s: fk(W, root)[I(s + "_tibia")][2] for s in "lr"}
+    for s in "lr":                                   # knees bent: thigh forward half, shin back the whole
+        W = turned(W, {s + "_femur", s + "_tibia", s + "_foot"}, BEHIND_KNEE / 2,
+                   lambda a, b: b[s + "_femur"][2] < a[s + "_femur"][2])
+        W = turned(W, {s + "_tibia", s + "_foot"}, BEHIND_KNEE, lambda a, b: b[s + "_tibia"][2] > a[s + "_tibia"][2])
+    W = turned(W, upper, BEHIND_LEAN, lambda a, b: b["head"][2] < a["head"][2] - 1)     # lean forward
+    F = fk(W, root)
+    drop = F[I("l_tibia")][2][1] - feet0["l"][1]
+    root = [root[0], root[1] - drop, root[2]]                                         # ankles back down
+    # her pelvis WALL_GAP in front of his (same facing), as 660's `_wall`
+    his = fa.Anim(ctx.char_file(_hb().CLOUD_BED["stand"].split(".")[0].lower() + ".a"))
+    hz0 = his.frames[0][1][2]
+    F = fk(W, root)
+    root = [root[0], root[1], root[2] + (hz0 - _dates().WALL_GAP) - F[I("hip")][1][2]]
+    F = fk(W, root)
+    bed = -BEHIND_BED_TOP / UNIT                                                       # y down
+    hands = {}
+    for s, out in (("l", 1), ("r", -1)):
+        sh = F[I(s + "_uparm")][1]
+        L = (math.dist(F[I(s + "_uparm")][1], F[I(s + "_uparm")][2]) +
+             math.dist(F[I(s + "_foarm")][1], F[I(s + "_foarm")][2])) * BEHIND_REACH
+        dy = (bed - BEHIND_PALM) - sh[1]
+        assert dy > 0 and L > dy, (name, "the bed out of reach", dy, L)
+        wrist = [sh[0] + 0.3 * out, bed - BEHIND_PALM, sh[2] - math.sqrt(L * L - dy * dy - 0.09)]
+        W = ik(W, F, s + "_uparm", s + "_foarm", wrist, [0.4 * out, -0.6, 0.7])          # elbows out and back
+        h = I(s + "_hand")
+        W[h] = fa._mul(align(bdir(W[h]), [0.0, 0.15, -1.0]), W[h])                    # flat, fingers forward
+        hands[s] = wrist
+        F = fk(W, root)
+    E0 = {names[i]: (st, e) for i, (_, st, e) in enumerate(F)}
+    ankles = {s: E0[s + "_tibia"][1] for s in "lr"}
+    sh0 = [(E0["l_uparm"][0][k] + E0["r_uparm"][0][k]) / 2 for k in range(3)]
+    frames = []
+    for _, hp, _ in his.frames:
+        d = hp[2] - hz0                                                                 # his pelvis along z
+        rt = [root[0], root[1], root[2] + d]
+        # the upper body pivots at her pelvis until the shoulders are back over where they were
+        best = None
+        for a10 in range(-300, 301):
+            M = [fa._mul(fa.axis_angle(side, a10 / 10), m) if names[i] in upper else m for i, m in enumerate(W)]
+            Fm = fk(M, rt)
+            sh = [(Fm[I("l_uparm")][1][k] + Fm[I("r_uparm")][1][k]) / 2 for k in range(3)]
+            err = abs(sh[2] - sh0[2])
+            if best is None or err < best[0]:
+                best = (err, M)
+        Wt = best[1]
+        for s, out in (("l", 1), ("r", -1)):
+            hm = W[I(s + "_hand")]
+            Wt = ik(Wt, fk(Wt, rt), s + "_uparm", s + "_foarm", hands[s], [0.4 * out, -0.6, 0.7])
+            Wt[I(s + "_hand")] = hm
+            Wt = ik(Wt, fk(Wt, rt), s + "_femur", s + "_tibia", ankles[s], fwd)
+            Wt[I(s + "_foot")] = W[I(s + "_foot")]
+        E = fk(Wt, rt)
+        for s in "lr":
+            assert math.dist(E[I(s + "_foarm")][2], hands[s]) < 0.05, (name, "hand moved")
+            assert math.dist(E[I(s + "_tibia")][2], ankles[s]) < 0.05, (name, "foot moved")
+        frames.append((rr, [rt[0], -rt[1], rt[2]], fa.local_rotations(sk, rr, Wt)))
+    base.frames = frames
+    ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
+    return {s: -hands[s][2] for s in "lr"}                                              # how far ahead
+
+
 # (user) "head": her head tilted HEAD_BACK further back (chin up) than 620's kneel (dzbk), as ZRTA
 HEAD_BACK = 20
+MISSION_PIVOT = 14              # (user) mission: Cloud's thighs swing this far about his knees (pelvic thrust)
+HEADREV_NOD = 15                # (user) head reverse: her hanging head rocks this far each way
+BEHIND_BED_EDGE = 20            # whitebg1: the left bed starts this far (field units) ahead of "behind"'s spot
 
 
 def _head_back(ctx):
@@ -963,7 +1090,11 @@ def _shoot(ctx, back, cast=None):
         _cloud_prone(ctx)
         for pos in POSITIONS:
             _place(ctx, pos)
-        dt._wall(ctx, "ZRWA.tor", RUBY_HRC, RUBY_STAND)          # (user) "behind": Scarlet's date pose on her
+        ahead = _behind_bed(ctx, "ZRWA.tor")                     # (user) "behind": hands on the bed, hips moving
+        assert min(ahead.values()) * UNIT > BEHIND_BED_EDGE + 8, ahead          # the hands over the mattress
+        hb._cloud_thrust(ctx, "ZCTU.tor", pivot=MISSION_PIVOT)   # (user) mission: legs still, pelvis thrusting
+        hb._on_back(ctx, "ZRHN.tor", hb.HEADREV_ARMS, hip_lift=hb.HEADREV_LIFT, head_down=True,
+                    head_nod=HEADREV_NOD)                        # (user) head reverse: her head rocking
         dt._koala(ctx, "ZRKA.tor", RUBY_HRC, RUBY_STAND)         # (user) "holding": Tifa's koala hug on her
         _BUILT["anims"] = _speeds(ctx)
     f = ctx.new_field(cast["field"] if cast else FIELD, ctx.field(BASE).build())
@@ -1257,8 +1388,8 @@ def _shoot(ctx, back, cast=None):
         main += say("“Here's a bonus, on the spot:\n {:,} gil. You earned it, star!”".format(gil))
         main += hb._say(sec, after)                                         # (user) the girl, after it
         main += [asm.goto(bonus_done)] if k_ + 1 < len(bonuses) else [bonus_done]
-    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
-             asm.biton(MOVIE_GIRL, 0), Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2)] + \
+        _advance() + [Op(hb.FADE_OUT), Op(b"\x6C")] + out()                 # (user) the next co-star
     # a CUT (user): he still sells what was shot (the presses so far: a low score), same wait for
     # the cut; only a full shoot raises the star rank
     main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
@@ -1267,9 +1398,8 @@ def _shoot(ctx, back, cast=None):
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
     main += say("“...That's a WRAP! Magnificent!”")
-    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
-             asm.biton(MOVIE_GIRL, 0),                                   # (user) a full shoot unlocks Skye
-             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2)] + \
+        _advance() + [Op(hb.FADE_OUT), Op(b"\x6C")] + out()                 # (user) a full shoot: the next co-star
     black = Op(bytes.fromhex("6b00000000000104" "00"))      # FADE type 4: black at once (as the game's
     scripts[0] = {0: [black, asm.ret()] + main}                    # fields that open on a scene)
     dt._blank(sec, scripts)
@@ -1310,6 +1440,46 @@ def _tree(var, lo, hi, leaf):
 
 
 # ---- Wall Market --------------------------------------------------------------
+# (user) one co-star at a time: each wrap raises the star rank (`MOVIE_RANK`) and the last star
+# leaves; back in Wall Market the cameraman tells why (user: dark humour at the industry's expense)
+NEWS = {
+    1: ["“Bad news, star: Ruby just turned 19 and\n retired. Hung up her heels for good.”",
+        "“But meet Skye, my new discovery.\n She's... enthusiastic. You'll see.”"],
+    2: ["“Skye? Gone. Signed an 'exclusive' deal\n with a studio in Junon. They own her\n name, her face and her next three lives.”",
+        "“Her lawyer wept with joy. Her agent\n bought a yacht. Skye got a fruit\n basket. That's showbiz, star!”",
+        "“Anyway! Your new co-star: Elena. Yes,\n the Turk. Their pension plan turns out\n to be mostly thoughts and prayers.”"],
+    3: ["“Elena's out. The Turks found the tapes.\n She's been 'reassigned'. So have her\n fingerprints, I hear.”",
+        "“Don't cry for her! Scarlet saw our sales\n figures and wants in. She calls it\n a hostile takeover. Kyahahaha, she said.”"],
+    4: ["“Scarlet tried to buy the studio, fire me\n and rename it the Shinra Adult Weapons\n Division. Security walked her out.”",
+        "“She took the good lights. And my chair.\n And, somehow, my will to live.”",
+        "“Good news, though: Tifa needs money for\n her bar. I offered her exposure. She\n offered me a fist. We settled on cash.”"],
+    5: ["“Tifa quit to 'reinvent herself'. They\n all do. Fitness tape, cookbook, tearful\n comeback special. Circle of life, star.”",
+        "“But Aerith walked in asking for top\n billing and points on the back end.\n Sweet as a flower, bargains like a shark.”",
+        "“Last of my discoveries, so treat her\n right. This business chews girls up.\n I should know: I'm the teeth.”"],
+}
+
+
+def _advance(state=3):
+    """Ops raising the star rank one step (`MOVIE_RANK`) and setting MOVIE_STATE to `state` (None:
+    left alone); nothing at the top."""
+    done, ops = asm.nop(), []
+    for v, b in MOVIE_RANK:
+        nxt = asm.nop()
+        ops += [asm.if_byte(v, "bit_off", b, nxt), asm.biton(v, b)] + \
+               ([asm.setbyte(MOVIE_STATE, state)] if state is not None else []) + [asm.goto(done), nxt]
+    return ops + [done]
+
+
+def _by_rank(blocks):
+    """Ops running blocks[r] (lists of ops, r = 1..5) for the current star rank (none at rank 0)."""
+    done, ops = asm.nop(), []
+    for r in range(len(MOVIE_RANK), 0, -1):
+        nxt = asm.nop()
+        v, b = MOVIE_RANK[r - 1]
+        ops += [asm.if_byte(v, "bit_on", b, nxt)] + blocks[r] + [asm.goto(done), nxt]
+    return ops + [done]
+
+
 def _unlocked_or(skip):
     """Ops jumping to `skip` unless all 20 HB_KID bits are set."""
     assert [k for k in HB_KID] == [((1, 214 + i // 8), i % 8) for i in range(20)]
@@ -1348,10 +1518,11 @@ def _wall_market(ctx, focus):
 
     def hidden(girl, extra=()):
         """Shown once every kid is born; "ruby": hidden once Skye is unlocked (she retired); "skye":
-        shown only then."""
+        shown only at rank 1 (mrkt2 has no room for the later co-stars: 16 models)."""
         shown, hide = asm.nop(), asm.nop()
         who = {"ruby": [asm.if_byte(MOVIE_GIRL, "bit_off", 0, hide)],
-               "skye": [asm.if_byte(MOVIE_GIRL, "bit_on", 0, hide)]}[girl]
+               "skye": [asm.if_byte(MOVIE_GIRL, "bit_on", 0, hide),
+                        asm.if_byte(MOVIE_RANK[1][0], "bit_off", MOVIE_RANK[1][1], hide)]}[girl]
         return _unlocked_or(hide) + who + list(extra) + [asm.goto(shown), hide, Op(b"\x7E\x01"), Op(b"\xC7\x01"),
                                                           hb._visi(0), shown]
 
@@ -1383,8 +1554,8 @@ def _wall_market(ctx, focus):
         told, fresh, scout = asm.nop(), asm.nop(), asm.nop()
         ops += [pitch] + _unlocked_or(scout)
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
-        ops += say("“Bad news, star: Ruby just turned 19 and\n retired. Hung up her heels for good.”")   # (user) once
-        ops += say("“But meet Skye, my new discovery.\n She's... enthusiastic. You'll see.”")
+        for t_ in NEWS[1]:                       # (user) once (if the arrival didn't tell it)
+            ops += say(t_)
         ops += [asm.biton(MOVIE_GIRL, 2), told, fresh]
         ops += say("“Well, well... I've heard rumours about\n a man who can handle sexy women.\n"
                    " That's you, isn't it?”")
@@ -1393,20 +1564,12 @@ def _wall_market(ctx, focus):
         no = asm.nop()
         ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.bitoff(MOVIE_GIRL, 1)]
         ops += [asm.bitoff(MOVIE_GIRL, g["bit"]) for g in MG.GIRLS]
-        # (user) once Skye is on, Ruby is still on the list; (user, since) and four more co-stars,
-        # each once she's devoted (HB_AFFECTION 20), else he says she'd need to be
-        only_ruby, pick_done = asm.nop(), asm.nop()
-        ask2, first2 = hb._ask(sec, "Cameraman\n“Who's your co-star today?”",
-                               ["Skye", "Ruby"] + [g["name"] for g in MG.GIRLS])
-        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, only_ruby)] + ask2
-        skye_ = asm.nop()
-        ops += [asm.if_byte(CHOICE, "!=", first2, skye_), asm.biton(MOVIE_GIRL, 1), asm.goto(pick_done), skye_]
-        for k_, g in enumerate(MG.GIRLS):
-            nxt, ok = asm.nop(), asm.nop()
-            aff = HB_AFFECTION[next(i for i, h in enumerate(HB_GIRLS) if h["name"] == g["name"])]
-            ops += [asm.if_byte(CHOICE, "==", first2 + 2 + k_, nxt), asm.if_byte(aff, "<", 20, ok)]
-            ops += say(g["refuse"]) + [asm.goto(end), ok, asm.biton(MOVIE_GIRL, g["bit"]), asm.goto(pick_done), nxt]
-        ops += [pick_done, only_ruby]
+        # (user, since) one co-star at a time, by the star rank: Ruby (0), Skye, Elena, Scarlet, Tifa,
+        # Aerith (it was a pick list; the Skye test was inverted: every other pick shot with Skye, user)
+        costar = {1: [asm.biton(MOVIE_GIRL, 1)]}
+        costar.update({k_ + 2: [asm.biton(MOVIE_GIRL, g["bit"])] for k_, g in enumerate(MG.GIRLS)})
+        assert [g["key"] for g in MG.GIRLS] == ["elena", "scarlet", "tifa", "aerith"]
+        ops += _by_rank(costar)
         ops += say("“That's my man! To the set!”")
         x, y, z, t = focus
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0)]
@@ -1427,10 +1590,18 @@ def _wall_market(ctx, focus):
     debrief_text = ("Cameraman\n“What a performance! Give me half an hour\n to sell the footage, then come and get\n"
                     " your cut of the profits.”")
     tid = sec0.add_string(_encode(debrief_text))
+    # (user) after a wrap (state 3) the news of the new co-star too; state 4 (debug "Star rank +1"):
+    # only the news, nothing owed
+    skip, go, news_only, no_news, owed, fin = (asm.nop() for _ in range(6))
+    news = {r: sum((hb._say(sec0, "Cameraman\n" + t_) for t_ in NEWS[r]), []) for r in NEWS}
+    news[1] += [asm.biton(MOVIE_GIRL, 2)]        # (told: not again on the next talk)
+    debrief = [asm.if_byte(MOVIE_STATE, "!=", 2, go), asm.if_byte(MOVIE_STATE, "!=", 3, go),
+               asm.if_byte(MOVIE_STATE, "==", 4, skip), go, hb._uc(1), hb._menu(1),
+               asm.if_byte(MOVIE_STATE, "!=", 4, news_only), hb._window(debrief_text), asm.message(0, tid),
+               news_only, asm.if_byte(MOVIE_STATE, "!=", 2, no_news)] + _by_rank(news) + \
+              [no_news, asm.if_byte(MOVIE_STATE, "==", 4, owed), asm.setbyte(MOVIE_STATE, 0), asm.goto(fin),
+               owed, asm.setbyte(MOVIE_STATE, 1), fin, hb._menu(0), hb._uc(0), skip]
     f.sections[0] = sec0.build()
-    skip = asm.nop()
-    debrief = [asm.if_byte(MOVIE_STATE, "==", 2, skip), hb._uc(1), hb._menu(1), hb._window(debrief_text),
-               asm.message(0, tid), asm.setbyte(MOVIE_STATE, 1), hb._menu(0), hb._uc(0), skip]
     cdir = facing_screen(cam, *spots["cam"][:3], (0, 1))
     add_npc(ctx, WALL, "filmman", cm, spots["cam"], cdir, talk,
             init_extra=[Op(bytes([0xA2, idle, 1])), Op(bytes([0xAE, idle, 1]))], main=debrief)   # (user) always there
