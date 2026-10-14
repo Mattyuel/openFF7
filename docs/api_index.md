@@ -805,7 +805,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md): data.
 ## `patches/_female_body.py`
 The standard female body (user): Skye's bare body from the neck down, built by
 
-- `bones(hrc)` {bone name: (length, [rsd names])} in an .hrc text.
+- `bones(hrc)` {bone name: (length, [rsd names], parent)} in an .hrc text.
 - `_scaled(d, sxy, sz, skin)` A copy of .p bytes d: vertices (x, y) x sxy, z (along the bone) x sz, normals kept;
 - `apply(ctx, hrc, tag, skin=None)` 
 

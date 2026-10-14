@@ -5,7 +5,8 @@
 `apply(ctx, hrc, tag)` takes another woman's .hrc text and returns it with the standard
 body's parts on her body bones (BODY: pelvis, torso, upper / lower arms, hands, thighs,
 shins). Her skeleton may differ from Skye's: each part is stretched along its bone by her
-bone's length / Skye's (so it still reaches the next joint) and scaled across by her
+bone's length / Skye's (so it still reaches the next joint; the torso by her shoulder bone's,
+and her chest bone shortened to match, so her head sits on it) and scaled across by her
 figure's size (the sum of her hip, chest, thigh and shin bones / Skye's); a part that needs
 no change is shared, the others are written as new parts "ZW<tag><letter>" (.rsd) /
 "ZX<tag><letter>" (.p), tag = one letter per woman (keep a list here). skin = her skin
@@ -24,7 +25,7 @@ SKIN = (166, 194, 247)
 
 
 def bones(hrc):
-    """{bone name: (length, [rsd names])} in an .hrc text."""
+    """{bone name: (length, [rsd names], parent)} in an .hrc text."""
     lines = [l.strip() for l in hrc.splitlines()]
     k = lines.index(next(l for l in lines if l.startswith(":BONES"))) + 1
     out = {}
@@ -33,7 +34,7 @@ def bones(hrc):
             k += 1
             continue
         name, length, parts = lines[k], float(lines[k + 2]), lines[k + 3].split()
-        out[name] = (length, parts[1:])
+        out[name] = (length, parts[1:], lines[k + 1])
         k += 4
     return out
 
@@ -59,13 +60,20 @@ def apply(ctx, hrc, tag, skin=None):
     assert len(tag) == 1 and tag.isalpha(), tag
     std = bones(ctx.char_file(STANDARD).decode("latin-1"))
     her = bones(hrc)
-    fig = sum(her[b][0] for b in FIGURE) / sum(std[b][0] for b in FIGURE)
+    # the torso: scaled by her shoulder height (the bone from the hip to her left collar), not her
+    # chest bone, whose end (her head) may sit much higher (Elena 6.1 vs 4.74: the torso's
+    # shoulders rose far above her arms, user); her chest bone is shortened to match, so her
+    # head sits on the torso (anims hold rotations only)
+    shoulder = lambda bs: next(n for n, v in bs.items() if v[2] == "hip" and bs.get("l_collar", (0, 0, ""))[2] == n)
+    lengths = {b: her[b][0] for b in BODY}
+    lengths["chest"] = std["chest"][0] * her[shoulder(her)][0] / std[shoulder(std)][0]
+    fig = sum(lengths[b] for b in FIGURE) / sum(std[b][0] for b in FIGURE)
     n = 0
     lines = hrc.splitlines(True)
     for b in BODY:
         assert b in her, (b, "not in her skeleton")
         assert len(std[b][1]) == 1 and len(her[b][1]) == 1, (b, std[b][1], her[b][1])
-        sz = her[b][0] / std[b][0]
+        sz = lengths[b] / std[b][0]
         rsd = std[b][1][0]
         if abs(sz - 1) > 0.01 or abs(fig - 1) > 0.01 or skin:
             r = ctx.char_file(rsd.lower() + ".rsd").decode("latin-1")
@@ -79,4 +87,6 @@ def apply(ctx, hrc, tag, skin=None):
         i = next(k for k in range(len(lines) - 3) if lines[k].strip() == b and
                  lines[k + 3].strip() == "1 %s" % her[b][1][0])
         lines[i + 3] = lines[i + 3].replace(her[b][1][0], rsd)
+        if lengths[b] != her[b][0]:
+            lines[i + 2] = lines[i + 2].replace(lines[i + 2].strip(), "%.6f" % lengths[b])
     return "".join(lines)
