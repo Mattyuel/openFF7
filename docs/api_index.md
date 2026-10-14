@@ -778,7 +778,7 @@ The movie minigame (user's design).
 - `_joints(ctx, hrc, anim)` Model-space joint ends of frame 0 (y down), plus 'root'.
 - `_off(m, d)` Field (dx, dy, dz) of model point m for an entity with DIR d (faces -z, +x = its left).
 - `_place(ctx, pos)` Spots worked out from both poses: "69" her (head over his pelvis, facing from his head to it),
-- `_retarget(ctx, names, prefix, hrc, stand)` (user: the four more co-stars) Ruby's position anims (`names`, on RUBY_HRC) copied onto
+- `_retarget(ctx, names, prefix, hrc, stand, head_down=None)` (user: the four more co-stars) Ruby's position anims (`names`, on RUBY_HRC) copied onto
 - `_shoot(ctx, back, cast=None)` The movie set: FIELD with Ruby / Skye, or (cast = a _movie_girls entry) her own set.
 - `_slaps(text)` A line about slapping / spanking (user: a slap sound after it).
 - `_encode(t)` 

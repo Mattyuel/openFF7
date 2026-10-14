@@ -896,11 +896,13 @@ def _place(ctx, pos):
                          pos["cloud"][2])
 
 
-def _retarget(ctx, names, prefix, hrc, stand):
+def _retarget(ctx, names, prefix, hrc, stand, head_down=None):
     """(user: the four more co-stars) Ruby's position anims (`names`, on RUBY_HRC) copied onto
     another skeleton `hrc` by bone name (Ruby's non_1 / non_2 are the l_ / r_chest bones); bones
     she lacks (hair, skirt, Tifa's armer) keep their pose in `stand` (frame 0); the root height
-    scaled by her legs (thigh + shin) / Ruby's. New names: prefix + the old name's last two."""
+    scaled by her legs (thigh + shin) / Ruby's. New names: prefix + the old name's last two.
+    head_down = {position name: degrees}: there her head and everything hanging from it (hair)
+    tilted forward about the head's side axis (Tifa's hair on all fours, user)."""
     from ff7 import fieldanim as fa
     src = [{"non_1": "l_chest", "non_2": "r_chest"}.get(b[0], b[0])
            for b in fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1"))]
@@ -909,12 +911,35 @@ def _retarget(ctx, names, prefix, hrc, stand):
     scale = leg(dst) / leg(fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1")))
     still = fa.Anim(ctx.char_file(stand)).frames[0][2]
     assert len(still) >= len(dst), (hrc, stand, len(still), len(dst))
+    names_d = [b[0] for b in dst]
+    under = {names_d.index("head")}                      # the head and its descendants (hair)
+    for i, b in enumerate(dst):
+        if b[1] in [names_d[j] for j in under]:
+            under.add(i)
+    head = names_d.index("head")
+
+    def lift(rr, rots, deg):
+        W = [m for m, _, _ in fa.forward(dst, rr, [0.0, 0.0, 0.0], rots)]
+        top = lambda M: fa.forward(dst, rr, [0.0, 0.0, 0.0], fa.local_rotations(dst, rr, M))[head][2]
+        side = fa._vec(W[head], [1.0, 0.0, 0.0])
+        for sg in (1, -1):
+            R = fa.axis_angle(side, sg * deg)
+            M = [fa._mul(R, m) if i in under else m for i, m in enumerate(W)]
+            if top(M)[1] > top(W)[1]:                        # (y down) the head's top went down: forward
+                return fa.local_rotations(dst, rr, M)
+        raise AssertionError("head_down")
     out = []
     for n in names:
         a = fa.Anim(ctx.char_file(n.split(".")[0].lower() + ".a"))
-        a.frames = [(rr, [c * scale for c in rp],
-                     [rots[src.index(b[0])] if b[0] in src else still[i] for i, b in enumerate(dst)])
-                    for rr, rp, rots in a.frames]
+        pos = POSITIONS[ord(n.split(".")[0][2]) - ord("A")]["name"]
+        deg = (head_down or {}).get(pos)
+        frames = []
+        for rr, rp, rots in a.frames:
+            new = [rots[src.index(b[0])] if b[0] in src else still[i] for i, b in enumerate(dst)]
+            if deg:
+                new = lift(rr, new, deg)
+            frames.append((rr, [c * scale for c in rp], new))
+        a.frames = frames
         struct.pack_into("<I", a.head, 8, len(dst))
         name = prefix + n.split(".")[0][2:]
         ctx.char_file(name.lower() + ".a", a.build())
@@ -1016,7 +1041,8 @@ def _shoot(ctx, back, cast=None):
         assert ModelLoader.hrc(donor.models[dmodel]).upper() == dhrc, (cast["name"], ModelLoader.hrc(donor.models[dmodel]))
         r = loader.add_from(donor, dmodel)
         her_anims = _retarget(ctx, girl_anims, cast["prefix"], dhrc,
-                              ModelLoader.anims(donor.models[dmodel])[0].split(".")[0].lower() + ".a")
+                              ModelLoader.anims(donor.models[dmodel])[0].split(".")[0].lower() + ".a",
+                              cast.get("head_down"))
         loader.models[r] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[r], cast["hrc"],
                                                                        ModelLoader.name(loader.models[r])[:-5] + "_b.char"),
                                                   her_anims)

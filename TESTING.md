@@ -392,11 +392,14 @@ Existing saves load, but they keep their own story progress; use a new game.
   his left), she sits 2 paces further right, her arms forward with the hands in front of her face;
   the first choice "Leave her alone!" now interferes and "Walk away." walks (they were swapped).
   Check the slap timing/sound, that the door path stays clear, talking to him, the battle and the fade.
+- **Honey Bee devoted scenes** (user, since): in "head" the girl kneels 3/4 of a head further from
+  Cloud; in "dog" Cloud uses the movie's dog (his hips thrust, upper body steady).
 - **Movie minigame, four more co-stars** (new; untested in-game, user): after the first wrap the
   co-star menu lists Skye, Ruby, Elena, Scarlet, Tifa, Aerith; the four need full affection (20),
   else the cameraman says so. Each shoots on her own copy of the set with her own lines and pays 10
   gil a press more (Elena 30 .. Aerith 60; finisher x100). Check her poses (copied from Ruby's onto
-  her skeleton: hands/knees may sit a little off; hair keeps its standing shape), her lines, the pay.
+  her skeleton: hands/knees may sit a little off; hair keeps its standing shape; Tifa's head tilts
+  forward on all fours so her hair clears her back), her lines, the pay.
 - **Movie minigame** (new; untested in-game): the cameraman now stands in Wall Market from the
   start (user), still, camera at his side (user, since: still there, filming again in the shoot); before all 20 Honey Bee kids he only asks whether you know a man with a way with
   the ladies. The shoot needs all 20 kids (debug menu: Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a

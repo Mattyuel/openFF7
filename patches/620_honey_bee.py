@@ -166,7 +166,7 @@ RIDE_RAISE = 18                              # cowgirl / ontop: she sits a head 
 # head (second version, user): on the floor left of the bed (z 25), Cloud facing screen-left,
 # the girl HEAD_GAP further left facing him.
 # (user, since) Cloud lower in head: knees bent HEAD_KNEE (ZCTS, "standlow"), HEAD_FORWARD closer to her
-HEAD_STAND, HEAD_GAP = (-20, -180), 30
+HEAD_STAND, HEAD_GAP = (-20, -180), 52       # (user, since) she 3/4 of a head (~22) further back: was 30
 HEAD_KNEE, HEAD_FORWARD = 70, 6
 # edge: her feet just left of the bed's left end (screen x ~10), torso and arms out over it;
 # Cloud EDGE_GAP further left, facing the bed (screen-right) like her
@@ -262,7 +262,8 @@ CLOUD_BED = {"grea": "GREA.hei",   # lying on his back, looking right
              "hbfe": "HBFE.tak",   # knelt, rubbing his face
              "eiab": "EIAB.chi",   # sitting comfortably
              "thrust": "ZCTA.tor",  # ours (_cloud_thrust): AVDD, legs straight back, slow hips
-             "pound": "ZCTB.tor",   # ours (_cloud_pound): knelt (HBGB), quick deep hip thrust
+             "pound": "ZCTN.tor",   # (user, since) the movie's dog: ZCTB (_cloud_pound: knelt, quick deep hip
+                                    # thrust) with the upper body held still (670 `_cloud_dog` writes zctn.a)
              "spread": "ZCTC.tor",  # ours (_cloud_spread): sitting (EIAB), legs 30 degrees out
              "buck": "ZCTD.tor",    # ours (_cloud_buck): on his back (GREA), quick upward thrusts
              "stand": "ZCTE.tor",   # ours (_cloud_stand): standing (ACFE), knees bent, leaning, thrusting

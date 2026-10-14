@@ -4,7 +4,8 @@ own lines: sexy, in character, and on a film set (a crew and a camera, not a pri
 Each shoots in her own copy of the set (`field`: the first set is at ~190 of its 255 texts),
 with her undressed model (675's standard body) on Ruby's poses, retargeted to her skeleton.
 Lines as 670's LINES: "C:" = Cloud, "(...)" = an action; head / head reverse / 69 muffled.
-`bit` = her MOVIE_GIRL bit (Skye's is 1); she's offered once she's devoted (HB_AFFECTION 20)."""
+`bit` = her MOVIE_GIRL bit (Skye's is 1); she's offered once she's devoted (HB_AFFECTION 20).
+`head_down` = {position: degrees}: her head (and the hair hanging from it) tilted forward in it."""
 
 GIRLS = [
     dict(key="elena", name="Elena", field="whitebg2", bit=3, hrc="ZELA.HRC", donor=("datiao_6", 10, "EVFE.HRC"),
@@ -78,6 +79,8 @@ GIRLS = [
          }),
     dict(key="tifa", name="Tifa", field="trap", bit=5, hrc="ZTFA.HRC", donor=("bwhlin", 3, "AAGB.HRC"),
          prefix="ZV", rate=50,
+         head_down={"dog": 35, "69": 35},   # (user) on all fours her long hair cut through her back: head
+                                            # tilted forward (user: not back), the hair falls forward
          aftermath="Tifa\n(Tifa wipes her mouth, blushing, and\n hides her face in your chest.)",
          refuse="“Tifa from Seventh Heaven? She'd only do\n it for a man she's crazy about.”",
          lines={
