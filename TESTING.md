@@ -429,6 +429,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   positions) and the switch is quicker (everyone placed at once). Head (Honey Bee, minigame, group):
   only Cloud's pelvis thrusts; his chest swings back about it so his shoulders, head and hands stay
   still (checked offline: head and hands move < 0.5 model units per stroke, the pelvis 3).
+  (User, since) his feet held flat on the floor. Pauses (head / head reverse / 69) come about twice
+  as often and her line shows the moment it happens. Elena's head reverse: Cloud 8 units further
+  back (solo and group).
 - **Minigame pauses** (new; untested in-game, user): in head, head reverse and 69 (and the group shoot)
   there's a small chance (~once every 25 s) the girl stops: both pull back and hold, she says a line
   (catching her breath / a reflex, urging him on), then they carry on. The meter is frozen meanwhile
