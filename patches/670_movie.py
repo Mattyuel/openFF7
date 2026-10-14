@@ -41,7 +41,7 @@ import math
 import struct
 
 import _marker_models as mm
-from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_PRESSES, MOVIE_STATE
+from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_STATE
 from _recruit import sound
 from _travel import CHOICE, add_npc, beside
 
@@ -256,6 +256,105 @@ def _bare_ruby(ctx):
         ctx.char_file(ply.lower() + ".p", bytes(d))
     assert n == 9, n
     ctx.char_file(BARE_HRC.lower(), hrc.encode("latin-1"))
+
+
+# Skye (user: the blue-haired girl in the bikini; unlocked by a full shoot with Ruby): gold_cgirl
+# (crcin_1 model 4, GOFD.HRC: the Honey Bee dancer's skeleton, so every pose and anim of Ruby's fits).
+# Her bare copy ZSKA.HRC: the bikini (purple, B,G,R 52,0,32) in her skin colour; the yellow streamers
+# behind her (44,153,153: hip and head pieces; user: "remove the yellow things") collapsed to one point
+# (their triangles vanish; asserted none of them shares a triangle with the rest)
+SKYE_DONOR, SKYE_HRC, SKYE_BARE = ("crcin_1", 4), "gofd.hrc", "ZSKA.HRC"
+SKYE_SKIN, SKYE_BIKINI, SKYE_STREAMER = (166, 194, 247), (52, 0, 32), (44, 153, 153)
+
+
+def _bare_skye(ctx):
+    hrc = ctx.char_file(SKYE_HRC).decode("latin-1")
+    lines = [l.strip() for l in hrc.splitlines()]
+    k = lines.index(next(l for l in lines if l.startswith(":BONES"))) + 1
+    parts = []
+    while k < len(lines):
+        if not lines[k]:
+            k += 1
+            continue
+        parts += [(lines[k], r) for r in lines[k + 3].split()[1:]]
+        k += 4
+    n = 0
+    for bone, old in parts:
+        r = ctx.char_file(old.lower() + ".rsd").decode("latin-1")
+        oldp = r.split("PLY=")[1][:4]
+        d = bytearray(ctx.char_file(oldp.lower() + ".p"))
+        h = struct.unpack_from("<16I", d, 0)
+        nv, nn, nunk, nt, nc, ne, npoly = h[3], h[4], h[5], h[6], h[7], h[8], h[9]
+        o_c = 128 + 12 * nv + 12 * nn + 12 * nunk + 8 * nt
+        o_p = o_c + 4 * nc + 4 * npoly + 4 * ne
+        cols = [tuple(d[o_c + 4 * i:o_c + 4 * i + 3]) for i in range(nc)]
+        if SKYE_BIKINI not in cols and SKYE_STREAMER not in cols:
+            continue
+        n += 1
+        rs, ply = "ZSK" + chr(ord("A") + n), "ZSL" + chr(ord("A") + n)
+        for name in (rs.lower() + ".rsd", ply.lower() + ".p"):
+            try:
+                ctx.char_file(name)
+                raise AssertionError("%s already in char.lgp" % name)
+            except KeyError:
+                pass
+        assert hrc.count("1 %s" % old) == 1, old
+        hrc = hrc.replace("1 %s" % old, "1 %s" % rs)
+        ctx.char_file(rs.lower() + ".rsd", r.replace("PLY=%s." % oldp, "PLY=%s." % ply).encode("latin-1"))
+        polys = [struct.unpack_from("<12H", d, o_p + 24 * j)[1:4] for j in range(npoly)]
+        streamer = {i for i in range(nc) if cols[i] == SKYE_STREAMER}
+        if streamer:
+            for vs in polys:
+                assert all(v in streamer for v in vs) or not any(v in streamer for v in vs), (bone, vs)
+            body = [i for i in range(nv) if i not in streamer]
+            c = [sum(struct.unpack_from("<3f", d, 128 + 12 * i)[a] for i in body) / len(body) for a in range(3)]
+            for i in streamer:
+                struct.pack_into("<3f", d, 128 + 12 * i, *c)
+        for i in range(nc):
+            if cols[i] == SKYE_BIKINI:
+                d[o_c + 4 * i:o_c + 4 * i + 3] = bytes(SKYE_SKIN)
+        for j in range(npoly):
+            o = o_c + 4 * nc + 4 * j
+            if tuple(d[o:o + 3]) == SKYE_BIKINI:
+                d[o:o + 3] = bytes(SKYE_SKIN)
+        ctx.char_file(ply.lower() + ".p", bytes(d))
+    assert n >= 2, n                                 # at least the hip and chest
+    ctx.char_file(SKYE_BARE.lower(), hrc.encode("latin-1"))
+
+
+# her lines (user: "a little more dirty"), by position; head / head reverse / 69 muffled
+SKYE_LINES = {
+    "mission": ["Mmm, fuck me like you mean it, star.", "Spread me wider... yes!", "Choke me a little... just a little.",
+                "Pound me into this mattress!", "Oh god, you're so deep...", "Don't you dare pull out!",
+                "Harder! Make me scream!", "Use me... I'm all yours."],
+    "cowgirl": ["Shut up and let me ride you.", "Grab my tits... squeeze!", "Feel how wet I am?",
+                "Slap my ass while I ride you!", "Oh fuck... I'm gonna bounce till you break.",
+                "Watch me take every inch...", "Don't you dare finish yet!", "Mmm, I'm riding you raw!"],
+    "dog": ["Pull my hair and fuck me harder!", "Spank me! Leave a mark!", "Call me your dirty girl!",
+            "Deeper! Ram it deeper!", "Grab my hips and slam me back!", "Oh fuck, right there!",
+            "Make the camera blush, star!", "Don't stop... I'm so close!"],
+    "edge": ["Bend me over and take me!", "Pull my hair back... harder!", "Fuck me till the bed breaks!",
+             "Spank me! Again! Again!", "Oh god, you're splitting me!", "Hold me down... yes!",
+             "Faster! Fuck me faster!", "Mmm, I'm dripping..."],
+    "headrev": ["Mmph... mmmh!", "(She gags and moans for more.)\n Ghk! Mmmh!", "Mmf! Mmmf...",
+                "(She grabs your ass and pulls you deeper.)", "Hnnh... mmph!", "(Tears in her eyes, she grins.)\n Mmmh!",
+                "Mmm... mmm... mmm!", "Gk... mmh! Mmmh..."],
+    "head": ["Mmm... mmph!", "(She looks up at you, eyes watering.)\n Mmmh!", "Ghk! Mmf... mmh...",
+             "(She pulls your hand to the back of her head.)", "Hmmm... mmmh!", "(She takes you all the way.)\n Mmmph!",
+             "Mmph! Mmm...", "(She moans, wanting more.)\n Mmmh!"],
+    "behind": ["Fuck me against the wall, star!", "Pull my hair! Harder!", "Spank my ass red!",
+               "Pin me to the wall... don't stop!", "Oh fuck, I can't stand up!", "Bite my neck...",
+               "Harder! Make the whole building hear!", "Yes! Yes! Fuck yes!"],
+    "holding": ["Hold me up and fuck me!", "Squeeze my ass while you bounce me!", "Don't drop me... deeper!",
+                "Mmm, you're so strong... harder!", "I'm gonna wrap round you all night...",
+                "Fuck me in the air!", "Oh god, I'm slipping onto you...", "Yes! Bounce me harder!"],
+    "69": ["Mmph... mmmh!", "(She grinds her hips onto your face.)\n Mmmf!", "Mmf... mmh, mmh...",
+           "(She moans around you, eager.)\n Mmmmh!", "Hnnh... mmph!", "(She digs her nails into your thighs.)",
+           "Mmm... mmm... mmm!", "(She shudders.)\n Gk... mmh! Mmmh..."],
+    "prone": ["Pin me down and fuck me!", "Pull my hair! Pull it!", "Spank me while you pound me!",
+              "Push me into the bed... harder!", "Oh fuck, I can't move...", "Call me your slut!",
+              "Deeper! Don't you dare stop!", "Fuck... I'm gonna come!"],
+}
 
 
 def _speeds(ctx):
@@ -592,10 +691,16 @@ def _shoot(ctx, back):
     sprites = _sprites(ctx, half, half_cursor)
     for hrc in ("QGAA", "QCUA"):
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
-    assert len(loader.models) == 7
+    # 7: Skye bare (user: the new girl after a full shoot), Ruby's anims
+    sk = loader.add_from(ModelLoader(ctx.field(SKYE_DONOR[0]).section("models")), SKYE_DONOR[1])
+    loader.models[sk] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[sk], SKYE_BARE,
+                                                                    ModelLoader.name(loader.models[sk])[:-5] + "_b.char"),
+                                               girl_anims)
+    sfirst = len(ModelLoader.anims(loader.models[sk])) - len(girl_anims)
+    assert len(loader.models) == 8 and sk == 7
 
     ents = {}
-    for name in ("cloudb", "ruby", "camera", "gauge", "cursor", "keys", "voice", "hush"):
+    for name in ("cloudb", "ruby", "camera", "gauge", "cursor", "keys", "voice", "hush", "skye"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -610,16 +715,22 @@ def _shoot(ctx, back):
                    2: by_p(lambda p, pl: [xyzi(*pl["focus"])]) + [asm.ret()]}
     scripts[CH] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()]}
 
-    def pose(first, who, wdir):
+    def pose(first, who, wdir, girl=None):
+        """girl: "ruby" / "skye": shown only if she is this shoot's co-star (MOVIE_GIRL bit 1)."""
         def make(p, pl):
             steps = [[Op(bytes([0xA2, first + 4 * p + s, 1])), Op(bytes([0xAE, first + 4 * p + s, 1]))]
                      for s in range(4)]
             return [xyzi(*pl[who]), d_(pl[wdir]), hb._visi(1)] + _chain(STEP, steps)
-        return by_p(make) + [asm.ret()]
+        off, head = asm.nop(), []
+        if girl:
+            head = [asm.if_byte(MOVIE_GIRL, "bit_off" if girl == "ruby" else "bit_on", 1, off)]
+        return head + by_p(make) + [asm.ret()] + ([off, hb._visi(0), asm.ret()] if girl else [])
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: pose(cfirst, "cloud", "cdir")}
     scripts[ents["ruby"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                             2: pose(gfirst, "girl", "gdir")}
+                             2: pose(gfirst, "girl", "gdir", "ruby")}
+    scripts[ents["skye"]] = {0: [Op(bytes([0xA1, 7])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
+                             2: pose(sfirst, "girl", "gdir", "skye")}
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide()
                                + [Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret(), asm.ret()],
                                2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1), asm.ret()]}
@@ -651,22 +762,28 @@ def _shoot(ctx, back):
     voice = [asm.ret(), vl, hb._w(SAY_EVERY), asm.if_byte(RUN, "==", 1, vdone),
              Op(bytes([0x95, K[0], K[1]])), Op(bytes([0x8D, K[0] << 4, K[1], LINES_EACH]))]   # INC K, MOD K
 
-    def line(p, pl):
-        out = []
-        assert len(LINES[POSITIONS[p]["name"]]) == LINES_EACH, POSITIONS[p]["name"]
-        for k_, text in enumerate(LINES[POSITIONS[p]["name"]]):
-            t = "Ruby\n“%s”" % text if not text.startswith("(") else "Ruby\n%s" % text
-            out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y), hb._req(ents["hush"], 2, wait=False),
-                        asm.message(1, sec.add_string(_encode(t)))])
-        return _chain(K, out)
-    voice += by_p(line) + [vdone, asm.goto_back(vl), asm.ret()]
+    def lines_of(who, table):
+        def line(p, pl):
+            out = []
+            assert len(table[POSITIONS[p]["name"]]) == LINES_EACH, (who, POSITIONS[p]["name"])
+            for k_, text in enumerate(table[POSITIONS[p]["name"]]):
+                t = "%s\n“%s”" % (who, text) if not text.startswith("(") else "%s\n%s" % (who, text)
+                out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y),
+                            hb._req(ents["hush"], 2, wait=False), asm.message(1, sec.add_string(_encode(t)))])
+            return _chain(K, out)
+        return line
+    skye_says = asm.nop()
+    voice += [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_says)]          # bit 1 set: Skye's lines
+    voice += by_p(lines_of("Ruby", LINES)) + [asm.goto(vdone), skye_says] + by_p(lines_of("Skye", SKYE_LINES))
+    voice += [vdone, asm.goto_back(vl), asm.ret()]
     scripts[ents["voice"]] = {0: voice}
     scripts[ents["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(SAY_FOR), Op(b"\x54\x01"), asm.ret()]}
 
     # director
     lost, wrap, tick = asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
-    place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], ents["ruby"], ents["camera"], ents["gauge"])]
+    place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], ents["ruby"], ents["skye"], ents["camera"],
+                                                 ents["gauge"])]
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
             asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE)] + place_all() + [hb._w(20)]
@@ -699,7 +816,8 @@ def _shoot(ctx, back):
     for s, th in enumerate(RATE_STEPS):
         main += [asm.if_word(RATE, ">=", th, done), asm.setbyte(NEW, s + 1)]
     main += [done, asm.if_byte(NEW, "!=", STEP, same), asm.setbyte(STEP, NEW),
-             hb._req(ents["cloudb"], 2, wait=False), hb._req(ents["ruby"], 2, wait=False), same]
+             hb._req(ents["cloudb"], 2, wait=False), hb._req(ents["ruby"], 2, wait=False),
+             hb._req(ents["skye"], 2, wait=False), same]
     # the next position each minute
     stay = asm.nop()
     main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, MINUTE),
@@ -725,6 +843,7 @@ def _shoot(ctx, back):
     main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
     main += say("“...That's a WRAP! Magnificent!”")
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             asm.biton(MOVIE_GIRL, 0),                                   # (user) a full shoot unlocks Skye
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     scripts[0] = {0: [asm.ret()] + main}
     dt._blank(sec, scripts)
@@ -772,6 +891,7 @@ def _wall_market(ctx, focus):
     cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
     idle = ModelLoader.anims(loader.models[cm]).index(CAMERA_IDLE)
     ru = loader.add_from(ModelLoader(ctx.field(RUBY_DONOR[0]).section("models")), RUBY_DONOR[1])
+    sy = loader.add_from(ModelLoader(ctx.field(SKYE_DONOR[0]).section("models")), SKYE_DONOR[1])
     f.set_section("models", loader.build())
     assert len(loader.models) <= 16, len(loader.models)
     from ff7.camera import facing_screen
@@ -782,10 +902,13 @@ def _wall_market(ctx, focus):
         assert t is not None, (key, x, y)
         spots[key] = (x, y, mesh.height(t, x, y), t)
 
-    def hidden(extra=()):
+    def hidden(extra=(), girl=None):
+        """girl "ruby": hidden once Skye is unlocked (she retired); "skye": shown only then."""
         shown, hide = asm.nop(), asm.nop()
-        return _unlocked_or(hide) + list(extra) + [asm.goto(shown), hide, Op(b"\x7E\x01"), Op(b"\xC7\x01"),
-                                                    hb._visi(0), shown]
+        who = {None: [], "ruby": [asm.if_byte(MOVIE_GIRL, "bit_off", 0, hide)],
+               "skye": [asm.if_byte(MOVIE_GIRL, "bit_on", 0, hide)]}[girl]
+        return _unlocked_or(hide) + who + list(extra) + [asm.goto(shown), hide, Op(b"\x7E\x01"), Op(b"\xC7\x01"),
+                                                          hb._visi(0), shown]
 
     def talk(sec):
         say = lambda t: hb._say(sec, "Cameraman\n" + t)
@@ -800,12 +923,22 @@ def _wall_market(ctx, focus):
         paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
         ops += paid + [asm.setbyte(MOVIE_STATE, 0), asm.goto(end)]
         ops += [wait_] + say("“Still selling the footage. Come back\n a little later for your cut.”") + [asm.goto(end)]
-        ops += [pitch] + say("“Well, well... I've heard rumours about\n a man who can handle sexy women.\n"
-                             " That's you, isn't it?”")
+        told, fresh = asm.nop(), asm.nop()
+        ops += [pitch, asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
+        ops += say("“Bad news, star: Ruby's retired. Hung up\n her heels for good.”")             # (user) once
+        ops += say("“But meet Skye, my new discovery.\n She's... enthusiastic. You'll see.”")
+        ops += [asm.biton(MOVIE_GIRL, 2), told, fresh]
+        ops += say("“Well, well... I've heard rumours about\n a man who can handle sexy women.\n"
+                   " That's you, isn't it?”")
         ask, first = hb._ask(sec, "Cameraman\n“I'm shooting a new movie and I need\n a star. Interested?”",
                              ["Lights, camera, action!", "Not now."])
         no = asm.nop()
-        ops += ask + [asm.if_byte(CHOICE, "==", first, no)]
+        ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.bitoff(MOVIE_GIRL, 1)]
+        # (user) once Skye is on, Ruby is still on the list
+        only_ruby, pick_done = asm.nop(), asm.nop()
+        ask2, first2 = hb._ask(sec, "Cameraman\n“Who's your co-star today?”", ["Skye", "Ruby"])
+        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, only_ruby)] + ask2
+        ops += [asm.if_byte(CHOICE, "==", first2, pick_done), asm.biton(MOVIE_GIRL, 1), pick_done, only_ruby]
         ops += say("“That's my man! To the set!”")
         x, y, z, t = focus
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0),
@@ -830,7 +963,14 @@ def _wall_market(ctx, focus):
         return [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + \
             hb._say(sec, "Ruby\n“So you're my co-star? Don't disappoint\n me, handsome.”") + [hb._uc(0), asm.ret()]
     add_npc(ctx, WALL, "ruby", ru, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)), ruby_talk,
-            init_extra=hidden())
+            init_extra=hidden(girl="ruby"))
+
+    def skye_talk(sec):
+        return [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + \
+            hb._say(sec, "Skye\n“So you're the famous star? Mmm...\n I hope you can keep up with me.”") + \
+            [hb._uc(0), asm.ret()]
+    add_npc(ctx, WALL, "skye", sy, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)), skye_talk,
+            init_extra=hidden(girl="skye"))     # (user) Ruby's place once she has retired
     # where the shoot sends you back: beside him, facing him
     x, y, z, t = spots["cam"]
     bx, by, bz, bt = beside(ctx, WALL, x, y, t, 40)
@@ -839,6 +979,7 @@ def _wall_market(ctx, focus):
 
 def apply(ctx):
     _bare_ruby(ctx)
+    _bare_skye(ctx)
     focus = _spot(Walkmesh(ctx.field(BASE).section("walkmesh")), *POSITIONS[0]["girl"][1][:2], 0, True)
     back = _wall_market(ctx, focus)
     _shoot(ctx, back)

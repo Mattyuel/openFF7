@@ -354,7 +354,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   rises. Ruby says a line (window at the bottom; 8 per
   position, e.g. 'Pull my hair!') every ~2.5 s that closes by
   itself (~2 s; muffled during head / head reverse / 69). Costa del Sol music. After five minutes:
-  "That's a wrap", back in Wall Market, he says to come back in half an hour; after 30 play
+  "That's a wrap", back in Wall Market, he says to come back in half an hour. The first full shoot
+  unlocks Skye (blue hair; her bare model: bikini skin-coloured, the yellow streamers removed): she
+  stands where Ruby was, the cameraman says once that Ruby retired, and after accepting he asks
+  "Skye" / "Ruby". Skye plays the same positions with her own, dirtier lines. After 30 play
   minutes his talk pays presses x 10 gil. Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
   and cursor visible and on screen at each bed? the self-closing lines? the bed positions on
   the right beds? Ruby's bare model (skin legs/skirt/upper arms/feet, coat kept).

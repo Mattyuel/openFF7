@@ -80,6 +80,8 @@ DATE_GIRL = (1, 217)               # girl index + 1 on a date (660_dates; 0 = no
 # from the shoot (the cameraman speaks on arrival); presses of the last shoot
 # (word, 219-220) and the play-clock minute it ended (word, 221-222). 223 free.
 MOVIE_STATE, MOVIE_PRESSES, MOVIE_AT = (1, 218), (2, 219), (2, 221)
+# bits: 0 Skye unlocked (a full shoot done), 1 Skye is this shoot's co-star, 2 told Ruby retired. Bank 1 223.
+MOVIE_GIRL = (1, 223)
 HB_RATE = 2                     # gil per star per minute
 HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 

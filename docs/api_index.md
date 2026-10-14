@@ -734,6 +734,7 @@ The movie minigame (user's design).
 - `_hb()` 
 - `_dates()` 
 - `_bare_ruby(ctx)` ZRHA.HRC: cbfe.hrc with the BARE parts copied (rsd ZRHB.., p ZRIB..).
+- `_bare_skye(ctx)` 
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `_gauge_pixels()` 
 - `_cursor_pixels()` 
