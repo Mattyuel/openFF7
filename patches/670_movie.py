@@ -338,7 +338,64 @@ def _bare_skye(ctx):
         ctx.char_file(ply.lower() + ".p", bytes(d))
     assert n >= 2, n                                 # at least the hip and chest
     _skye_shape(ctx, hrc)
+    hrc = _skye_limbs(ctx, hrc)
     ctx.char_file(SKYE_BARE.lower(), hrc.encode("latin-1"))
+
+
+# (user) her arms and legs remade to match the new torso / pelvis (620 `_limb`: smooth rings
+# sized by slicing the old box-like parts, at most twice their triangles): per bone (rings
+# (t, scale), points a ring, top end, bottom end). Thighs fuller at the top, tapering to a
+# rounded knee (the shin's capped top sits in it); calves, slimmer ankles; the upper arm
+# rounded over the shoulder, slimmer, the forearm narrowing to the wrist. Hands and feet as
+# they were. New parts ZSKE.. / ZSLE.. (her dressed model keeps the old ones).
+SKYE_LIMBS = {
+    "femur": ([(0.0, 0.95), (0.88, 0.88)], 8, None, ("tip", 0.15)),             # 16 + 8 = 24 (of 12)
+    "tibia": ([(0.0, 0.95), (0.3, 1.0), (1.0, 0.8)], 6, "cap", None),           # 24 + 4 = 28 (of 14)
+    "uparm": ([(0.15, 0.95), (0.45, 0.88), (1.0, 0.9)], 8, ("tip", 0.25), "cap"),   # 8 + 32 + 6 = 46 (of 28)
+    "foarm": ([(0.0, 0.88), (0.45, 0.92), (1.0, 0.78)], 8, "cap", "cap"),        # 32 + 12 = 44 (of 28)
+}
+
+
+def _skye_limbs(ctx, hrc):
+    hb = _hb()
+    lines = [l.strip() for l in hrc.splitlines()]
+    k = lines.index(next(l for l in lines if l.startswith(":BONES"))) + 1
+    letter = ord("E")
+    while k < len(lines):
+        if not lines[k]:
+            k += 1
+            continue
+        bone, rs = lines[k], lines[k + 3].split()
+        k += 4
+        spec = SKYE_LIMBS.get(bone[2:])
+        if not spec or len(rs) != 2:
+            continue
+        old = rs[1]
+        r = ctx.char_file(old.lower() + ".rsd").decode("latin-1")
+        oldp = r.split("PLY=")[1][:4]
+        d = ctx.char_file(oldp.lower() + ".p")
+        rings, n, top, bottom = spec
+        new_rs, new_p = "ZSK" + chr(letter), "ZSL" + chr(letter)
+        letter += 1
+        for name in (new_rs.lower() + ".rsd", new_p.lower() + ".p"):
+            try:
+                ctx.char_file(name)
+                raise AssertionError("%s already in char.lgp" % name)
+            except KeyError:
+                pass
+        assert hrc.count("1 %s" % old) == 1, old
+        hrc = hrc.replace("1 %s" % old, "1 %s" % new_rs)
+        ctx.char_file(new_rs.lower() + ".rsd", r.replace("PLY=%s." % oldp, "PLY=%s." % new_p).encode("latin-1"))
+        V, tris = hb._limb(d, rings, n, top, bottom)
+        o = 128 + 12 * struct.unpack_from("<16I", d, 0)[3] + 12 * struct.unpack_from("<16I", d, 0)[4]
+        h = struct.unpack_from("<16I", d, 0)
+        oc = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6]
+        cols = [tuple(d[oc + 4 * i:oc + 4 * i + 3]) for i in range(h[7])]
+        col = max(set(cols), key=cols.count)            # its own (skin) colour
+        op = oc + 4 * h[7] + 4 * h[9] + 4 * h[8]
+        ctx.char_file(new_p.lower() + ".p", hb._p_file(V, tris, col, d[64:128], struct.unpack_from("<12H", d, op)[10:12]))
+    assert letter - ord("E") == 8, letter - ord("E")       # both arms' two parts, both legs' two
+    return hrc
 
 
 # (user) her bare pelvis and torso remade with a woman's shape (620 `_loft`): rings round one

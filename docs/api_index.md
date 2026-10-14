@@ -654,6 +654,7 @@ Honey Bee Girl recruitment.
 - `_loft(rings, angles, centre, bulge_x=(1.2, 0.85), side=1, cleft=0.0, rnd=0.75, top=False, bottom=None)` A body part as rings round a centre line (model units, y down, facing -z): each ring
 - `_centre_line(pts)` z on y (least squares) through world points: a body's centre line from its old parts.
 - `_write_part(ctx, ply, old, made, bone_world, bgr)` Replace .p `ply` (old bytes `old`) by the mesh `made` = (world vertices, triangles),
+- `_limb(old, rings, n, top=None, bottom=None, rnd=0.85)` A limb part remade as a loft in its own bone frame (the bone runs down local -z from the
 - `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.
@@ -755,6 +756,7 @@ The movie minigame (user's design).
 - `_dates()` 
 - `_bare_ruby(ctx)` ZRHA.HRC: cbfe.hrc with the BARE parts copied (rsd ZRHB.., p ZRIB..).
 - `_bare_skye(ctx)` 
+- `_skye_limbs(ctx, hrc)` 
 - `_skye_shape(ctx, hrc)` 
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `_gauge_pixels()` 

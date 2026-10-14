@@ -1478,6 +1478,57 @@ def _write_part(ctx, ply, old, made, bone_world, bgr):
     ctx.char_file(ply, _p_file(local, tris, bgr, old[64:128], struct.unpack_from("<12H", old, o)[10:12]))
 
 
+def _limb(old, rings, n, top=None, bottom=None, rnd=0.85):
+    """A limb part remade as a loft in its own bone frame (the bone runs down local -z from the
+    joint at 0): `old` = the original .p bytes, sliced across at each ring's height to measure
+    its cross-section (x / y extents -> centre and half axes); rings = (t, scale): t = 0 .. 1
+    from the old mesh's top to its bottom, the measured section scaled; n points a ring.
+    Ends: None (open: inside the next part), "cap" (flat fan) or ("tip", d) = a fan to a
+    point d beyond that end on the axis line (a rounded shoulder / knee). Returns (V, tris)."""
+    import math
+    h = struct.unpack_from("<16I", old, 0)
+    nv, npoly = h[3], h[9]
+    V0 = [struct.unpack_from("<3f", old, 128 + 12 * i) for i in range(nv)]
+    o = 128 + 12 * nv + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * npoly + 4 * h[8]
+    P = [struct.unpack_from("<12H", old, o + 24 * j)[1:4] for j in range(npoly)]
+    ztop, zbot = max(v[2] for v in V0), min(v[2] for v in V0)
+
+    def section(z):                                  # where the old triangles cross the plane at z
+        pts = []
+        for t in P:
+            for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+                pa, pb = V0[a], V0[b]
+                if (pa[2] - z) * (pb[2] - z) < 0:
+                    f = (z - pa[2]) / (pb[2] - pa[2])
+                    pts.append((pa[0] + f * (pb[0] - pa[0]), pa[1] + f * (pb[1] - pa[1])))
+        assert pts, z
+        xs, ys = [q[0] for q in pts], [q[1] for q in pts]
+        return (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, (max(xs) - min(xs)) / 2, (max(ys) - min(ys)) / 2
+    V, tris, ring_z = [], [], []
+    for t, scale in rings:
+        z = ztop + (zbot - ztop) * t
+        cx, cy, ax, ay = section(ztop + (zbot - ztop) * min(0.97, max(0.03, t)))
+        ring_z.append((z, cx, cy))
+        for k in range(n):
+            ph = 2 * math.pi * k / n
+            c_, s_ = math.cos(ph), math.sin(ph)
+            V.append([cx + scale * ax * math.copysign(abs(c_) ** rnd, c_),
+                      cy + scale * ay * math.copysign(abs(s_) ** rnd, s_), z])
+    for r in range(len(rings) - 1):
+        for k in range(n):
+            a, b = r * n + k, r * n + (k + 1) % n
+            tris += [(a, b, b + n), (a, b + n, a + n)]
+    for end, base, step in ((top, 0, 1), (bottom, (len(rings) - 1) * n, -1)):
+        if end == "cap":
+            tris += [(base, base + k, base + k + 1) for k in range(1, n - 1)]
+        elif end:
+            _, cx, cy = ring_z[0] if step > 0 else ring_z[-1]
+            V.append([cx, cy, ztop + end[1] if step > 0 else zbot - end[1]])   # beyond the old mesh's end
+            tris += [(base + k, base + (k + 1) % n, len(V) - 1) for k in range(n)]
+    assert len(tris) <= 2 * npoly, (len(tris), npoly)  # (user) at most twice the original
+    return V, tris
+
+
 def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375)):
     """A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
     any winding), every vertex colour bgr; laid out as the games' own untextured parts

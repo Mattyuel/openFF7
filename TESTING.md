@@ -348,6 +348,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   gondola and capsule Elena sits half a body width further left (in the gondola just past the
   floor's edge: check she still sits on the seat). Since (user): Cloud kneels upright, so she is a little closer
   to him (part two, every place).
+- **Skye's arms and legs** (new; untested in-game, user): remade as smooth limbs like her new
+  torso (thighs fuller at the top, rounded knees and shoulders, slimmer wrists and ankles). Check
+  the knees and elbows when bent (no holes) and that the hands and feet still meet the limbs.
 - **Sculpted buttocks** (new; untested in-game, user): Skye's pelvis now has a rounded seat
   (two cheeks, a cleft, tucked under) and bare Cloud's pelvis too (smaller). Check from behind and
   the side in the movie / dates / Honey Bee scenes: no holes, no gap at the waist or the thigh tops.
