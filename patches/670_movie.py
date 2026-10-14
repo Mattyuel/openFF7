@@ -548,6 +548,19 @@ SKYE_LINES = {
 
 PAUSE_POS = ["headrev", "69", "head"]               # (user) where she may need a moment (`_pause_ops`)
 PCNT, RND2 = (5, 144), (5, 145)                     # the pause lines' turn; the pause roll
+PARM, PT = (5, 139), (6, 142)                       # (user, since) this position's pause: armed; its frame
+
+
+def _pause_arm(hb, length):
+    """(user: "a 50% chance that a girl has to stop momentarily" in head / head reverse / 69) at a
+    position's start: with `_movie_group.PAUSE_CHANCE` / 256, arm one pause (PARM 1) for a frame PT
+    somewhere in the middle half of its `length` frames (eight steps); `_pause_ops` fires it."""
+    no = asm.nop()
+    ops = [asm.setbyte(PARM, 0), Op(bytes([0x99, RND2[0], RND2[1]])),
+                          asm.if_byte(RND2, "<", GR.PAUSE_CHANCE, no), asm.setbyte(PARM, 1),
+                          Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 8])),
+                          asm.setword(PT, FR), hb._arith(0x86, PT, length // 4)]
+    return ops + _chain(RND2, [[hb._arith(0x86, PT, k * length // 16)] if k else [] for k in range(8)]) + [no]
 
 
 def _pause_ops(hb, sec, actors, hush, lines, cond):
@@ -567,7 +580,7 @@ def _pause_ops(hb, sec, actors, hush, lines, cond):
                         hb._req(hush, 2, wait=False),
                         asm.message(3, sec.add_string(_encode(GR.NAMES[key] + "\n" + t)))])
         return _chain(PCNT, out)
-    return cond(no) + [Op(bytes([0x99, RND2[0], RND2[1]])), asm.if_byte(RND2, "<", GR.PAUSE_ODDS, no),
+    return cond(no) + [asm.if_byte(PARM, "==", 1, no), asm.if_word(FR, ">=", PT, no), asm.setbyte(PARM, 0),
                        asm.setbyte(RUN, 0), Op(b"\x54\x01")] + [hb._req(e, 4, wait=False) for e in actors] + \
         [Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
         lines(block) + [hb._w(w2), hb._arith(0x86, NEXT, w0 + w1 + w2 + 10)] + \
@@ -1463,7 +1476,8 @@ def _shoot(ctx, back, cast=None):
     main += [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C")]
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“...And... ACTION!”")
-    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK), asm.setbyte(RUN, 1)]
+    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK)] + _pause_arm(hb, MINUTE) + \
+        [asm.setbyte(RUN, 1)]
     # a tick: every TICK frames by the frame count (FR from `keys`), whatever the director's own pace
     wait1, go = hb._w(1), asm.nop()
     main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, TICK),
@@ -1506,7 +1520,7 @@ def _shoot(ctx, back, cast=None):
              Op(bytes([0x85, P[0] << 4, P[1], 1])),
              asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
             [hb._w(4), Op(FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
-             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, MINUTE), asm.setbyte(RUN, 1),
+             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, MINUTE)] + _pause_arm(hb, MINUTE) + [asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
     def out():                                   # jump back; then wait (a main that reaches RET starts over)
@@ -1914,7 +1928,8 @@ def _group(ctx, back):
     main += pick() + [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C")]
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“...And... ACTION!”")
-    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK), asm.setbyte(RUN, 1)]
+    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK)] + _pause_arm(hb, GR.TURN) + \
+        [asm.setbyte(RUN, 1)]
     wait1, go = hb._w(1), asm.nop()
     main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, TICK),
              asm.setword(T, PR), asm.setword(PR, 0), hb._arith(0x86, TOT, T),
@@ -1951,7 +1966,7 @@ def _group(ctx, back):
              asm.if_byte(TN, "==", n_g, part2), asm.setbyte(PH, 1), asm.setbyte(USED, 0), part2] + pick() + \
             [asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
             [hb._w(4), Op(FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
-             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN), asm.setbyte(RUN, 1),
+             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN)] + _pause_arm(hb, GR.TURN) + [asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
 

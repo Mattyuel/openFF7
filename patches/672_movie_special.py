@@ -54,11 +54,15 @@ KNEE_PAD, SHOULDER_PAD, PELVIS_LAG, HEAD_UP, ENTRY = 0.7, 1.3, 35, 40, (0.0, 1.2
 # insert, Cloud (Cloud's skeleton): feet FOOT_X either side, FOOT_Z behind her root; upper body and
 # pelvis leaning LEAN forward; he travels STROKE along his member's line, DEPTH inside at the bottom;
 # hands on his knees (KNEE_HAND up / forward of the knee joint), head tilted HEAD_BACK back
-FOOT_X, FOOT_Z, LEAN, STROKE, DEPTH, HEAD_BACK = 5.5, 1.5, 45, 2.6, 1.0, 25
+FOOT_X, FOOT_Z, LEAN, STROKE, DEPTH, HEAD_BACK = 5.5, 1.5, 55, 2.6, 1.8, 25   # (user, since) pelvis lower, body
+                                             # further forward: LEAN 45 -> 55, DEPTH 1.0 -> 1.8
 # finisher, her: SEAT above Cloud's root, LEAN_BACK from upright, thighs THIGH_DOWN below the
 # horizontal and THIGH_OUT out, shins back along the bed, hips lifting by turning the upper body
 # LIFT degrees about her shoulders
-SEAT, LEAN_BACK, THIGH_DOWN, THIGH_OUT, LIFT, HEAD_TILT = 2.6, 45, 45, 30, 22, 20
+SEAT, LEAN_BACK, THIGH_DOWN, THIGH_OUT, LIFT, HEAD_TILT = 2.4, 45, 45, 30, 22, 20   # (SEAT 2.6 -> 2.4: room for
+                                             # his thrust with her knees on the bed)
+RIDE_EXTRA = 0.0                             # (user, since: Cloud thrusts, ZCTD) she rides his hips; this much more at his top
+KNEE_ON_BED = 0.8                            # her knee joints this far above the bed, shins flat on it
 RUBY_HRC, RUBY_STAND, CLOUD_HRC = "cbfe.hrc", "dxid.a", "aaaa.hrc"
 
 
@@ -249,7 +253,7 @@ def _cloud_still(ctx):
 
 
 def _girl_finisher(ctx):
-    """ZRFA (Ruby's skeleton) astride Cloud's ZCTW, 15 frames: frame 0 down, 7 up."""
+    """ZRFA (Ruby's skeleton) astride Cloud thrusting in ZCTD (his frames: she rides his hips)."""
     fa, sk, I, base, rr, root0, W0, fk = _setup(ctx, RUBY_HRC, RUBY_STAND)
     sub, add, dot, mul, unit, bdir = _v(fa)
     csk = fa.skeleton(ctx.char_file(CLOUD_HRC).decode("latin-1"))
@@ -274,31 +278,46 @@ def _girl_finisher(ctx):
                 W[I(s + b)] = fa._mul(_mv()._align(fa, bdir(W[I(s + b)]), d), W[I(s + b)])
     h, v = math.radians(THIGH_DOWN), math.radians(THIGH_OUT)
     F = fk(W, r0)
-    ankles = {}
-    for s, out in (("l", 1), ("r", -1)):
-        hip_j = F[I(s + "_femur")][1]
-        thigh = [out * math.cos(h) * math.sin(v), math.sin(h), -math.cos(h) * math.cos(v)]
-        knee = add(hip_j, mul(thigh, math.dist(F[I(s + "_femur")][1], F[I(s + "_femur")][2])))
-        shin_l = math.dist(F[I(s + "_tibia")][1], F[I(s + "_tibia")][2])
-        knee[1] = min(knee[1], -0.7)
-        ankles[s] = add(knee, [out * shin_l * 0.25, 0.0, shin_l * 0.968])
-        ankles[s][1] = -0.6
+    hdir, shin_w, foot_w, thigh_l = {}, {}, {}, {}
+    for s, out in (("l", 1), ("r", -1)):                 # thighs down into the V; (user) shins flat on the bed
+        hdir[s] = unit([out * math.sin(v), 0.0, -math.cos(v)])                    # the thigh's way along the bed
+        thigh_l[s] = math.dist(F[I(s + "_femur")][1], F[I(s + "_femur")][2])
+        shin_w[s] = fa._mul(_mv()._align(fa, bdir(W0[I(s + "_tibia")]), unit([out * 0.25, 0.0, 0.968])),
+                            W0[I(s + "_tibia")])
+        foot_w[s] = _pitch(fa, W0[I(s + "_foot")], [0, -0.1, 1])
+    knee_y = -KNEE_ON_BED                                                         # (user) knees and shins on the bed
+    # (user) Cloud thrusts (ZCTD, his hips bucking up): she rides his hips, lifted RIDE_EXTRA more at his top,
+    # her torso turning about her shoulders (hands planted), knees sliding on the bed (shins flat)
+    cl = fa.Anim(ctx.char_file("zctd.a")).frames
+    hy = [-f[1][1] for f in cl]                                                   # his root height (y down)
+    lo_ = min(hy)
     pivot = [0.0] + [sum(F[I(s + "_collar")][1][k] for s in "lr") / 2 for k in (1, 2)]   # between the shoulders
-    up = min((1, -1), key=lambda g: add(pivot, fa._vec(fa.axis_angle([1.0, 0, 0], g * LIFT), sub(r0, pivot)))[1])
+    rot = lambda g: fa.axis_angle([1.0, 0, 0], g)
     frames = []
-    for t in range(15):
-        e = (1 - math.cos(2 * math.pi * t / 15)) / 2
-        R = fa.axis_angle([1.0, 0, 0], up * LIFT * e)                              # hips up, about the shoulders
+    for t in range(len(cl)):
+        e = (hy[0] - hy[t]) / (hy[0] - lo_)                                       # 0 his bottom .. 1 his top
+        want = r0[1] + (hy[t] - hy[0]) - RIDE_EXTRA * e
+        g_lo, g_hi = (0.0, 40.0) if add(pivot, fa._vec(rot(10), sub(r0, pivot)))[1] < r0[1] else (0.0, -40.0)
+        for _ in range(40):                                                       # the turn that lifts the root to `want`
+            mid = (g_lo + g_hi) / 2
+            y_ = add(pivot, fa._vec(rot(mid), sub(r0, pivot)))[1]
+            g_lo, g_hi = (mid, g_hi) if y_ > want else (g_lo, mid)
+        R = rot((g_lo + g_hi) / 2)
         Wt = [fa._mul(R, m) if sk[i][0] in upper else m for i, m in enumerate(W)]
         r = add(pivot, fa._vec(R, sub(r0, pivot)))
-        for s, out in (("l", 1), ("r", -1)):
-            F = fk(Wt, r)
-            Wt = _two_bone(fa, Wt, I, F, s + "_femur", s + "_tibia", ankles[s], [out * 0.5, -0.3, -1.0])
-            Wt[I(s + "_foot")] = _pitch(fa, W0[I(s + "_foot")], [0, -0.1, 1])
+        assert abs(r[1] - want) < 0.05, (t, r[1], want)
         F = fk(Wt, r)
-        if t == 7:
-            assert r[1] < r0[1] - 1.0, ("hips up", r, r0)
         for s in "lr":
+            hip_j = F[I(s + "_femur")][1]
+            dy = knee_y - hip_j[1]
+            assert 0 < dy < thigh_l[s], (t, s, dy)
+            k = add(hip_j, add(mul(hdir[s], math.sqrt(thigh_l[s] ** 2 - dy ** 2)), [0.0, dy, 0.0]))
+            Wt[I(s + "_femur")] = fa._mul(_mv()._align(fa, bdir(Wt[I(s + "_femur")]), sub(k, hip_j)), Wt[I(s + "_femur")])
+            Wt[I(s + "_tibia")], Wt[I(s + "_foot")] = shin_w[s], foot_w[s]
+        F = fk(Wt, r)
+        for s in "lr":
+            assert abs(F[I(s + "_tibia")][1][1] - knee_y) < 0.05 and abs(F[I(s + "_tibia")][2][1] - knee_y) < 0.3, \
+                ("shins flat", t, s)
             assert math.dist(F[I(s + "_hand")][2], fk(W, r0)[I(s + "_hand")][2]) < 0.4, "hands planted"
         frames.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, Wt)))
     base.frames = frames
@@ -322,7 +341,7 @@ def poses(ctx):
         ctx.char_file("zmp%d.a" % s, a.build())
         girl.append("ZMP%d.tor" % s)
         cloud.append("ZNP%d.tor" % s)
-    for letter, g_, c_ in (("Q", "zrta.a", "zctq.a"), ("R", "zrfa.a", "zctw.a")):
+    for letter, g_, c_ in (("Q", "zrta.a", "zctq.a"), ("R", "zrfa.a", "zctd.a")):
         for who, src, out in (("M", g_, girl), ("N", c_, cloud)):
             frames = fa.Anim(ctx.char_file(src)).frames
             assert len(frames) == 15, (src, len(frames))
@@ -565,7 +584,8 @@ def _special(ctx, key, back):
     main += [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(4), Op(hb.FADE_IN), Op(b"\x6C")]
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, mv.MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“Same rules as always: tap OK, mind the\n meter. Three positions, a minute each.\n ...And... ACTION!”")
-    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, mv.TICK), asm.setbyte(RUN, 1)]
+    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, mv.TICK)] + mv._pause_arm(hb, SPECIAL_MINUTE) + \
+        [asm.setbyte(RUN, 1)]
     wait1, go = hb._w(1), asm.nop()
     A, B, C, VMAX, DANGER = mv.A, mv.B, mv.C, mv.VMAX, mv.DANGER
     main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, mv.TICK),
@@ -608,8 +628,8 @@ def _special(ctx, key, back):
              Op(bytes([0x85, P[0] << 4, P[1], 1])), asm.setbyte(STEP, 0),
              asm.setword(POS, 500), asm.setword(VEL, 1000), asm.setword(RATE, 40)] + place_all() + \
             [hb._w(4), Op(mv.FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
-             hb._arith(0x86, NT, mv.TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, SPECIAL_MINUTE),
-             asm.setbyte(RUN, 1), stay, asm.goto_back(tick)]
+             hb._arith(0x86, NT, mv.TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, SPECIAL_MINUTE)] + \
+            mv._pause_arm(hb, SPECIAL_MINUTE) + [asm.setbyte(RUN, 1), stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
 
     def out():

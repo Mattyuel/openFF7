@@ -107,4 +107,6 @@ PAUSES = {
                "(She catches her breath.)\n“Wow... I almost saw the Planet. Keep going!”"],
 }
 PAUSE_FRAMES = (0, 75, 15)         # before her line (user: shown the moment it happens); the line; after it
-PAUSE_ODDS = 2                     # a pause when RANDOM (0-255) < this, checked every physics tick (user: was 1)
+PAUSE_CHANCE = 128                 # (user, since) a 50% chance per position (or group turn) of one pause, armed
+                                   # at its start for a random frame in its middle half (670 `_pause_arm`; was a
+                                   # per-tick RANDOM < 2)

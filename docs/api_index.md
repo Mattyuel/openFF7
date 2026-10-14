@@ -669,7 +669,7 @@ Honey Bee Girl recruitment.
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
 - `_cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
-- `_on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0, head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD, turn_out=0)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
+- `_on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0, head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD, turn_out=0, v_legs=None)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
 - `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
 - `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
 - `_bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=EDGE_ARMS_DOWN)` dzbg.a (EDGE_ANIM): standing, knees bent EDGE_KNEE, bent EDGE_BEND forward at
@@ -767,6 +767,7 @@ The movie minigame (user's design).
 - `_bare_skye(ctx)` 
 - `_skye_limbs(ctx, hrc)` 
 - `_skye_shape(ctx, hrc)` 
+- `_pause_arm(hb, length)` (user: "a 50% chance that a girl has to stop momentarily" in head / head reverse / 69) at a
 - `_pause_ops(hb, sec, actors, hush, lines, cond)` (user) A rare pause (`_movie_group.PAUSES`): ops for the director's tick. cond = ops jumping to
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `_gauge_pixels()` 
@@ -816,7 +817,7 @@ The movie minigame (user's design).
 - `_member(ctx, fa)` Cloud's member (620 zcmp.p, on the hip bone): (base, tip) in the hip bone's frame.
 - `_cloud_insert(ctx, entry, n, name)` Cloud's insert (Cloud's skeleton), n frames a stroke: frame 0 out (top), n/2 in.
 - `_cloud_still(ctx)` ZCTW: Cloud on his back, still (ZCTD's first frame, 15 frames).
-- `_girl_finisher(ctx)` ZRFA (Ruby's skeleton) astride Cloud's ZCTW, 15 frames: frame 0 down, 7 up.
+- `_girl_finisher(ctx)` ZRFA (Ruby's skeleton) astride Cloud thrusting in ZCTD (his frames: she rides his hips).
 - `poses(ctx)` Every special pose; (girl anim names, Cloud anim names) on Ruby's / Cloud's skeleton, 4 per
 - `_girl(ctx, key)` (her donor (field, model): clothed as it is, bare with `bare hrc`; bare hrc; an anim to append to
 - `_special(ctx, key, back)` 

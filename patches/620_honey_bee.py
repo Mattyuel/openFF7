@@ -224,6 +224,9 @@ LIE_ANIM_SCENE, LEG_RAISE, LEG_SPREAD = "DZBT.tor", 45, 45
 MISSION_LEG_RAISE = 18                       # (user, since) straighter again (was 28)
 MISSION_LEG_SPREAD = 60                      # (user) legs further apart (LEG_SPREAD 45)
 MISSION_TURN_OUT = 45                        # (user) and each leg turned out this far at the hip (knees open, feet stay)
+# (user, since: "fix the legs; start with straight legs, open them to a V, raise the knees off the bed and
+# keep the feet flat") `_on_back(v_legs=)`: each leg MISSION_V out from straight, thigh MISSION_KNEE_UP up
+MISSION_V, MISSION_KNEE_UP = 25, 40
 # On all fours (user): from her standing pose BAJB, the upper body pitched 90 degrees
 # forward (facing down), thighs hanging (hip 90), shins and feet folded back flat
 # (knee 90), upper arms hanging (shoulder 90 forward), hands flat forward; each
@@ -2352,7 +2355,7 @@ def _cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0):
 
 
 def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0,
-             head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD, turn_out=0):
+             head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD, turn_out=0, v_legs=None):
     """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
     the knees fall open POSE_ROCK and close again (each leg turns about its
     hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames.
@@ -2362,7 +2365,10 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
     shoulders stay down, so her body slopes back to them); head_down: the head
     hangs straight down every frame (face upright: head reverse); head_nod: that hanging head
     rocks this many degrees back and forth (about her side axis) with each stroke (670's head
-    reverse, user)."""
+    reverse, user). v_legs = (spread, raise) (mission, user: "start with straight legs, open them
+    to a V, then raise the knees off the bed, feet flat"): each straight leg turned `spread` degrees
+    out in the bed's plane, the thigh raised `raise` degrees in that leg's vertical plane, the shin
+    down to the bed and the foot flat on it pointing along the leg."""
     fa, sk, idx, rr, world = _standing(ctx)
     names = [b[0] for b in sk]
     x, z = (1, 0, 0), (0, 0, 1)
@@ -2384,12 +2390,52 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
 
     def ends(w):
         return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, fa.local_rotations(sk, rr, w)))}
-    knee = _bisect(lambda k: ends(pose(k, 0))["l_tibia"][1], 0, 120)          # ankle down to the bed (~100)
-    foot = _bisect(lambda f: ends(pose(knee, f))["l_tibia"][1] - ends(pose(knee, f))["l_foot"][1], -90, 90)
-    w0 = pose(knee, foot)
+
+    def v_pose(spread, raise_):                      # (user) straight -> V -> knees up, feet flat (world matrices)
+        import math
+        from importlib import import_module
+        al = lambda a, b: import_module("670_movie")._align(fa, a, b)
+        unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+        w = [fa._mul(back, m) for m in world]
+        straight = {}
+        for side in "lr":                            # the straight leg: thigh, shin and foot along the body, towards her feet
+            for n in ("_femur", "_tibia", "_foot"):
+                i = idx(side + n)
+                w[i] = fa._mul(al(fa._vec(w[i], [0, 0, -1]), [0.0, 0.0, -1.0]), w[i])
+            straight[side] = [w[idx(side + n)] for n in ("_femur", "_tibia", "_foot")]
+        e = ends(w)
+        mid = (e["l_femur"][0] + e["r_femur"][0]) / 2
+        bed = max(e[s + "_femur"][1] for s in "lr")  # the straight legs' height = the bed under her calves
+        out = {s: (1 if e[s + "_femur"][0] > mid else -1) for s in "lr"}
+        r = math.radians(raise_)
+        for side in "lr":
+            a = math.radians(spread) * out[side]
+            v = [math.sin(a), 0.0, -math.cos(a)]                     # along the bed, out into the V
+            thigh = unit([v[0] * math.cos(r), -math.sin(r), v[2] * math.cos(r)])
+            fi, ti, fo = idx(side + "_femur"), idx(side + "_tibia"), idx(side + "_foot")
+            w[fi] = fa._mul(al(fa._vec(straight[side][0], [0, 0, -1]), thigh), straight[side][0])
+            ee = ends(w)
+            knee = ee[side + "_femur"]
+            l2 = math.dist(ee[side + "_tibia"], ee[side + "_femur"])
+            drop = max(-1.0, min(1.0, (bed - knee[1]) / l2))           # down to the bed
+            shin = unit([v[0] * math.cos(math.asin(drop)), drop, v[2] * math.cos(math.asin(drop))])
+            w[ti] = fa._mul(al(fa._vec(straight[side][1], [0, 0, -1]), shin), straight[side][1])
+            w[fo] = fa._mul(al(fa._vec(straight[side][2], [0, 0, -1]), unit([v[0], 0.12, v[2]])), straight[side][2])
+        return w
+    if v_legs:
+        w0 = v_pose(*v_legs)
+        e_ = ends(w0)
+        bed_y = max(e_[s + "_tibia"][1] for s in "lr")
+        for s_ in "lr":
+            assert e_[s_ + "_femur"][1] < bed_y - 2, ("knees up", s_)
+            assert abs(e_[s_ + "_tibia"][1] - bed_y) < 0.3, ("ankles on the bed", s_)
+    else:
+        knee = _bisect(lambda k: ends(pose(k, 0))["l_tibia"][1], 0, 120)          # ankle down to the bed (~100)
+        foot = _bisect(lambda f: ends(pose(knee, f))["l_tibia"][1] - ends(pose(knee, f))["l_foot"][1], -90, 90)
+        w0 = pose(knee, foot)
     e0 = ends(w0)
     for n in ("l_tibia", "r_tibia", "l_foot", "r_foot"):
-        assert abs(e0[n][1]) < 0.5, (n, e0[n])                                 # feet planted
+        assert v_legs or abs(e0[n][1]) < 0.5, (n, e0[n])                       # feet planted
     assert e0["l_femur"][1] < -1 and e0["r_femur"][1] < -1, (e0["l_femur"], e0["r_femur"])   # knees up
     import math
     up = [0.0, -1.0, 0.0]
@@ -2712,7 +2758,7 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=ED
 
 
 def apply(ctx):
-    _on_back(ctx, leg_raise=MISSION_LEG_RAISE, leg_spread=MISSION_LEG_SPREAD, turn_out=MISSION_TURN_OUT)
+    _on_back(ctx, v_legs=(MISSION_V, MISSION_KNEE_UP))   # (user, since) straight legs opened to a V, knees up, feet flat
     _on_back(ctx, HEADREV_ANIM, HEADREV_ARMS, hip_lift=HEADREV_LIFT, head_down=True)
     _fours(ctx)
     _cloud_thrust(ctx)

@@ -420,6 +420,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   in front of the bed, "finisher" (Cloud on his back, still; she astride facing his feet, leaning back on
   straight arms, bouncing). Check: placement on the bed (does the bed's background draw over them?), her
   pose, his hips meeting hers, the gauge's size and spot in this room, the pay and the return.
+- **Special scenes, mission, pauses** (new; untested in-game, user): the special insert lines now go
+  "there" in the role-play, with a little pain at first; insert: Cloud lower and leaning further forward;
+  finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
+  mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
+  head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
 - **Instant pose changes** (new; untested in-game, user): every movie shoot (one girl, group, special)
   ends the current animation (ANIMB) before starting the next pose. In the group shoot the engaged girl
   should switch together with Cloud, and in part two the girls should be lying in place by the fade-in.
