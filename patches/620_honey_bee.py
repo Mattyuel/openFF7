@@ -674,9 +674,13 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     extra = dict(CLOUD_EXTRA, **{n: CLOUD_BED[n] for n in bed_used})
     ca = {n: len(cloud_anims) + i for i, n in enumerate(extra)}
     loader.models[0] = ModelLoader.with_anims(loader.models[0], list(extra.values()))
-    bare = None                                      # devoted room: part two's Cloud (same anims, so same indices)
+    bare = bare_girl = None                          # devoted room: part two's Cloud (same anims, so same indices)
     if field == DEVOTED_ROOM:
         bare = loader.add(ModelLoader.with_hrc(loader.models[0], CLOUD_BARE_HRC, "onna_52main_n_cloud_b.char"))
+        # (user) and the girl: the dancer undressed, the standard female body (675 writes HB_BARE_HRC)
+        bare_girl = loader.add(ModelLoader.with_hrc(loader.models[1], HB_BARE_HRC,
+                                                    ModelLoader.name(loader.models[1])[:-5] + "_b.char"))
+        assert len(loader.models) <= 16, len(loader.models)
     f.set_section("models", loader.build())
 
     def on_floor(a, b):
@@ -873,6 +877,21 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
             sec.entry[ent][k] = ops[0]
             slots[(ent, name)] = k
 
+    girl_b = None
+    if bare_girl is not None:                        # the bare girl: hidden until the bed, every girl beat copied
+        sx, sy, sz, st = spot(STAGE)
+        girl_b = sec.add_entity("girlb", {0: [Op(bytes([0xA1, bare_girl])), _xyzi(sx, sy, sz, st), _visi(0),
+                                              Op(b"\x7E\x01"), Op(b"\xC7\x01"), asm.ret(), asm.ret()]})
+        for (ent, name), k in list(slots.items()):
+            if ent == girl:
+                ops = [Op(bytes(o.raw)) for o in girl_beats[name]] + [asm.ret()]
+                sec.ops.extend(ops)
+                sec.entry[girl_b][k] = ops[0]
+        hide = [_visi(0), asm.ret()]                  # the dressed girl hides at the bed
+        sec.ops.extend(hide)
+        girl_hide = _free_slots(sec, girl, 8)[0]
+        sec.entry[girl][girl_hide] = hide[0]
+
     # girls starting on the bed: placed by girl2's init, before the room appears
     init = sec.script_ops(girl, 0)
     ret = next(o for o in init if o.op == 0x00)
@@ -894,13 +913,14 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
         ops += [asm.if_byte(HB_VISIT, "==", i + 1, nxt),
                 asm.setbyte(ACT, cloud_act[into]), _req(cloud, cslot), _w(15)]
         who = cloud                                   # part two: the bare Cloud (devoted room)
+        whog = girl                                   # and the bare girl
         for step in scenes[i]:
             kind = step[0]
             cs_ = cslot if who == cloud else 2
             if kind == "start":
                 continue
             if kind in ("g", "g&"):
-                ops += [_req(girl, slots[(girl, step[1])], wait=kind == "g"), _w(PACE)]
+                ops += [_req(whog, slots[(girl, step[1])], wait=kind == "g"), _w(PACE)]
             elif kind == "c":                          # the dispatcher reads ACT: always waited for
                 ops += [asm.setbyte(ACT, cloud_act[step[1]]), _req(who, cs_), _w(PACE)]
             elif kind == "G":
@@ -911,7 +931,11 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
                 ops.append(_w(step[1]))
             elif kind == "bed":                        # fade out, both onto the bed, fade in
                 gb, cb = BED_LAYOUTS[step[1]]
-                ops += [_w(20), Op(FADE_OUT), Op(b"\x6C"), _req(girl, slots[(girl, gb)])]
+                ops += [_w(20), Op(FADE_OUT), Op(b"\x6C")]
+                if girl_b is not None:
+                    ops.append(_req(girl, girl_hide))
+                    whog = girl_b
+                ops.append(_req(whog, slots[(girl, gb)]))
                 if cloud2 is not None:
                     ops += [asm.setbyte(ACT, cloud_act["hide_" + cb]), _req(cloud, cslot)]
                     who = cloud2
@@ -1284,6 +1308,7 @@ def _bed_depth(ctx):
 # in to the size of the thigh's hip ring (~1.6) about its own centre. New files:
 # zcla.hrc (bones as AAAA) -> new .rsd for the five changed parts -> new .p.
 CLOUD_BARE_HRC = "ZCLA.HRC"
+HB_BARE_HRC = "ZHBA.HRC"                              # (user) the girls undressed: written by 675
 THIGH_TOP_IN = 0.75                                  # bare Cloud's thigh tops (the hip ring) x this (user)
 BARE_PARTS = {"AAAB": "ZCLB", "AADE": "ZCLC", "AAEA": "ZCLD", "AAEE": "ZCLE", "AAFA": "ZCLF"}   # rsd -> rsd
 PANTS, SKIN = (119, 73, 97), (135, 167, 248)        # vertex colours (B, G, R) of the pants / the arms

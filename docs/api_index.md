@@ -816,6 +816,7 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `bones(hrc)` {bone name: (length, [rsd names], parent)} in an .hrc text.
 - `_scaled(d, sxy, sz, skin, sole=None)` A copy of .p bytes d: vertices (x, y) x sxy, z (along the bone) x sz, normals kept;
 - `_bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail)` A rounded bar along a bone (local -z): rings of radius r at z0 and z1, pointed to tip0 /
+- `face_skin(ctx, hrc)` Her face's skin colour (B, G, R): the head part's most common skin-like vertex colour
 - `apply(ctx, hrc, tag, skin=None, legs=None)` See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
 
 ## `patches/_honey_bee_data.py`

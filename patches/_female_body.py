@@ -13,7 +13,7 @@ no change is shared, the others are written as new parts "ZW<tag><letter>" (.rsd
 colour (B, G, R) for the body's skin (Skye's SKIN) if given. Use it only from patches that
 run after 670 (the standard body is built there).
 
-Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA) (675)
+Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD) (675)
 """
 import importlib
 import struct
@@ -148,6 +148,17 @@ def _bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail):
     tris += [(k, (k + 1) % n, len(V) - 2) for k in range(n)]
     tris += [(n + k, n + (k + 1) % n, len(V) - 1) for k in range(n)]
     return _hb()._p_file(V, tris, bgr, tail, poly_tail)
+
+
+def face_skin(ctx, hrc):
+    """Her face's skin colour (B, G, R): the head part's most common skin-like vertex colour
+    (faces are vertex-coloured; their textures only hold eyes and mouth)."""
+    rsd = bones(hrc)["head"][1][0]
+    d = ctx.char_file(ctx.char_file(rsd.lower() + ".rsd").decode("latin-1").split("PLY=")[1][:4].lower() + ".p")
+    _, _, C = _part(d)
+    skinlike = [c for c in C if c[2] > 180 and 0.6 < c[1] / c[2] < 0.88 and 0.45 < c[0] / c[2] < 0.78]
+    assert skinlike, rsd
+    return max(set(skinlike), key=skinlike.count)
 
 
 def apply(ctx, hrc, tag, skin=None, legs=None):

@@ -356,6 +356,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   elbows when bent, hands and feet still meeting. Since (user): Skye's forearms straight from the elbow (as wide
   as the upper arm) and widening only near the hand, overlapping the upper arm at the elbow; her
   shoulders reach into the arms; a small belly pooch; a bigger bust.
+- **Honey Bee devoted scenes, undressed girls** (new; untested in-game, user): at the fade to the
+  bed the girl is swapped for an undressed copy (the standard body, her dancer head and shoes), as
+  Cloud already is. Check the swap is hidden by the fade, she plays every position, and the room
+  doesn't crash (onna_6 now 14 models).
 - **Standard female body on Ruby, Elena, Scarlet, Tifa** (new; untested in-game, user): their
   undressed models (movie, dates) now use Skye's body with their own heads, feet and face skin
   tones; Scarlet keeps her stockings. Check their poses still line up (Elena's head sits lower),

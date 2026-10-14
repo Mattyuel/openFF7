@@ -10,16 +10,21 @@ import _female_body as fb
 
 STOCKING, BAND = (22, 22, 32), (204, 204, 204)
 SCARLET_SKIN = (136, 168, 246)
-GIRLS = [  # (.hrc, tag, face skin (B, G, R), legs)
-    ("ZRHA.HRC", "R", (153, 204, 255), None),
-    ("ZELA.HRC", "E", (149, 178, 255), None),
-    ("ZSCA.HRC", "S", SCARLET_SKIN, {"femur": [(0.0, SCARLET_SKIN), (0.88 / 5.32, BAND), (1.63 / 5.32, STOCKING)],
-                                      "tibia": [(0.0, STOCKING)]}),
-    ("ZTFA.HRC", "T", (167, 190, 248), None),
+GIRLS = [  # (.hrc written, from .hrc, tag, legs); skin = her face's (`_female_body.face_skin`)
+    ("ZRHA.HRC", "ZRHA.HRC", "R", None),
+    ("ZELA.HRC", "ZELA.HRC", "E", None),
+    ("ZSCA.HRC", "ZSCA.HRC", "S", {"femur": [(0.0, SCARLET_SKIN), (0.88 / 5.32, BAND), (1.63 / 5.32, STOCKING)],
+                                    "tibia": [(0.0, STOCKING)]}),
+    ("ZTFA.HRC", "ZTFA.HRC", "T", None),
+    # (user) the Honey Bee girls' undressed copy of the dancer (BADD): 620's devoted room shows it
+    # from the fade to the bed (entity girlb, HB_BARE_HRC)
+    ("ZHBA.HRC", "BADD.HRC", "H", None),
 ]
 
 
 def apply(ctx):
-    for hrc, tag, skin, legs in GIRLS:
-        text = ctx.char_file(hrc.lower()).decode("latin-1")
-        ctx.char_file(hrc.lower(), fb.apply(ctx, text, tag, skin, legs).encode("latin-1"))
+    for out, src, tag, legs in GIRLS:
+        text = ctx.char_file(src.lower()).decode("latin-1")
+        skin = fb.face_skin(ctx, text)
+        ctx.char_file(out.lower(), fb.apply(ctx, text, tag, skin, legs).encode("latin-1"))
+    assert fb.face_skin(ctx, ctx.char_file("zsca.hrc").decode("latin-1")) == SCARLET_SKIN
