@@ -474,7 +474,8 @@ def _girl_talk(sec, i, g):
         ops += q + [asm.if_byte(CHOICE, "!=", first + right, ok), asm.setbyte(WRONG, 1), ok]
     ops += [asm.if_byte(WRONG, "==", 0, fail),
             sound(SOUND_RECRUIT), asm.biton(hv, bit)] + _say(sec, g["hired"]) + [asm.goto(end)]
-    ops += [fail] + _say(sec, g["fail"]) + [asm.goto(end)]
+    slap = [sound(0x76)] if "*slap*" in g["fail"] else []    # (user) a slap after lines about one (Scarlet)
+    ops += [fail] + _say(sec, g["fail"]) + slap + [asm.goto(end)]
     ops += [stranger] + _say(sec, g["stranger"]) + [asm.goto(end)]
     ops += [idle] + _say(sec, g["idle"])
     return ops + [end, asm.ret()]

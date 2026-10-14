@@ -754,6 +754,7 @@ The movie minigame (user's design).
 - `_off(m, d)` Field (dx, dy, dz) of model point m for an entity with DIR d (faces -z, +x = its left).
 - `_place(ctx, pos)` Spots worked out from both poses: "69" her (head over his pelvis, facing from his head to it),
 - `_shoot(ctx, back)` 
+- `_slaps(text)` A line about slapping / spanking (user: a slap sound after it).
 - `_encode(t)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
 - `_tree(var, lo, hi, leaf)` Binary search on word var in lo..hi (values past hi take hi's leaf).

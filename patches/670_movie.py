@@ -941,7 +941,8 @@ def _shoot(ctx, back):
                 if t not in texts:
                     texts[t] = sec.add_string(_encode(t))
                 out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y),
-                            hb._req(ents["hush"], 2, wait=False), asm.message(1, texts[t])])
+                            hb._req(ents["hush"], 2, wait=False), asm.message(1, texts[t])]
+                           + ([sound(SLAP_SOUND)] if _slaps(text) else []))   # (user) a slap after such lines
             return _chain(K, out)
         return line
     skye_says = asm.nop()
@@ -1025,6 +1026,14 @@ def _shoot(ctx, back):
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()
     return places[0]["focus"]
+
+
+SLAP_SOUND = 0x76                                    # the slap (660's dates, Scarlet's)
+
+
+def _slaps(text):
+    """A line about slapping / spanking (user: a slap sound after it)."""
+    return any(w in text.lower() for w in ("slap", "spank", "smack"))
 
 
 def _encode(t):

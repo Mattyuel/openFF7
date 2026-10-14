@@ -371,6 +371,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   height on her in prone (PRONE_UP). Debug menu (Honey Bee / Hunter): "Star rank +1" (unlocks Skye),
   "Time +30 min" (the movie cut and the Honey Bee takings wait 30 minutes less; bounties not).
   After Aerith's date Cloud now lands to her left on screen (was stuck beside her).
+  A slap sound now follows every minigame line about slapping/spanking (Ruby's and Skye's), and
+  Scarlet's "WRONG! *slap*" Honey Bee line. Check when it sounds: the minigame's windows can't be
+  closed, so if their MESSAGE waits for the window, the slap comes as the line closes (~2 s later).
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens
   One Star Girls (Next page / Never mind), then Two .. Five Star Girls (Next /
   Previous / Never mind; no Next on Five). Girls not hired show as ???? and
