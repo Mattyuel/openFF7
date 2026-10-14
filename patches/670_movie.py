@@ -156,8 +156,8 @@ SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines;
 # right (high) red is a finisher, not a CUT: fanfare, a bonus on the spot of the girl's gil per
 # press x FINISH_BONUS (Ruby 1,000, Skye 2,000), and the shoot ends as a wrap
 FINISH_FRAMES, FINISH_BONUS, FINISH_SAY_FOR, FANFARE = 150, 100, 120, 5
-AFTERMATH = ("Ruby\n“Mmh... *gulp*... Well. That's one way\n to end a scene. Give me a minute to\n catch my breath, handsome.”",
-             "Skye\n“Mmm... every last drop. Best finish\n of my career, star. Same time tomorrow?”")   # (user) Ruby, Skye     # FANFARE: AKAO index (620's part twos)
+AFTERMATH = ("Ruby\n(Ruby swallows, wipes her lips with her\n thumb and sinks back, breathless.)",
+             "Skye\n(Skye licks her lips clean, sighs happily\n and blows a kiss at the camera.)")   # (user) Ruby, Skye     # FANFARE: AKAO index (620's part twos)
 
 # temp vars (this field only)
 POS, VEL, PR, TOT, FR, RATE, T, S, NEXT, BKT, EARN, EL, NT = ((6, a) for a in range(100, 126, 2))
