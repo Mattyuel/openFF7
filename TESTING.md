@@ -362,7 +362,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   unlocks Skye (blue hair; her bare model: bikini skin-coloured, the yellow streamers removed): she
   stands where Ruby was, the cameraman says once that Ruby retired, and after accepting he asks
   "Skye" / "Ruby". Skye plays the same positions with her own, dirtier lines. After 30 play
-  minutes his talk pays presses x 10 gil. Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
+  minutes his talk pays presses x 10 gil (x 20 for a shoot with Skye: user). Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
   and cursor visible and on screen at each bed? the self-closing lines? the bed positions on
   the right beds? Ruby's bare model (skin legs/skirt/upper arms/feet, coat kept).
   Since (user): the shoot opens on black and fades in once everyone is placed (no visible model

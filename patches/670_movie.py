@@ -68,6 +68,7 @@ TICK = 10                                           # frames per physics tick, b
                                                     # own pace varied, and the push per press with it)
 BACK_DOWN = 100                                     # Wall Market return: 4 paces (~25 each) down the screen
 PAY_RATE, PAY_DELAY = 10, 30                        # gil per press; play minutes before the cut
+SKYE_PAY = 2                                        # (user) Skye's videos: double
 
 # Positions (user: all six used so far, moving between the beds). Spots are
 # (x, y, dz, DIR); "bed" picks the bed's raised walkmesh piece under (x, y).
@@ -1102,10 +1103,16 @@ def _wall_market(ctx, focus):
         end, pitch, wait_ = asm.nop(), asm.nop(), asm.nop()
         ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8), asm.if_byte(MOVIE_STATE, "!=", 0, pitch),
                asm.setword(EL, HB_MINUTES), hb._arith(0x88, EL, MOVIE_AT), asm.if_word(EL, ">=", PAY_DELAY, wait_)]
-        capped = asm.nop()
-        ops += [asm.setword(GIL, MOVIE_PRESSES), asm.if_word(GIL, ">", 65535 // PAY_RATE, capped),
-                asm.setword(GIL, 65535 // PAY_RATE), capped, hb._arith(0x8A, GIL, PAY_RATE),
-                Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), sound(0x168)]
+        # (user) Skye's videos pay double (MOVIE_GIRL bit 1: she was this shoot's co-star; it
+        # stays set until the next shoot is accepted, after this payment)
+        def pay(rate):                           # GIL = presses x rate, capped to a word
+            capped = asm.nop()
+            return [asm.if_word(GIL, ">", 65535 // rate, capped), asm.setword(GIL, 65535 // rate), capped,
+                    hb._arith(0x8A, GIL, rate)]
+        ruby, paid_ = asm.nop(), asm.nop()
+        ops += [asm.setword(GIL, MOVIE_PRESSES), asm.if_byte(MOVIE_GIRL, "bit_on", 1, ruby)]   # bit off -> ruby
+        ops += pay(PAY_RATE * SKYE_PAY) + [asm.goto(paid_), ruby] + pay(PAY_RATE) + [paid_]
+        ops += [Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), sound(0x168)]
         paid = say("“The film's flying off the shelves!\n Here's your cut, star: {VAR} gil.”")
         paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
         ops += paid + [asm.setbyte(MOVIE_STATE, 0), asm.goto(end)]
