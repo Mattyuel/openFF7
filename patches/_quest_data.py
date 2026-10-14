@@ -825,3 +825,35 @@ GIVERS = [
 from _quest_data_world import WORLD_GIVERS  # noqa: E402
 
 GIVERS += WORLD_GIVERS
+
+# (user) quests run by NPCs other patches build (external: 600 adds their markers and quest-log
+# entries but not the NPC; the giver's own patch moves the state with `quest_state` /
+# `count_ops` / `reward_ops`): the Honey Bee manager (620) and the cameraman (670). `gate`: offer
+# conditions besides the previous quest being done ((kind, var, value): "eq" byte == value,
+# "bits" all of those bits set), here every Honey Bee kid born (_config.HB_KID)
+EXTERNAL_GIVERS = [
+    dict(field="onna_4", name="hbmgr", external=True, level=8, at=(104, -48), dir=0,
+         who="Honey Bee Manager", where="Wall Market, Honey Bee Inn",
+         quests=[dict(id="hb_first", kind="count", late=True, label="Girl hired", count=1,
+                      title="Talent Scout",
+                      desc=["Hire a girl for the Honey Bee Inn: find",
+                            "a pretty woman and answer her questions.",
+                            "Then report back to the manager."],
+                      reward=dict(gil=500))]),
+    dict(field="mds7st3", name="filmman", external=True, level=8, at=(-3000, 2380), dir=0,
+         who="Cameraman", where="Sector 7 Station, lower platform",
+         quests=[dict(id="film_tape", kind="count", late=True, label="Tape watched", count=1,
+                      title="Late Night Viewing",
+                      desc=["Watch the tape the cameraman sold you on",
+                            "the terminal in Wall Market's Item Store,",
+                            "then tell him what you thought."],
+                      reward=dict(gil=100)),
+                 dict(id="film_first", kind="count", late=True, label="Video made", count=1,
+                      title="Lights, Camera...",
+                      desc=["Star in the cameraman's first video: say",
+                            "yes and see the shoot through (a cut",
+                            "counts too). Then collect your fee."],
+                      gate=[("eq", (1, 214), 0xFF), ("eq", (1, 215), 0xFF), ("bits", (1, 216), [0, 1, 2, 3])],
+                      reward=dict(gil=1000))]),
+]
+GIVERS += EXTERNAL_GIVERS

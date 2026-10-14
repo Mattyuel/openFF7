@@ -175,6 +175,9 @@ HEAD_STAND, HEAD_GAP = (-20, -180), 44       # (user, since) she slightly closer
 HEAD_FORWARD = 6
 TXPOKE = 0x1D                                 # field opcode (quest_menu.asm t_op, CODE+40): see _manager
 HEAD_STEP, HEAD_THRUST = 20, 2.0
+# (user, since) only his pelvis thrusts: the chest swings back about the top of the pelvis so the
+# shoulders stay where frame 0 has them (`_cloud_stand(still_upper=)`)
+HEAD_STILL_UPPER = True
 # (user, since) head: Cloud's pelvis down a third of the way to the floor (HEAD_LOW of its height),
 # thrusting from there; both hands on her head: fingertips HOLD_SIDE either side of her head's middle
 # (the dancer's DZBK, HEAD_HOLD_GAP model units ahead = the movie's 35 field units), fingers down
@@ -464,6 +467,11 @@ def _collect(sec, end):
     return ops
 
 
+def _quests():
+    import importlib
+    return importlib.import_module("600_quests")
+
+
 def _hired(i):
     return (HB_HIRED[0], HB_HIRED[1] + i // 8), i % 8
 
@@ -511,7 +519,8 @@ def _girl_talk(sec, i, g):
         ok = asm.nop()
         ops += q + [asm.if_byte(CHOICE, "!=", first + right, ok), asm.setbyte(WRONG, 1), ok]
     ops += [asm.if_byte(WRONG, "==", 0, fail),
-            sound(SOUND_RECRUIT), asm.biton(hv, bit)] + _say(sec, g["hired"]) + [asm.goto(end)]
+            sound(SOUND_RECRUIT), asm.biton(hv, bit)] + _quests().count_ops("hb_first") + \
+        _say(sec, g["hired"]) + [asm.goto(end)]                          # (user) the "Talent Scout" quest
     slap = [sound(0x76)] if "*slap*" in g["fail"] else []    # (user) a slap after lines about one (Scarlet)
     ops += [fail] + _say(sec, g["fail"]) + slap + [asm.goto(end)]
     ops += [stranger] + _say(sec, g["stranger"]) + [asm.goto(end)]
@@ -575,8 +584,21 @@ def _manager(ctx, back):
 
     def talk(sec):
         end, offer, visit, tips, cut = _uc(0), asm.nop(), asm.nop(), asm.nop(), asm.nop()
+        qx = _quests()
+        qs, (qc, _) = qx.quest_state("hb_first"), qx.quest_counter("hb_first")
         ops = [_uc(1), Op(b"\x35\x00\x08\x02"), _w(8),
                asm.if_byte(HB_JOB[0], "bit_on", HB_JOB[1], offer)]
+        # (user) "Talent Scout" (600 external quest): a save with the job but no quest yet gets it
+        # (done if a girl is already hired); with a girl hired, the manager hands it in
+        synced, owed = asm.nop(), asm.nop()
+        ops += [asm.if_byte(qs, "==", qx.NEW, synced), asm.setbyte(qs, qx.ACCEPTED), asm.setbyte(qc, 0)]
+        for k_ in range(3):
+            no_ = asm.nop()
+            ops += [asm.if_byte((HB_HIRED[0], HB_HIRED[1] + k_), "!=", 0, no_), asm.setbyte(qc, 1), no_]
+        ops += [synced, asm.if_byte(qs, "==", qx.ACCEPTED, owed), asm.if_byte(qc, ">=", 1, owed)]
+        ops += _say(sec, "Manager\n“Ha! Your first girl, and a looker too.\n The customers are lining up already.”")
+        ops += _say(sec, "Manager\n“Here's a finder's fee. Keep 'em coming,\n partner. Every girl is money in the bank.”")
+        ops += qx.reward_ops(sec, "hb_first") + [asm.setbyte(qs, qx.DONE), owed]
         menu, first = _ask(sec, "Manager\n“Back again, partner? What'll it be?”",
                            ["Visit one of the girls.", "Collect the girls' earnings.",
                             "Where do I find girls?", "Nothing."])
@@ -667,7 +689,8 @@ def _manager(ctx, back):
                           ["You've got a deal.", "Not interested."])
         no = asm.nop()
         ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.biton(*HB_JOB),
-                      asm.setword(HB_LAST, HB_MINUTES)]                         # earnings count from now
+                      asm.setword(HB_LAST, HB_MINUTES),                         # earnings count from now
+                      asm.setbyte(qs, qx.ACCEPTED), asm.setbyte(qc, 0)]        # (user) "Talent Scout" starts
         ops += _say(sec, "Manager\n“Great! Talk to the ladies you meet.\n The classier the girl, the more\n questions she'll ask. Get 'em all right!”")
         ops += [asm.goto(end), no] + _say(sec, "Manager\n“Your loss, partner.”")
         return ops + [end, asm.ret()]
@@ -1908,7 +1931,7 @@ def _cloud_buck(ctx):
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
                  lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None,
-                 elbows_out=1.0, legs_out=0):
+                 elbows_out=1.0, legs_out=0, still_upper=False):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
     the left thigh raised to `hip` degrees forward of vertical and turned `out` degrees
     outward, the shin straight down, the foot level; it stays planted while the hips
@@ -1919,7 +1942,9 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     this fraction of its height with STAND_KNEE (head: 2/3, user). hold = (her .hrc, her anim, gap,
     right): both hands on the sides of her head (her kneeling `gap` model units ahead and `right` to
     his right, facing him; elbows_out: how far out the elbows point, against down / back), or "still" (the hands stay where frame 0 has them: edge, user), held
-    there by two-bone IK on each arm every frame (head, user)."""
+    there by two-bone IK on each arm every frame (head, user). still_upper: only the pelvis
+    thrusts; the chest and everything above it turn back about the pelvis's top each frame so the
+    neck keeps frame 0's forward position (the upper body still; head, user)."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -1944,6 +1969,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     end = lambda F, n: F[I(n)][2]
     feet0 = {s: end(fk(W), s + "_tibia") for s in "lr"}
     foot_flat = W[I("l_foot")]                       # ACFE's standing foot
+    flat = {s: W[I(s + "_foot")] for s in "lr"}      # (still_upper) both standing feet, kept flat every frame
 
     def align(a, b):
         n = lambda v: [c / math.sqrt(dot(v, v)) for c in v]
@@ -1985,8 +2011,10 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
         for s, out in (("l", 1), ("r", -1)):
             leg = (s + "_femur", s + "_tibia", s + "_foot")
             kx = end(fk(W), s + "_femur")[0]
-            W = next(M for M in (rot(W, leg, fa.axis_angle(up, a)) for a in (legs_out, -legs_out))
-                     if out * end(fk(M), s + "_femur")[0] > out * kx + 0.1)
+            a = next(a for a in (legs_out, -legs_out)
+                     if out * end(fk(rot(W, leg, fa.axis_angle(up, a))), s + "_femur")[0] > out * kx + 0.1)
+            W = rot(W, leg, fa.axis_angle(up, a))
+            flat[s] = fa._mul(fa.axis_angle(up, a), flat[s])                 # (the flat foot turned out too)
     if lift:                                         # left leg up: thigh from knee / 2 to lift[0] forward,
         hip_a, out_a = lift                          # turned lift[1] out; shin down, foot level
         h_, o_ = math.radians(hip_a), math.radians(out_a)        # thigh: hip_a forward of straight down,
@@ -2087,6 +2115,24 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             h0 = dot(end(fk(Wt, rt), "head"), fwd)
             Wt = next(M for M in (rot(Wt, upper, fa.axis_angle(side, a * EDGE_LEAN_BACK * e)) for a in (1, -1))
                       if dot(end(fk(M, rt), "head"), fwd) < h0)
+        if still_upper:                                                        # (user) feet flat on the floor
+            for s in "lr":
+                Wt[I(s + "_foot")] = flat[s]
+        if still_upper and e > 1e-9:                                           # neck back where frame 0 has it
+            chest_up = upper - {"hip"}
+            n0 = dot(E0[I("chest")], fwd)
+            sense = next(a for a in (1, -1)
+                         if dot(end(fk(rot(Wt, chest_up, fa.axis_angle(side, a * 5)), rt), "chest"), fwd) <
+                         dot(end(fk(Wt, rt), "chest"), fwd))
+            lo_, hi_ = 0.0, 60.0
+            for _ in range(30):
+                mid = (lo_ + hi_) / 2
+                ahead = dot(end(fk(rot(Wt, chest_up, fa.axis_angle(side, sense * mid)), rt), "chest"), fwd) > n0
+                lo_, hi_ = (mid, hi_) if ahead else (lo_, mid)
+            Wt = rot(Wt, chest_up, fa.axis_angle(side, sense * (lo_ + hi_) / 2))
+            Wt = rot(Wt, {"head"}, fa.axis_angle(side, -sense * (lo_ + hi_) / 2))    # the head level again
+            assert abs(dot(end(fk(Wt, rt), "chest"), fwd) - n0) < 0.02, "upper body still"
+            assert math.dist(end(fk(Wt, rt), "head"), E0[I("head")]) < 0.5, "head still"
         for s, out in (("l", 1), ("r", -1)) if hold else ():                  # hands on her head
             wrist, hd, _ = grips[s]
             Fh = fk(Wt, rt)
@@ -2679,7 +2725,7 @@ def apply(ctx):
     _cloud_stand(ctx, CLOUD_BED["standlow"], arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, step=HEAD_STEP,
                  thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, lean=HEAD_LEAN, elbows_out=HEAD_ELBOWS_OUT, legs_out=HEAD_LEGS_OUT,
                  hold=("badd.hrc", "dzbk.a", HEAD_HOLD_GAP,
-                                                                     HEAD_RIGHT / 3.41))   # head (user): ZCTQ, also the movie's
+                                                                     HEAD_RIGHT / 3.41), still_upper=HEAD_STILL_UPPER)   # head (user): ZCTQ, also the movie's
     for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)
         _cloud_stand(ctx, name, arms=AERITH_CLOUD_ARMS, arms_out=AERITH_CLOUD_IN, elbow_in=AERITH_CLOUD_ELBOW, nframes=n)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_OUT),

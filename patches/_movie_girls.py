@@ -10,6 +10,7 @@ Lines as 670's LINES: "C:" = Cloud, "(...)" = an action; head / head reverse / 6
 GIRLS = [
     dict(key="elena", name="Elena", field="whitebg2", bit=3, hrc="ZELA.HRC", donor=("datiao_6", 10, "EVFE.HRC"),
          prefix="ZY", rate=30,
+         cloud_back={"headrev": 8},      # (user) her head reverse had Cloud too close: 8 further back
          aftermath="Elena\n(Elena wipes her chin, gasping, and\n whispers 'Don't tell Tseng' to the lens.)",
          refuse="“Elena of the Turks? She'd have to be\n head over heels for you first, star.”",
          lines={

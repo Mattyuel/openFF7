@@ -106,5 +106,5 @@ PAUSES = {
                "(She coughs softly, then beams.)\n“Okay! Ready again. Don't hold back, okay?”",
                "(She catches her breath.)\n“Wow... I almost saw the Planet. Keep going!”"],
 }
-PAUSE_FRAMES = (30, 75, 15)        # pulled back before her line; the line; after it
-PAUSE_ODDS = 1                     # a pause when RANDOM (0-255) < this, checked every physics tick
+PAUSE_FRAMES = (0, 75, 15)         # before her line (user: shown the moment it happens); the line; after it
+PAUSE_ODDS = 2                     # a pause when RANDOM (0-255) < this, checked every physics tick (user: was 1)

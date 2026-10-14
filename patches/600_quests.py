@@ -233,9 +233,40 @@ def _marker_branch(giver, offer, accepted, none):
     ops = []
     for q in giver["quests"]:
         nxt = asm.nop()
-        ops += [jump_if(state(q), "==", DONE, nxt),
-                jump_if(state(q), "==", NEW, offer), asm.goto(accepted), nxt]
+        ops += [jump_if(state(q), "==", DONE, nxt)]
+        if q.get("gate"):                        # (external) offered only when its gate holds too
+            new = asm.nop()
+            ops += [jump_if(state(q), "==", NEW, new), asm.goto(accepted), new] + gate_ops(q, none) + [asm.goto(offer)]
+        else:
+            ops += [jump_if(state(q), "==", NEW, offer), asm.goto(accepted)]
+        ops.append(nxt)
     return ops + [asm.goto(none)]
+
+
+def gate_ops(q, target):
+    """Ops jumping to `target` unless quest q's `gate` conditions all hold."""
+    ops = []
+    for kind, v, value in q.get("gate", []):
+        if kind == "eq":
+            ops.append(jump_if(v, "!=", value, target))
+        else:
+            ops += [asm.if_byte(v, "bit_on", b, target) for b in value]     # (skips when a bit is off)
+    return ops
+
+
+def _quest(qid):
+    return next(q for g in GIVERS for q in g["quests"] if q["id"] == qid)
+
+
+def quest_state(qid):
+    """(user) For external givers' patches: the state var of quest `qid` (NEW 0, ACCEPTED 2, DONE 4)."""
+    return state(_quest(qid))
+
+
+def reward_ops(sec, qid):
+    """(user) For external givers' patches: the reward ops (gil, Sources, the received line)."""
+    q = _quest(qid)
+    return _reward(sec, next(g for g in GIVERS if q in g["quests"]), q)
 
 
 def _tint(rgb):
@@ -553,10 +584,11 @@ def apply(ctx):
         field = g["field"]
         assert len(g["name"]) <= 8, g["name"]
         pos = _spot(ctx, field, *g["at"])
-        model = copy_model(ctx, field, *g["model"])
-        add_npc(ctx, field, g["name"], model, pos, g["dir"], _talk(g, _ride(ctx, g)))
+        if not g.get("external"):                # (external: the NPC is built by its own patch)
+            model = copy_model(ctx, field, *g["model"])
+            add_npc(ctx, field, g["name"], model, pos, g["dir"], _talk(g, _ride(ctx, g)))
         by_field.setdefault(field, []).append((g, pos))
-        if "companion" in g:
+        if "companion" in g and not g.get("external"):
             _add_companion(ctx, g)
     for field, givers in by_field.items():
         _add_markers(ctx, field, givers)

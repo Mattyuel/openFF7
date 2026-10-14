@@ -588,6 +588,10 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_ride(ctx, giver)` A giver's `ride` (after all their quests): a choice to MAPJUMP to
 - `_talk(giver, ride=None)` 
 - `_marker_branch(giver, offer, accepted, none)` Ops jumping to `offer` / `accepted` (the giver's first quest that isn't
+- `gate_ops(q, target)` Ops jumping to `target` unless quest q's `gate` conditions all hold.
+- `_quest(qid)` 
+- `quest_state(qid)` (user) For external givers' patches: the state var of quest `qid` (NEW 0, ACCEPTED 2, DONE 4).
+- `reward_ops(sec, qid)` (user) For external givers' patches: the reward ops (gil, Sources, the received line).
 - `_tint(rgb)` 
 - `_marker_loop(entries, offer, accepted)` Main loop of a field's marker entity: every 10 frames the first of
 - `_spot(ctx, field, x, y)` 
@@ -623,6 +627,7 @@ Honey Bee Girl recruitment.
 - `_req(ent, slot, wait=True)` 
 - `_arith(op, dst, src)` PLUS2 0x86 / MINUS2 0x88 / MUL2 0x8A [banks][dst][u16 src]: dst word op= src
 - `_collect(sec, end)` Income since the last collection: total stars of the hired girls x
+- `_quests()` 
 - `_hired(i)` 
 - `_window(text, win=0, x=8, y=8)` 
 - `_say(sec, text, win=0, x=8, y=8)` 
@@ -660,7 +665,7 @@ Honey Bee Girl recruitment.
 - `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.
-- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
+- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0, still_upper=False)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
 - `_cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
@@ -754,6 +759,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 ## `patches/670_movie.py`
 The movie minigame (user's design).
 
+- `_quests()` 
 - `_hb()` 
 - `_dates()` 
 - `_bare_ruby(ctx)` ZRHA.HRC: cbfe.hrc with the BARE parts copied (rsd ZRHB.., p ZRIB..).
@@ -793,6 +799,7 @@ The movie minigame (user's design).
 - `_spot_or(mesh, x, y, z)` (x, y, z, tri): the floor / bed under (x, y) if any (its height + z), else (x, y, z) on the
 - `_group(ctx, back)` (user) The group shoot: see `_movie_group`.
 - `_wall_market(ctx, focus)` 
+- `_terminal(ctx)` (user) The Item Store terminal (mkt_ia line00 script 4, OK at the console): where the gun
 - `apply(ctx)` 
 
 ## `patches/675_standard_bodies.py`
@@ -898,4 +905,4 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 - `line_across(ctx, field, x, y, overhang=30, reach=800)` A LINE ((x1, y1, z1), (x2, y2, z2)) through (x, y) across the floor at
 - `add_line(ctx, field, name, p1, p2, on_cross, init_extra=())` Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
 - `add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=())` Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk
-- `reuse_npc(ctx, field, entity, donor, pos, direction, talk)` An NPC in a field already at 16 models: it takes over entity `entity`
+- `reuse_npc(ctx, field, entity, donor, pos, direction, talk, init_extra=(), main=None)` An NPC in a field already at 16 models: it takes over entity `entity`

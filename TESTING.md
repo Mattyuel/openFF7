@@ -410,6 +410,25 @@ Existing saves load, but they keep their own story progress; use a new game.
   a girl whose devoted scene you've seen shows a "*" after her name (written into the menu text in
   memory by a new field opcode, 0x1D: check it appears/disappears correctly and nothing else in the
   text changes).
+- **Cameraman moved + three new quests** (new; untested in-game, user): the cameraman and his
+  co-star (Ruby, later Skye) now stand in the **Sector 7 station, lower platform, centre** (no longer
+  in Wall Market); after a shoot you land just below him. A star shows over him from the start:
+  **"Late Night Viewing"**: he sells a video tape for 20 gil (refuses if you have less; the tape is
+  key item "Video Tape"). Watch it on the **Item Store terminal in Wall Market** (where the gun used to
+  fire: the gun is gone; without the tape the terminal just has a slot): "Insert the tape." shows six
+  narration pages. Back to him: "What did you think?" (three answers, his reply), 100 gil + a Source.
+  Only then (and with all 20 kids) does he offer the shoot: **"Lights, Camera..."** is offered (star)
+  then, starts when you accept, and counts on the return (a CUT counts too); his next talk hands it in
+  (1,000 gil + a Source; your cut comes on a later talk as before). **"Talent Scout"**: taking the
+  Honey Bee manager's job starts it, hiring the first girl completes it, the manager hands it in
+  (500 gil + a Source); an old save that already has the job gets it on the next talk (done at once
+  if a girl is hired). Check the star/heart over each of them, the Quests list, the tape in Key
+  Items, and the terminal.
+- **Group switch + head pose** (new; untested in-game, user): in the group shoot each girl's 15 s now
+  count from the fade-in (the switch no longer eats her time; same for the one-girl shoot's
+  positions) and the switch is quicker (everyone placed at once). Head (Honey Bee, minigame, group):
+  only Cloud's pelvis thrusts; his chest swings back about it so his shoulders, head and hands stay
+  still (checked offline: head and hands move < 0.5 model units per stroke, the pelvis 3).
 - **Minigame pauses** (new; untested in-game, user): in head, head reverse and 69 (and the group shoot)
   there's a small chance (~once every 25 s) the girl stops: both pull back and hold, she says a line
   (catching her breath / a reflex, urging him on), then they carry on. The meter is frozen meanwhile

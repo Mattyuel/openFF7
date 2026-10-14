@@ -46,7 +46,7 @@ from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOV
 import _movie_girls as MG
 import _movie_group as GR
 from _recruit import sound
-from _travel import CHOICE, add_npc, beside, screen_step
+from _travel import CHOICE, beside, reuse_npc, screen_step
 
 from ff7 import asm
 from ff7.camera import Camera, facing_screen, screen_range
@@ -54,8 +54,16 @@ from ff7.models import ModelLoader
 from ff7.script import Op, Script
 from ff7.walkmesh import Walkmesh
 
-FIELD, BASE, WALL = "whitebg1", "mds7_w3", "mrkt2"
-CAMERA_AT, RUBY_AT = (310, 378), (386, 314)          # mrkt2: right of the item shop (rendered)
+FIELD, BASE, WALL = "whitebg1", "mds7_w3", "mds7st3"
+# (user) the Sector 7 station's lower platform, centre (was Wall Market, mrkt2); mds7st3 is at 16
+# models, so they take over the Avalanche members the pinned moment keeps hidden (`TAKEOVER`)
+CAMERA_AT, RUBY_AT = (-3000, 2380), (-2760, 2520)
+TAKEOVER = {"filmman": "aval", "ruby": "avaf", "skye": "avaw"}
+# (user) "Late Night Viewing": the tape he sells (20 gil, key item 63, free: 51-62 are 625's gifts)
+# is watched on the Item Store terminal in Wall Market (mkt_ia's line00 script 4: the gun)
+TAPE_PRICE, TAPE_ITEM, TERMINAL = 20, 63, "mkt_ia"
+TAPE_BIT = ((1, 64 + TAPE_ITEM // 8), TAPE_ITEM % 8)
+TAPE_NAME, TAPE_DESC = "Video Tape", "An unlabelled tape. Play it on a terminal."
 CAMERA_DONOR, RUBY_DONOR = ("junone2", 6), ("jun_i2", 6)
 CAMERA_IDLE, CAMERA_FILM = "FDCB.yos", "FFBC.yos"    # camera held low / at his eye
 # (user) the shoot's intro: standing at the foot of the left bed (it starts at y -140), the camera
@@ -198,6 +206,11 @@ BARE = {"hip", "uparm", "femur", "tibia", "foot"}
 BOOT, FOOT = 0.6, 0.6
 BUTT = -2.4                               # the skirt's back hem corners (were -3.15: a sharp point; user's sketch)
 LIMB_TOP = 1.3                            # the skirt's box round each thigh: this x the thigh's half width
+
+
+def _quests():
+    from importlib import import_module
+    return import_module("600_quests")
 
 
 def _hb():
@@ -530,6 +543,7 @@ def _pause_ops(hb, sec, actors, hush, lines, cond):
     (NEXT) extended by the pause, so it costs nothing."""
     no = asm.nop()
     w0, w1, w2 = GR.PAUSE_FRAMES
+    assert w0 == 0                               # (user) her line the moment it happens: no wait first
 
     def block(key):
         out = []
@@ -539,8 +553,8 @@ def _pause_ops(hb, sec, actors, hush, lines, cond):
                         asm.message(3, sec.add_string(_encode(GR.NAMES[key] + "\n" + t)))])
         return _chain(PCNT, out)
     return cond(no) + [Op(bytes([0x99, RND2[0], RND2[1]])), asm.if_byte(RND2, "<", GR.PAUSE_ODDS, no),
-                       asm.setbyte(RUN, 0), Op(b"\x54\x01")] + [hb._req(e, 4) for e in actors] + \
-        [hb._w(w0), Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
+                       asm.setbyte(RUN, 0), Op(b"\x54\x01")] + [hb._req(e, 4, wait=False) for e in actors] + \
+        [Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
         lines(block) + [hb._w(w2), hb._arith(0x86, NEXT, w0 + w1 + w2 + 10)] + \
         [hb._req(e, 2) for e in actors] + [asm.setword(PR, 0), asm.setword(NT, FR), hb._arith(0x86, NT, TICK),
                                            asm.setbyte(RUN, 1), no]
@@ -1166,6 +1180,12 @@ def _shoot(ctx, back, cast=None):
     for pos in POSITIONS:
         g = _spot(mesh, *pos["girl"][1][:2], pos["girl"][1][2], pos["girl"][2])
         c = _spot(mesh, *pos["cloud"][1][:2], pos["cloud"][1][2], pos["cloud"][2])
+        back_ = (cast or {}).get("cloud_back", {}).get(pos["name"])
+        if back_:                                            # (user) this girl: Cloud further from her
+            vx, vy = c[0] - pos["girl"][1][0], c[1] - pos["girl"][1][1]
+            n_ = math.hypot(vx, vy)
+            c = _spot(mesh, round(c[0] + vx / n_ * back_), round(c[1] + vy / n_ * back_), pos["cloud"][1][2],
+                      pos["cloud"][2])
         cx, cy, camdir = pos["camera"]
         cm = _spot(mesh, cx, cy)
         focus = _spot(mesh, *pos["girl"][1][:2], 0, pos["girl"][2])
@@ -1459,7 +1479,8 @@ def _shoot(ctx, back, cast=None):
     main += pause                                    # (user) now and then she needs a moment
     # the next position each minute
     stay = asm.nop()
-    main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, MINUTE),
+    # (user: the switch cut into the next position's time) its time counts from the fade-in
+    main += [asm.if_word(FR, ">=", NEXT, stay),
              asm.if_byte(P, "<", len(POSITIONS) - 1, wrap),
              # (user: the switch showed awkward, late model moves) paused and hidden by a fade; P moves on
              # only once the screen is black (user: things changed before the fade: the cursor and the
@@ -1469,7 +1490,7 @@ def _shoot(ctx, back, cast=None):
              Op(bytes([0x85, P[0] << 4, P[1], 1])),
              asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
             [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
-             hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1),
+             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, MINUTE), asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
     def out():                                   # jump back; then wait (a main that reaches RET starts over)
@@ -1690,7 +1711,8 @@ def _group(ctx, back):
         g = _spot(mesh, gx, gy, 0, True)
         assert abs(g[2] - top) < 2, ("not on bed", b, g)
         girl_at[6 + k] = g
-        cloud_at[6 + k] = _spot_or(mesh, gx, gy - GR.HEADREV_CLOUD, top - GR.BEDS[0][2])   # (raised as the bed)
+        back_ = next((g_.get("cloud_back", {}).get("headrev", 0) for g_ in MG.GIRLS if g_["key"] == GR.ORDER[k]), 0)
+        cloud_at[6 + k] = _spot_or(mesh, gx, gy - GR.HEADREV_CLOUD - back_, top - GR.BEDS[0][2])   # (raised as the bed)
         gdirs[6 + k] = cdirs[6 + k] = 0x80
         cam_at[6 + k] = _spot(mesh, *GROUP_CAM[1 + b])
     for q in range(2 * n_g):
@@ -1850,7 +1872,9 @@ def _group(ctx, back):
     girl_ents = [ents[key] for key in GR.ORDER]
     pause = _pause_ops(hb, sec, [ents["cloudb"]] + girl_ents, ents["hush3"],
                        lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [])
-    place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"], ents["gauge"])]
+    # (user: a long delay before the fade-in) all at once, not each waited on in turn (11 entities)
+    place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"],
+                                                             ents["gauge"])] + [hb._w(6)]
 
     def pick():                                       # E = a girl not yet used this part, at random; P = q
         found, ops = asm.nop(), [Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], n_g]))]
@@ -1903,14 +1927,15 @@ def _group(ctx, back):
     main += pause                                    # (user) now and then she needs a moment
     # the next girl every TURN frames; after six, part two; after twelve, the wrap
     stay, part2 = asm.nop(), asm.nop()
-    main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, GR.TURN),
+    # (user: a long switch cut into the next girl's turn) her turn counts from the fade-in
+    main += [asm.if_word(FR, ">=", NEXT, stay),
              asm.if_byte(TN, "<", 2 * n_g - 1, wrap),
              asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C"),
              Op(bytes([0x85, TN[0] << 4, TN[1], 1])),
              asm.if_byte(TN, "==", n_g, part2), asm.setbyte(PH, 1), asm.setbyte(USED, 0), part2] + pick() + \
             [asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
             [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
-             hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1),
+             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN), asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
 
@@ -1948,23 +1973,17 @@ def _wall_market(ctx, focus):
     hb = _hb()
     f = ctx.field(WALL)
     mesh = Walkmesh(f.section("walkmesh"))
-    loader = ModelLoader(f.section("models"))
-    cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
+    donor = lambda d: ModelLoader(ctx.field(d[0]).section("models")).models[d[1]]
     # (user) still here, the camera at his side: a one-frame copy of FDCB's first frame as his
-    # default anim (a held CANM would end when he turns to talk)
+    # default anim (a held CANM would end when he turns to talk); appended to his model's anims
+    # once the entity is taken over (below)
     from ff7 import fieldanim as fa
     still = fa.Anim(ctx.char_file(CAMERA_IDLE.split(".")[0].lower() + ".a"))
     still.frames = still.frames[:1]
     ctx.char_file(CAMERA_STILL.split(".")[0].lower() + ".a", still.build())
-    loader.models[cm] = ModelLoader.with_anims(loader.models[cm], [CAMERA_STILL])
-    idle = ModelLoader.anims(loader.models[cm]).index(CAMERA_STILL)
-    ru = loader.add_from(ModelLoader(ctx.field(RUBY_DONOR[0]).section("models")), RUBY_DONOR[1])
-    sy = loader.add_from(ModelLoader(ctx.field(SKYE_DONOR[0]).section("models")), SKYE_DONOR[1])
-    # (user: she sat) her donor's default anim is a sitting pose: the dancer's stand (same skeleton)
-    loader.models[sy] = ModelLoader.with_anims(loader.models[sy], ["DXID.tor"])
-    stand = len(ModelLoader.anims(loader.models[sy])) - 1
-    f.set_section("models", loader.build())
-    assert len(loader.models) <= 16, len(loader.models)
+    idle = len(ModelLoader.anims(donor(CAMERA_DONOR)))
+    # (user: she sat) Skye's donor's default anim is a sitting pose: the dancer's stand (same skeleton)
+    stand = len(ModelLoader.anims(donor(SKYE_DONOR)))
     from ff7.camera import facing_screen
     cam = Camera(f.sections[1])
     spots = {}
@@ -1980,13 +1999,68 @@ def _wall_market(ctx, focus):
         who = {"ruby": [asm.if_byte(MOVIE_GIRL, "bit_off", 0, hide)],
                "skye": [asm.if_byte(MOVIE_GIRL, "bit_on", 0, hide),
                         asm.if_byte(MOVIE_RANK[1][0], "bit_off", MOVIE_RANK[1][1], hide)]}[girl]
-        return _unlocked_or(hide) + who + list(extra) + [asm.goto(shown), hide, Op(b"\x7E\x01"), Op(b"\xC7\x01"),
+        return _unlocked_or(hide) + [asm.if_byte(tape_q, "==", qx.DONE, hide)] + who + list(extra) + [asm.goto(shown), hide, Op(b"\x7E\x01"), Op(b"\xC7\x01"),
                                                           hb._visi(0), shown]
+
+    qx = _quests()
+    tape_q, (tape_c, _) = qx.quest_state("film_tape"), qx.quest_counter("film_tape")
+    first_q, (first_c, _) = qx.quest_state("film_first"), qx.quest_counter("film_first")
+
+    def tape(sec, say, end):
+        """(user) "Late Night Viewing", before anything else: he sells a video tape for 20 gil
+        (the quest starts), asks after it until it is watched, then what you thought (done)."""
+        ops, done, sold, watched = [], asm.nop(), asm.nop(), asm.nop()
+        ops += [asm.if_byte(tape_q, "!=", qx.DONE, done), asm.if_byte(tape_q, "==", qx.NEW, sold)]
+        ops += say("“Psst. Hey, pal. You look like a man of\n refined tastes. I've got a little something\n"
+                   " you won't find on any store shelf.”")
+        ask, first = hb._ask(sec, "Cameraman\n“One video tape, my own work. Twenty gil.\n"
+                                  " Strictly for the... discerning viewer.”", ["I'll take it.", "No thanks."])
+        no, short, ok = asm.nop(), asm.nop(), asm.nop()
+        gl, gh = (6, 0xF8), (6, 0xFA)            # temp words for CHGLD (as 625 / 640)
+        ops += ask + [asm.if_byte(CHOICE, "==", first, no),
+                      Op(bytes([0x3B, 0x66, gl[1], gh[1]])),                    # CHGLD lo, hi
+                      asm.if_word(gh, "==", 0, ok), asm.if_word(gl, ">=", TAPE_PRICE, short), ok,
+                      Op(bytes([0x3A, 0x00]) + struct.pack("<I", TAPE_PRICE)),  # GOLDD
+                      asm.biton(*TAPE_BIT), sound(0x168),
+                      asm.setbyte(tape_q, qx.ACCEPTED), asm.setbyte(tape_c, 0)]
+        ops += hb._say(sec, "Received “%s”!" % TAPE_NAME)
+        ops += say("“Pleasure doing business. Now, you can't\n exactly play it on a train... The Item Store\n"
+                   " in Wall Market has a terminal. Try that.”")
+        ops += say("“Then come back and tell me what you\n thought. An artist values his critics.”")
+        ops += [asm.goto(end), short] + say("“Twenty gil, pal. Come back when your\n pockets aren't so light.”")
+        ops += [asm.goto(end), no] + say("“Suit yourself. You know where I am.”") + [asm.goto(end)]
+        ops += [sold, asm.if_byte(tape_c, "<", 1, watched)]
+        ops += say("“Watched it yet? The Item Store in Wall\n Market has a terminal that'll play it.\n"
+                   " Don't let the shopkeeper see you.”") + [asm.goto(end)]
+        ops += [watched] + say("“Well? You watched it, didn't you?\n I can see it in your eyes. What did\n you think?”")
+        ask, first = hb._ask(sec, "Cameraman\n“Be honest. I can take it.”",
+                             ["“A masterpiece.”", "“Those girls were... something.”", "“I could do better.”"])
+        nxt1, nxt2, said = asm.nop(), asm.nop(), asm.nop()
+        ops += ask + [asm.if_byte(CHOICE, "==", first, nxt1)]
+        ops += say("“A masterpiece! Ha! I knew you had\n taste the moment I saw you.”") + [asm.goto(said), nxt1]
+        ops += [asm.if_byte(CHOICE, "==", first + 1, nxt2)]
+        ops += say("“Weren't they? Every one a natural.\n The camera loves them, and so do\n the customers.”") + [asm.goto(said), nxt2]
+        ops += say("“Ha! Big talk! ...But you know, you've\n got the look. The build, the hair.\n Maybe you could, at that.”")
+        ops += [said] + say("“Tell you what. I'm always looking for\n new talent. A man with a way with the\n"
+                            " ladies, the kind every girl knows by name.”")
+        ops += say("“Find me a man like that, or be one,\n and we'll make movies together.\n Here, for your trouble.”")
+        ops += qx.reward_ops(sec, "film_tape") + [asm.setbyte(tape_q, qx.DONE), asm.goto(end), done]
+        return ops
+
+    def first_video(sec, say, end):
+        """(user) "Lights, Camera...": the first shoot's quest, handed in on the next talk."""
+        ops, no_ = [], asm.nop()
+        ops += [asm.if_byte(first_q, "==", qx.ACCEPTED, no_), asm.if_byte(first_c, ">=", 1, no_)]
+        ops += say("“Your first video, star! The whole crew's\n talking about it. Here's a little bonus,\n"
+                   " on top of your cut.”")
+        ops += qx.reward_ops(sec, "film_first") + [asm.setbyte(first_q, qx.DONE), asm.goto(end), no_]
+        return ops
 
     def talk(sec):
         say = lambda t: hb._say(sec, "Cameraman\n" + t)
         end, pitch, wait_ = asm.nop(), asm.nop(), asm.nop()
-        ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8), asm.if_byte(MOVIE_STATE, "!=", 0, pitch),
+        ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + first_video(sec, say, end) + \
+            [asm.if_byte(MOVIE_STATE, "!=", 0, pitch),
                asm.setword(EL, HB_MINUTES), hb._arith(0x88, EL, MOVIE_AT), asm.if_word(EL, ">=", PAY_DELAY, wait_)]
         # (user) Skye's videos pay double (MOVIE_GIRL bit 1: she was this shoot's co-star; it
         # stays set until the next shoot is accepted, after this payment)
@@ -2012,7 +2086,7 @@ def _wall_market(ctx, focus):
         # (user) he stands here from the start; until every Honey Bee kid is born he's only
         # scouting for a man with a way with the ladies
         told, fresh, scout = asm.nop(), asm.nop(), asm.nop()
-        ops += [pitch] + _unlocked_or(scout)
+        ops += [pitch] + tape(sec, say, end) + _unlocked_or(scout)
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
         for t_ in NEWS[1]:                       # (user) once (if the arrival didn't tell it)
             ops += say(t_)
@@ -2024,6 +2098,8 @@ def _wall_market(ctx, focus):
         no = asm.nop()
         ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.bitoff(MOVIE_GIRL, 1)]
         ops += [asm.bitoff(MOVIE_GIRL, g["bit"]) for g in MG.GIRLS]
+        new_ = asm.nop()                         # (user) "Lights, Camera..." starts with the first shoot
+        ops += [asm.if_byte(first_q, "==", qx.NEW, new_), asm.setbyte(first_q, qx.ACCEPTED), asm.setbyte(first_c, 0), new_]
         # (user, since) the co-stars come one at a time, by the star rank: Ruby (0), Skye, Elena,
         # Scarlet, Tifa, Aerith; (user) every one unlocked so far stays on the list, newest first
         # (rank 0: Ruby, no list). (The old list's Skye test was inverted: every other pick shot
@@ -2084,27 +2160,35 @@ def _wall_market(ctx, focus):
     news[1] += [asm.biton(MOVIE_GIRL, 2)]        # (told: not again on the next talk)
     debrief = [asm.if_byte(MOVIE_STATE, "!=", 2, go), asm.if_byte(MOVIE_STATE, "!=", 3, go),
                asm.if_byte(MOVIE_STATE, "==", 4, skip), go, hb._uc(1), hb._menu(1),
-               asm.if_byte(MOVIE_STATE, "!=", 4, news_only), hb._window(debrief_text), asm.message(0, tid),
+               asm.if_byte(MOVIE_STATE, "!=", 4, news_only), hb._window(debrief_text), asm.message(0, tid)] + \
+              qx.count_ops("film_first") + [
                news_only, asm.if_byte(MOVIE_STATE, "!=", 2, no_news)] + _by_rank(news) + \
               [no_news, asm.if_byte(MOVIE_STATE, "==", 4, owed), asm.setbyte(MOVIE_STATE, 0), asm.goto(fin),
                owed, asm.setbyte(MOVIE_STATE, 1), fin, hb._menu(0), hb._uc(0), skip]
     f.sections[0] = sec0.build()
     cdir = facing_screen(cam, *spots["cam"][:3], (0, 1))
-    add_npc(ctx, WALL, "filmman", cm, spots["cam"], cdir, talk,
-            init_extra=[Op(bytes([0xA2, idle, 1])), Op(bytes([0xAE, idle, 1]))], main=debrief)   # (user) always there
+    cm = reuse_npc(ctx, WALL, TAKEOVER["filmman"], CAMERA_DONOR, spots["cam"], cdir, talk,
+                   init_extra=[Op(bytes([0xA2, idle, 1])), Op(bytes([0xAE, idle, 1]))], main=debrief)   # (user) always there
 
     def ruby_talk(sec):
         return [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + \
             hb._say(sec, "Ruby\n“So you're my co-star? Don't disappoint\n me, handsome.”") + [hb._uc(0), asm.ret()]
-    add_npc(ctx, WALL, "ruby", ru, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)), ruby_talk,
-            init_extra=hidden("ruby"))
+    reuse_npc(ctx, WALL, TAKEOVER["ruby"], RUBY_DONOR, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)),
+              ruby_talk, init_extra=hidden("ruby"))
 
     def skye_talk(sec):
         return [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + \
             hb._say(sec, "Skye\n“So you're the famous star? Mmm...\n I hope you can keep up with me.”") + \
             [hb._uc(0), asm.ret()]
-    add_npc(ctx, WALL, "skye", sy, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)), skye_talk,
-            init_extra=hidden("skye", [Op(bytes([0xA2, stand, 1])), Op(bytes([0xAE, stand, 1]))]))     # (user) Ruby's place once she has retired
+    sy = reuse_npc(ctx, WALL, TAKEOVER["skye"], SKYE_DONOR, spots["ruby"], facing_screen(cam, *spots["ruby"][:3], (0, 1)),
+                   skye_talk, init_extra=hidden("skye", [Op(bytes([0xA2, stand, 1])), Op(bytes([0xAE, stand, 1]))]))   # (user) Ruby's place once she has retired
+    loader = ModelLoader(f.section("models"))   # the new anims on the taken-over model entries
+    loader.models[cm] = ModelLoader.with_anims(loader.models[cm], [CAMERA_STILL])
+    loader.models[sy] = ModelLoader.with_anims(loader.models[sy], ["DXID.tor"])
+    assert ModelLoader.anims(loader.models[cm]).index(CAMERA_STILL) == idle
+    assert ModelLoader.anims(loader.models[sy]).index("DXID.tor") == stand
+    f.set_section("models", loader.build())
+    assert len(loader.models) <= 16, len(loader.models)
     # where the shoot sends you back: beside him, facing him
     x, y, z, t = spots["cam"]
     bx, by, bz, bt = beside(ctx, WALL, x, y, t, 40)
@@ -2112,7 +2196,57 @@ def _wall_market(ctx, focus):
     return bx, by, bz, bt, _dates()._dir_to(x - bx, y - by)
 
 
+# (user) what you watch on the tape: "some text describes what you watch in implicit detail"
+TAPE_SCENE = [
+    "(The screen flickers. A title card in pink\n letters: “HONEY BEE NIGHTS, Vol. 1”.)",
+    "(A redhead in a black jacket sits on the end\n of a bed, smiling at the camera. She slips\n the jacket off one shoulder, slowly.)",
+    "(A young man walks in. She pulls him down by\n his tie. The jacket hits the floor, then\n everything else does.)",
+    "(The camera lingers. Bare skin, tangled\n sheets, her hands gripping the headboard.\n The bed creaks in time with her gasps.)",
+    "(She ends up on top, head thrown back,\n hair everywhere. The shaky camera can\n barely keep up with her.)",
+    "(Fade to black. Then, in wobbly letters:\n “A film by the Cameraman. Cast wanted.”)",
+]
+
+
+def _terminal(ctx):
+    """(user) The Item Store terminal (mkt_ia line00 script 4, OK at the console): where the gun
+    fired, the tape plays: with the Video Tape held, "Insert the tape." shows `TAPE_SCENE` and
+    counts "Late Night Viewing"; without it, a line about the slot. The gun is gone."""
+    hb, qx = _hb(), _quests()
+    k2 = ctx.kernel2()
+    from ff7.text import decode
+    assert decode(k2.get(15, TAPE_ITEM)) == "" and decode(k2.get(7, TAPE_ITEM)) == "", TAPE_ITEM    # unused
+    k2.set(15, TAPE_ITEM, _encode(TAPE_NAME))
+    k2.set(7, TAPE_ITEM, _encode(TAPE_DESC))
+    f = ctx.field(TERMINAL)
+    sec = Script.parse(f.sections[0])
+    ent = sec.entity_index("line00")
+    ops = sec.script_ops(ent, 4)
+    menu = next(o for o in ops if o.raw == b"\x4A\x01")                  # MENU2 01 (UC 01 before it)
+    i = ops.index(menu)
+    back = next(o for o in ops[i:] if o.raw == b"\x33\x00")               # UC 00 (MENU2 00, RET)
+    guns = [o for o in ops[i:ops.index(back)] if o.op == 0x03 and o.raw[1] == 0x04]
+    assert len(guns) >= 2, [o.raw.hex() for o in guns]                   # REQEW event (gun / Cid)
+    none, out = asm.nop(), asm.nop()
+    new = [asm.if_byte(TAPE_BIT[0], "bit_on", TAPE_BIT[1], none)]
+    ask, first = hb._ask(sec, "(A video terminal. There's a slot for a\n tape below the screen.)",
+                         ["Insert the tape.", "Leave it."])
+    new += ask + [asm.if_byte(CHOICE, "==", first, out)]
+    for t_ in TAPE_SCENE:
+        new += hb._say(sec, t_)
+    new += qx.count_ops("film_tape")
+    new += hb._say(sec, "{CLOUD}\n“...”") + [asm.goto(back)]
+    new += [none] + hb._say(sec, "(A video terminal. There's a slot for a\n tape below the screen.)") + [out, asm.goto(back)]
+    sec.insert_before(ops[i + 1], new)
+    key = ops[0]                                 # IFKEYON's jump is 1 byte: it hops via a goto now
+    assert key.op == 0x31, key
+    hop, cont = asm.goto(key.target), asm.nop()
+    sec.insert_before(ops[1], [asm.goto(cont), hop, cont], retarget=False)
+    key.target = hop
+    f.sections[0] = sec.build()
+
+
 def apply(ctx):
+    _terminal(ctx)
     _bare_ruby(ctx)
     _bare_skye(ctx)
     focus = _spot(Walkmesh(ctx.field(BASE).section("walkmesh")), *POSITIONS[0]["girl"][1][:2], 0, True)

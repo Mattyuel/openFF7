@@ -144,13 +144,14 @@ def add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=(
     return ent
 
 
-def reuse_npc(ctx, field, entity, donor, pos, direction, talk):
+def reuse_npc(ctx, field, entity, donor, pos, direction, talk, init_extra=(), main=None):
     """An NPC in a field already at 16 models: it takes over entity `entity`
     (one the pinned moment keeps hidden): that entity's model entry becomes
     `donor` = (field, model index), its init's CHAR is replaced in place by
     CHAR + XYZI + DIR + TALKR and a jump over the rest of the old init (so no
     second CHAR), its main is dropped, its talk is `talk(sec)` and every other
-    script slot becomes RET (calls from other entities do nothing)."""
+    script slot becomes RET (calls from other entities do nothing). `init_extra`: ops after the
+    TALKR; `main`: ops for a new main (default none). Returns the model index."""
     sec = Script.parse(ctx.field(field).sections[0])
     ent = sec.entity_index(entity)
     init = sec.script_ops(ent, 0)
@@ -163,9 +164,9 @@ def reuse_npc(ctx, field, entity, donor, pos, direction, talk):
     ctx.field(field).set_section("models", loader.build())
     ret = next(o for o in init if o.op == 0x00)
     sec.replace(init[0], [Op(bytes([0xA1, model])), xyzi(*pos), Op(bytes([0xB3, 0, direction])),
-                          Op(bytes([0xC5, 0x00, TALK_RADIUS])), asm.goto(ret)])
-    main = init[init.index(ret) + 1]
-    sec.insert_before(main, [asm.ret()], retarget=True)                      # no old main
+                          Op(bytes([0xC5, 0x00, TALK_RADIUS]))] + list(init_extra) + [asm.goto(ret)])
+    old_main = init[init.index(ret) + 1]
+    sec.insert_before(old_main, list(main or []) + [asm.ret()], retarget=True)    # no old main
     body = talk(sec) if callable(talk) else talk
     empty = asm.ret()
     sec.ops.extend([empty] + body)
@@ -173,3 +174,4 @@ def reuse_npc(ctx, field, entity, donor, pos, direction, talk):
     sec.entry[ent] = [empty] * 32
     sec.entry[ent][0], sec.entry[ent][1] = first, body[0]
     ctx.field(field).sections[0] = sec.build()
+    return model
