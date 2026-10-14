@@ -33,7 +33,7 @@ from ff7.script import Op, Script
 from ff7.text import encode
 from ff7.walkmesh import Walkmesh
 
-DEBUG_FLAGS = (1, 213)                  # bit 0: random encounters off (bank 1 213-223 free, see CLAUDE.md)
+DEBUG_FLAGS = (1, 213)                  # bit 0: random encounters off; bit 1: 626's rescue scene always (bank 1 213-223 free, see CLAUDE.md)
 FLAGS_VA = 0xDC08DC + DEBUG_FLAGS[1]    # field var bank 1 base in memory
 WM_ROLL_CALL, WM_ROLL = 0x76760B, 0x767641
 L1, R1 = 0x0004, 0x0008
@@ -136,12 +136,12 @@ def _menu(sec, dests):
     ops += [hb] + _ask(sec, "Honey Bee / Hunter", ["Job + hire all 20 girls", "All affection 0",
                                                    "All affection 10", "All affection 20", "All 12 gifts",
                                                    "All 20 kids", "Hunter points +50", "Star rank +1",
-                                                   "Time +30 min", "Back"])
-    hb_acts = [asm.nop() for _ in range(9)]
+                                                   "Time +30 min", "Rescue scene: always", "Back"])
+    hb_acts = [asm.nop() for _ in range(10)]
     for k, label in enumerate(hb_acts):
         ops += [asm.if_byte(CHOICE, "!=", 1 + k, label)]
     ops += [asm.goto_back(main)]
-    hire, a0, a10, a20, allg, kids, hunt, star, later = hb_acts
+    hire, a0, a10, a20, allg, kids, hunt, star, later, rescue = hb_acts
     hv = HB_HIRED
     ops += [hire, asm.biton(*HB_JOB), asm.setbyte(hv, 0xFF), asm.setbyte((hv[0], hv[1] + 1), 0xFF),
             asm.setbyte((hv[0], hv[1] + 2), 0x0F), asm.goto(done)]
@@ -160,6 +160,8 @@ def _menu(sec, dests):
     # 30 (wrapping: the elapsed difference still comes out +30): the movie cut and the Honey Bee takings
     ops += [later] + [Op(bytes([0x88, v[0] << 4, v[1]]) + struct.pack("<H", 30)) for v in (MOVIE_AT, HB_LAST)]
     ops += [asm.goto(done)]
+    # 626's Wall Market rescue scene on every entry to mrkt3 (DEBUG_FLAGS bit 1)
+    ops += [rescue, asm.biton(DEBUG_FLAGS, 1), asm.goto(done)]
     ops += [done, sound(0x168), asm.goto_back(main)]
     # close: control back, wait for the buttons to be let go
     release = asm.nop()

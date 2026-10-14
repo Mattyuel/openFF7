@@ -281,7 +281,8 @@ GIVERS = [
                     "already eyeing the next pipe.")),
 
     # ---- Wall Market --------------------------------------------------------
-    dict(field="mrkt3", name="madam_m", level=10, model=("mrkt1", 6), at=(81, -262), dir=0,
+    # (user) moved from (81,-262), the lower right corner, for 626's scene outside the inn
+    dict(field="mrkt3", name="madam_m", level=10, model=("mrkt1", 6), at=(-200, -300), dir=0,
          who="Madam M", where="Wall Market, by the Honey Bee Inn",
          quests=[
              dict(id="madam_m", kind="deliver", item=3, count=2, label="Ethers",

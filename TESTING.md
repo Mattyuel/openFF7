@@ -341,6 +341,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   screen (at her seat), turned as before (DIR -21 from "the other way"). Elena sits on the left
   gondola seat in part one. Check: his hand meeting her behind at the slap, the two not overlapping
   (her hips are 4.5 to his right and 7 ahead in model units), her all-fours on the floor.
+- **Honey Bee rescue** (new; untested in-game): with at least one girl hired, entering Wall
+  Market by the Honey Bee Inn has a 1 in 10 chance of a customer slapping one of your girls (a
+  Honey Bee dancer, named in the dialogue) cowering on the ground in the lower right corner (debug
+  build: Honey Bee / Hunter -> "Rescue scene: always"). Talk to him: "Leave her alone!" -> a battle
+  (Bullmotor for now; no escape, losing doesn't end the game). Win: her affection +1, her thanks,
+  fade, both gone. Madam M moved to the lower left. Check: the slap timing/sound, the two not
+  overlapping, that you can reach him to talk (he stands behind her), the battle and the fade.
 - **Movie minigame** (new; untested in-game): the cameraman now stands in Wall Market from the
   start (user); before all 20 Honey Bee kids he only asks whether you know a man with a way with
   the ladies. The shoot needs all 20 kids (debug menu: Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
