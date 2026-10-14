@@ -742,6 +742,12 @@ The movie minigame (user's design).
 - `_unproject(cam, sx, sy, depth)` Field point at screen (sx, sy) (pixels from the background centre) and view depth.
 - `_view_depth(cam, p)` 
 - `_nearest_tri(mesh, x, y)` 
+- `_align(fa, a, b)` The smallest rotation turning direction a into b.
+- `_bob(ctx)` 
+- `_prone(ctx)` 
+- `_joints(ctx, hrc, anim)` Model-space joint ends of frame 0 (y down), plus 'root'.
+- `_off(m, d)` Field (dx, dy, dz) of model point m for an entity with DIR d (faces -z, +x = its left).
+- `_place(ctx, pos)` Spots worked out from both poses: "69" her (head over his pelvis, facing from his head to it),
 - `_shoot(ctx, back)` 
 - `_encode(t)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).

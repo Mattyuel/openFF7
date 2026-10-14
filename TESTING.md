@@ -343,13 +343,17 @@ Existing saves load, but they keep their own story progress; use a new game.
   (confirm button) repeatedly: the gauge at the top (red | green | red; was off the bottom of the screen) and the cursor
   above it; pressing pushes it right, stopping lets it drift left, it has momentum and runs
   away from the middle. Red at either end = "CUT!" and back to Wall Market, no pay (check: talking to him
-  afterwards should offer a new shoot, not the 'come back later' line). Eight
-  positions, one minute each, moving between the beds (mission left bed, cowgirl middle bed,
+  afterwards should offer a new shoot, not the 'come back later' line). Ten
+  positions, 30 s each, moving between the beds (mission left bed, cowgirl middle bed,
   dog right bed, edge and head reverse at the left bed's foot, head on the floor, then "behind"
-  (Scarlet's date pose) at the left bed's foot by the wall and "holding" (Tifa's koala hug) at the right bed's end); the thrust
-  speed follows how fast you press (4 steps). Each position change fades out and in (user). Ruby says a line (window at the bottom; 8 per
+  (Scarlet's date pose) at the left bed's foot by the wall, "holding" (Tifa's koala hug) at the right
+  bed's end, "69" on the middle bed and "prone" on the right bed); the thrust
+  speed follows how fast you press (4 steps). Each position change fades out and in, and the
+  position only changes once the screen is black (user). The cursor is half its old size and the
+  push is now timed by frames (it couldn't be pushed up before): ~2.5 presses/s holds it, faster
+  rises. Ruby says a line (window at the bottom; 8 per
   position, e.g. 'Pull my hair!') every ~2.5 s that closes by
-  itself (~2 s; muffled during head / head reverse). Costa del Sol music. After eight minutes:
+  itself (~2 s; muffled during head / head reverse / 69). Costa del Sol music. After five minutes:
   "That's a wrap", back in Wall Market, he says to come back in half an hour; after 30 play
   minutes his talk pays presses x 10 gil. Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
   and cursor visible and on screen at each bed? the self-closing lines? the bed positions on

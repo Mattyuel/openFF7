@@ -59,18 +59,21 @@ MUSIC = 35                                          # COSTA: Costa del Sol (user
 OK_KEY = 0x220                                      # OK, as every original script tests it: IFKEY (0x61220D) / IFKEYON
                                                     # (0x61225D) with mask bit 0x200 read the field header's +0x78 held /
                                                     # +0x80 new keys, else +0x68 / +0x70; 0x20 alone never fired (user)
-MINUTE = 1800                                       # frames per position (30 fps)
+MINUTE = 900                                        # frames per position (30 fps; user: 30 s each, was a minute)
 SPEEDS = (20, 15, 11, 8)                            # frames per stroke, slowest to fastest
 RATE_STEPS = (30, 60, 95)                           # smoothed press rate thresholds for steps 1-3
-A, B, C, VMAX, DANGER = 5, 6, 50, 45, 100           # physics (tuned in a Python model of the same integer maths)
-TICK_WAIT = 4                                       # frames the director waits per tick (+ its own ~4 turns)
+A, B, C, VMAX, DANGER = 6, 5, 60, 40, 100           # physics (tuned in a Python model of the same integer maths;
+                                                    # user: the cursor wouldn't go up: easier, ~2.5 presses/s holds)
+TICK = 10                                           # frames per physics tick, by the frame count (the director's
+                                                    # own pace varied, and the push per press with it)
 PAY_RATE, PAY_DELAY = 10, 30                        # gil per press; play minutes before the cut
 
 # Positions (user: all six used so far, moving between the beds). Spots are
 # (x, y, dz, DIR); "bed" picks the bed's raised walkmesh piece under (x, y).
 # Offsets from 620's user-tuned layouts, turned to each bed's long axis (y).
 POSITIONS = [
-    dict(name="mission", girl=("DZBT", (-225, -60, 0, 0x00), True), cloud=("ZCTA", (-220, -25, -4, 0x80), True),
+    # (user) she slightly right and down on screen: (-225, -60) -> (-215, -59)
+    dict(name="mission", girl=("DZBT", (-215, -59, 0, 0x00), True), cloud=("ZCTA", (-220, -25, -4, 0x80), True),
          camera=(-130, -60, 0xC0)),                                         # left bed, she lies, head to the pillow
     # middle bed, Cloud's head on the pillow; she (user) a body width to her right (x 0 -> 18): over his line;
     # then (user) slightly lower onto him (raise 18 -> 14) and slightly back (y -87 -> -91: she faces +y);
@@ -96,6 +99,14 @@ POSITIONS = [
     # on his ZCTH); (user) at the end of a bed: the floor off the right bed's front end, side on
     dict(name="holding", girl=("ZRKA", (193, -165, 0, "facing"), False), cloud=("ZCTH", (193, -165, 0, "screen-left"),
          False), camera=(110, -245, None)),
+    # (user) "69": Cloud on his back on the middle bed thrusting (as cowgirl); she on all fours over him the
+    # other way, knees by his head, her head over his pelvis, bobbing (ZR6A: dzbf + a head bob, `_bob`). Her
+    # spot and DIR come from both poses (`_place`); muffled
+    dict(name="69", girl=("ZR6A", "69", True), cloud=("ZCTD", (18, -95, 0, 0x80), True), camera=(-130, -60, None)),
+    # (user) "prone": flat on her stomach on the right bed, hips lifting and rocking forward (ZRPA, `_prone`);
+    # Cloud knelt over her pelvis facing her head (ZCTB); his spot from both poses (`_place`)
+    dict(name="prone", girl=("ZRPA", (227, -110, 0, 0x00), True), cloud=("ZCTB", "prone", True),
+         camera=(90, -60, None)),
 ]
 LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
     "mission": ["Mmm... the camera loves you.", "Kiss my neck... yes, right there...",
@@ -121,6 +132,12 @@ LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user
     "holding": ["Hold me up... don't drop me!", "Mmm, you're so strong...", "Squeeze my ass tighter...",
                 "Bounce me harder!", "I'm all yours, star...", "Kiss me... mmm...",
                 "Oh, I'm slipping... hold on!", "Yes! Yes! Right there!"],
+    "69": ["Mmph... mmmh!", "(She pushes her hips down onto you.)\n Mmmf!", "Mmf... mmh, mmh...",
+           "(She squeezes your thighs.) Mmmh!", "Hnnh... mmph!", "(Her hips grind against you.)\n Mmmmh...!",
+           "Mmm... mmm... mmm!", "Gk... mmh! Mmmh..."],
+    "prone": ["Mmm... pin me down...", "Pull my hair!", "Harder... push me into the bed!",
+              "Grab my ass... yes!", "Don't stop, star... don't stop...", "Spank me! Again!",
+              "Ah! Deeper... deeper!", "Oh, I can't move... I love it!"],
     "head": ["Mmm... mmph!", "(She guides your hand into her hair.)\n Mmmh!", "Mmf... mmh, mmh...",
              "(She looks up at you.) Mmm...", "Hmmm... mmmh!", "Gk... mmf! Mmmh...",
              "(She pulls your hips closer.)\n Mmph!", "Mmph! Mmm..."],
@@ -129,7 +146,7 @@ LINES_EACH = 8
 SAY_EVERY, SAY_FOR = 75, 60                          # frames between her lines; frames each stays up
 
 # temp vars (this field only)
-POS, VEL, PR, TOT, FR, RATE, T, S, NEXT, BKT, EARN, EL = ((6, a) for a in range(100, 124, 2))
+POS, VEL, PR, TOT, FR, RATE, T, S, NEXT, BKT, EARN, EL, NT = ((6, a) for a in range(100, 126, 2))
 P, STEP, NEW, RUN, K, HELD = (5, 130), (5, 131), (5, 132), (5, 133), (5, 134), (5, 135)
 GIL = (6, 140)                                       # mrkt2: the cut (temp word)
 
@@ -262,7 +279,7 @@ def _speeds(ctx):
 
 
 GAUGE_W, GAUGE_H = 64, 8                    # texture pixels (in a 64 x 64 texture)
-GAUGE_PX, CURSOR_PX, CURSOR_UP = 45, 12, 8   # on-screen widths (user: the bar a quarter of its first 180); cursor
+GAUGE_PX, CURSOR_PX, CURSOR_UP = 45, 6, 6   # (user: cursor 50%: 12 -> 6)  # on-screen widths (user: the bar a quarter of its first 180); cursor
                                             # above the bar (screen px)
 GAUGE_Y = -80                               # the bar's screen y from the view centre (user: at +88 it was below
                                             # the screen: the view sits higher than the centred guess)
@@ -353,8 +370,145 @@ def _nearest_tri(mesh, x, y):
     return min(range(len(mesh.tris)), key=lambda i: math.dist(mesh.center(i)[:2], (x, y)))
 
 
+# "69" (user): her all-fours rock (620's dzbf) with the head lowered BOB_DOWN and bobbing BOB more and
+# back each stroke. "prone" (user): flat on her stomach (her stand pose tipped face down, feet in line
+# with the shins), the hips lifting PRONE_LIFT and pushing PRONE_FWD forward each stroke, shoulders and
+# knees staying on the bed (chest / thighs re-aimed each frame), 15 frames
+BOB_DOWN, BOB, PRONE_LIFT, PRONE_FWD, PRONE_PAD = 25, 20, 1.6, 0.8, 0.8
+UNIT = 3.41                                         # field units per model unit at entry scale 512 (renders)
+SIX9_RAISE, SIX9_DOWN = 6, 10                       # (user) "69": her raised a bit, further down his body
+
+
+def _align(fa, a, b):
+    """The smallest rotation turning direction a into b."""
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+    a, b = unit(a), unit(b)
+    ax = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+    s = math.sqrt(sum(c * c for c in ax))
+    return fa.axis_angle(ax, math.degrees(math.atan2(s, sum(a[k] * b[k] for k in range(3))))) if s > 1e-9 \
+        else fa.euler_matrix(0, 0, 0)
+
+
+def _bob(ctx):
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1"))
+    names = [b[0] for b in sk]
+    h = names.index("head")
+    base = fa.Anim(ctx.char_file("dzbf.a"))
+    n = len(base.frames)
+    frames = []
+    for t, (rr, rp, rots) in enumerate(base.frames):
+        root = [rp[0], -rp[1], rp[2]]
+        W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+        y0 = fa.forward(sk, rr, root, rots)[h][2][1]
+        a = BOB_DOWN + BOB * (1 - math.cos(2 * math.pi * t / n)) / 2
+        for sg in (1, -1):                           # the sense that lowers the head (y down)
+            Wt = list(W)
+            Wt[h] = fa._mul(fa.axis_angle((1.0, 0.0, 0.0), sg * a), W[h])
+            local = fa.local_rotations(sk, rr, Wt)
+            if fa.forward(sk, rr, root, local)[h][2][1] > y0:
+                break
+        else:
+            raise AssertionError("bob")
+        frames.append((rr, rp, local))
+    base.frames = frames
+    ctx.char_file("zr6a.a", base.build())
+
+
+def _prone(ctx):
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1"))
+    names = [b[0] for b in sk]
+    I = names.index
+    base = fa.Anim(ctx.char_file(RUBY_STAND))
+    rr, rp, rots = base.frames[0]
+    world = [m for m, _, _ in fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)]
+    face_local = fa._vec(fa._t(world[I("head")]), [0.0, 0.0, -1.0])     # she faces -z standing
+    for a in (90, -90):
+        W = [fa._mul(fa.axis_angle((1.0, 0.0, 0.0), a), m) for m in world]
+        if fa._vec(W[I("head")], face_local)[1] > 0.9:                  # face down (y down)
+            break
+    else:
+        raise AssertionError("prone: no face-down turn")
+    for s in "lr":
+        W[I(s + "_foot")] = W[I(s + "_tibia")]                          # feet in line with the shins
+    fk = lambda W, r: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
+    low = max(p[1] for _, s_, e in fk(W, [0.0, 0.0, 0.0]) for p in (s_, e))
+    rest = [0.0, -PRONE_PAD - low, 0.0]                                  # lowest joint PRONE_PAD above the bed
+    E0 = fk(W, rest)
+    assert E0[I("head")][2][2] < rest[2] - 5, "head not forward (-z)"
+    keep = ("chest", "non_1", "non_2", "l_femur", "r_femur")              # their far ends stay put
+    target = {n: E0[I(n)][2] for n in keep}
+    frames = []
+    for t in range(15):
+        e = (1 - math.cos(2 * math.pi * t / 15)) / 2
+        r = [rest[0], rest[1] - PRONE_LIFT * e, rest[2] - PRONE_FWD * e]   # hips up and forward
+        Wt = list(W)
+        F = fk(Wt, r)
+        for n in keep:
+            i = I(n)
+            Wt[i] = fa._mul(_align(fa, fa._vec(Wt[i], [0, 0, -1]), [target[n][k] - F[i][1][k] for k in range(3)]),
+                            Wt[i])
+        Ft = fk(Wt, r)
+        for n in keep:
+            assert math.dist(Ft[I(n)][2], target[n]) < 1.5, (t, n)       # shoulders / knees near their place
+                                                                          # (a re-aimed bone keeps its length)
+        frames.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, Wt)))
+    base.frames = frames
+    ctx.char_file("zrpa.a", base.build())
+
+
+def _joints(ctx, hrc, anim):
+    """Model-space joint ends of frame 0 (y down), plus 'root'."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
+    rr, rp, rots = fa.Anim(ctx.char_file(anim)).frames[0]
+    root = [rp[0], -rp[1], rp[2]]
+    out = {b[0]: e for b, (_, _, e) in zip(sk, fa.forward(sk, rr, root, rots))}
+    out["root"] = root
+    return out
+
+
+def _off(m, d):
+    """Field (dx, dy, dz) of model point m for an entity with DIR d (faces -z, +x = its left)."""
+    a = d * 2 * math.pi / 256
+    F = (math.sin(a), -math.cos(a))
+    L = (-F[1], F[0])
+    return UNIT * (m[0] * L[0] - m[2] * F[0]), UNIT * (m[0] * L[1] - m[2] * F[1]), -UNIT * m[1]
+
+
+def _place(ctx, pos):
+    """Spots worked out from both poses: "69" her (head over his pelvis, facing from his head to it),
+    "prone" his (his pelvis over hers, facing her way)."""
+    hb = _hb()
+    cl_hrc = hb.CLOUD_BARE_HRC.lower()
+    if pos["girl"][1] == "69":
+        x, y, dz, cd = pos["cloud"][1]
+        his = _joints(ctx, cl_hrc, pos["cloud"][0].lower() + ".a")
+        P = [c + o for c, o in zip((x, y), _off(his["root"], cd))]
+        H = [c + o for c, o in zip((x, y), _off(his["head"], cd))]
+        gd = _dates()._dir_to(P[0] - H[0], P[1] - H[1])
+        hers = _joints(ctx, RUBY_HRC, pos["girl"][0].lower() + ".a")
+        o = _off(hers["head"], gd)
+        d = math.hypot(P[0] - H[0], P[1] - H[1])
+        u = ((P[0] - H[0]) / d, (P[1] - H[1]) / d)              # down his body
+        pos["girl"] = (pos["girl"][0], (round(P[0] - o[0] + u[0] * SIX9_DOWN), round(P[1] - o[1] + u[1] * SIX9_DOWN),
+                                        SIX9_RAISE, gd), pos["girl"][2])
+    if pos["cloud"][1] == "prone":
+        x, y, dz, gd = pos["girl"][1]
+        hers = _joints(ctx, RUBY_HRC, pos["girl"][0].lower() + ".a")
+        Pg = [c + o for c, o in zip((x, y), _off(hers["root"], gd))]
+        his = _joints(ctx, cl_hrc, pos["cloud"][0].lower() + ".a")
+        o = _off(his["root"], gd)
+        pos["cloud"] = (pos["cloud"][0], (round(Pg[0] - o[0]), round(Pg[1] - o[1]), 0, gd), pos["cloud"][2])
+
+
 def _shoot(ctx, back):
     hb, dt = _hb(), _dates()
+    _bob(ctx)
+    _prone(ctx)
+    for pos in POSITIONS:
+        _place(ctx, pos)
     f = ctx.new_field(FIELD, ctx.field(BASE).build())
     sec = Script.parse(f.sections[0])
     dt._clear_texts(sec)
@@ -519,12 +673,14 @@ def _shoot(ctx, back):
     main += say("“Places, everyone! Here's how it works, star:\n tap OK to keep the rhythm going.”")
     main += say("“Faster means more footage, and every push\n is 10 gil in your pocket. But watch the meter:\n"
                 " push too hard and it runs away from you,\n ease off and it all falls flat.”")
-    main += say("“Hit the red at either end and the shoot's\n over. Eight positions, a minute each.\n Ready?”")
+    main += say("“Hit the red at either end and the shoot's\n over. Ten positions, half a minute each.\n Ready?”")
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“...And... ACTION!”")
-    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setbyte(RUN, 1)]
-    # a tick
-    main += [tick, hb._w(TICK_WAIT), asm.setword(T, PR), asm.setword(PR, 0), hb._arith(0x86, TOT, T),
+    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK), asm.setbyte(RUN, 1)]
+    # a tick: every TICK frames by the frame count (FR from `keys`), whatever the director's own pace
+    wait1, go = hb._w(1), asm.nop()
+    main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, TICK),
+             asm.setword(T, PR), asm.setword(PR, 0), hb._arith(0x86, TOT, T),
              hb._arith(0x8A, VEL, 5), hb._arith(0x8C, VEL, 6),
              hb._arith(0x86, VEL, 1000 - 1000 * 5 // 6 - B - 500 // C),
              asm.setword(S, T), hb._arith(0x8A, S, A), hb._arith(0x86, VEL, S),
@@ -547,10 +703,14 @@ def _shoot(ctx, back):
     # the next position each minute
     stay = asm.nop()
     main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, MINUTE),
-             Op(bytes([0x85, P[0] << 4, P[1], 1])), asm.if_byte(P, "<", len(POSITIONS), wrap),
-             # (user: the switch showed awkward, late model moves) paused and hidden by a fade
-             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + \
-            [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setbyte(RUN, 1),
+             asm.if_byte(P, "<", len(POSITIONS) - 1, wrap),
+             # (user: the switch showed awkward, late model moves) paused and hidden by a fade; P moves on
+             # only once the screen is black (user: things changed before the fade: the cursor and the
+             # speed-change REQs read P at once)
+             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C"),
+             Op(bytes([0x85, P[0] << 4, P[1], 1]))] + place_all() + \
+            [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
+             hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
     def out():                                   # jump back; then wait (a main that reaches RET starts over)
