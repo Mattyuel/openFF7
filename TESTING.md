@@ -350,7 +350,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   three of Corneo's lackeys) or a grey-suited manager (a 500 gil bribe). Talk to him: "Leave her
   alone!"; fights have no escape and losing doesn't end the game. Done: her affection +1, her thanks,
   fade, both gone. Since (user): Madam M back in the lower right; the customer stands further from
-  the girl, is Cloud's height, and slaps by swinging his raised arm out then quickly in. Check the
+  the girl, is Cloud's height, and slaps by swinging his raised arm out then quickly in. Since (user): both moved left and down
+  (left of the pillar by the door) and closer together. Check the
   slap timing/sound, that the door path stays clear, talking to him, the battle and the fade.
 - **Movie minigame** (new; untested in-game): the cameraman now stands in Wall Market from the
   start (user); before all 20 Honey Bee kids he only asks whether you know a man with a way with
@@ -387,7 +388,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   Since (user): the shoot opens on black and fades in once everyone is placed (no visible model
   moves at the first position); back in Wall Market Cloud lands 4 paces further down (he was stuck
   beside the cameraman); Skye stands (her donor's default pose was sitting); "head": Ruby's head
-  tilted ~20 back; "dog": Cloud's hips thrust while his upper body stays put (ZCTN); "prone": Cloud
+  tilted ~20 back, Cloud's left leg cocked ~20 forward with the foot planted and a stronger
+  thrust (ZCTQ); "dog": Cloud's hips thrust while his upper body stays put (ZCTN); "prone": Cloud
   on his stomach on her, torso up 30, head a little down, upper arms down and forearms forward with
   the hands flat on the bed, hips thrusting up with the knees bending and back (ZCTO). Check his
   height on her in prone (PRONE_UP). Debug menu (Honey Bee / Hunter): "Star rank +1" (unlocks Skye),

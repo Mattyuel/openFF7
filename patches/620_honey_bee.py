@@ -1436,10 +1436,12 @@ def _cloud_buck(ctx):
 
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
-                 lean=STAND_LEAN, arms_out=0):
+                 lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, knee):
     the left thigh raised to `hip` degrees forward of vertical, the left knee bent
-    only `knee` (EDGE_CLOUD_*: zctf.a)."""
+    only `knee` (EDGE_CLOUD_*: zctf.a). step: the left leg cocked forward that many
+    degrees at the hip, the knee bent back until the foot is down on the floor again
+    (670's head). thrust: how far the hips go forward each stroke."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -1467,6 +1469,18 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
         leg = (s + "_femur", s + "_tibia", s + "_foot")
         W = signed(W, leg, STAND_KNEE / 2, lambda F: dot(end(F, s + "_femur"), fwd) > dot(feet0[s], fwd))
         W = signed(W, leg[1:], STAND_KNEE, lambda F: dot(sub(end(F, s + "_tibia"), end(F, s + "_femur")), fwd) < 0)
+    if step:                                         # left leg cocked forward, the foot planted again
+        k0 = end(fk(W), "l_femur")
+        W = signed(W, ("l_femur", "l_tibia", "l_foot"), step, lambda F: dot(end(F, "l_femur"), fwd) > dot(k0, fwd))
+        floor_y = feet0["l"][1]
+        down = lambda a: rot(W, ("l_tibia", "l_foot"), fa.axis_angle(side, a))
+        a_ = next(sg for sg in (1, -1) if end(fk(down(sg * 5)), "l_tibia")[1] > end(fk(W), "l_tibia")[1])
+        # the knee turned until the ankle reaches the floor, or as low as it gets (shin upright)
+        ys = [(end(fk(down(a_ * k)), "l_tibia")[1], k) for k in range(0, 121)]
+        hit = next((k for y, k in ys if y >= floor_y), None)
+        W = down(a_ * (hit if hit is not None else max(ys)[1]))
+        gap = floor_y - end(fk(W), "l_tibia")[1]
+        assert gap < 1.0 and dot(end(fk(W), "l_tibia"), fwd) > dot(feet0["l"], fwd) + 1, ("step", gap)
     if lift:                                         # left leg up: thigh from STAND_KNEE / 2 to lift[0] forward,
         hip, knee = lift                             # the knee opened from STAND_KNEE to lift[1]
         k0 = end(fk(W), "l_femur")
@@ -1524,7 +1538,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     frames = []
     for t in range(nframes):
         e = (1 - math.cos(2 * math.pi * t / nframes)) / 2
-        d = STAND_THRUST * e
+        d = thrust * e
         rt = [root[k] + fwd[k] * d for k in range(3)]                          # hips forward
         Wt = list(W)
         for n in ("r_femur",) if lift else ("l_femur", "r_femur"):            # knees stay: thighs re-aimed

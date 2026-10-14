@@ -69,9 +69,10 @@ THUGS = [
 ]
 TAKEN = ["earith", "tifa", "cid", None]         # hidden party copies the first three take over; the 4th: a new entity
 DANCER = ("onna_52", 1)                         # market_dancer, BADD.HRC
-GIRL_AT = (-72, -44)                            # (user) below the hearts, left of the inn's door (screen ~(19,42))
-THUG_GAP = 120                                  # (user: further apart) him this far from her (field units; ~20 px on screen)
-THUG_STEP = (0.15, 1)                           # him THUG_GAP from her this way (up the floor strip, left of the door path)
+GIRL_AT = (-180, -168)                          # (user, since) 4 body widths left, 2 steps down: the pillar
+                                                # left of the door blocks those exact spots, so the nearest floor (screen ~(-30,61))
+THUG_GAP = 40                                   # (user: the girl halfway closer) him this far from her (screen ~(-25,54))
+THUG_STEP = (6, 40)                             # him THUG_GAP from her this way
 GIRL_FRAMES = 8                                 # her tremble loop
 SLAP_SOUND, SLAP_PAUSE = 0x76, 45               # the slap; frames between slaps
 EV, GI, TI, R, TRY = (5, 160), (5, 161), (5, 162), (5, 163), (5, 164)   # event on, girl, thug, scratch

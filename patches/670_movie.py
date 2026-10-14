@@ -109,7 +109,9 @@ POSITIONS = [
     # (user) "head" last: the finisher position
     # on the floor in front of the beds; she (user) half a head further from him (x 50 -> 42)
     # (user, since) y -230 -> -224: to her left (his right)
-    dict(name="head", girl=("ZRTA", (42, -224, 0, 0x40), False), cloud=("ZCTE", (80, -230, 0, 0xC0), False),
+    # (user, since) Cloud: ZCTQ = ZCTE with his left leg cocked HEAD_STEP forward (foot planted) and
+    # HEAD_THRUST x the pelvic thrust (620 `_cloud_stand` step / thrust)
+    dict(name="head", girl=("ZRTA", (42, -224, 0, 0x40), False), cloud=("ZCTQ", (80, -230, 0, 0xC0), False),
          camera=(140, -235, 0xC0)),
 ]
 LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
@@ -605,6 +607,9 @@ def _head_back(ctx):
     ctx.char_file("zrta.a", base.build())
 
 
+HEAD_STEP, HEAD_THRUST = 20, 2.0                   # (user) "head": left leg forward, a bigger thrust
+
+
 # Cloud's bones: the pelvis ("hip") carries the chest and both shoulder bones; the legs hang off the root
 UPPER = ("chest", "l_chest", "r_chest")
 
@@ -776,6 +781,9 @@ def _shoot(ctx, back):
     _head_back(ctx)
     _cloud_dog(ctx)
     _cloud_prone(ctx)
+    hb_ = _hb()
+    hb_._cloud_stand(ctx, "ZCTQ.tor", arms=hb_.STAND_ARMS_LR, elbow_in=hb_.STAND_ELBOW_IN, step=HEAD_STEP,
+                     thrust=hb_.STAND_THRUST * HEAD_THRUST)
     for pos in POSITIONS:
         _place(ctx, pos)
     f = ctx.new_field(FIELD, ctx.field(BASE).build())
