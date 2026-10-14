@@ -459,7 +459,7 @@ def _special(ctx, key, back):
     hide = lambda: [Op(b"\x7E\x01"), Op(b"\xC7\x01")]
     by_p = lambda make: mv._chain(P, [make(p, pl) for p, pl in enumerate(places)])
     xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
-    anim = lambda i: [Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
+    anim = lambda i: [mv._animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]   # (ANIMB: at once, see 670)
     ispot = {k: spot(*v[:2]) for k, v in INTRO_AT.items()}
     scripts = {e: {0: ops} for e, ops in keep.items()}
     scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*ispot["cloud"]), d_(INTRO_AT["cloud"][2]),

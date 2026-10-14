@@ -420,6 +420,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   in front of the bed, "finisher" (Cloud on his back, still; she astride facing his feet, leaning back on
   straight arms, bouncing). Check: placement on the bed (does the bed's background draw over them?), her
   pose, his hips meeting hers, the gauge's size and spot in this room, the pay and the return.
+- **Instant pose changes** (new; untested in-game, user): every movie shoot (one girl, group, special)
+  ends the current animation (ANIMB) before starting the next pose. In the group shoot the engaged girl
+  should switch together with Cloud, and in part two the girls should be lying in place by the fade-in.
+  (Cause, from the exe: a new animation waited for the previous one-shot animation to finish; the
+  girls' waiting animations are ~8 s long.)
 - **Switch speed, head reverse, size** (new; untested in-game, user): the switch between positions (every
   shoot) uses faster fades and places everyone at once; head reverse (and behind, and the dates' standing
   part twos, which share the pose): only Cloud's hips thrust, his upper body still, feet flat; Cloud's

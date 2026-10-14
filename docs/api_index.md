@@ -759,6 +759,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 ## `patches/670_movie.py`
 The movie minigame (user's design).
 
+- `_animb()` ANIMB (0xDD): ends the model's current animation. (exe: ANIME2 (0x61484A) sets the model's
 - `_quests()` 
 - `_hb()` 
 - `_dates()` 

@@ -213,6 +213,16 @@ BUTT = -2.4                               # the skirt's back hem corners (were -
 LIMB_TOP = 1.3                            # the skirt's box round each thigh: this x the thigh's half width
 
 
+def _animb():
+    """ANIMB (0xDD): ends the model's current animation. (exe: ANIME2 (0x61484A) sets the model's
+    animation state 0xCC0980 to 5 and any later ANIME1/ANIME2 waits while it is 5, i.e. until that
+    animation has played out; ANIMB (0x615271) sets state 3, from which the next one starts at once.
+    The group's girls idle in 252-frame waiting anims: their next pose came seconds late, and a
+    REQSW to an entity still running a same-priority script makes the caller retry each frame,
+    user.) Put before every DFANM + ANIME2 that must take effect now."""
+    return Op(b"\xDD")
+
+
 def _quests():
     from importlib import import_module
     return import_module("600_quests")
@@ -1314,7 +1324,7 @@ def _shoot(ctx, back, cast=None):
     def pose(first, who, wdir, girl=None):
         """girl: "ruby" / "skye": shown only if she is this shoot's co-star (MOVIE_GIRL bit 1)."""
         def make(p, pl):
-            steps = [[Op(bytes([0xA2, first + 4 * p + s, 1])), Op(bytes([0xAE, first + 4 * p + s, 1]))]
+            steps = [[_animb(), Op(bytes([0xA2, first + 4 * p + s, 1])), Op(bytes([0xAE, first + 4 * p + s, 1]))]
                      for s in range(4)]
             return [xyzi(*pl[who]), d_(pl[wdir]), hb._visi(1)] + _chain(STEP, steps)
         off, head = asm.nop(), []
@@ -1322,7 +1332,7 @@ def _shoot(ctx, back, cast=None):
             head = [asm.if_byte(MOVIE_GIRL, "bit_off" if girl == "ruby" else "bit_on", 1, off)]
         return head + by_p(make) + [asm.ret()] + ([off, hb._visi(0), asm.ret()] if girl else [])
     pnames = [p_["name"] for p_ in POSITIONS]
-    hold = lambda first: by_p(lambda p, pl: ([Op(bytes([0xA2, first + 4 * len(POSITIONS) + PAUSE_POS.index(pnames[p]), 1])),
+    hold = lambda first: by_p(lambda p, pl: ([_animb(), Op(bytes([0xA2, first + 4 * len(POSITIONS) + PAUSE_POS.index(pnames[p]), 1])),
                                               Op(bytes([0xAE, first + 4 * len(POSITIONS) + PAUSE_POS.index(pnames[p]), 1]))]
                                              if pnames[p] in PAUSE_POS else [])) + [asm.ret()]
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
@@ -1337,7 +1347,7 @@ def _shoot(ctx, back, cast=None):
     idir["cam"] = _dates()._dir_to(ispot["girl"][0] / 2 + ispot["cloud"][0] / 2 - cx,
                                    ispot["girl"][1] / 2 + ispot["cloud"][1] / 2 - cy)     # facing them
     intro = lambda who, anim: [xyzi(*ispot[who]), d_(idir[who]), hb._visi(1),
-                               Op(bytes([0xA2, anim, 1])), Op(bytes([0xAE, anim, 1])), asm.ret()]
+                               _animb(), Op(bytes([0xA2, anim, 1])), Op(bytes([0xAE, anim, 1])), asm.ret()]
     scripts[CL][3] = [xyzi(*ispot["focus"]), asm.ret()]
     scripts[ents["cloudb"]][3] = intro("cloud", 0)
     for key, model, first, test in girls:
@@ -1348,7 +1358,7 @@ def _shoot(ctx, back, cast=None):
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide()
                                + [Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret(), asm.ret()],
                                2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) +
-                               [hb._visi(1), Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret()],
+                               [hb._visi(1), _animb(), Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret()],
                                3: intro("cam", idle_cam)}
     scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 5])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
                               2: by_p(lambda p, pl: [xyzi(*pl["gauge"])]) + [hb._visi(1), asm.ret()]}
@@ -1787,7 +1797,7 @@ def _group(ctx, back):
     hide = lambda: [Op(b"\x7E\x01"), Op(b"\xC7\x01")]
     xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
     by_q = lambda make: _chain(P, [make(q) for q in range(2 * n_g)])
-    loop_ = lambda i: [Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
+    loop_ = lambda i: [_animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
     HEAD_P, HEADREV_P = [p["name"] for p in POSITIONS].index("head"), [p["name"] for p in POSITIONS].index("headrev")
     centre = _spot(mesh, (GR.HEAD_X[0] + GR.HEAD_X[1]) // 2, GR.HEAD_YS[1], 0, True)
     scripts = {}

@@ -266,6 +266,14 @@ delete `build/cache` (~350 MB) any time.
 - Numbers in dialogue: `MPRA2 [src bank][window][slot][u16 var]` after the
   WINDOW op, text `{VAR}` (FE E1, no operand) shows it. GOLDU/GOLDD
   `[bank<<4][u32]`: bank 6 + offset = add/remove a temp word var of gil.
+- **ANIME2 blocks the next animation op** (exe, static reading): ANIME1/ANIME2 (0x61484A) switch on
+  the model's animation state 0xCC0980[model]: 0/1/3 start the anim (ANIME2 -> state 5, ANIME1 -> 2
+  and wait), anything else (2, 5, ANIM!2's 6) returns "retry": a script doing ANIME2 while the model's
+  previous ANIME2 is still playing **waits until it has played out**. The group shoot's girls idle in
+  252-frame anims, so their next pose came seconds late (user). **ANIMB (0xDD, 1 byte, 0x615271)** ends
+  the current anim (state 3): put it before DFANM + ANIME2 whenever the change must be immediate
+  (670 `_animb`). Also REQ/REQSW/REQEW (0x6127A2): a request at the priority the target is already
+  running makes REQSW/REQEW retry every frame (the caller stalls); a busy queue slot likewise.
 - **No waiting animation op in an init**: ANIME1 (0xA3) and ANIM!1 (0xAF) yield
   until the animation ends (handlers 0x61484A / 0x6149A5); ANIME1 of a 60-frame
   loop in girl2's init left Tifa's/Velvet's devoted room on a black screen
