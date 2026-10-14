@@ -876,10 +876,11 @@ ELBOW_MAX = 90                        # (user) the spanking elbow bends this muc
 ELBOW_POLE = (-0.3, -1.0, 0.2)        # the bent elbow points up (y down), a little out (his right = -x) and back
 
 
-def _spank_arm(fa, sk, rr, W, root, target, name):
+def _spank_arm(fa, sk, rr, W, root, target, name, hand_up=None):
     """Cloud's right arm bent once (two-bone IK at the lowest point: the wrist HAND_UP above
     `target`, the elbow up and a little out, like a hammer; ELBOW_MAX at most) so the hand lands
-    on `target`; returns (W, sense, arm bones): + sense about his side axis raises the arm."""
+    on `target` (hand_up: that wrist height, for a hand bone other than Cloud's); returns
+    (W, sense, arm bones): + sense about his side axis raises the arm."""
     names = [b[0] for b in sk]
     I = names.index
     side = [1.0, 0.0, 0.0]
@@ -894,7 +895,7 @@ def _spank_arm(fa, sk, rr, W, root, target, name):
     S = F[I("r_uparm")][1]
     L1 = math.dist(F[I("r_uparm")][1], F[I("r_uparm")][2])
     L2 = math.dist(F[I("r_foarm")][1], F[I("r_foarm")][2])
-    T = [target[0], target[1] - HAND_UP, target[2]]
+    T = [target[0], target[1] - (HAND_UP if hand_up is None else hand_up), target[2]]
     d = math.dist(S, T)
     assert d < L1 + L2 - 0.1, (name, d, L1 + L2, [T[k] - S[k] for k in range(3)])   # in reach
     # (user) the elbow bends ELBOW_MAX at most: a nearer wrist would need more, so it moves out

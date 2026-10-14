@@ -2,12 +2,14 @@
 
 Each time you enter mrkt3 (Wall Market by the Honey Bee Inn) with at least one
 girl hired, there is a 1 in 10 chance (`CHANCE`) that, in the lower right
-corner, a customer (one of three `THUGS`, picked at random) stands over one of
-your hired girls (picked at random), slapping her while she cowers on the
-ground. Talk to him: "Leave her alone!" / "Walk away.". Stepping in starts a
-battle (`FORMATION`; no escape, no game over: a loss just ends it, BTMD2 as
-Corel's Cid fight). Win: her affection +1 (capped 20), her thanks, then the
-screen fades out, both are gone, and it fades back in.
+corner, a customer (one of four `THUGS`, picked at random) stands over one of
+your hired girls (picked at random, never `SPARED`), slapping her while she
+cowers on the ground. Talk to him: "Leave her alone!" / "Walk away.". The
+soldier and the mohawk punk fight (a Grunt / three of Corneo's lackeys; no
+escape, no game over: a loss just ends it, BTMD2 as Corel's Cid fight); the
+drunk sailor hands over a Speed Drink and the grey-suited manager a 500 gil
+bribe. Done: her affection +1 (capped 20), her thanks, then the screen fades
+out, both are gone, and it fades back in.
 
 The girl is the Honey Bee dancer (the inn's uniform: the girls' own world
 models can't all fit in one field), named in the lines. Her cowering pose
@@ -16,9 +18,9 @@ trembling) and each thug's slap (ZTS<k>: leaning in, the right arm bent once
 and swung at the shoulder onto her head, 660's `_spank_arm`) are built here;
 each thug is placed where his hand lands on her head.
 
-Models: mrkt3 was at 14. The thugs take over the three hidden party copies
+Models: mrkt3 was at 14. Three thugs take over the hidden party copies
 (aerith / tifa / cid: Cloud always leads, so they are never shown) and their
-model slots; the girl is a new entity and model (15). Madam M (600's quest
+model slots; the fourth and the girl are new entities and models (16). Madam M (600's quest
 giver) moved out of the corner to make room (`_quest_data`).
 """
 import math
@@ -33,19 +35,38 @@ from ff7 import asm
 from ff7.camera import Camera, facing_screen
 from ff7.models import ModelLoader
 from ff7.script import Op, Script
-from ff7.text import encode
+from ff7.text import decode, encode
 from ff7.walkmesh import Walkmesh
 
 FIELD = "mrkt3"
 CHANCE = 10                                     # 1 in CHANCE entries
 SPARED = {"Tifa", "Aerith", "Elena", "Scarlet"}  # (user) never the girl in this scene
-# (user: "I can choose") the three thugs, one picked at random each time: (field, model index).
-# All on Cloud's skeleton layout (AAFE / ACFE anims), so one slap recipe fits each.
-THUGS = [("colne_2", 4),                        # Corneo's lackey (market_buka: suit, red hair)
-         ("jail3", 3),                          # Corel convict (korel_bou1: shades, orange vest)
-         ("colne_4", 8)]                        # Corneo's mansion guard (market_youjin_l: big, red vest)
-TAKEN = ["earith", "tifa", "cid"]               # hidden party copies whose entities/models the thugs take over
-FORMATION = 525                                 # Bullmotor (Corel prison's biker thug, level 19): user may pick
+# (user) the four customers, one picked at random each time; all on Cloud's skeleton layout (AAFE /
+# ACFE anims), so one slap recipe fits each. Two fight ("battle": formation, no escape, no game
+# over: a loss just ends it, BTMD2 as Corel's Cid fight); two give you something instead.
+THUGS = [
+    dict(model=("blackbg2", 9), who="Sailor",          # shinra_crew: white sailor's uniform
+         taunt="“Hic… shtay outta thish, pal… me an'\n %s are… are havin' a convershation…”",
+         outcome=("item", "Speed Drink", 1),
+         lines=["“Whoa, whoa… easy, buddy… I'm goin'…\n The room's shpinnin' anyway…”",
+                "“Here… *hic*… take thish. Shpeed Drink.\n Makesh ya fasht. Faster'n me, anyway…”"]),
+    dict(model=("blin66_6", 6), who="Soldier",         # shinra_hei: Shinra infantry
+         taunt="“Move along, civilian. Me and %s\n are having a private discussion.”",
+         outcome=("battle", 28),                        # a Grunt (level 7)
+         lines=["“You're interfering with a Shinra\n officer. That's a mistake.”"],
+         lost="“Hmph. Know your place, civilian.”"),
+    dict(model=("jail2", 6), who="Punk",               # korel_bou202: the mohawk
+         taunt="“Get lost, spiky! %s owes me,\n and I'm collectin'!”",
+         outcome=("battle", 384),                       # three of Corneo's lackeys (level 8: the only lackey fight)
+         lines=["“Oh, you want some? BOYS!\n Get over here!”"],
+         lost="“Ha! Stay down, hero.”"),
+    dict(model=("blackbg1", 3), who="Manager",         # shinra_ippan_1: grey suit
+         taunt="“Ahem. This is a private matter between\n myself and %s. Run along.”",
+         outcome=("gil", 500),
+         lines=["“Now, now, let's not make a scene.\n My wife can't hear about this…”",
+                "“Here. 500 gil. You never saw me.\n Understood?”"]),
+]
+TAKEN = ["earith", "tifa", "cid", None]         # hidden party copies the first three take over; the 4th: a new entity
 DANCER = ("onna_52", 1)                         # market_dancer, BADD.HRC
 GIRL_AT = (100, -268)                           # her spot (the lower right corner, on screen ~(80,92))
 THUG_FACING = (0.3, 1)                          # he stands behind her (up the screen), facing the camera
@@ -142,7 +163,7 @@ def _cower(ctx):
     return {names[i]: e for i, (_, _, e) in enumerate(fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W)))}
 
 
-SLAP_LEAN, SLAP_LEANS = 20, (20, 35, 50)          # a taller thug leans further to reach her
+SLAP_LEAN, SLAP_LEANS = 20, (20, 35, 50, 65, 80)  # a taller thug leans further to reach her
 
 
 def _slap(ctx, hrc, name, target, lean=SLAP_LEAN):
@@ -160,7 +181,8 @@ def _slap(ctx, hrc, name, target, lean=SLAP_LEAN):
     side = [1.0, 0.0, 0.0]
     legs = {s + n for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
     W = _turned(fa, sk, rr, W, root, set(names) - legs, side, lean, lambda a, b: b["head"][2] < a["head"][2])
-    W, sense, arm = dt._spank_arm(fa, sk, rr, W, root, list(target), name)
+    hand = next(b[2] for b in sk if b[0] == "r_hand")                  # the wrist this far above her head
+    W, sense, arm = dt._spank_arm(fa, sk, rr, W, root, list(target), name, hand_up=hand * 0.9)
     frames = []
     for t in range(THUG_FRAMES):
         e = (1 - math.cos(2 * math.pi * t / THUG_FRAMES)) / 2
@@ -217,21 +239,30 @@ def apply(ctx):
     # each thug: his model in a taken-over slot, placed back along his facing until his slap reaches her head
     a = tdir * 2 * math.pi / 256
     fwd = (math.sin(a), -math.cos(a))
+    left = (-fwd[1], fwd[0])                                            # his left (model +x)
     thugs = []
-    for k, ((dfield, di), ent_name) in enumerate(zip(THUGS, TAKEN)):
-        ent = sec.entity_index(ent_name)
-        init = sec.script_ops(ent, 0)
-        assert init[0].op == 0xA1 and any(o.op == 0xA0 for o in init), (ent_name, [o.raw.hex() for o in init])  # CHAR, PC
-        m = init[0].raw[1]
+    for k, (spec, ent_name) in enumerate(zip(THUGS, TAKEN)):
+        dfield, di = spec["model"]
+        if ent_name is None:                                        # a new entity and model (appended)
+            ent, m, old_char = None, len(loader.models), None
+            loader.models.append(None)
+        else:
+            ent = sec.entity_index(ent_name)
+            init = sec.script_ops(ent, 0)
+            assert init[0].op == 0xA1 and any(o.op == 0xA0 for o in init), (ent_name, [o.raw.hex() for o in init])  # CHAR, PC
+            m, old_char = init[0].raw[1], init[0]
         src = ModelLoader(ctx.field(dfield).section("models"))
         entry = src.models[di]
         entry = ModelLoader.with_scale(entry, round(ModelLoader.entry_scale(entry) * loader.scale / src.scale))
         unit = UNIT * ModelLoader.entry_scale(entry) / 512
         hrc = ModelLoader.hrc(entry)
-        anim = "ZTS" + "ABC"[k]
+        anim = "ZTS" + "ABCD"[k]
         placed = None
-        for lean, dist in ((le, di) for le in SLAP_LEANS for di in range(0, 80)):   # least lean, nearest spot
-            tx, ty = head_f[0] - fwd[0] * dist, head_f[1] - fwd[1] * dist   # along his facing, through her head
+        # least lean, then least sideways step (to his left, so her head comes in front of his right
+        # hand: broad shoulders put it out of reach), then nearest
+        for lean, lat, dist in ((le, la, di) for le in SLAP_LEANS for la in range(0, 26, 2) for di in range(0, 80)):
+            tx = head_f[0] - fwd[0] * dist + left[0] * lat
+            ty = head_f[1] - fwd[1] * dist + left[1] * lat
             tt = mesh.find(round(tx), round(ty))
             if tt is None:
                 continue
@@ -244,10 +275,10 @@ def apply(ctx):
             placed = (round(tx), round(ty), tz, tt)
             break
         thug_lean = lean
-        assert placed is not None, (ent_name, hrc)
+        assert placed is not None, (spec["who"], hrc)
         loader.models[m] = ModelLoader.with_anims(entry, [anim + ".tor"])
         slap = len(ModelLoader.anims(loader.models[m])) - 1
-        thugs.append(dict(ent=ent, model=m, at=placed, slap=slap, idle=0, old_char=init[0]))
+        thugs.append(dict(ent=ent, model=m, at=placed, slap=slap, idle=0, old_char=old_char, spec=spec))
     # her model: a new entity at the end (the next model index)
     gm = len(loader.models)
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_scale(dancer, ModelLoader.entry_scale(dancer)),
@@ -260,22 +291,35 @@ def apply(ctx):
     hidden = lambda: [Op(b"\x7E\x01"), Op(b"\xC7\x01"), hb._visi(0)]          # TLKON 01, SOLID 01, VISI 00
     shown = lambda: [Op(b"\x7E\x00"), Op(b"\xC7\x00"), hb._visi(1)]
     by_girl = lambda make: _chain(GI, [make(i, g) for i, g in enumerate(GIRLS)])
-    girl_ent = len(sec.entity_names)                                     # the next entity (added below)
-    # the thug's talk: shared by the three (each REQs nothing of the others)
-    def talk(me):
+    girl_ent = len(sec.entity_names) + sum(1 for t in thugs if t["ent"] is None)   # after any new thug entity
+    k2 = ctx.kernel2()
+    item_id = lambda name: next(i for i in range(128) if decode(k2.get(10, i)).strip() == name)
+
+    def talk(spec):
+        who = spec["who"]
         say = lambda t: hb._say(sec, t)
         end, walk, won = asm.nop(), asm.nop(), asm.nop()
         ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)]
+
         def ask(i, g):
-            a_, first = hb._ask(sec, "Customer\n“What're you looking at? This is between\n me and %s here. Beat it.”"
-                                % g["name"], ["Leave her alone!", "Walk away."])
+            a_, first = hb._ask(sec, who + "\n" + spec["taunt"] % g["name"], ["Leave her alone!", "Walk away."])
             return a_ + [asm.if_byte(CHOICE, "!=", first, walk)]
         ops += by_girl(ask)
-        ops += say("Customer\n“You wanna play hero? Fine by me!”")
-        ops += [Op(bytes([0x22, 0x08, 0x00, 0x01, 0x00])),             # BTMD2: no escape, no game over
-                asm.battle(FORMATION), Op(bytes([0x23, RES[0], RES[1]])),  # BTRLD
-                asm.if_word(RES, "&", 1, won)]                         # bit 0 clear: won
-        ops += say("Customer\n“Heh. Stay outta my business,\n pretty boy.”") + [asm.goto(end)]
+        for line in spec["lines"]:
+            ops += say(who + "\n" + line)
+        kind = spec["outcome"][0]
+        if kind == "battle":
+            ops += [Op(bytes([0x22, 0x08, 0x00, 0x01, 0x00])),                  # BTMD2: no escape, no game over
+                    asm.battle(spec["outcome"][1]), Op(bytes([0x23, RES[0], RES[1]])),   # BTRLD
+                    asm.if_word(RES, "&", 1, won)]                              # bit 0 clear: won
+            ops += say(who + "\n" + spec["lost"]) + [asm.goto(end)]
+        elif kind == "item":
+            _, name, n = spec["outcome"]
+            ops += [asm.add_item(item_id(name), n), sound(0x168)] + say("Received “%s”!" % name)
+        else:                                                                    # gil
+            ops += [Op(bytes([0x39, 0x00]) + struct.pack("<I", spec["outcome"][1])), sound(0x168)] + \
+                say("Received %d gil!" % spec["outcome"][1])
+
         def thanks(i, g):
             aff = HB_AFFECTION[i]
             ok = asm.nop()
@@ -284,7 +328,7 @@ def apply(ctx):
         ops += [won] + by_girl(thanks)
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(EV, 0)] + hidden() + \
                [hb._req(girl_ent, 3), hb._w(15), Op(hb.FADE_IN), Op(b"\x6C"), asm.goto(end)]
-        ops += [walk] + say("Customer\n“That's right. Keep walking.”")
+        ops += [walk] + say(who + "\n“That's right. Keep walking.”")
         return ops + [end, hb._uc(0), asm.ret()]
 
     for k, th in enumerate(thugs):
@@ -301,7 +345,10 @@ def apply(ctx):
                 quiet, idle_top, hb._w(30), asm.goto_back(idle_top), asm.ret()]
         init = [Op(bytes([0xA1, th["model"]])), hb._xyzi(x, y, z, t), Op(bytes([0xB3, 0, tdir])),
                 Op(bytes([0xC5, 0x00, 0x46]))] + hidden() + [asm.ret()]
-        body = talk(th["ent"])
+        body = talk(th["spec"])
+        if th["ent"] is None:
+            sec.add_entity("hbthug%d" % k, {0: init + main, 1: body})
+            continue
         sec.replace(th["old_char"], [asm.ret()])          # the old init (no longer an entry): no second CHAR
         empty = asm.ret()
         sec.ops.extend([empty] + init + main + body)
@@ -330,7 +377,7 @@ def apply(ctx):
         nxt = asm.nop()
         var, bit = (HB_HIRED[0], HB_HIRED[1] + i // 8), i % 8
         roll += [asm.if_byte(GI, "==", i, nxt), asm.if_byte(var, "bit_on", bit, nxt), asm.goto(found), nxt]
-    roll += [asm.goto_back(loop), found, Op(bytes([0x99, TI[0], TI[1]])), Op(bytes([0x8D, TI[0] << 4, TI[1], 3])),
+    roll += [asm.goto_back(loop), found, Op(bytes([0x99, TI[0], TI[1]])), Op(bytes([0x8D, TI[0] << 4, TI[1], len(THUGS)])),
              asm.setbyte(EV, 1), done, asm.ret(), asm.ret()]
     sec.add_entity("hbrescue", {0: roll})
     f.sections[0] = sec.build()

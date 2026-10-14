@@ -345,8 +345,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   Market by the Honey Bee Inn has a 1 in 10 chance of a customer slapping one of your girls (never
   Tifa, Aerith, Elena or Scarlet; a
   Honey Bee dancer, named in the dialogue) cowering on the ground in the lower right corner (debug
-  build: Honey Bee / Hunter -> "Rescue scene: always"). Talk to him: "Leave her alone!" -> a battle
-  (Bullmotor for now; no escape, losing doesn't end the game). Win: her affection +1, her thanks,
+  build: Honey Bee / Hunter -> "Rescue scene: always"). One of four customers, at random (user): a
+  drunk sailor (gives a Speed Drink), a Shinra soldier (battle: a Grunt), a mohawk punk (battle:
+  three of Corneo's lackeys) or a grey-suited manager (a 500 gil bribe). Talk to him: "Leave her
+  alone!"; fights have no escape and losing doesn't end the game. Done: her affection +1, her thanks,
   fade, both gone. Madam M moved to the lower left. Check: the slap timing/sound, the two not
   overlapping, that you can reach him to talk (he stands behind her), the battle and the fade.
 - **Movie minigame** (new; untested in-game): the cameraman now stands in Wall Market from the
