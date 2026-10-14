@@ -57,6 +57,9 @@ FIELD, BASE, WALL = "whitebg1", "mds7_w3", "mrkt2"
 CAMERA_AT, RUBY_AT = (310, 378), (386, 314)          # mrkt2: right of the item shop (rendered)
 CAMERA_DONOR, RUBY_DONOR = ("junone2", 6), ("jun_i2", 6)
 CAMERA_IDLE, CAMERA_FILM = "FDCB.yos", "FFBC.yos"    # camera held low / at his eye
+# (user) the shoot's intro: standing at the foot of the left bed (it starts at y -140), the camera
+# follows "focus" (the hidden player); the cameraman a little off, facing them
+INTRO = {"girl": (-268, -160), "cloud": (-222, -165), "focus": (-240, -170), "cam": (-160, -150)}
 CAMERA_STILL = "ZCFA.tor"                            # (user) Wall Market: FDCB frame 0 only, held
 MUSIC = 35                                          # COSTA: Costa del Sol (user; was Turks' Theme, RHYTHM 45)
 OK_KEY = 0x220                                      # OK, as every original script tests it: IFKEY (0x61220D) / IFKEYON
@@ -1211,10 +1214,15 @@ def _shoot(ctx, back, cast=None):
         sk = loader.add_from(ModelLoader(ctx.field(SKYE_DONOR[0]).section("models")), SKYE_DONOR[1])
         loader.models[sk] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[sk], SKYE_BARE,
                                                                         ModelLoader.name(loader.models[sk])[:-5] + "_b.char"),
-                                                   girl_anims)
-        sfirst = len(ModelLoader.anims(loader.models[sk])) - len(girl_anims)
+                                                   girl_anims + [RUBY_STAND.split(".")[0].upper() + ".tor"])
+        sfirst = len(ModelLoader.anims(loader.models[sk])) - len(girl_anims) - 1   # (then DXID: she stands, intro)
         assert len(loader.models) == 8 and sk == 7
         girls = [("ruby", 3, gfirst, "ruby"), ("skye", 7, sfirst, "skye")]
+    # (user) the intro: everyone standing at the foot of the left bed (slot 3), the girl's stand =
+    # her model's anim 0 (Skye's donor sits: her DXID, appended last)
+    stand_of = {g[0]: 0 for g in girls}
+    if not cast:
+        stand_of["skye"] = len(ModelLoader.anims(loader.models[7])) - 1
 
     ents = {}
     for name in ("cloudb", girls[0][0], "camera", "gauge", "cursor", "keys", "voice", "hush") + \
@@ -1248,9 +1256,26 @@ def _shoot(ctx, back, cast=None):
     for key, model, first, test in girls:
         scripts[ents[key]] = {0: [Op(bytes([0xA1, model])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: pose(first, "girl", "gdir", test)}
+    imesh, icam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
+    ispot = {k: _spot(imesh, *xy) for k, xy in INTRO.items()}
+    idir = {k: facing_screen(icam, *v[:3], (0, 1)) for k, v in ispot.items()}
+    cx, cy = ispot["cam"][:2]
+    idir["cam"] = _dates()._dir_to(ispot["girl"][0] / 2 + ispot["cloud"][0] / 2 - cx,
+                                   ispot["girl"][1] / 2 + ispot["cloud"][1] / 2 - cy)     # facing them
+    intro = lambda who, anim: [xyzi(*ispot[who]), d_(idir[who]), hb._visi(1),
+                               Op(bytes([0xA2, anim, 1])), Op(bytes([0xAE, anim, 1])), asm.ret()]
+    scripts[CL][3] = [xyzi(*ispot["focus"]), asm.ret()]
+    scripts[ents["cloudb"]][3] = intro("cloud", 0)
+    for key, model, first, test in girls:
+        off = asm.nop()
+        head = [asm.if_byte(MOVIE_GIRL, "bit_off" if test == "ruby" else "bit_on", 1, off)] if test else []
+        scripts[ents[key]][3] = head + intro("girl", stand_of[key]) + ([off, hb._visi(0), asm.ret()] if test else [])
+    idle_cam = ModelLoader.anims(loader.models[cm]).index(CAMERA_IDLE)
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide()
                                + [Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret(), asm.ret()],
-                               2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1), asm.ret()]}
+                               2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) +
+                               [hb._visi(1), Op(bytes([0xA2, film, 1])), Op(bytes([0xAE, film, 1])), asm.ret()],
+                               3: intro("cam", idle_cam)}
     scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 5])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
                               2: by_p(lambda p, pl: [xyzi(*pl["gauge"])]) + [hb._visi(1), asm.ret()]}
     # cursor: every frame while RUN, bucket = POS / 50 -> its spot for the position
@@ -1326,14 +1351,17 @@ def _shoot(ctx, back, cast=None):
                                                  ents["gauge"])]
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
-            asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE), asm.setbyte(FIN, 0)] + place_all() + \
-           [hb._w(20)]
+            asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE), asm.setbyte(FIN, 0)] + \
+           [hb._req(e, 3) for e in (CL, ents["cloudb"], *(ents[g[0]] for g in girls), ents["camera"])] + \
+           [hb._w(20)]                               # (user) the intro: all standing by the left bed
     main += [Op(hb.FADE_IN), Op(b"\x6C")]            # (user: the first position showed the models move too)
     main += say("“Places, everyone! Here's how it works, star:\n tap OK to keep the rhythm going.”")
     main += say("“Faster means more footage, and every push\n is %d gil in your pocket. But watch the meter:\n"
                 % (cast["rate"] if cast else PAY_RATE) +
                 " push too hard and it runs away from you,\n ease off and it all falls flat.”")
     main += say("“Hit the red at either end and the shoot's\n over. Ten positions, half a minute each.\n Ready?”")
+    # (user) fade out, the first position, fade in, then "Action!"
+    main += [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C")]
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“...And... ACTION!”")
     main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK), asm.setbyte(RUN, 1)]

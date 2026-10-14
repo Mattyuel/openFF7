@@ -410,6 +410,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   a girl whose devoted scene you've seen shows a "*" after her name (written into the menu text in
   memory by a new field opcode, 0x1D: check it appears/disappears correctly and nothing else in the
   text changes).
+- **Minigame intro** (new; untested in-game, user): the shoot opens with Cloud and the girl standing at
+  the foot of the left bed, the cameraman beside them; before "...And... ACTION!" the screen fades out
+  and back in on the first position. Check each co-star stands (her model's first animation).
 - **Batch** (new; untested in-game, user): the minigame meter goes back to the middle at every
   position change; mission (everywhere): her legs wider apart and her knees straighter again
   (bent ~39); Tifa's and Scarlet's breasts 50% bigger, Aerith's 50% smaller (undressed models:
