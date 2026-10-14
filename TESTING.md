@@ -342,8 +342,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   him -> "Lights, camera, action!" -> the Sector 7 room with three beds. Press OK
   (confirm button) repeatedly: the gauge at the top (red | green | red; was off the bottom of the screen) and the cursor
   above it; pressing pushes it right, stopping lets it drift left, it has momentum and runs
-  away from the middle. Red at either end = "CUT!" and back to Wall Market, no pay (check: talking to him
-  afterwards should offer a new shoot, not the 'come back later' line). Ten
+  away from the middle. Red at either end = "CUT!" and back to Wall Market; he still sells what was shot (user: a
+  low score, presses so far x 10 gil, same 30-minute wait), but only a full shoot raises the star
+  rank (unlocks Skye). Ten
   positions, 30 s each, moving between the beds (mission left bed, cowgirl middle bed,
   dog right bed, edge and head reverse at the left bed's foot, head on the floor, then "behind"
   (Scarlet's date pose) at the left bed's foot by the wall, "holding" (Tifa's koala hug) at the right
@@ -361,6 +362,15 @@ Existing saves load, but they keep their own story progress; use a new game.
   minutes his talk pays presses x 10 gil. Check: does every OK press register now (held-state polling; the 'just pressed' check missed some)? the gauge
   and cursor visible and on screen at each bed? the self-closing lines? the bed positions on
   the right beds? Ruby's bare model (skin legs/skirt/upper arms/feet, coat kept).
+  Since (user): the shoot opens on black and fades in once everyone is placed (no visible model
+  moves at the first position); back in Wall Market Cloud lands 4 paces further down (he was stuck
+  beside the cameraman); Skye stands (her donor's default pose was sitting); "head": Ruby's head
+  tilted ~20 back; "dog": Cloud's hips thrust while his upper body stays put (ZCTN); "prone": Cloud
+  on his stomach on her, torso up 30, head a little down, upper arms down and forearms forward with
+  the hands flat on the bed, hips thrusting up with the knees bending and back (ZCTO). Check his
+  height on her in prone (PRONE_UP). Debug menu (Honey Bee / Hunter): "Star rank +1" (unlocks Skye),
+  "Time +30 min" (the movie cut and the Honey Bee takings wait 30 minutes less; bounties not).
+  After Aerith's date Cloud now lands to her left on screen (was stuck beside her).
 - **Honey Bee visit menu** (new; untested in-game): "Visit one of the girls" opens
   One Star Girls (Next page / Never mind), then Two .. Five Star Girls (Next /
   Previous / Never mind; no Next on Five). Girls not hired show as ???? and

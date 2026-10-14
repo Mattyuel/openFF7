@@ -12,7 +12,9 @@ In any field, hold L1 + R1: the DEBUG menu opens.
           roll's call (0x76760B -> 0x767641, returns a formation or -1) goes
           through a stub returning -1 while the bit is set.
   Honey Bee / Hunter: job + all 20 girls hired, every girl's affection set
-          to 0 / 10 / 20, all 12 gifts, Hunter points +50.
+          to 0 / 10 / 20, all 12 gifts, Hunter points +50, movie star rank +1
+          (unlocks Skye), time +30 min (the movie cut / Honey Bee takings
+          wait 30 minutes less).
 
 Fields left out: text tables within 5 of the 255 limit, 48+ entities (the
 most any original field has), scripts the parser rejects.
@@ -21,7 +23,7 @@ import csv
 import os
 import struct
 
-from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_VISIT, HUNTER_PTS
+from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL
 from _recruit import sound
 from _travel import CHOICE, window
 import _honey_bee_gifts as gifts
@@ -133,12 +135,13 @@ def _menu(sec, dests):
     ops += [on, asm.bitoff(DEBUG_FLAGS, 0), asm.battles_enabled(True), asm.goto(done)]
     ops += [hb] + _ask(sec, "Honey Bee / Hunter", ["Job + hire all 20 girls", "All affection 0",
                                                    "All affection 10", "All affection 20", "All 12 gifts",
-                                                   "All 20 kids", "Hunter points +50", "Back"])
-    hb_acts = [asm.nop() for _ in range(7)]
+                                                   "All 20 kids", "Hunter points +50", "Star rank +1",
+                                                   "Time +30 min", "Back"])
+    hb_acts = [asm.nop() for _ in range(9)]
     for k, label in enumerate(hb_acts):
         ops += [asm.if_byte(CHOICE, "!=", 1 + k, label)]
     ops += [asm.goto_back(main)]
-    hire, a0, a10, a20, allg, kids, hunt = hb_acts
+    hire, a0, a10, a20, allg, kids, hunt, star, later = hb_acts
     hv = HB_HIRED
     ops += [hire, asm.biton(*HB_JOB), asm.setbyte(hv, 0xFF), asm.setbyte((hv[0], hv[1] + 1), 0xFF),
             asm.setbyte((hv[0], hv[1] + 2), 0x0F), asm.goto(done)]
@@ -151,6 +154,12 @@ def _menu(sec, dests):
     ops += [asm.goto(done)]
     ops += [kids] + [asm.biton(*k) for k in HB_KID] + [asm.goto(done)]
     ops += [hunt, Op(bytes([0x86, HUNTER_PTS[0] << 4, HUNTER_PTS[1]]) + struct.pack("<H", 50)), asm.goto(done)]
+    # the movie's star rank (670: a girl retires -> the next co-star): rank 1 = Skye
+    ops += [star, asm.biton(MOVIE_GIRL, 0), asm.goto(done)]
+    # +30 minutes: the play clock can't be reached from a field, so the times waited from move back
+    # 30 (wrapping: the elapsed difference still comes out +30): the movie cut and the Honey Bee takings
+    ops += [later] + [Op(bytes([0x88, v[0] << 4, v[1]]) + struct.pack("<H", 30)) for v in (MOVIE_AT, HB_LAST)]
+    ops += [asm.goto(done)]
     ops += [done, sound(0x168), asm.goto_back(main)]
     # close: control back, wait for the buttons to be let go
     release = asm.nop()

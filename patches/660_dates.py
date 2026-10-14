@@ -25,7 +25,7 @@ from _config import DATE_GIRL, HB_AFFECTION
 from _dates_data import DATES
 from _honey_bee_data import GIRLS
 from _recruit import sound
-from _travel import CHOICE, beside
+from _travel import CHOICE, beside, screen_step
 
 from ff7 import asm
 from ff7.camera import Camera, facing_screen
@@ -138,6 +138,7 @@ GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"}}
 STAND_ON_THIRD = {"Scarlet"}
 SLAP_HIT, SLAP_END, SLAP_SOUND = 0x1D, 0x31, 0x76
 RETURN_GAP = 40                        # back beside her: this far from her spot
+RETURN_SCREEN = {"Aerith": (-1, 0)}    # (user: stuck beside her after a date) to her left on screen
 
 
 def _dir_to(dx, dy):
@@ -191,7 +192,10 @@ def _return_spot(ctx, g):
     mesh = Walkmesh(ctx.field(g["field"]).section("walkmesh"))
     x, y = g["at"]
     tri = mesh.find(x, y)
-    bx, by, _, bt = beside(ctx, g["field"], x, y, tri, RETURN_GAP)
+    if g["name"] in RETURN_SCREEN:
+        bx, by, _, bt = screen_step(ctx, g["field"], x, y, RETURN_SCREEN[g["name"]], RETURN_GAP)
+    else:
+        bx, by, _, bt = beside(ctx, g["field"], x, y, tri, RETURN_GAP)
     return bx, by, bt, _dir_to(x - bx, y - by)
 
 

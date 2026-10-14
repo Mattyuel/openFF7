@@ -197,7 +197,10 @@ pulled in (user's sketch).
 
 | Anim | Pose |
 |---|---|
-| ZM<p><s> / ZN<p><s> | Ruby / bare Cloud: position p (A mission DZBT+ZCTA, B cowgirl DZBL+ZCTD, C dog DZBF+ZCTB, D edge DZBG+ZCTF, E head reverse DZBH+ZCTE, F head DZBK+ZCTE, G behind ZRWA+ZCTE, H holding ZRKA+ZCTH) resampled from 15 frames to 20 / 15 / 11 / 8 (s = 0..3: the thrust speed steps). `670._speeds`. |
+| ZM<p><s> / ZN<p><s> | Ruby / bare Cloud: position p (A mission DZBT+ZCTA, B cowgirl DZBL+ZCTD, C dog DZBF+ZCTN, D edge DZBG+ZCTF, E head reverse DZBH+ZCTE, F head ZRTA+ZCTE, G behind ZRWA+ZCTE, H holding ZRKA+ZCTH, I 69 ZR6A+ZCTD, J prone ZRPA+ZCTO) resampled from 15 frames to 20 / 15 / 11 / 8 (s = 0..3: the thrust speed steps). `670._speeds`. |
 
 Cameraman (junon_report2, FCGD.HRC from junone2 model 6): FDCB holds the camera low (idle), FFBC films with it at his eye, FDCD films crouching.
+| ZRTA | Ruby: DZBK with the head turned HEAD_BACK (20) further back, chin up (user), the minigame's "head". `670._head_back` |
+| ZCTN | bare Cloud: ZCTB (dog) with the chest and both shoulder bones re-aimed every frame to their frame-0 ends, head and arms keeping frame 0's turn: the hips thrust, the upper body stays (within ~1 unit) (user). `670._cloud_dog` |
+| ZCTO | bare Cloud: ACFE tipped face down (feet in line with the shins), pelvis + upper body turned CP_TORSO (30) up from the bed with the legs flat, head CP_HEAD (15) down, upper arms straight down, forearms forward to the bed, hands flat pointing ahead; each 15 frames the hips rise CP_LIFT (1.8) with the knees bending (thighs re-aimed to their knees) and the upper body held (chest/shoulders re-aimed, ~0.5 drift), and back (user). The minigame's "prone", PRONE_UP 8 above her. `670._cloud_prone` |
 | ZRWA / ZRKA | Ruby (CBFE, from DXID): Scarlet's wall pose (`660._wall`, on ZCTE, same XYZI/DIR as Cloud) / Tifa's koala hug (`660._koala`, on ZCTH, DIR + 128): the minigame's "behind" / "holding" (user). |

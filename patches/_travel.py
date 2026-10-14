@@ -70,6 +70,23 @@ def beside(ctx, field, x, y, triangle, dist=60):
     raise RuntimeError("no floor beside (%d, %d) in %s" % (x, y, field))
 
 
+def screen_step(ctx, field, x, y, screen_dir, dist):
+    """A floor spot (x, y, z, tri) `dist` field units from (x, y) in the field
+    direction that looks most like `screen_dir` (dx, dy; y down) on screen."""
+    import math
+    from ff7.camera import Camera, facing_screen
+    f = ctx.field(field)
+    mesh = Walkmesh(f.section("walkmesh"))
+    cam = Camera(f.sections[1])
+    tri = mesh.find(x, y)
+    assert tri is not None, (field, x, y)
+    a = facing_screen(cam, x, y, mesh.height(tri, x, y), screen_dir) * 2 * math.pi / 256
+    px, py = round(x + math.sin(a) * dist), round(y - math.cos(a) * dist)
+    t = mesh.find(px, py)
+    assert t is not None, "%s: (%d, %d) is off the floor" % (field, px, py)
+    return px, py, mesh.height(t, px, py), t
+
+
 def line_across(ctx, field, x, y, overhang=30, reach=800):
     """A LINE ((x1, y1, z1), (x2, y2, z2)) through (x, y) across the floor at
     its narrowest there, reaching a little past the walkable edge on both

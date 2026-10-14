@@ -746,6 +746,10 @@ The movie minigame (user's design).
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_bob(ctx)` 
 - `_prone(ctx)` 
+- `_head_back(ctx)` 
+- `_keep_upper(fa, sk, rr, Wt, r, target, tol, also=())` Re-aim UPPER (+ `also`) so each bone's end goes back to `target` (a bone keeps its length:
+- `_cloud_dog(ctx)` 
+- `_cloud_prone(ctx)` 
 - `_joints(ctx, hrc, anim)` Model-space joint ends of frame 0 (y down), plus 'root'.
 - `_off(m, d)` Field (dx, dy, dz) of model point m for an entity with DIR d (faces -z, +x = its left).
 - `_place(ctx, pos)` Spots worked out from both poses: "69" her (head over his pelvis, facing from his head to it),
@@ -828,6 +832,7 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 - `copy_model(ctx, field, donor_field, donor_index)` 
 - `near(ctx, field, triangle)` Centre (x, y, z, tri) of a walkmesh triangle next to `triangle`.
 - `beside(ctx, field, x, y, triangle, dist=60)` A spot (x, y, z, tri) about `dist` from (x, y) on walkable floor
+- `screen_step(ctx, field, x, y, screen_dir, dist)` A floor spot (x, y, z, tri) `dist` field units from (x, y) in the field
 - `line_across(ctx, field, x, y, overhang=30, reach=800)` A LINE ((x1, y1, z1), (x2, y2, z2)) through (x, y) across the floor at
 - `add_line(ctx, field, name, p1, p2, on_cross, init_extra=())` Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
 - `add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=())` Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk
