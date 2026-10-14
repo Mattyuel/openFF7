@@ -1460,6 +1460,11 @@ NEWS = {
 }
 
 
+NEWS_AFTER = "“The old girls still take a callback if you\n ask for 'em, star. Rent's due for everyone.”"
+for r_ in NEWS:                                     # (user) the earlier girls stay on the list
+    NEWS[r_].append(NEWS_AFTER)
+
+
 def _advance(state=3):
     """Ops raising the star rank one step (`MOVIE_RANK`) and setting MOVIE_STATE to `state` (None:
     left alone); nothing at the top."""
@@ -1565,12 +1570,24 @@ def _wall_market(ctx, focus):
         no = asm.nop()
         ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.bitoff(MOVIE_GIRL, 1)]
         ops += [asm.bitoff(MOVIE_GIRL, g["bit"]) for g in MG.GIRLS]
-        # (user, since) one co-star at a time, by the star rank: Ruby (0), Skye, Elena, Scarlet, Tifa,
-        # Aerith (it was a pick list; the Skye test was inverted: every other pick shot with Skye, user)
-        costar = {1: [asm.biton(MOVIE_GIRL, 1)]}
-        costar.update({k_ + 2: [asm.biton(MOVIE_GIRL, g["bit"])] for k_, g in enumerate(MG.GIRLS)})
+        # (user, since) the co-stars come one at a time, by the star rank: Ruby (0), Skye, Elena,
+        # Scarlet, Tifa, Aerith; (user) every one unlocked so far stays on the list, newest first
+        # (rank 0: Ruby, no list). (The old list's Skye test was inverted: every other pick shot
+        # with Skye, user.)
         assert [g["key"] for g in MG.GIRLS] == ["elena", "scarlet", "tifa", "aerith"]
-        ops += _by_rank(costar)
+        cast_ = [("Ruby", None), ("Skye", 1)] + [(g["name"], g["bit"]) for g in MG.GIRLS]
+        lists = {}
+        for r in range(1, len(cast_)):
+            on = cast_[:r + 1][::-1]                 # newest first
+            ask_r, first_r = hb._ask(sec, "Cameraman\n“Who's your co-star today?”", [n for n, _ in on])
+            picked = asm.nop()
+            lists[r] = list(ask_r)
+            for k_, (_, bit) in enumerate(on):
+                nxt = asm.nop()
+                lists[r] += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + \
+                    ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else []) + [asm.goto(picked), nxt]
+            lists[r] += [picked]
+        ops += _by_rank(lists)
         ops += say("“That's my man! To the set!”")
         x, y, z, t = focus
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0)]

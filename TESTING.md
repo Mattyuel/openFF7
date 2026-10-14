@@ -414,8 +414,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   Cloud (her back pivots, arms bend); mission: Cloud's shins stay flat and still, his pelvis
   thrusting; head reverse: her hanging head rocks back and forth; mission everywhere (Honey Bee,
   movie, the lounges' lying girls): her knees straighter. **Co-stars now come one at a time**:
-  each wrap (a full shoot) brings the next (Ruby, Skye, Elena, Scarlet, Tifa, Aerith; no pick list,
-  no affection needed); back in Wall Market the cameraman explains where the last one went. Debug
+  each wrap (a full shoot) brings the next (Ruby, Skye, Elena, Scarlet, Tifa, Aerith; no affection
+  needed), and (user) every girl unlocked so far stays on the co-star list, newest first; back in
+  Wall Market the cameraman explains where the last one went (and that the old girls still take a
+  callback). Debug
   "Star rank +1" raises the rank one step and he tells the news on your next Wall Market visit (the
   old menu's Skye check was inverted: every other pick shot with Skye). Check every girl's set
   starts, her pay rate, and each news line.
