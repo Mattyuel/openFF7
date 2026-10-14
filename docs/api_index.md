@@ -648,8 +648,12 @@ Honey Bee Girl recruitment.
 - `_save_frames(ctx, fa, name, frames)` frames: [(root position as FK uses it (y down), local rotations)].
 - `_bed_depth(ctx)` 
 - `_bare_cloud(ctx)` 
+- `_bare_cloud_seat(ctx, hrc)` 
 - `_bare_cloud_member(ctx, hrc)` 
 - `_box_p(V, bgr, tail)` A .p of one untextured box: 8 corners V (z-major, then y, then x), vertex colour bgr
+- `_loft(rings, angles, centre, bulge_x=(1.2, 0.85), side=1, cleft=0.0, rnd=0.75, top=False, bottom=None)` A body part as rings round a centre line (model units, y down, facing -z): each ring
+- `_centre_line(pts)` z on y (least squares) through world points: a body's centre line from its old parts.
+- `_write_part(ctx, ply, old, made, bone_world, bgr)` Replace .p `ply` (old bytes `old`) by the mesh `made` = (world vertices, triangles),
 - `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.

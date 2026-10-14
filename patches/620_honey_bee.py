@@ -1340,8 +1340,35 @@ def _bare_cloud(ctx):
             for i in knee + [tip]:
                 struct.pack_into("<3f", d, o_v + 12 * i, *V[i])
         ctx.char_file(newp.lower() + ".p", bytes(d))
+    _bare_cloud_seat(ctx, hrc)
     hrc = _bare_cloud_member(ctx, hrc)
     ctx.char_file(CLOUD_BARE_HRC.lower(), hrc.encode("latin-1"))
+
+
+# (user) bare Cloud's pelvis remade with sculpted buttocks (`_loft`, as Skye's): rings of
+# CLOUD_SEAT_ANG points (155 = the cheeks' middles, 180 = the cleft) round a centre line fitted
+# to the old part, laid out on his standing pose (ACFE frame 0): the top ring matches his
+# chest's bottom (y -15.3, half width 2.24, front 1.94, back 1.39), the seat fullest at
+# -13.7 and tucked under at -12.85, then a fan to CLOUD_CROTCH; a man's seat: smaller and
+# higher than Skye's. 46 triangles (at most twice the old 24, user).
+CLOUD_SEAT_ANG = (0, 60, 115, 155, 180, -155, -115, -60)
+CLOUD_SEAT_RINGS = [(-15.3, 2.3, 1.95, 1.45, 0.0), (-13.7, 2.95, 1.95, 1.6, 0.8), (-12.85, 2.6, 1.75, 1.3, 0.45)]
+CLOUD_SEAT, CLOUD_CLEFT, CLOUD_CROTCH = (1.3, 0.8), 0.3, (0.0, -12.45)
+
+
+def _bare_cloud_seat(ctx, hrc):
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(hrc)
+    assert sk[0][0] == "hip", sk[0]
+    rr, rp, rots = fa.Anim(ctx.char_file("acfe.a")).frames[0]
+    bone = fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)[0]
+    m, start, _ = bone
+    d = ctx.char_file("zcmb.p")
+    old = [[start[j] + fa._vec(m, struct.unpack_from("<3f", d, 128 + 12 * i))[j] for j in range(3)]
+           for i in range(struct.unpack_from("<16I", d, 0)[3])]
+    made = _loft(CLOUD_SEAT_RINGS, CLOUD_SEAT_ANG, _centre_line(old), CLOUD_SEAT, 1, CLOUD_CLEFT,
+                 top=True, bottom=CLOUD_CROTCH)
+    _write_part(ctx, "zcmb.p", d, made, bone, SKIN)
 
 
 # (user) bare Cloud's penis: a plain box (rectangular prism) in his skin colour, a second
@@ -1387,6 +1414,68 @@ def _box_p(V, bgr, tail):
     faces = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
     tris = [t for q in faces for t in ((q[0], q[1], q[2]), (q[0], q[2], q[3]))]
     return _p_file(V, tris, bgr, tail)
+
+
+def _loft(rings, angles, centre, bulge_x=(1.2, 0.85), side=1, cleft=0.0, rnd=0.75, top=False, bottom=None):
+    """A body part as rings round a centre line (model units, y down, facing -z): each ring
+    (y, half width, front depth, back depth, bulge) gets one point per angle (degrees from the
+    front, + = the body's left = +x) on a squared-off ellipse (exponent `rnd`); `bulge` pushes
+    the points on `side` (-1 front: bust, +1 back: seat) out by bulge x gauss(|x| - bulge_x[0],
+    bulge_x[1]) x |cos| (two mirrored mounds), and the point straight behind (180) is pulled in
+    by `cleft` x that ring's bulge share. centre(y) = the line's z. Caps: top = a flat fan over
+    the last ring; bottom = None (open), "cap" (flat fan) or (x, y) = a fan down to that point
+    (a crotch). Returns (vertices, triangles)."""
+    import math
+    gauss = lambda d, s_: math.exp(-(d / s_) ** 2)
+    V, tris, n = [], [], len(angles)
+    top_seat = max(r[4] for r in rings) or 1.0
+    for y, hw, front, back, amount in rings:
+        cz = centre(y)
+        for a in angles:
+            sa, ca = math.sin(math.radians(a)), math.cos(math.radians(a))
+            x = hw * math.copysign(abs(sa) ** rnd, sa)
+            z = -(front if ca > 0 else back) * math.copysign(abs(ca) ** rnd, ca)
+            if side * z > 0:
+                z += side * amount * gauss(abs(x) - bulge_x[0], bulge_x[1]) * abs(ca)
+            if abs(abs(a) - 180) < 1e-6 and side > 0:
+                z -= cleft * amount / top_seat
+            V.append([x, y, cz + z])
+    for r in range(len(rings) - 1):
+        for k in range(n):
+            a, b = r * n + k, r * n + (k + 1) % n
+            tris += [(a, b, b + n), (a, b + n, a + n)]
+    last = (len(rings) - 1) * n
+    if top:
+        tris += [(last, last + k, last + k + 1) for k in range(1, n - 1)]
+    if bottom == "cap":
+        tris += [(0, k + 1, k) for k in range(1, n - 1)]
+    elif bottom:
+        V.append([bottom[0], bottom[1], centre(bottom[1])])
+        tris += [(k, (k + 1) % n, len(V) - 1) for k in range(n)]
+    return V, tris
+
+
+def _centre_line(pts):
+    """z on y (least squares) through world points: a body's centre line from its old parts."""
+    my = sum(w[1] for w in pts) / len(pts)
+    mz = sum(w[2] for w in pts) / len(pts)
+    slope = sum((w[1] - my) * (w[2] - mz) for w in pts) / sum((w[1] - my) ** 2 for w in pts)
+    return lambda y: mz + slope * (y - my)
+
+
+def _write_part(ctx, ply, old, made, bone_world, bgr):
+    """Replace .p `ply` (old bytes `old`) by the mesh `made` = (world vertices, triangles),
+    taken into the bone's frame (bone_world = fieldanim.forward's (matrix, start, end));
+    at most twice the old triangle count (user)."""
+    from ff7 import fieldanim as fa
+    V, tris = made
+    h = struct.unpack_from("<16I", old, 0)
+    assert len(tris) <= 2 * h[9], (ply, len(tris), h[9])
+    m, start, _ = bone_world
+    mt = [[m[r][c] for r in range(3)] for c in range(3)]
+    local = [fa._vec(mt, [p[k] - start[k] for k in range(3)]) for p in V]
+    o = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
+    ctx.char_file(ply, _p_file(local, tris, bgr, old[64:128], struct.unpack_from("<12H", old, o)[10:12]))
 
 
 def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375)):
