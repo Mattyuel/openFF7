@@ -410,6 +410,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   a girl whose devoted scene you've seen shows a "*" after her name (written into the menu text in
   memory by a new field opcode, 0x1D: check it appears/disappears correctly and nothing else in the
   text changes).
+- **Head and mission** (Honey Bee + minigame; untested in-game, user): in head Cloud's legs are turned
+  45 out, he stands a little to his right so his pelvis is on her face, and his hands hold the
+  outside of her head; in mission her legs are turned 45 out at the hips (knees open, feet planted).
 - **Minigame group shoot** (new; untested in-game, user): after Aerith's wrap the co-star list starts
   with "Everyone": all six girls on one set. Part one on the middle bed: two lines of three kneeling
   girls facing each other, Cloud between them going through each girl in a random order, 15 s each;

@@ -179,13 +179,17 @@ HEAD_STEP, HEAD_THRUST = 20, 2.0
 # thrusting from there; both hands on her head: fingertips HOLD_SIDE either side of her head's middle
 # (the dancer's DZBK, HEAD_HOLD_GAP model units ahead = the movie's 35 field units), fingers down
 # and tipped HOLD_IN inwards
-HEAD_LOW, HOLD_SIDE, HOLD_IN, HEAD_HOLD_GAP = 3 / 4, 1.5, 0.35, 38 / 3.41
+HEAD_LOW, HOLD_SIDE, HOLD_IN, HEAD_HOLD_GAP = 3 / 4, 3.2, 0.35, 38 / 3.41   # (user, since) HOLD_SIDE 1.5 -> 3.2:
+                                                                           # hands outside her head (and hair: +-4.3)
 # (user, since) Cloud slightly higher (HEAD_LOW 2/3 -> 3/4), she slightly further (35 -> 38), his torso
 # leaning HEAD_LEAN forward (STAND_LEAN 25: tilted back a bit) and his elbows HEAD_ELBOWS_OUT further out;
 # his fingertips HOLD_NEAR to his side of her head's middle so it stays in reach
 HEAD_LEAN, HEAD_ELBOWS_OUT = 20, 2.0              # (15 put her head out of his reach)
 HOLD_NEAR = 0.7                               # the fingertips this far to his side of her head's middle
-HEAD_RIGHT = 6                                # she kneels this far (field units) to his right (as the movie)
+HEAD_RIGHT = 1                                # she kneels this far (field units) to his right (as the movie);
+                                              # (user, since) his pelvis on her face: was 6
+HEAD_SHIFT = 5                                # (user) Cloud moved this far to his right (she stays: HEAD_RIGHT 6 -> 1)
+HEAD_LEGS_OUT = 45                            # (user) his legs turned out this far at the hips
 # edge: her feet just left of the bed's left end (screen x ~10), torso and arms out over it;
 # Cloud EDGE_GAP further left, facing the bed (screen-right) like her
 EDGE_GIRL, EDGE_GAP = (-12, -180), 26
@@ -216,6 +220,7 @@ LIE_ANIM_SCENE, LEG_RAISE, LEG_SPREAD = "DZBT.tor", 45, 45
 # her knees straighter: the thighs raised only MISSION_LEG_RAISE, the feet still flat on the bed
 MISSION_LEG_RAISE = 18                       # (user, since) straighter again (was 28)
 MISSION_LEG_SPREAD = 60                      # (user) legs further apart (LEG_SPREAD 45)
+MISSION_TURN_OUT = 45                        # (user) and each leg turned out this far at the hip (knees open, feet stay)
 # On all fours (user): from her standing pose BAJB, the upper body pitched 90 degrees
 # forward (facing down), thighs hanging (hip 90), shins and feet folded back flat
 # (knee 90), upper arms hanging (shoulder 90 forward), hands flat forward; each
@@ -810,8 +815,8 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
     bx_, by_, bz_, bt_ = spot(CLOUD_ONTOP)
     rx_, ry_, rz_, rt_ = spot(CLOUD_ONTOP)
     hc = spot(HEAD_CLOUD)
-    ks = spot((HEAD_STAND[0] - HEAD_FORWARD, HEAD_STAND[1]))          # (he faces screen-left: -x)
-    kg = spot((HEAD_STAND[0] - HEAD_GAP, HEAD_STAND[1] + HEAD_RIGHT))   # (he faces -x: his right is +y)
+    ks = spot((HEAD_STAND[0] - HEAD_FORWARD, HEAD_STAND[1] + HEAD_SHIFT))   # (he faces screen-left: -x; his right +y)
+    kg = spot((HEAD_STAND[0] - HEAD_GAP, HEAD_STAND[1] + HEAD_SHIFT + HEAD_RIGHT))
     eg = spot(EDGE_GIRL_MOVED)
     hr = spot(HEADREV_GIRL)
     assert abs(hr[2] - 76) < 2, hr                                      # on the bed
@@ -1903,7 +1908,7 @@ def _cloud_buck(ctx):
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
                  lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None,
-                 elbows_out=1.0):
+                 elbows_out=1.0, legs_out=0):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
     the left thigh raised to `hip` degrees forward of vertical and turned `out` degrees
     outward, the shin straight down, the foot level; it stays planted while the hips
@@ -1976,6 +1981,12 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
         W = down(a_ * (hit if hit is not None else max(ys)[1]))
         gap = floor_y - end(fk(W), "l_tibia")[1]
         assert gap < 1.0 and dot(end(fk(W), "l_tibia"), fwd) > dot(feet0["l"], fwd) + 1, ("step", gap)
+    if legs_out:                                     # (user) each leg turned out at the hip (knee and foot outward)
+        for s, out in (("l", 1), ("r", -1)):
+            leg = (s + "_femur", s + "_tibia", s + "_foot")
+            kx = end(fk(W), s + "_femur")[0]
+            W = next(M for M in (rot(W, leg, fa.axis_angle(up, a)) for a in (legs_out, -legs_out))
+                     if out * end(fk(M), s + "_femur")[0] > out * kx + 0.1)
     if lift:                                         # left leg up: thigh from knee / 2 to lift[0] forward,
         hip_a, out_a = lift                          # turned lift[1] out; shin down, foot level
         h_, o_ = math.radians(hip_a), math.radians(out_a)        # thigh: hip_a forward of straight down,
@@ -2064,7 +2075,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             D = sub(A, start)
             dd = math.sqrt(dot(D, D))
             u = [c / dd for c in D]
-            pole = fwd if not lift else sub(E0[i], S0[i])                     # lift: the frame-0 knee side
+            pole = fwd if not (lift or legs_out) else sub(E0[i], S0[i])      # lift / legs out: the frame-0 knee side
             pp = sub(pole, [dot(pole, u) * c for c in u])
             pn = math.sqrt(dot(pp, pp))
             pp = [c / pn for c in pp]
@@ -2295,7 +2306,7 @@ def _cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0):
 
 
 def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0,
-             head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD):
+             head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD, turn_out=0):
     """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
     the knees fall open POSE_ROCK and close again (each leg turns about its
     hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames.
@@ -2371,7 +2382,7 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
         w = list(w0)
         for side, outward in (("l", -1), ("r", 1)):            # sign checked: the knees move apart
             h, a = e0[side + "_hip"], e0[side + "_tibia"]                      # hip joint, ankle
-            turn = fa.axis_angle([a[k] - h[k] for k in range(3)], outward * POSE_ROCK * b)
+            turn = fa.axis_angle([a[k] - h[k] for k in range(3)], outward * (turn_out + POSE_ROCK * b))
             for n in ("_femur", "_tibia", "_foot"):
                 w[idx(side + n)] = fa._mul(turn, w0[idx(side + n)])
         e = ends(w)
@@ -2655,7 +2666,7 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=ED
 
 
 def apply(ctx):
-    _on_back(ctx, leg_raise=MISSION_LEG_RAISE, leg_spread=MISSION_LEG_SPREAD)
+    _on_back(ctx, leg_raise=MISSION_LEG_RAISE, leg_spread=MISSION_LEG_SPREAD, turn_out=MISSION_TURN_OUT)
     _on_back(ctx, HEADREV_ANIM, HEADREV_ARMS, hip_lift=HEADREV_LIFT, head_down=True)
     _fours(ctx)
     _cloud_thrust(ctx)
@@ -2666,7 +2677,7 @@ def apply(ctx):
     _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
     _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8)   # x2 (dates)
     _cloud_stand(ctx, CLOUD_BED["standlow"], arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, step=HEAD_STEP,
-                 thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, lean=HEAD_LEAN, elbows_out=HEAD_ELBOWS_OUT,
+                 thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, lean=HEAD_LEAN, elbows_out=HEAD_ELBOWS_OUT, legs_out=HEAD_LEGS_OUT,
                  hold=("badd.hrc", "dzbk.a", HEAD_HOLD_GAP,
                                                                      HEAD_RIGHT / 3.41))   # head (user): ZCTQ, also the movie's
     for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)

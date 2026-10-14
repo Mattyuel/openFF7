@@ -17,7 +17,7 @@ NAMES = {"ruby": "Ruby", "skye": "Skye", "elena": "Elena", "scarlet": "Scarlet",
 # HEAD_GAP from Cloud as in the one-girl "head" (38 ahead, 6 to his right): line one at x -20
 # facing +x, line two at x 56 facing -x, Cloud between them at x 18
 HEAD_X, HEAD_YS = (-20, 56), (-125, -85, -45)    # (user, since) up the bed, away from its end
-HEAD_GAP, HEAD_RIGHT = 38, 6
+HEAD_GAP, HEAD_RIGHT = 38, 1                 # (user, since) his pelvis on her face (was 6)
 
 # part two: two girls per bed lying along it, heads over its near end (y -), XYZI by her feet as
 # the one-girl "head reverse" (the left bed: girl y -54 with its end at -134, Cloud 96 nearer);
