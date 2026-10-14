@@ -788,6 +788,9 @@ The movie minigame (user's design).
 - `_advance(state=3)` Ops raising the star rank one step (`MOVIE_RANK`) and setting MOVIE_STATE to `state` (None:
 - `_by_rank(blocks)` Ops running blocks[r] (lists of ops, r = 1..5) for the current star rank (none at rank 0).
 - `_unlocked_or(skip)` Ops jumping to `skip` unless all 20 HB_KID bits are set.
+- `_still_poses(ctx)` 
+- `_spot_or(mesh, x, y, z)` (x, y, z, tri): the floor / bed under (x, y) if any (its height + z), else (x, y, z) on the
+- `_group(ctx, back)` (user) The group shoot: see `_movie_group`.
 - `_wall_market(ctx, focus)` 
 - `apply(ctx)` 
 
@@ -852,6 +855,10 @@ Quest marker models: battle-effect sprites shown in the field.
 
 ## `patches/_movie_girls.py`
 (user) The movie minigame's four more co-stars: Elena, Scarlet, Tifa, Aerith, each 10 gil a
+
+
+## `patches/_movie_group.py`
+(user) The movie minigame's "group" shoot, unlocked by a wrap with Aerith (star rank 6): Ruby,
 
 
 ## `patches/_quest_data.py`

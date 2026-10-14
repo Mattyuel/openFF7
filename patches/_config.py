@@ -82,12 +82,13 @@ DATE_GIRL = (1, 217)               # girl index + 1 on a date (660_dates; 0 = no
 # raised the star rank (the arrival line + the news of the new co-star), 4 = only that news (debug).
 MOVIE_STATE, MOVIE_PRESSES, MOVIE_AT = (1, 218), (2, 219), (2, 221)
 # bits: 0 Skye unlocked (a full shoot done), 1 Skye is this shoot's co-star, 2 told Ruby retired,
-# 3-6 Elena / Scarlet / Tifa / Aerith is this shoot's co-star. Bank 1 223.
+# 3-6 Elena / Scarlet / Tifa / Aerith is this shoot's co-star (3 + 4 together: the group shoot),
+# 7 = star rank 6 (the group shoot unlocked). Bank 1 223.
 MOVIE_GIRL = (1, 223)
 # (user) the movie's star rank, one co-star at a time (Ruby, Skye, Elena, Scarlet, Tifa, Aerith):
 # rank r >= 1 when bit MOVIE_RANK[r - 1] is set; each wrap sets the next. Bank 1 216 bits 4-7 (above
 # the last four HB_KID bits).
-MOVIE_RANK = [(MOVIE_GIRL, 0)] + [((1, 216), b) for b in (4, 5, 6, 7)]
+MOVIE_RANK = [(MOVIE_GIRL, 0)] + [((1, 216), b) for b in (4, 5, 6, 7)] + [(MOVIE_GIRL, 7)]   # rank 6 = the group shoot
 HB_RATE = 2                     # gil per star per minute
 HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 

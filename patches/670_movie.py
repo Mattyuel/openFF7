@@ -44,6 +44,7 @@ import struct
 import _marker_models as mm
 from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_RANK, MOVIE_STATE
 import _movie_girls as MG
+import _movie_group as GR
 from _recruit import sound
 from _travel import CHOICE, add_npc, beside, screen_step
 
@@ -59,6 +60,7 @@ CAMERA_DONOR, RUBY_DONOR = ("junone2", 6), ("jun_i2", 6)
 CAMERA_IDLE, CAMERA_FILM = "FDCB.yos", "FFBC.yos"    # camera held low / at his eye
 # (user) the shoot's intro: standing at the foot of the left bed (it starts at y -140), the camera
 # follows "focus" (the hidden player); the cameraman a little off, facing them
+GROUP_CAM = [(40, -215), (-160, -200), (100, -215), (170, -235)]   # the group's cameraman: part one; each bed
 INTRO = {"girl": (-268, -160), "cloud": (-222, -165), "focus": (-240, -170), "cam": (-160, -150)}
 CAMERA_STILL = "ZCFA.tor"                            # (user) Wall Market: FDCB frame 0 only, held
 MUSIC = 35                                          # COSTA: Costa del Sol (user; was Turks' Theme, RHYTHM 45)
@@ -1072,7 +1074,8 @@ def _retarget(ctx, names, prefix, hrc, stand, head_down=None):
     out = []
     for n in names:
         a = fa.Anim(ctx.char_file(n.split(".")[0].lower() + ".a"))
-        pos = POSITIONS[ord(n.split(".")[0][2]) - ord("A")]["name"]
+        pi = ord(n.split(".")[0][2]) - ord("A")
+        pos = POSITIONS[pi]["name"] if pi < len(POSITIONS) else None      # (K / L: the group's still poses)
         deg = (head_down or {}).get(pos)
         frames = []
         for rr, rp, rots in a.frames:
@@ -1109,6 +1112,7 @@ def _shoot(ctx, back, cast=None):
                     head_nod=HEADREV_NOD)                        # (user) head reverse: her head rocking
         dt._koala(ctx, "ZRKA.tor", RUBY_HRC, RUBY_STAND)         # (user) "holding": Tifa's koala hug on her
         _BUILT["anims"] = _speeds(ctx)
+        _still_poses(ctx)                                        # (the group shoot's waiting girls)
     f = ctx.new_field(cast["field"] if cast else FIELD, ctx.field(BASE).build())
     sec = Script.parse(f.sections[0])
     dt._clear_texts(sec)
@@ -1189,6 +1193,9 @@ def _shoot(ctx, back, cast=None):
         loader.models[r] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[r], cast["hrc"],
                                                                        ModelLoader.name(loader.models[r])[:-5] + "_b.char"),
                                                   her_anims)
+        _BUILT.setdefault("cast", {})[cast["key"]] = her_anims + _retarget(
+            ctx, STILL, cast["prefix"], dhrc, ModelLoader.anims(donor.models[dmodel])[0].split(".")[0].lower() + ".a",
+            cast.get("head_down"))                               # (+ the group's still poses)
         gfirst = len(ModelLoader.anims(loader.models[r])) - len(her_anims)
     else:
         rd = ModelLoader(ctx.field(RUBY_DONOR[0]).section("models"))
@@ -1501,6 +1508,7 @@ NEWS = {
 NEWS_AFTER = "“The old girls still take a callback if you\n ask for 'em, star. Rent's due for everyone.”"
 for r_ in NEWS:                                     # (user) the earlier girls stay on the list
     NEWS[r_].append(NEWS_AFTER)
+NEWS[6] = GR.NEWS                                   # (user) after Aerith's wrap: the group shoot
 
 
 def _advance(state=3):
@@ -1529,6 +1537,344 @@ def _unlocked_or(skip):
     assert [k for k in HB_KID] == [((1, 214 + i // 8), i % 8) for i in range(20)]
     return [asm.if_byte((1, 214), "==", 0xFF, skip), asm.if_byte((1, 215), "==", 0xFF, skip)] + \
            [asm.if_byte((1, 216), "bit_on", b, skip) for b in range(4)]
+
+
+# (user) the group shoot's waiting poses on Ruby's skeleton (retargeted for the others like every
+# pose): lying straight on her back, arms by her sides, head tilted back STILL_HEAD_BACK (head
+# reverse, not engaged; hips where 620's lying poses have them, so the same XYZI), and the kneel
+# ("head", ZMJ0 frame 0); (user) each now and then turning her head left or right (IDLE_TURN, about
+# the neck), on two timings (IDLE_A / IDLE_B, girls alternate) so they don't move together:
+# ZMK0 lie A, ZML0 kneel A, ZMM0 lie B, ZMN0 kneel B
+STILL = ["ZMK0.tor", "ZML0.tor", "ZMM0.tor", "ZMN0.tor"]
+STILL_HEAD_BACK = 50
+IDLE_A = [(90, 0), (8, 40), (40, 40), (8, 0), (60, 0), (8, -35), (30, -35), (8, 0)]   # (frames, to degrees)
+IDLE_B = [(50, 0), (8, -40), (50, -40), (8, 0), (80, 0), (8, 30), (25, 30), (8, 0)]
+GROUP_FIELD = "subin_4"                              # (a free maplist name, docs/dates_plan.md)
+GROUP_BITS = (3, 4)                                  # MOVIE_GIRL bits 3 + 4 together = the group this shoot
+PH, E, TN, USED, CC, VV, RND = ((5, a) for a in range(137, 144))   # phase, engaged girl, turn, girls done,
+                                                     # commenter, line kind, random scratch
+
+
+def _still_poses(ctx):
+    hb = _hb()
+    fa, sk, idx, rr, world = hb._standing(ctx)
+    x = (1.0, 0.0, 0.0)
+    h = idx("head")
+    lie = [fa._mul(fa.axis_angle(x, -90), m) for m in world]              # on her back (620 `_on_back`)
+    hip_pos = fa.Anim(ctx.char_file("dzba.a")).frames[0][1]
+    lie_root = [0.0, -hip_pos[1], hip_pos[2]]
+    top = lambda M: fa.forward(sk, rr, lie_root, fa.local_rotations(sk, rr, M))[h][2]
+    for sg in (1, -1):                                                     # the head tipped back: its top down
+        M = [fa._mul(fa.axis_angle(x, sg * STILL_HEAD_BACK), m) if i == h else m for i, m in enumerate(lie)]
+        if top(M)[1] > top(lie)[1] + 0.5:                                  # (y down)
+            lie = M
+            break
+    else:
+        raise AssertionError("head back")
+    kneel_a = fa.Anim(ctx.char_file("zmj0.a"))
+    krr, krp, krots = kneel_a.frames[0]
+    kneel_root = [krp[0], -krp[1], krp[2]]
+    kneel = [m for m, _, _ in fa.forward(sk, krr, kneel_root, krots)]
+
+    def turns(base, timing):                                               # world matrices -> frames' head turn
+        neck = fa._vec(base[h], [0.0, 0.0, -1.0])
+        out, a0 = [], 0.0
+        for n, a1 in timing:
+            for t in range(n):
+                a = a0 + (a1 - a0) * (t + 1) / n
+                out.append([fa._mul(fa.axis_angle(neck, a), m) if i == h else m for i, m in enumerate(base)])
+            a0 = a1
+        return out
+    for name, timing in ((STILL[0], IDLE_A), (STILL[2], IDLE_B)):
+        hb._save_frames(ctx, fa, name, [(lie_root, fa.local_rotations(sk, rr, w)) for w in turns(lie, timing)])
+    for name, timing in ((STILL[1], IDLE_A), (STILL[3], IDLE_B)):
+        a_ = fa.Anim(ctx.char_file("zmj0.a"))
+        a_.frames = [(krr, krp, fa.local_rotations(sk, krr, w)) for w in turns(kneel, timing)]
+        ctx.char_file(name.split(".")[0].lower() + ".a", a_.build())
+
+
+def _spot_or(mesh, x, y, z):
+    """(x, y, z, tri): the floor / bed under (x, y) if any (its height + z), else (x, y, z) on the
+    nearest triangle (the right bed's near end has little walkable floor; XYZI places directly)."""
+    if any(mesh.contains(t, x, y) for t in range(len(mesh.tris))):
+        return _spot(mesh, x, y, z)
+    return x, y, z, _nearest_tri(mesh, x, y)
+
+
+def _group(ctx, back):
+    """(user) The group shoot: see `_movie_group`."""
+    hb, dt = _hb(), _dates()
+    f = ctx.new_field(GROUP_FIELD, ctx.field(BASE).build())
+    sec = Script.parse(f.sections[0])
+    dt._clear_texts(sec)
+    mesh = Walkmesh(f.section("walkmesh"))
+    cam = Camera(f.sections[1])
+    loader = ModelLoader(f.section("models"))
+    names = [bytes(n).rstrip(b"\0").decode("latin-1") for n in sec.entity_names]
+    assert names[:5] == ["produce", "direct", "ad", "cloud", "child"], names
+    assert len(loader.models) == 2
+    n_g = len(GR.ORDER)
+    # spots: q = phase * 6 + girl
+    girl_at, cloud_at, cam_at, gdirs, cdirs = {}, {}, {}, {}, {}
+    for k in range(n_g):
+        line = 0 if k < 3 else 1
+        gx, gy = GR.HEAD_X[line], GR.HEAD_YS[k % 3]
+        g = _spot(mesh, gx, gy, 0, True)
+        assert g[2] > 90, ("not on the middle bed", g)
+        sgn = 1 if line == 0 else -1
+        c = _spot(mesh, gx + sgn * GR.HEAD_GAP, gy - sgn * GR.HEAD_RIGHT, 0, True)
+        assert c[2] == g[2], (g, c)
+        girl_at[k], cloud_at[k] = g, c
+        gdirs[k], cdirs[k] = (0x40, 0xC0) if line == 0 else (0xC0, 0x40)
+        cam_at[k] = _spot(mesh, *GROUP_CAM[0])
+        b, lane = divmod(k, 2)
+        (lanes, end, top) = GR.BEDS[b]
+        gx, gy = lanes[lane], end + GR.HEADREV_ALONG
+        g = _spot(mesh, gx, gy, 0, True)
+        assert abs(g[2] - top) < 2, ("not on bed", b, g)
+        girl_at[6 + k] = g
+        cloud_at[6 + k] = _spot_or(mesh, gx, gy - GR.HEADREV_CLOUD, top - GR.BEDS[0][2])   # (raised as the bed)
+        gdirs[6 + k] = cdirs[6 + k] = 0x80
+        cam_at[6 + k] = _spot(mesh, *GROUP_CAM[1 + b])
+    for q in range(2 * n_g):
+        cam_at[q] = cam_at[q] + (_dates()._dir_to(cloud_at[q][0] - cam_at[q][0], cloud_at[q][1] - cam_at[q][1]),)
+    focus = {q: (cloud_at[q][0], cloud_at[q][1], cloud_at[q][2], cloud_at[q][3]) for q in range(2 * n_g)}
+    # gauge / cursor per q (as `_shoot`)
+    left, top_, right, bottom = screen_range(f.section("triggers"))
+    near = min(_view_depth(cam, v) for t in mesh.tris for v in t) * 0.8
+    donor_loader = ModelLoader(ctx.field(mm.DONOR_FIELD).section("models"))
+    sprite_scale = round(ModelLoader.entry_scale(donor_loader.models[mm.DONOR_MODEL]) * loader.scale / donor_loader.scale)
+    gauge, cursor = {}, {}
+    for q in range(2 * n_g):
+        sx, sy = cam.project(*focus[q][:3])
+        sx = min(max(sx, left + 160), right - 160)
+        sy = min(max(sy, top_ + 120), bottom - 120)
+        gy = sy + GAUGE_Y
+        g = _unproject(cam, sx, gy, near)
+        gauge[q] = (round(g[0]), round(g[1]), round(g[2]), _nearest_tri(mesh, g[0], g[1]))
+        cursor[q] = []
+        for b in range(21):
+            off = ((b * 50 + 25) - 500) / 1000 * GAUGE_PX
+            p_ = _unproject(cam, sx + off, gy - CURSOR_UP, near)
+            cursor[q].append((round(p_[0]), round(p_[1]), round(p_[2]), _nearest_tri(mesh, p_[0], p_[1])))
+    gx, gy_, gz = gauge[0][:3]
+
+    def tilt(d):
+        a = d * 2 * math.pi / 256
+        p0, p1 = cam.project(gx, gy_, gz), cam.project(gx + 50 * math.cos(a), gy_ + 50 * math.sin(a), gz)
+        return abs(p1[1] - p0[1]) / (abs(p1[0] - p0[0]) + 1e-9) + (0 if p1[0] > p0[0] else 100)
+    sprite_dir = min(range(256), key=tilt)
+
+    # models: 2 bare Cloud, 3-8 the girls (ORDER), 9 cameraman, 10 gauge, 11 cursor
+    girl_anims, cloud_anims = _BUILT["anims"]
+    cl0 = loader.models[0]
+    loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC,
+                                                                     ModelLoader.name(cl0)[:-5] + "_b.char"), cloud_anims))
+    cfirst = len(ModelLoader.anims(loader.models[2])) - len(cloud_anims)
+    gfirst = {}
+    by_key = {g["key"]: g for g in MG.GIRLS}
+    for key in GR.ORDER:
+        if key in ("ruby", "skye"):
+            (df, dm), hrc = (RUBY_DONOR, BARE_HRC) if key == "ruby" else (SKYE_DONOR, SKYE_BARE)
+            anims = girl_anims + STILL
+        else:
+            df, dm, _ = by_key[key]["donor"]
+            hrc, anims = by_key[key]["hrc"], _BUILT["cast"][key]
+        m = loader.add_from(ModelLoader(ctx.field(df).section("models")), dm)
+        loader.models[m] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[m], hrc,
+                                                                       ModelLoader.name(loader.models[m])[:-5] + "_b.char"),
+                                                  anims)
+        assert len(anims) == len(girl_anims) + len(STILL), (key, len(anims))
+        gfirst[key] = len(ModelLoader.anims(loader.models[m])) - len(anims)
+    cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
+    film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
+    sprites = _BUILT["sprites"]
+    for hrc in ("QGAA", "QCUA"):
+        loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
+    assert len(loader.models) == 12 and cm == 9, len(loader.models)
+
+    ents = {}
+    for name in ("cloudb", *GR.ORDER, "camera", "gauge", "cursor", "keys", "voice", "hush", "shout", "hush2"):
+        ents[name] = len(sec.entity_names)
+        sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
+        sec.entry.append([None] * 32)
+    CL, CH = 3, 4
+    hide = lambda: [Op(b"\x7E\x01"), Op(b"\xC7\x01")]
+    xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
+    by_q = lambda make: _chain(P, [make(q) for q in range(2 * n_g)])
+    loop_ = lambda i: [Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
+    HEAD_P, HEADREV_P = [p["name"] for p in POSITIONS].index("head"), [p["name"] for p in POSITIONS].index("headrev")
+    centre = _spot(mesh, (GR.HEAD_X[0] + GR.HEAD_X[1]) // 2, GR.HEAD_YS[1], 0, True)
+    scripts = {}
+    scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*centre), hb._visi(0), asm.ret(), asm.ret()],
+                   2: by_q(lambda q: [xyzi(*focus[q])]) + [asm.ret()], 3: [xyzi(*centre), asm.ret()]}
+    scripts[CH] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()]}
+    steps = lambda first, p: _chain(STEP, [loop_(first + 4 * p + s_) for s_ in range(4)])
+    scripts[ents["cloudb"]] = {
+        0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
+        2: by_q(lambda q: [xyzi(*cloud_at[q]), d_(cdirs[q]), hb._visi(1)] +
+                steps(cfirst, HEAD_P if q < n_g else HEADREV_P)) + [asm.ret()],
+        3: [xyzi(*centre), d_(facing_screen(cam, *centre[:3], (0, 1))), hb._visi(1)] + loop_(0) + [asm.ret()]}
+    for k, key in enumerate(GR.ORDER):
+        first = gfirst[key]
+        b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
+        still_lie, still_kneel = first + len(girl_anims) + b_, first + len(girl_anims) + b_ + 1
+
+        def place(ph, k=k, first=first, still_lie=still_lie, still_kneel=still_kneel):
+            q = ph * n_g + k
+            idle = asm.nop()
+            return [xyzi(*girl_at[q]), d_(gdirs[q]), hb._visi(1), asm.if_byte(E, "==", k, idle)] + \
+                steps(first, HEAD_P if ph == 0 else HEADREV_P) + [asm.ret(), idle] + \
+                loop_(still_kneel if ph == 0 else still_lie) + [asm.ret()]
+        scripts[ents[key]] = {0: [Op(bytes([0xA1, 3 + k])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
+                              2: _chain(PH, [place(0), place(1)]) + [asm.ret()],
+                              3: [xyzi(*girl_at[k]), d_(gdirs[k]), hb._visi(1)] + loop_(still_kneel) + [asm.ret()]}
+    scripts[ents["camera"]] = {
+        0: [Op(bytes([0xA1, 9]))] + hide() + [xyzi(*cam_at[0][:4]), d_(cam_at[0][4])] + loop_(film) + [asm.ret(), asm.ret()],
+        2: by_q(lambda q: [xyzi(*cam_at[q][:4]), d_(cam_at[q][4])]) + [asm.ret()]}
+    scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 10])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
+                              2: by_q(lambda q: [xyzi(*gauge[q])]) + [hb._visi(1), asm.ret()]}
+    loop, idle = asm.nop(), asm.nop()
+    cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50)]
+    cur += by_q(lambda q: _tree(BKT, 0, 20, lambda b: [xyzi(*cursor[q][b])]) + [hb._visi(1), hb._w(1),
+                                                                               asm.goto_back(loop)])
+    cur += [idle, hb._visi(0), hb._w(1), asm.goto_back(loop)]
+    scripts[ents["cursor"]] = {0: [Op(bytes([0xA1, 11])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret()] + cur
+                               + [asm.ret()]}
+    wait = hb._w(1)
+    back1, up = asm.goto_back(wait), asm.setbyte(HELD, 0)
+    scripts[ents["keys"]] = {0: [asm.ret(), wait, Op(bytes([0x96, FR[0], FR[1]])),
+                                 Op(bytes([0x30]) + struct.pack("<H", OK_KEY) + b"\x00", target=up),
+                                 asm.if_byte(HELD, "==", 0, back1), asm.setbyte(HELD, 1),
+                                 Op(bytes([0x96, PR[0], PR[1]])), back1,
+                                 up, asm.goto_back(wait), asm.ret()]}
+    # voice: the engaged girl (muffled) and a random other girl's comment, in turn
+    texts = {}
+
+    def line(who, text):
+        t = "%s\n%s" % (GR.NAMES[who], text if text.startswith("(") or text.startswith("Mm") or
+                        text.startswith("Hn") or text.startswith("Gk") else "“%s”" % text)
+        if t not in texts:
+            texts[t] = sec.add_string(_encode(t))
+        return [Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y), hb._req(ents["hush"], 2, wait=False),
+                asm.message(1, texts[t])] + ([sound(SLAP_SOUND)] if _slaps(text) else [])
+    vl, vdone, other, picked = asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    voice = [asm.ret(), vl, hb._w(SAY_EVERY), asm.if_byte(RUN, "==", 1, vdone),
+             Op(bytes([0x95, K[0], K[1]])), Op(bytes([0x8D, K[0] << 4, K[1], 6])),
+             Op(bytes([0x95, VV[0], VV[1]])), Op(bytes([0x8D, VV[0] << 4, VV[1], 2])),
+             asm.if_byte(VV, "==", 0, other)]
+    voice += _chain(E, [_chain(K, [line(key, GR.MUFFLED[key][j % 3]) for j in range(6)]) for key in GR.ORDER])
+    voice += [asm.goto(vdone), other, Op(bytes([0x99, CC[0], CC[1]])), Op(bytes([0x8D, CC[0] << 4, CC[1], n_g]))]
+    for k in range(n_g):                                  # never the engaged girl: the next one instead
+        nx = asm.nop()
+        voice += [asm.if_byte(E, "==", k, nx), asm.if_byte(CC, "==", k, nx), asm.setbyte(CC, (k + 1) % n_g), nx]
+    voice += _chain(CC, [_chain(PH, [_chain(K, [line(key, GR.COMMENTS[key][ph][j]) for j in range(6)])
+                                     for ph in range(2)]) for key in GR.ORDER])
+    voice += [vdone, asm.goto_back(vl), asm.ret()]
+    scripts[ents["voice"]] = {0: voice}
+    scripts[ents["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(SAY_FOR), Op(b"\x54\x01"), asm.ret()]}
+    shout = "Cameraman\n“Five seconds left! Go all out, star!\n Give me a FINISHER!”"
+    scripts[ents["shout"]] = {0: [asm.ret(), asm.ret()],
+                              2: [Op(b"\x52\x02\x00\x01"), hb._window(shout, 2, 8, 56),
+                                  hb._req(ents["hush2"], 2, wait=False), asm.message(2, sec.add_string(_encode(shout))),
+                                  asm.ret()]}
+    scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
+
+    # director
+    lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    say = lambda t: hb._say(sec, "Cameraman\n" + t)
+    girl_ents = [ents[key] for key in GR.ORDER]
+    place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"], ents["gauge"])]
+
+    def pick():                                       # E = a girl not yet used this part, at random; P = q
+        found, ops = asm.nop(), [Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], n_g]))]
+        for step in range(2 * n_g):
+            k = step % n_g
+            nxt, taken = asm.nop(), asm.nop()
+            ops += [asm.if_byte(RND, "==", k, nxt), asm.if_byte(USED, "bit_off", k, taken),
+                    asm.setbyte(E, k), asm.biton(USED, k), asm.goto(found), taken,
+                    asm.setbyte(RND, (k + 1) % n_g), nxt]
+        ops += [found] + _chain(E, [[asm.setbyte(P, k)] for k in range(n_g)])
+        two = asm.nop()
+        return ops + [asm.if_byte(PH, "==", 1, two), Op(bytes([0x85, P[0] << 4, P[1], n_g])), two]
+    main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
+            asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
+            asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, GR.TURN), asm.setbyte(FIN, 0),
+            asm.setbyte(PH, 0), asm.setbyte(TN, 0), asm.setbyte(USED, 0), asm.setbyte(E, 255), asm.setbyte(VV, 0)] + \
+           [hb._req(e, 3) for e in (CL, ents["cloudb"], *girl_ents)] + [hb._w(20)]
+    main += [Op(hb.FADE_IN), Op(b"\x6C")]
+    for t_ in GR.INTRO:
+        main += say(t_)
+    main += pick() + [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C")]
+    main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
+    main += say("“...And... ACTION!”")
+    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK), asm.setbyte(RUN, 1)]
+    wait1, go = hb._w(1), asm.nop()
+    main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, TICK),
+             asm.setword(T, PR), asm.setword(PR, 0), hb._arith(0x86, TOT, T),
+             hb._arith(0x8A, VEL, 5), hb._arith(0x8C, VEL, 6),
+             hb._arith(0x86, VEL, 1000 - 1000 * 5 // 6 - B - 500 // C),
+             asm.setword(S, T), hb._arith(0x8A, S, A), hb._arith(0x86, VEL, S),
+             asm.setword(S, POS), hb._arith(0x8C, S, C), hb._arith(0x86, VEL, S)]
+    lo, hi = asm.nop(), asm.nop()
+    main += [asm.if_word(VEL, "<", 1000 - VMAX, lo), asm.setword(VEL, 1000 - VMAX), lo,
+             asm.if_word(VEL, ">", 1000 + VMAX, hi), asm.setword(VEL, 1000 + VMAX), hi,
+             asm.setword(S, POS), hb._arith(0x86, S, VEL),
+             asm.if_word(S, ">=", 1000 + DANGER, lost),
+             asm.setword(POS, S), hb._arith(0x88, POS, 1000),
+             asm.if_word(POS, "<=", 1000 - DANGER, hi_red)]
+    no_call = asm.nop()
+    main += [asm.if_byte(TN, "==", 2 * n_g - 1, no_call), asm.if_byte(FIN, "==", 0, no_call),
+             asm.setword(FT, FR), hb._arith(0x86, FT, FINISH_FRAMES), asm.if_word(FT, ">=", NEXT, no_call),
+             asm.setbyte(FIN, 1), hb._req(ents["shout"], 2, wait=False), no_call]
+    done, same = asm.nop(), asm.nop()
+    main += [hb._arith(0x8A, RATE, 3), hb._arith(0x8C, RATE, 4), asm.setword(S, T), hb._arith(0x8A, S, 16),
+             hb._arith(0x86, RATE, S), asm.setbyte(NEW, 0)]
+    for s_, th in enumerate(RATE_STEPS):
+        main += [asm.if_word(RATE, ">=", th, done), asm.setbyte(NEW, s_ + 1)]
+    main += [done, asm.if_byte(NEW, "!=", STEP, same), asm.setbyte(STEP, NEW),
+             hb._req(ents["cloudb"], 2, wait=False)] + [hb._req(e, 2, wait=False) for e in girl_ents] + [same]
+    # the next girl every TURN frames; after six, part two; after twelve, the wrap
+    stay, part2 = asm.nop(), asm.nop()
+    main += [asm.if_word(FR, ">=", NEXT, stay), hb._arith(0x86, NEXT, GR.TURN),
+             asm.if_byte(TN, "<", 2 * n_g - 1, wrap),
+             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C"),
+             Op(bytes([0x85, TN[0] << 4, TN[1], 1])),
+             asm.if_byte(TN, "==", n_g, part2), asm.setbyte(PH, 1), asm.setbyte(USED, 0), part2] + pick() + \
+            [asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
+            [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
+             hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1),
+             stay, asm.goto_back(tick)]
+    rx, ry, rz, rt, rdir = back
+
+    def out():
+        stop = hb._w(30)
+        return [hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(WALL), rx, ry, rt, rdir), stop,
+                asm.goto_back(stop), asm.ret()]
+    gil = GR.RATE * FINISH_BONUS
+    main += [hi_red, sound(RED_SOUND), asm.if_byte(FIN, "==", 1, lost), asm.setbyte(RUN, 0), Op(b"\x54\x01"),
+             Op(b"\x54\x02"), Op(bytes([0xF2, 0, 0, 0, 0x10, FANFARE]) + bytes(8)), hb._w(45)]
+    main += say("“WOW! What a FINISHER!\n That's going straight on the poster!”")
+    main += [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil)), sound(0x168)]
+    main += say("“Here's a bonus, on the spot:\n {:,} gil. You earned it, star!”".format(gil))
+    main += hb._say(sec, GR.AFTERMATH)
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
+    main += say("“CUT! CUT! You lost it, man!\n ...Fine. We'll sell what we've got.”")
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
+    main += say("“...That's a WRAP! Magnificent!”")
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    black = Op(bytes.fromhex("6b00000000000104" "00"))
+    scripts[0] = {0: [black, asm.ret()] + main}
+    dt._blank(sec, scripts)
+    f.set_section("models", loader.build())
+    f.sections[0] = sec.build()
+    assert len(sec.strings if hasattr(sec, "strings") else []) <= 255
+    return len(texts)
 
 
 def _wall_market(ctx, focus):
@@ -1584,6 +1930,9 @@ def _wall_market(ctx, focus):
         # (user, since) each co-star 10 gil a press more: Ruby 10, Skye 20, Elena .. Aerith 30 .. 60
         paid_ = asm.nop()
         ops += [asm.setword(GIL, MOVIE_PRESSES)]
+        not_group = asm.nop()                    # (user) the group shoot first: bits 3 + 4 together
+        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], not_group),
+                asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], not_group)] + pay(GR.RATE) + [asm.goto(paid_), not_group]
         for bit, rate in [(1, PAY_RATE * SKYE_PAY)] + [(g["bit"], g["rate"]) for g in MG.GIRLS]:
             other = asm.nop()
             ops += [asm.if_byte(MOVIE_GIRL, "bit_on", bit, other)] + pay(rate) + [asm.goto(paid_), other]
@@ -1625,10 +1974,25 @@ def _wall_market(ctx, focus):
                 lists[r] += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + \
                     ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else []) + [asm.goto(picked), nxt]
             lists[r] += [picked]
+        # (user) rank 6 (Aerith's wrap): "Everyone" = the group shoot, first
+        on = [("Everyone", "group")] + cast_[::-1]
+        ask_r, first_r = hb._ask(sec, "Cameraman\n“Who's your co-star today?”", [n for n, _ in on])
+        picked = asm.nop()
+        lists[6] = list(ask_r)
+        for k_, (_, bit) in enumerate(on):
+            nxt = asm.nop()
+            sets = [asm.biton(MOVIE_GIRL, b_) for b_ in GROUP_BITS] if bit == "group" else \
+                ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else [])
+            lists[6] += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + sets + [asm.goto(picked), nxt]
+        lists[6] += [picked]
+        assert len(MOVIE_RANK) == 6
         ops += _by_rank(lists)
         ops += say("“That's my man! To the set!”")
         x, y, z, t = focus
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0)]
+        solo = asm.nop()                         # (user) the group's set: bits 3 + 4 together
+        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], solo), asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], solo),
+                asm.mapjump(ctx.maplist.index(GROUP_FIELD), x, y, t, 0), asm.ret(), solo]
         for g in MG.GIRLS:                       # her own set
             nxt = asm.nop()
             ops += [asm.if_byte(MOVIE_GIRL, "bit_on", g["bit"], nxt),
@@ -1691,3 +2055,4 @@ def apply(ctx):
     _shoot(ctx, back)
     for g in MG.GIRLS:                           # (user) four more co-stars, each on her own set
         _shoot(ctx, back, g)
+    _group(ctx, back)                            # (user) all six on one set, after Aerith

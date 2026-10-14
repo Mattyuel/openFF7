@@ -410,6 +410,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   a girl whose devoted scene you've seen shows a "*" after her name (written into the menu text in
   memory by a new field opcode, 0x1D: check it appears/disappears correctly and nothing else in the
   text changes).
+- **Minigame group shoot** (new; untested in-game, user): after Aerith's wrap the co-star list starts
+  with "Everyone": all six girls on one set. Part one on the middle bed: two lines of three kneeling
+  girls facing each other, Cloud between them going through each girl in a random order, 15 s each;
+  part two: two girls lying across the end of each bed, the same. Idle girls turn their heads now
+  and then; the others comment while the engaged girl mumbles. Pays 70 gil a press. Check the bed
+  placements (especially the right bed's end, which has little floor) and that every girl gets one turn.
 - **Minigame intro** (new; untested in-game, user): the shoot opens with Cloud and the girl standing at
   the foot of the left bed, the cameraman beside them; before "...And... ACTION!" the screen fades out
   and back in on the first position. Check each co-star stands (her model's first animation).
