@@ -802,6 +802,26 @@ The movie minigame (user's design).
 - `_terminal(ctx)` (user) The Item Store terminal (mkt_ia line00 script 4, OK at the console): where the gun
 - `apply(ctx)` 
 
+## `patches/672_movie_special.py`
+(user) The movie minigame's "Special" scenes: role-play shoots in Don Corneo's bedroom, one set per
+
+- `_mv()` 
+- `_hb()` 
+- `_setup(ctx, hrc, stand)` 
+- `_v(fa)` 
+- `_pitch(fa, m, target)` m turned about the x axis so its bone's direction has target's pitch (the y-z angle).
+- `_two_bone(fa, W, I, F, upper, lower, target, pole)` Upper / lower bones re-aimed so the lower bone's end reaches `target`, the joint towards
+- `_girl_insert(ctx)` ZRIA (her insert pose, static) on Ruby's skeleton. Returns her ENTRY point (model space).
+- `_member(ctx, fa)` Cloud's member (620 zcmp.p, on the hip bone): (base, tip) in the hip bone's frame.
+- `_cloud_insert(ctx, entry, n, name)` Cloud's insert (Cloud's skeleton), n frames a stroke: frame 0 out (top), n/2 in.
+- `_cloud_still(ctx)` ZCTW: Cloud on his back, still (ZCTD's first frame, 15 frames).
+- `_girl_finisher(ctx)` ZRFA (Ruby's skeleton) astride Cloud's ZCTW, 15 frames: frame 0 down, 7 up.
+- `poses(ctx)` Every special pose; (girl anim names, Cloud anim names) on Ruby's / Cloud's skeleton, 4 per
+- `_girl(ctx, key)` (her donor (field, model): clothed as it is, bare with `bare hrc`; bare hrc; an anim to append to
+- `_special(ctx, key, back)` 
+- `_dates()` 
+- `apply(ctx)` 
+
 ## `patches/675_standard_bodies.py`
 (user) The standard female body (`_female_body`, built by 670) on the undressed
 
@@ -867,6 +887,10 @@ Quest marker models: battle-effect sprites shown in the field.
 
 ## `patches/_movie_group.py`
 (user) The movie minigame's "group" shoot, unlocked by a wrap with Aerith (star rank 6): Ruby,
+
+
+## `patches/_movie_special.py`
+(user) The movie minigame's "Special" scenes (672_movie_special), data only: unlocked by a full
 
 
 ## `patches/_quest_data.py`

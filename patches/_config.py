@@ -89,6 +89,9 @@ MOVIE_GIRL = (1, 223)
 # rank r >= 1 when bit MOVIE_RANK[r - 1] is set; each wrap sets the next. Bank 1 216 bits 4-7 (above
 # the last four HB_KID bits).
 MOVIE_RANK = [(MOVIE_GIRL, 0)] + [((1, 216), b) for b in (4, 5, 6, 7)] + [(MOVIE_GIRL, 7)]   # rank 6 = the group shoot
+# (user) the movie's "Special" scenes (672): unlocked by a full group shoot. Bank 1 213 bit 7: byte 213 is the
+# debug build's DEBUG_FLAGS (bits 0-1 only, debug builds only), unused by a normal build
+SPECIAL_ON = ((1, 213), 7)
 HB_RATE = 2                     # gil per star per minute
 HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 

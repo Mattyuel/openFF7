@@ -23,7 +23,7 @@ import csv
 import os
 import struct
 
-from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL, MOVIE_RANK, MOVIE_STATE
+from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL, MOVIE_RANK, MOVIE_STATE, SPECIAL_ON
 from _recruit import sound
 from _travel import CHOICE, window
 import _honey_bee_gifts as gifts
@@ -162,6 +162,7 @@ def _menu(sec, dests):
     for v, b in MOVIE_RANK:
         nxt = asm.nop()
         ops += [asm.if_byte(v, "bit_off", b, nxt), asm.biton(v, b), asm.goto(up_), nxt]
+    ops += [asm.biton(*SPECIAL_ON)]              # (user) past the group shoot: the special scenes (672)
     ops += [up_, asm.if_byte(MOVIE_STATE, "==", 0, owed_), asm.setbyte(MOVIE_STATE, 4), owed_, asm.goto(done)]
     # +30 minutes: the play clock can't be reached from a field, so the times waited from move back
     # 30 (wrapping: the elapsed difference still comes out +30): the movie cut and the Honey Bee takings

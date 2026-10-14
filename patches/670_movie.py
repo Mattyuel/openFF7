@@ -42,7 +42,7 @@ import math
 import struct
 
 import _marker_models as mm
-from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_RANK, MOVIE_STATE
+from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_RANK, MOVIE_STATE, SPECIAL_ON
 import _movie_girls as MG
 import _movie_group as GR
 from _recruit import sound
@@ -71,6 +71,9 @@ CAMERA_IDLE, CAMERA_FILM = "FDCB.yos", "FFBC.yos"    # camera held low / at his 
 GROUP_CAM = [(40, -215), (-160, -200), (100, -215), (170, -235)]   # the group's cameraman: part one; each bed
 INTRO = {"girl": (-268, -160), "cloud": (-222, -165), "focus": (-240, -170), "cam": (-160, -150)}
 CAMERA_STILL = "ZCFA.tor"                            # (user) Wall Market: FDCB frame 0 only, held
+# (user: speed up the switch between positions) fades at speed 0x10 (the game's usual is 0x08; read as
+# "higher = faster", from the values the game's own scripts use: inferred, not checked in the exe)
+FAST_OUT, FAST_IN = bytes.fromhex("6b0000000000100200"), bytes.fromhex("6b00000000001001ff")
 MUSIC = 35                                          # COSTA: Costa del Sol (user; was Turks' Theme, RHYTHM 45)
 OK_KEY = 0x220                                      # OK, as every original script tests it: IFKEY (0x61220D) / IFKEYON
                                                     # (0x61225D) with mask bit 0x200 read the field header's +0x78 held /
@@ -189,6 +192,8 @@ POS, VEL, PR, TOT, FR, RATE, T, S, NEXT, BKT, EARN, EL, NT = ((6, a) for a in ra
 P, STEP, NEW, RUN, K, HELD = (5, 130), (5, 131), (5, 132), (5, 133), (5, 134), (5, 135)
 FIN, FT = (5, 136), (6, 126)                         # finisher on (last 5 s of the last position); scratch word
 GIL = (6, 140)                                       # mrkt2: the cut (temp word)
+SPEC = (5, 138)                                      # the cameraman's talk: a special scene picked (672)
+SPECIAL_BASE, SPECIAL_ARRIVE = "colne_6", (15, 45)  # 672's sets (copies of colne_6): arrival, by the bed
 
 # Ruby bare (user, second version: "look like the original, just with bare shoulders, legs,
 # feet; leave the rest of the coat", "pants need to be skin too", "don't change the size, just
@@ -636,7 +641,7 @@ def _sprites(ctx, half_gauge, half_cursor):
             raise AssertionError("%s already in char.lgp" % hrc)
         except KeyError:
             pass
-        gauge = hrc == "QGAA"
+        gauge = hrc.startswith("QG")                   # (QGAA; 672: QGEA)
         crop = (0, 0, GAUGE_W - 1, GAUGE_H - 1) if gauge else (0, 0, 15, 11)
         half = half_gauge if gauge else half_cursor
         ctx.char_file(hrc.lower() + ".hrc",
@@ -1417,8 +1422,9 @@ def _shoot(ctx, back, cast=None):
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
-    place_all = lambda: [hb._req(e, 2) for e in (CL, ents["cloudb"], *(ents[g[0]] for g in girls), ents["camera"],
-                                                 ents["gauge"])]
+    # (user: speed up the switch) all at once, not each waited on in turn
+    place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *(ents[g[0]] for g in girls),
+                                                             ents["camera"], ents["gauge"])] + [hb._w(6)]
 
     def pause_cond(no):                              # only in PAUSE_POS
         doit = asm.nop()
@@ -1486,10 +1492,10 @@ def _shoot(ctx, back, cast=None):
              # only once the screen is black (user: things changed before the fade: the cursor and the
              # speed-change REQs read P at once)
              # (user, since) the meter back to the middle (POS 500, VEL 0) with every new position
-             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C"),
+             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(FAST_OUT), Op(b"\x6C"),
              Op(bytes([0x85, P[0] << 4, P[1], 1])),
              asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
-            [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
+            [hb._w(4), Op(FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
              hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, MINUTE), asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
@@ -1930,11 +1936,11 @@ def _group(ctx, back):
     # (user: a long switch cut into the next girl's turn) her turn counts from the fade-in
     main += [asm.if_word(FR, ">=", NEXT, stay),
              asm.if_byte(TN, "<", 2 * n_g - 1, wrap),
-             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C"),
+             asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(FAST_OUT), Op(b"\x6C"),
              Op(bytes([0x85, TN[0] << 4, TN[1], 1])),
              asm.if_byte(TN, "==", n_g, part2), asm.setbyte(PH, 1), asm.setbyte(USED, 0), part2] + pick() + \
             [asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
-            [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
+            [hb._w(4), Op(FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
              hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN), asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
@@ -1950,6 +1956,7 @@ def _group(ctx, back):
     main += [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil)), sound(0x168)]
     main += say("“Here's a bonus, on the spot:\n {:,} gil. You earned it, star!”".format(gil))
     main += hb._say(sec, GR.AFTERMATH)
+    main += [asm.biton(*SPECIAL_ON)]             # (user) a full group shoot unlocks the special scenes (672)
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
@@ -1958,6 +1965,7 @@ def _group(ctx, back):
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
     main += say("“...That's a WRAP! Magnificent!”")
+    main += [asm.biton(*SPECIAL_ON)]
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     black = Op(bytes.fromhex("6b00000000000104" "00"))
@@ -2130,9 +2138,26 @@ def _wall_market(ctx, focus):
         lists[6] += [picked]
         assert len(MOVIE_RANK) == 6
         ops += _by_rank(lists)
+        # (user) after a full group shoot: "Normal scene" / "Special scene" (672) for one co-star
+        import _movie_special as SP_
+        spec_no, spec_ask = asm.nop(), asm.nop()
+        ops += [asm.setbyte(SPEC, 0), asm.if_byte(SPECIAL_ON[0], "bit_on", SPECIAL_ON[1], spec_no),
+                asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], spec_ask),
+                asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], spec_ask), asm.goto(spec_no), spec_ask]
+        ask_s, first_s = hb._ask(sec, "Cameraman\n“The usual, or something special today?”",
+                                 ["Normal scene.", "Special scene."])
+        ops += ask_s + [asm.if_byte(CHOICE, "==", first_s + 1, spec_no), asm.setbyte(SPEC, 1), spec_no]
         ops += say("“That's my man! To the set!”")
         x, y, z, t = focus
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0)]
+        not_spec = asm.nop()
+        sx_, sy_, sz_, st_ = _spot(Walkmesh(ctx.field(SPECIAL_BASE).section("walkmesh")), *SPECIAL_ARRIVE, 0, True)
+        ops += [asm.if_byte(SPEC, "==", 1, not_spec)]
+        for key_, bit_ in [("skye", 1)] + [(g["key"], g["bit"]) for g in MG.GIRLS]:
+            nxt = asm.nop()
+            ops += [asm.if_byte(MOVIE_GIRL, "bit_on", bit_, nxt),
+                    asm.mapjump(ctx.maplist.index(SP_.FIELDS[key_]), sx_, sy_, st_, 0xC0), asm.ret(), nxt]
+        ops += [asm.mapjump(ctx.maplist.index(SP_.FIELDS["ruby"]), sx_, sy_, st_, 0xC0), asm.ret(), not_spec]
         solo = asm.nop()                         # (user) the group's set: bits 3 + 4 together
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], solo), asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], solo),
                 asm.mapjump(ctx.maplist.index(GROUP_FIELD), x, y, t, 0), asm.ret(), solo]
@@ -2253,6 +2278,7 @@ def apply(ctx):
     for g in MG.GIRLS:                           # (their sets are new fields: the maplist names first)
         assert g["field"] in ctx.maplist, g["field"]
     back = _wall_market(ctx, focus)
+    ctx.movie_back = back                        # (672's special sets send you back here too)
     _shoot(ctx, back)
     for g in MG.GIRLS:                           # (user) four more co-stars, each on her own set
         _shoot(ctx, back, g)

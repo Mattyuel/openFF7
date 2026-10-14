@@ -1493,7 +1493,7 @@ def _bare_cloud_seat(ctx, hrc):
 # (ACFE frame 0, y down, facing -z): MEMBER_LEN forward from the pelvis's front-bottom
 # middle (sunk MEMBER_SINK into it), MEMBER_W wide and tall, MEMBER_UP above the pelvis's
 # lowest point; corners taken into the hip bone's own frame.
-MEMBER_LEN, MEMBER_W, MEMBER_UP, MEMBER_SINK = 2.2, 0.65, 0.45, 0.4
+MEMBER_LEN, MEMBER_W, MEMBER_UP, MEMBER_SINK = 3.3, 0.975, 0.45, 0.4   # (user, since) 50% bigger (was 2.2, 0.65)
 
 
 def _bare_cloud_member(ctx, hrc):
@@ -2720,8 +2720,10 @@ def apply(ctx):
     _cloud_spread(ctx)
     _cloud_buck(ctx)
     _ride(ctx)                                       # (her kneel, dzbk.a: head's hands are placed on it)
-    _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN)
-    _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8)   # x2 (dates)
+    # (user, since) head reverse (and every ZCTE / ZCTI user: behind, the dates' part twos): only the hips
+    # thrust, the upper body still (their girls' poses follow only his pelvis)
+    _cloud_stand(ctx, arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, still_upper=True)
+    _cloud_stand(ctx, "ZCTI.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, nframes=8, still_upper=True)   # x2 (dates)
     _cloud_stand(ctx, CLOUD_BED["standlow"], arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, step=HEAD_STEP,
                  thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, lean=HEAD_LEAN, elbows_out=HEAD_ELBOWS_OUT, legs_out=HEAD_LEGS_OUT,
                  hold=("badd.hrc", "dzbk.a", HEAD_HOLD_GAP,
