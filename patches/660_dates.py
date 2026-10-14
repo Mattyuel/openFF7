@@ -78,8 +78,7 @@ GIRL_SIT = {"Tifa": {"bench": "GDEE.chi"},                    # bwhlin tifa DFAN
             "Aerith": {"bench": "GDBE.chi"},                  # bwhlin earith DFANM 03
             "Scarlet": {"bench": "ZDBS.tor"},                 # ours
             "Elena": {"bench": "ZDBE.tor"}}                   # ours
-BENCH = {"ZDBS.tor": ("amcc.hrc", "anae.a"), "ZDBE.tor": ("evfe.hrc", "acfe.a"),   # no sitting anims: ours,
-         "ZDBC.tor": ("aaaa.hrc", "acfe.a")}     # feet on the floor (ZDBC: Cloud, for his seated part twos)
+BENCH = {"ZDBS.tor": ("amcc.hrc", "anae.a"), "ZDBE.tor": ("evfe.hrc", "acfe.a")}   # no sitting anims: ours
 LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # part two: each girl's undressed copy (a NEW skeleton file; her own model is untouched)
 # and her pose; Tifa: AAGB with the chest part's white top (vertex colour B,G,R 204) in her
@@ -87,18 +86,19 @@ LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # part two per girl: her undressed copy's skeleton (None: her own model), her poses (the first
 # is where it starts, the last is the "fast" one), Cloud's pose and his fast one (CLOUD_PART2 keys)
 CLOUD_PART2 = ["standk", "stand", "standf", "standa", "standaf",   # 620's CLOUD_BED: koala, head (x2), Aerith's (x2)
-               "sitspank", "sitthrust"]                              # ours (CLOUD_SEATED): Elena's
-CLOUD_SEATED = {"sitspank": "ZCTL.tor", "sitthrust": "ZCTM.tor"}     # bare Cloud on a bench: spanking / thrusting
+               "standspank"]                                         # ours: Elena's
+CLOUD_SEATED = {"standspank": "ZCTP.tor"}                            # bare Cloud standing, spanking her (_elena_fours)
 PART2 = {
     "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
     # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
     "Aerith": {"bare": None, "anims": ["ZDKA.tor", "ZDKC.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf",
                "acts": {"look": "ZDKC.tor"}},     # (user) she looks up at him when he tells her to
-    # (user) Elena over bare Cloud's lap (he sits, spanking her: one swing + the slap sound per
-    # "spank"), then (fade, "part3") on his lap, bouncing as he thrusts and slaps ("smack": sound)
-    "Elena": {"bare": "ZELA.HRC", "anims": ["ZDEA.tor", "ZDEB.tor"], "cloud": "sitspank", "cloud_still": True,
-              "same_way": True, "once": {"spank": "sitspank"},
-              "switch": {"part3": ("sitthrust", "ZDEB.tor")}, "slap_loop": True,
+    # (user) Elena standing, in every place: on all fours, Cloud standing behind and to her side,
+    # leaning down, spanking her (one swing + the slap sound per "spank"), then (fade, "part3")
+    # Tifa's koala hug ("holding") with a slap every stroke
+    "Elena": {"bare": "ZELA.HRC", "anims": ["ZDEF.tor", "ZDEK.tor"], "cloud": "standspank", "cloud_still": True,
+              "same_way": True, "once": {"spank": "standspank"},
+              "switch": {"part3": ("standk", "ZDEK.tor")}, "slap_loop": True,
               # (user) both on the left of the screen (at her seat) and turned the other way
               "at_her_seat": True, "turn": 128 - 21},   # (user, since) then 30 more to their right (DIR -21)
     # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
@@ -864,37 +864,22 @@ def _bare_elena(ctx):
     ctx.char_file(ELENA_BARE.lower(), hrc.encode("latin-1"))
 
 
-# bare Cloud seated (ZDBC, our bench pose) for Elena's part two: ZCTL spanking (the right arm
-# raised SPANK_UP more and swung down onto her, its lowest at the middle frame), ZCTM thrusting
-# (hips up SEAT_THRUST at the middle frame, feet riding along) with the same right-hand slap;
-# SEATED_FRAMES = 0.5 s
-SEATED_FRAMES, SPANK_UP, SEAT_THRUST = 15, 70, 1.0
+# Cloud's spank (Elena's part two, ZCTP): the right arm raised SPANK_UP more and swung down onto
+# her, its lowest at the middle frame; SEATED_FRAMES = 0.5 s (was a seated spank over his lap)
+SEATED_FRAMES, SPANK_UP = 15, 70
 ELBOW_MAX = 90                        # (user) the spanking elbow bends this much at most
 ELBOW_POLE = (-0.3, -1.0, 0.2)        # the bent elbow points up (y down), a little out (his right = -x) and back
 
 
-def _cloud_seated(ctx, name, thrust):
-    """His right arm swung at the shoulder (user: a simple shoulder rotation), lowest at the middle
-    frame where the hand comes nearest her behind (spank: across his lap, `_lap`'s ZDEA; thrust:
-    sitting on his lap facing him, ZDEB)."""
-    from ff7 import fieldanim as fa
-    sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
+def _spank_arm(fa, sk, rr, W, root, target, name):
+    """Cloud's right arm bent once (two-bone IK at the lowest point: the wrist HAND_UP above
+    `target`, the elbow up and a little out, like a hammer; ELBOW_MAX at most) so the hand lands
+    on `target`; returns (W, sense, arm bones): + sense about his side axis raises the arm."""
     names = [b[0] for b in sk]
     I = names.index
-    base = fa.Anim(ctx.char_file("zdbc.a"))
-    rr, rp, rots = base.frames[0]
-    root = [rp[0], -rp[1], rp[2]]
-    W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
     side = [1.0, 0.0, 0.0]
     fk = lambda W, r=root: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
     arm = {I(n) for n in ("r_uparm", "r_foarm", "r_hand")}
-    F = fk(W)
-    mids = [[(F[I(s + "_femur")][1][k] + F[I(s + "_femur")][2][k]) / 2 for k in range(3)] for s in "lr"]
-    lap = [(mids[0][k] + mids[1][k]) / 2 for k in range(3)]
-    if thrust:                                   # her behind: on his lap facing him, the far side of her pelvis
-        target = [lap[0] - 1.0, lap[1] - LAP_SEAT - 0.5, lap[2] - LAP_BACK - 1.8]
-    else:                                        # across his lap: the top of her behind
-        target = [lap[0] - LAP_RIGHT, lap[1] - LAP_UP - BUTT_TOP, lap[2]]
     # (user: "a simple shoulder rotation") one fixed bend at the elbow (two-bone IK at the lowest
     # point: the wrist HAND_UP above her behind, the elbow up and a little out, like a hammer),
     # then the whole arm only swings at the shoulder about his side axis (SPANK_UP up and back)
@@ -906,7 +891,7 @@ def _cloud_seated(ctx, name, thrust):
     L2 = math.dist(F[I("r_foarm")][1], F[I("r_foarm")][2])
     T = [target[0], target[1] - HAND_UP, target[2]]
     d = math.dist(S, T)
-    assert d < L1 + L2 - 0.1, (name, d, L1 + L2)                 # in reach
+    assert d < L1 + L2 - 0.1, (name, d, L1 + L2, [T[k] - S[k] for k in range(3)])   # in reach
     # (user) the elbow bends ELBOW_MAX at most: a nearer wrist would need more, so it moves out
     # level (away from his shoulder) until that bend reaches it; the hand lands that much further
     # across her
@@ -938,30 +923,10 @@ def _cloud_seated(ctx, name, thrust):
     hand0 = fk(W)[I("r_hand")][2]
     sense = 1 if fk([fa._mul(fa.axis_angle(side, 10), m) if i in arm else m for i, m in enumerate(W)])[I("r_hand")][2][1] \
         < hand0[1] else -1                               # + sense: the hand goes up (y down)
-    frames = []
-    for t in range(SEATED_FRAMES):
-        e = (1 - math.cos(2 * math.pi * t / SEATED_FRAMES)) / 2            # 0 -> 1 (middle) -> 0
-        up = sense * SPANK_UP * (1 - e)                                   # raised, down at the middle
-        Wt = [fa._mul(fa.axis_angle(side, up), m) if i in arm else m for i, m in enumerate(W)]
-        r = [root[0], root[1] - (SEAT_THRUST * e if thrust else 0.0), root[2]]
-        frames.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, Wt)))
-    base.frames = frames
-    ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
+    return W, sense, arm
 
 
-# Elena on his lap (same XYZI and DIR as Cloud): ZDEA lying face down across his thighs (her
-# length along his side axis), hips on his lap, upper body LAP_HANG head-down and legs LAP_HANG
-# down over the sides; ZDEB sitting on his lap facing his way (our bench pose's legs), bouncing
-# with his ZCTM thrust plus LAP_BOUNCE
-LAP_HANG, LAP_UP, LAP_SEAT, LAP_BOUNCE = 25, 1.8, 1.4, 1.0
-# (user) her torso straighter (LAP_TORSO), her hips angled more (LAP_LEGS), arms dangling straight
-# down, LAP_RIGHT to his right (towards his slapping hand: his right = -x); BUTT_TOP = the top of
-# her behind above her pelvis' centre, where his hand lands
-LAP_TORSO, LAP_LEGS, LAP_RIGHT, BUTT_TOP = 10, 40, 2.0, 1.6
 HAND_UP = 2.0                         # his wrist this far above where the hand lands (the hand's length)
-# ZDEB (user: facing him): her bench pose with the thighs spread LAP_SPREAD round his hips, turned
-# round inside the anim (her entity keeps his DIR), LAP_BACK further from his chest
-LAP_SPREAD, LAP_BACK = 50, 0.5
 
 
 def _align(fa, a, b):
@@ -973,65 +938,109 @@ def _align(fa, a, b):
     d = sum(a[k] * b[k] for k in range(3))
     return fa.axis_angle(ax, math.degrees(math.atan2(s_, d))) if s_ > 1e-9 else fa.euler_matrix(0, 0, 0)
 
+# (user) Elena's part two, standing, in every place: she on all fours (ZDEF, held: thighs
+# straight down, shins flat behind, torso FOURS_PITCH head-up, arms straight and angled forward
+# so hands and knees rest on his floor, head FOURS_LOOK up), her hips SPANK_SIDE to his right and
+# SPANK_FRONT in front of him (he stands behind and to her side, facing her way; her place is
+# in her anim, same XYZI and DIR); Cloud (ZCTP) from 620's ZCTE frame 0 (knees bent) with the
+# upper body leaned SPANK_LEAN further forward, his right arm as the seated spank (one bend,
+# swung at the shoulder, landing on the top of her behind at the middle frame). Part three:
+# Tifa's koala hug on her (ZDEK), turned round inside the anim (both keep one DIR).
+FOURS_LOOK, FOURS_PAD, SPANK_LEAN, SPANK_SIDE, SPANK_FRONT, FOURS_BUTT = 25, 0.6, 55, 4.5, 6.0, 2.0
+FOURS_PITCH = 15
 
-def _lap(ctx):
+
+def _elena_fours(ctx):
+    """ZDEF (Elena on all fours) and ZCTP (Cloud spanking her, standing); see SPANK_*."""
     from ff7 import fieldanim as fa
     csk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
     CI = [b[0] for b in csk].index
-
-    def his(anim, t=0):
-        A = fa.Anim(ctx.char_file(anim))
-        rr, rp, rots = A.frames[t]
-        return fa.forward(csk, rr, [rp[0], -rp[1], rp[2]], rots), len(A.frames), A
-    C, _, _ = his("zctl.a")
-    mids = [[(C[CI(s + "_femur")][1][k] + C[CI(s + "_femur")][2][k]) / 2 for k in range(3)] for s in "lr"]
-    lap = [(mids[0][k] + mids[1][k]) / 2 for k in range(3)]                  # between his thighs' middles
+    cbase = fa.Anim(ctx.char_file("zcte.a"))
+    crr, crp, crots = cbase.frames[0]
+    croot = [crp[0], -crp[1], crp[2]]
+    cfk = lambda W, r=croot: fa.forward(csk, crr, list(r), fa.local_rotations(csk, crr, W))
+    CW = [m for m, _, _ in fa.forward(csk, crr, croot, crots)]
+    floor = max(e[1] for n, (_, _, e) in zip([b[0] for b in csk], cfk(CW)) if n[2:] in ("tibia", "foot"))
+    side = [1.0, 0.0, 0.0]
+    # her pose
     sk = fa.skeleton(ctx.char_file("zela.hrc").decode("latin-1"))
     names = [b[0] for b in sk]
     I = names.index
     rr, rp, rots = fa.Anim(ctx.char_file("acfe.a")).frames[0]
-    root = [rp[0], -rp[1], rp[2]]
-    W0 = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
-    fk = lambda W, r: fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
-    side, up = [1.0, 0.0, 0.0], [0.0, -1.0, 0.0]
-    legs = {n for n in names if n[:2] in ("l_", "r_") and not any(k in n for k in ("chest", "collar", "arm", "hand"))}
+    W = [m for m, _, _ in fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)]
+    fk = lambda W, r=(0.0, 0.0, 0.0): fa.forward(sk, rr, list(r), fa.local_rotations(sk, rr, W))
+    end = lambda W, n, r=(0.0, 0.0, 0.0): fk(W, r)[I(n)][2]
+    legs = {s + n for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
+    arms = {s + n for s in "lr" for n in ("_uparm", "_foarm", "_hand")}
+    upper = set(names) - legs
 
-    def turned(W, bones, axis, angle, test):
+    def turned(W, bones, angle, test):
         for sg in (1, -1):
-            M = [fa._mul(fa.axis_angle(axis, sg * angle), m) if names[i] in bones else m for i, m in enumerate(W)]
-            if test(fk(W, [0, 0, 0]), fk(M, [0, 0, 0])):
+            M = [fa._mul(fa.axis_angle(side, sg * angle), m) if names[i] in bones else m for i, m in enumerate(W)]
+            if test(W, M):
                 return M
-        raise AssertionError(bones)
-    # ZDEA: face down, then hanging over his lap, then her length turned across it
-    W = turned(W0, set(names), side, 90, lambda a, b: b[I("head")][2][2] < a[I("head")][2][2] - 3)
-    W = turned(W, set(names) - legs, side, LAP_TORSO, lambda a, b: b[I("head")][2][1] > a[I("head")][2][1] + 0.2)
-    W = turned(W, legs, side, LAP_LEGS, lambda a, b: b[I("l_tibia")][2][1] > a[I("l_tibia")][2][1] + 0.5)
-    Y = fa.axis_angle(up, 90)
-    W = [fa._mul(Y, m) for m in W]
-    for n_ in ("l_uparm", "l_foarm", "l_hand", "r_uparm", "r_foarm", "r_hand"):   # arms straight down
-        W[I(n_)] = fa._mul(_align(fa, fa._vec(W[I(n_)], [0, 0, -1]), [0.0, 1.0, 0.0]), W[I(n_)])
-    r = [lap[0] - LAP_RIGHT, lap[1] - LAP_UP, lap[2]]                        # her pelvis on his lap, to his right
+        raise AssertionError((sorted(bones), angle))
+    down = lambda W, bones: [fa._mul(_align(fa, fa._vec(m, [0, 0, -1]), [0.0, 1.0, 0.0]), m) if names[i] in bones
+                             else m for i, m in enumerate(W)]
+    W = turned(W, upper, 90, lambda a, b: end(b, "head")[2] < end(a, "head")[2] - 3)        # face down
+    W = turned(W, {"head"}, FOURS_LOOK, lambda a, b: end(b, "head")[1] < end(a, "head")[1])   # looking ahead
+    for s in "lr":                                                                          # shins flat behind
+        W = turned(W, {s + "_tibia", s + "_foot"}, 90, lambda a, b: end(b, s + "_tibia")[2] > end(a, s + "_tibia")[2] + 1)
+        W[I(s + "_foot")] = W[I(s + "_tibia")]
+
+    # the upper body pitched FOURS_PITCH head-up (arms longer than thighs), then each arm
+    # straight from the shoulder forward and down to the floor (hands ahead of the shoulders)
+    probe = [fa._mul(fa.axis_angle(side, 5), m) if names[i] in upper else m for i, m in enumerate(W)]
+    sense = 1 if end(probe, "head")[1] < end(W, "head")[1] else -1
+    W = [fa._mul(fa.axis_angle(side, sense * FOURS_PITCH), m) if names[i] in upper else m for i, m in enumerate(W)]
+    knee = end(W, "l_femur")
+    r = [-SPANK_SIDE, floor - FOURS_PAD - knee[1], -SPANK_FRONT]                    # her pelvis, in his space
+    F = fk(W, r)
+    for s in "lr":
+        L = sum(sk[I(s + n)][2] for n in ("_uparm", "_foarm", "_hand"))
+        h = floor - FOURS_PAD - F[I(s + "_collar")][2][1]
+        assert 0 < h < L, (s, h, L)
+        d = [0.0, h, -math.sqrt(L * L - h * h)]
+        for n in ("_uparm", "_foarm", "_hand"):
+            W[I(s + n)] = fa._mul(_align(fa, fa._vec(W[I(s + n)], [0, 0, -1]), d), W[I(s + n)])
+    F = fk(W, r)
+    for n in ("l_femur", "r_femur", "l_hand", "r_hand", "l_tibia", "r_tibia"):
+        assert abs(F[I(n)][2][1] - (floor - FOURS_PAD)) < 0.3, (n, F[I(n)][2][1], floor)   # on his floor
+    assert F[I("head")][2][2] < r[2] - 5, "her head not forward"
     A = fa.Anim(ctx.char_file("acfe.a"))
     A.frames = [(rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, W))]
-    ctx.char_file("zdea.a", A.build())
-    # ZDEB: sitting on his lap (her bench pose), bouncing with his thrust
-    br, bp, brots = fa.Anim(ctx.char_file("zdbe.a")).frames[0]
-    Wb = [m for m, _, _ in fa.forward(sk, br, [bp[0], -bp[1], bp[2]], brots)]
-    for s_, out in (("l", 1), ("r", -1)):                                     # thighs round his hips
-        Wb = turned(Wb, {s_ + "_femur", s_ + "_tibia", s_ + "_foot"}, up, LAP_SPREAD,
-                    lambda a, b: out * b[I(s_ + "_femur")][2][0] > out * a[I(s_ + "_femur")][2][0] + 0.5)
-    Wb = [fa._mul(fa.axis_angle(up, 180), m) for m in Wb]                    # facing him
-    _, n, HA = his("zctm.a")
-    hy0 = -HA.frames[0][1][1]
+    ctx.char_file("zdef.a", A.build())
+    # his spank: lean, then the arm onto the top of her behind (above her pelvis, a little back)
+    cl_legs = {CI(s + n) for s in "lr" for n in ("_hip", "_femur", "_tibia", "_foot")}
+    for sg in (1, -1):
+        M = [fa._mul(fa.axis_angle(side, sg * SPANK_LEAN), m) if i not in cl_legs else m for i, m in enumerate(CW)]
+        if cfk(M)[CI("head")][2][2] < cfk(CW)[CI("head")][2][2]:
+            break
+    CW = M
+    target = [r[0], r[1] - FOURS_BUTT, r[2] + 0.5]
+    CW, csense, arm = _spank_arm(fa, csk, crr, CW, croot, target, "ZCTP")
     frames = []
-    for t in range(n):
-        e = (1 - math.cos(2 * math.pi * t / n)) / 2
-        lift = -HA.frames[t][1][1] - hy0                                       # his hips' rise (y down)
-        rt = [lap[0], lap[1] - LAP_SEAT + lift - LAP_BOUNCE * e, lap[2] - LAP_BACK]
-        frames.append((br, [rt[0], -rt[1], rt[2]], fa.local_rotations(sk, br, Wb)))
-    B = fa.Anim(ctx.char_file("zdbe.a"))
-    B.frames = frames
-    ctx.char_file("zdeb.a", B.build())
+    for t in range(SEATED_FRAMES):
+        e = (1 - math.cos(2 * math.pi * t / SEATED_FRAMES)) / 2            # 0 -> 1 (middle) -> 0
+        Wt = [fa._mul(fa.axis_angle(side, csense * SPANK_UP * (1 - e)), m) if i in arm else m for i, m in enumerate(CW)]
+        frames.append((crr, crp, fa.local_rotations(csk, crr, Wt)))
+    cbase.frames = frames
+    ctx.char_file("zctp.a", cbase.build())
+
+
+def _turn_round(ctx, name, hrc):
+    """`name`.a turned 180 about the vertical: for a pose laid out facing Cloud (DIR + 128)
+    played with his DIR."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
+    A = fa.Anim(ctx.char_file(name))
+    Y = fa.axis_angle([0.0, -1.0, 0.0], 180)
+    frames = []
+    for rr, rp, rots in A.frames:
+        W = [fa._mul(Y, m) for m, _, _ in fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)]
+        frames.append((rr, [-rp[0], rp[1], -rp[2]], fa.local_rotations(sk, rr, W)))
+    A.frames = frames
+    ctx.char_file(name, A.build())
 
 
 def _koala(ctx, name, hrc, stand):
@@ -1120,11 +1129,11 @@ def apply(ctx):
     for anim, (hrc, stand) in BENCH.items():
         _ledge(ctx, anim, hrc, stand, bench=True)
     _bare_elena(ctx)
-    _cloud_seated(ctx, "ZCTL.tor", False)
-    _cloud_seated(ctx, "ZCTM.tor", True)
-    _lap(ctx)
+    _elena_fours(ctx)
     _bare_tifa(ctx)
     _koala(ctx, "ZDKT.tor", "ztfa.hrc", "abcd.a")
+    _koala(ctx, "ZDEK.tor", "zela.hrc", "acfe.a")            # (user) Elena's part three: Tifa's hug
+    _turn_round(ctx, "zdek.a", "zela.hrc")
     _scarlet_bare(ctx)
     _wall(ctx, "ZDSW.tor", "zsca.hrc", "anae.a")
     _wall(ctx, "ZDSX.tor", "zsca.hrc", "anae.a", "standf")      # with his double speed

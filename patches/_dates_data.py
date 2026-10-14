@@ -292,8 +292,8 @@ DATES = {
         "desire": "Somewhere in Midgar, Tseng sighed,\nand didn't know why...",
         "leave": "“…Okay. Maybe a hug is enough.\n Just this once.”",
         "part2_music": 38,                                    # CHASE (Crazy Motorcycle), as her Honey Bee part two
-        # (user) over his lap, spanked with escalating passion; she begs for more; fade to part
-        # three: on his lap, bouncing as he thrusts and slaps her behind
+        # (user) on all fours, Cloud standing beside her spanking her with escalating passion; she
+        # begs for more; fade to part three: Tifa's koala hug ("holding"), slaps every stroke
         "part2": [("G", "“I'm sorry, sir…\n I'll do better, I promise!”"),
                   ("act", "spank"),
                   ("G", "“Ah! …I'm sorry! I'll read the\n manual properly next time!”"),

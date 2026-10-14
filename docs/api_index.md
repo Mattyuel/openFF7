@@ -722,9 +722,10 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_scarlet_bare(ctx)` 
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
 - `_bare_elena(ctx)` 
-- `_cloud_seated(ctx, name, thrust)` His right arm swung at the shoulder (user: a simple shoulder rotation), lowest at the middle
+- `_spank_arm(fa, sk, rr, W, root, target, name)` Cloud's right arm bent once (two-bone IK at the lowest point: the wrist HAND_UP above
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
-- `_lap(ctx)` 
+- `_elena_fours(ctx)` ZDEF (Elena on all fours) and ZCTP (Cloud spanking her, standing); see SPANK_*.
+- `_turn_round(ctx, name, hrc)` `name`.a turned 180 about the vertical: for a pose laid out facing Cloud (DIR + 128)
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
 - `apply(ctx)` 
 

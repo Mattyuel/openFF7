@@ -318,8 +318,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   view (gondola: Gold Saucer at night with no cabin; capsule: stars in the round window; cannon:
   the top of the Junon cannon where Tifa and Scarlet had their slap fight, the sea animating),
   where the two sit and face (cannon: both standing, Cloud in Tifa's slap spot, she in Scarlet's),
-  sitting poses, text, music. Part two/three on the cannon use the same poses (Elena's lap scene:
-  Cloud sits on nothing there; say if you want something else).
+  sitting poses, text, music. Part two/three on the cannon use the same poses.
 - **Dates with Aerith** (new; untested in-game): talk to Aerith (Temple of the Ancients,
   by the altar) -> "Ask her on a date." -> any of the three places. Same flow as Tifa's; her
   third date is playfully submissive ("Sir."). Part two = the head scene in her own model:
@@ -332,13 +331,14 @@ Existing saves load, but they keep their own story progress; use a new game.
   wall in front of standing Cloud; she stops him ("put it THERE?"), allows it, he goes
   faster. Check the slaps (pose pops while seated?), her sitting, the wall pose.
 - **Dates with Elena** (new; untested in-game): talk to Elena (Shinra Mansion, Nibelheim)
-  -> "Ask her on a date." Third date: she doubts herself and begs to be punished. Part two:
-  bare Cloud seated, her (new model: thighs bare) face down over his lap; spanks with the
-  slap sound in rounds of 1, 2, 3; she asks for more; fade to part three: she sits on his
-  lap bouncing as he thrusts and slaps. Since (user): both on the left of the screen (at her seat)
-  and turned the other way (then 30 more to their right), his spank a simple shoulder swing (elbow
-  bent 90 at most), Elena sits on the left gondola seat in part one, a slap sound every 0.5 s through
-  part three. Check her placement on his lap, the spank timing, the slap rhythm.
+  -> "Ask her on a date." Third date: she doubts herself and begs to be punished. Part two
+  (user, since: standing, in every place): she on all fours (her new model: thighs bare), bare
+  Cloud standing beside her hips, a little behind, leaning down, spanking with his right hand
+  (one swing + the slap sound per spank, in rounds of 1, 2, 3); she asks for more; fade to part
+  three: Tifa's koala hug ("holding") on Elena, a slap sound every 0.5 s. Both on the left of the
+  screen (at her seat), turned as before (DIR -21 from "the other way"). Elena sits on the left
+  gondola seat in part one. Check: his hand meeting her behind at the slap, the two not overlapping
+  (her hips are 4.5 to his right and 6 ahead in model units), her all-fours on the floor.
 - **Movie minigame** (new; untested in-game): needs all 20 Honey Bee kids (debug menu:
   Honey Bee / Hunter -> All 20 kids). Wall Market main street, right of the item shop: a
   cameraman (the Junon reporter with the camera) and Ruby (red hair, black jacket). Talk to
