@@ -346,7 +346,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   afterwards should offer a new shoot, not the 'come back later' line). Eight
   positions, one minute each, moving between the beds (mission left bed, cowgirl middle bed,
   dog right bed, edge and head reverse at the left bed's foot, head on the floor, then "behind"
-  (Scarlet's date pose) on the floor in front and "holding" (Tifa's koala hug) between the left and middle beds); the thrust
+  (Scarlet's date pose) at the left bed's foot by the wall and "holding" (Tifa's koala hug) at the right bed's end); the thrust
   speed follows how fast you press (4 steps). Each position change fades out and in (user). Ruby says a line (window at the bottom; 8 per
   position, e.g. 'Pull my hair!') every ~2.5 s that closes by
   itself (~2 s; muffled during head / head reverse). Costa del Sol music. After eight minutes:

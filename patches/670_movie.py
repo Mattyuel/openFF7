@@ -73,8 +73,9 @@ POSITIONS = [
     dict(name="mission", girl=("DZBT", (-225, -60, 0, 0x00), True), cloud=("ZCTA", (-220, -25, -4, 0x80), True),
          camera=(-130, -60, 0xC0)),                                         # left bed, she lies, head to the pillow
     # middle bed, Cloud's head on the pillow; she (user) a body width to her right (x 0 -> 18): over his line;
-    # then (user) slightly lower onto him (raise 18 -> 14) and slightly back (y -87 -> -91: she faces +y)
-    dict(name="cowgirl", girl=("DZBL", (18, -91, 14, 0x80), True), cloud=("ZCTD", (18, -95, 0, 0x80), True),
+    # then (user) slightly lower onto him (raise 18 -> 14) and slightly back (y -87 -> -91: she faces +y);
+    # then (user) a little towards his head (-91 -> -95: his head is on the pillow, -y)
+    dict(name="cowgirl", girl=("DZBL", (18, -95, 14, 0x80), True), cloud=("ZCTD", (18, -95, 0, 0x80), True),
          camera=(-130, -60, 0x40)),
     dict(name="dog", girl=("DZBF", (227, -125, 0, 0x00), True), cloud=("ZCTB", (225, -103, 0, 0x00), True),
          camera=(90, -60, 0x40)),                                           # right bed
@@ -87,13 +88,14 @@ POSITIONS = [
          camera=(140, -235, 0xC0)),
     # (user) Scarlet's date pose, "behind": she leans forward, arms out, right knee up, in front of standing
     # Cloud facing his way (660 `_wall` on her skeleton: same XYZI and DIR as his ZCTE, her pelvis in the
-    # anim); on the floor in front of the beds, side on (facing screen-right); the cameraman faces them
-    dict(name="behind", girl=("ZRWA", (75, -290, 0, "cloud"), False), cloud=("ZCTE", (75, -290, 0, "screen-right"),
-         False), camera=(140, -235, None)),
+    # anim); (user) at the foot of the leftmost bed, by the left wall, facing the bed (+y: she leans over
+    # it); the cameraman faces them
+    dict(name="behind", girl=("ZRWA", (-255, -160, 0, "cloud"), False), cloud=("ZCTE", (-255, -160, 0, 0x80), False),
+         camera=(-160, -200, None)),
     # (user) Tifa's date pose, "holding": she koala-hugs standing Cloud (660 `_koala`: same XYZI, DIR + 128,
-    # on his ZCTH), between the left and middle beds, side on
-    dict(name="holding", girl=("ZRKA", (-128, -40, 0, "facing"), False), cloud=("ZCTH", (-128, -40, 0, "screen-left"),
-         False), camera=(-130, -180, None)),
+    # on his ZCTH); (user) at the end of a bed: the floor off the right bed's front end, side on
+    dict(name="holding", girl=("ZRKA", (193, -165, 0, "facing"), False), cloud=("ZCTH", (193, -165, 0, "screen-left"),
+         False), camera=(110, -245, None)),
 ]
 LINES = {   # Ruby, while it plays (in turn); head / head reverse: muffled (user); then more, more specific (user)
     "mission": ["Mmm... the camera loves you.", "Kiss my neck... yes, right there...",
