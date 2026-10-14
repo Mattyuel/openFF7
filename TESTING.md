@@ -410,6 +410,20 @@ Existing saves load, but they keep their own story progress; use a new game.
   a girl whose devoted scene you've seen shows a "*" after her name (written into the menu text in
   memory by a new field opcode, 0x1D: check it appears/disappears correctly and nothing else in the
   text changes).
+- **Special scenes** (new; untested in-game, user): after a full group shoot (or debug "Star rank +1" once
+  more past the group), picking a single co-star makes the cameraman ask "Normal scene." / "Special scene.".
+  Special: Don Corneo's bedroom (check the room looks right: bed, lights, disco ball), the two clothed in
+  front of the bed role-playing (Ruby: detective/thief; Skye: lifeguard; Elena: Turks field exam; Scarlet:
+  professor/extra credit; Tifa: Zangan's secret technique; Aerith: evening class), then three positions of
+  a minute each: "insert" on the bed (she face down, hips up; Cloud squatting over her, hands on his
+  knees, lowering into her; the stroke speeds up every 15 s: 4 s, 3 s, 2 s, 0.5 s), "head" on the floor
+  in front of the bed, "finisher" (Cloud on his back, still; she astride facing his feet, leaning back on
+  straight arms, bouncing). Check: placement on the bed (does the bed's background draw over them?), her
+  pose, his hips meeting hers, the gauge's size and spot in this room, the pay and the return.
+- **Switch speed, head reverse, size** (new; untested in-game, user): the switch between positions (every
+  shoot) uses faster fades and places everyone at once; head reverse (and behind, and the dates' standing
+  part twos, which share the pose): only Cloud's hips thrust, his upper body still, feet flat; Cloud's
+  member 50% bigger everywhere.
 - **Cameraman moved + three new quests** (new; untested in-game, user): the cameraman and his
   co-star (Ruby, later Skye) now stand in the **Sector 7 station, lower platform, centre** (no longer
   in Wall Market); after a shoot you land just below him. A star shows over him from the start:
