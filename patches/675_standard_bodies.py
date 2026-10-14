@@ -11,6 +11,7 @@ import _female_body as fb
 
 STOCKING, BAND = (22, 22, 32), (204, 204, 204)
 SCARLET_SKIN = (136, 168, 246)
+BUST = {"ZSCA.HRC": 1.5, "ZTFA.HRC": 1.5, "ZAEA.HRC": 0.5}   # (user) her bust's size (standard 1)
 GIRLS = [  # (.hrc written, from .hrc, tag, legs); skin = her face's (`_female_body.face_skin`)
     ("ZRHA.HRC", "ZRHA.HRC", "R", None),
     ("ZELA.HRC", "ZELA.HRC", "E", None),
@@ -28,7 +29,7 @@ def apply(ctx):
     for out, src, tag, legs in GIRLS:
         text = ctx.char_file(src.lower()).decode("latin-1")
         skin = fb.face_skin(ctx, text)
-        ctx.char_file(out.lower(), fb.apply(ctx, text, tag, skin, legs).encode("latin-1"))
+        ctx.char_file(out.lower(), fb.apply(ctx, text, tag, skin, legs, BUST.get(out, 1.0)).encode("latin-1"))
     assert fb.face_skin(ctx, ctx.char_file("zsca.hrc").decode("latin-1")) == SCARLET_SKIN
     # (user) pink nipples on all of them and on Skye (the standard itself), after every `apply`
     tips = fb._bust_tips(ctx)

@@ -214,7 +214,8 @@ ONTOP_RAISE = 4                              # Cloud on top of her: drawn this m
 LIE_ANIM_SCENE, LEG_RAISE, LEG_SPREAD = "DZBT.tor", 45, 45
 # (user, since) mission (every one: Honey Bee, dates, the movie; the lounges' lying girls share it):
 # her knees straighter: the thighs raised only MISSION_LEG_RAISE, the feet still flat on the bed
-MISSION_LEG_RAISE = 28
+MISSION_LEG_RAISE = 18                       # (user, since) straighter again (was 28)
+MISSION_LEG_SPREAD = 60                      # (user) legs further apart (LEG_SPREAD 45)
 # On all fours (user): from her standing pose BAJB, the upper body pitched 90 degrees
 # forward (facing down), thighs hanging (hip 90), shins and feet folded back flat
 # (knee 90), upper arms hanging (shoulder 90 forward), hands flat forward; each
@@ -2294,7 +2295,7 @@ def _cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0):
 
 
 def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0,
-             head_down=False, head_nod=0, leg_raise=LEG_RAISE):
+             head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD):
     """dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
     the knees fall open POSE_ROCK and close again (each leg turns about its
     hip-ankle line, so the feet stay exactly where they are), POSE_FRAMES frames.
@@ -2314,7 +2315,7 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
 
     def pose(knee, foot):                            # world matrices
         w = [fa._mul(back, m) for m in world]
-        for side, out in (("l", LEG_SPREAD), ("r", -LEG_SPREAD)):
+        for side, out in (("l", leg_spread), ("r", -leg_spread)):
             thigh = fa._mul(fa.axis_angle(z, out), fa.axis_angle(x, -leg_raise))   # up, then out to her side
             for n in ("_hip", "_femur", "_tibia", "_foot"):
                 w[idx(side + n)] = fa._mul(thigh, w[idx(side + n)])
@@ -2332,7 +2333,7 @@ def _on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=L
     e0 = ends(w0)
     for n in ("l_tibia", "r_tibia", "l_foot", "r_foot"):
         assert abs(e0[n][1]) < 0.5, (n, e0[n])                                 # feet planted
-    assert e0["l_femur"][1] < -2 and e0["r_femur"][1] < -2, (e0["l_femur"], e0["r_femur"])   # knees up
+    assert e0["l_femur"][1] < -1 and e0["r_femur"][1] < -1, (e0["l_femur"], e0["r_femur"])   # knees up
     import math
     up = [0.0, -1.0, 0.0]
     bdir = lambda m: fa._vec(m, [0, 0, -1])
@@ -2654,7 +2655,7 @@ def _bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=ED
 
 
 def apply(ctx):
-    _on_back(ctx, leg_raise=MISSION_LEG_RAISE)
+    _on_back(ctx, leg_raise=MISSION_LEG_RAISE, leg_spread=MISSION_LEG_SPREAD)
     _on_back(ctx, HEADREV_ANIM, HEADREV_ARMS, hip_lift=HEADREV_LIFT, head_down=True)
     _fours(ctx)
     _cloud_thrust(ctx)

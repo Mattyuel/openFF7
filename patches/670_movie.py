@@ -466,6 +466,13 @@ def _skye_shape(ctx, hrc):
                                         bottom=SKYE_CROTCH))):
         ply, d = files[bone]
         hb._write_part(ctx, ply, d, made, W[names.index(bone)], SKYE_SKIN)
+        if bone == "chest":                          # the bust's own share of each vertex, in the bone's
+            flat = hb._loft([r[:4] + (0.0,) for r in SKYE_CHEST], SKYE_ANG, centre, SKYE_BUST, -1, top=True,
+                            bottom="cap")[0]         # frame (`_female_body.apply(bust=)` scales it per girl)
+            m = W[names.index(bone)][0]
+            mt = [[m[r][c] for r in range(3)] for c in range(3)]
+            ctx.bust_delta = [fa._vec(mt, [a[k] - b[k] for k in range(3)]) for a, b in zip(made[0], flat)]
+            assert len(flat) == len(made[0]) and max(abs(c) for v in ctx.bust_delta for c in v) > 0.5
 
 
 # her lines (user: "a little more dirty"), by position; head / head reverse / 69 muffled
@@ -1365,8 +1372,10 @@ def _shoot(ctx, back, cast=None):
              # (user: the switch showed awkward, late model moves) paused and hidden by a fade; P moves on
              # only once the screen is black (user: things changed before the fade: the cursor and the
              # speed-change REQs read P at once)
+             # (user, since) the meter back to the middle (POS 500, VEL 0) with every new position
              asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(hb.FADE_OUT), Op(b"\x6C"),
-             Op(bytes([0x85, P[0] << 4, P[1], 1]))] + place_all() + \
+             Op(bytes([0x85, P[0] << 4, P[1], 1])),
+             asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
             [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
              hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1),
              stay, asm.goto_back(tick)]

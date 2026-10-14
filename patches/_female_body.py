@@ -164,13 +164,14 @@ def face_skin(ctx, hrc):
     return max(set(skinlike), key=skinlike.count)
 
 
-def apply(ctx, hrc, tag, skin=None, legs=None):
+def apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0):
     """See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
     colours (Scarlet's stockings). Her torso bones (pelvis, chest, both shoulder and collar
     bones, the hip joints) are set to the standard's x her figure (user: Tifa's long pelvis
     bone stretched the pelvis and her neck floated; Elena's long chest bone lifted the torso's
     shoulders above her arms); her arm and leg bones stay hers. Figure = her limbs (thigh,
-    shin, upper arm, forearm) / the standard's."""
+    shin, upper arm, forearm) / the standard's. bust: her bust's size (each torso vertex's bust
+    offset, `ctx.bust_delta` from 670, x bust; user: Tifa / Scarlet 1.5, Aerith 0.5)."""
     assert len(tag) == 1 and tag.isalpha(), tag
     std = bones(ctx.char_file(STANDARD.lower()).decode("latin-1"))
     her = bones(hrc)
@@ -204,6 +205,14 @@ def apply(ctx, hrc, tag, skin=None, legs=None):
         part = _scaled(ctx.char_file(ply.lower() + ".p"), fig, sz, skin, lengths[b] if b.endswith("tibia") else None)
         if legs and b[2:] in legs:
             part = _banded(part, legs[b[2:]], lengths[b])
+        if b == "chest" and bust != 1.0:
+            part = bytearray(part)
+            assert len(ctx.bust_delta) == struct.unpack_from("<16I", part, 0)[3], tag
+            for i, dv in enumerate(ctx.bust_delta):
+                x, y, z = struct.unpack_from("<3f", part, 128 + 12 * i)
+                struct.pack_into("<3f", part, 128 + 12 * i, x + (bust - 1) * dv[0] * fig,
+                                 y + (bust - 1) * dv[1] * fig, z + (bust - 1) * dv[2] * sz)
+            part = bytes(part)
         ctx.char_file(new_p.lower() + ".p", part)
         i = at(b)
         lines[i + 3] = lines[i + 3].replace(her[b][1][0], new_r)

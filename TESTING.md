@@ -410,6 +410,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   a girl whose devoted scene you've seen shows a "*" after her name (written into the menu text in
   memory by a new field opcode, 0x1D: check it appears/disappears correctly and nothing else in the
   text changes).
+- **Batch** (new; untested in-game, user): the minigame meter goes back to the middle at every
+  position change; mission (everywhere): her legs wider apart and her knees straighter again
+  (bent ~39); Tifa's and Scarlet's breasts 50% bigger, Aerith's 50% smaller (undressed models:
+  dates, movie; check the nipples still sit on them).
 - **Movie minigame, poses and co-stars** (new; untested in-game, user): head: she kneels a touch
   closer; behind: her hands planted on the bed, feet on the floor, only her hips moving with
   Cloud (her back pivots, arms bend); mission: Cloud's shins stay flat and still, his pelvis
