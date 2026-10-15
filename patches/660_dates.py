@@ -22,6 +22,7 @@ are dropped, entity 0 becomes the director.
 import importlib
 import math
 
+import _cid as CID
 from _config import DATE_GIRL, HB_AFFECTION, HB_KID
 from _dates_data import DATES
 import _movie_girls as MG
@@ -40,7 +41,12 @@ MAX = 20
 WRONG = (5, 246)                       # temp: an answer this date was wrong
 TIERS = (10, 20)                       # affection where the second / third dates start
 # date fields: (place, group) -> new field name (free maplist names, docs/dates_plan.md)
-GROUPS = [["Tifa", "Aerith", "Scarlet", "Elena"]]
+GROUPS = [["Tifa", "Aerith", "Scarlet", "Elena", "Cid"]]
+# (user) friends, not dates: hang-outs in the same places, every tier ending with its close (no part
+# two); name -> data module (`_cid`: INDEX, AFFECTION, HANGOUT, FIELD/AT, MODEL, DONOR, SIT)
+COMPANIONS = {CID.NAME: CID}
+QUEST_ID = {CID.NAME: "hangout_cid"}               # else "date_<name>"
+ARRIVE = {}                                         # group -> {place: arrival}: 661 (Cid's own talk) uses it (ctx.date_arrive)
 FIELDS = {("gondola", 0): "blackbga", ("capsule", 0): "blackbgf", ("cannon", 0): "blackbgg", ("beach", 0): "fship_26"}
 BASE = {"gondola": "bwhlin", "capsule": "rcktin7", "cannon": "junone7",   # (user) the cannon replaced the water tower
         "beach": "del3"}                                                  # (user) Costa del Sol's beach, empty
@@ -105,7 +111,8 @@ LOUNGE = {}                                                  # skeleton -> its a
 GIRL_SIT = {"Tifa": {"bench": "GDEE.chi"},                    # bwhlin tifa DFANM 03
             "Aerith": {"bench": "GDBE.chi"},                  # bwhlin earith DFANM 03
             "Scarlet": {"bench": "ZDBS.tor"},                 # ours
-            "Elena": {"bench": "ZDBE.tor"}}                   # ours
+            "Elena": {"bench": "ZDBE.tor"},                   # ours
+            CID.NAME: CID.SIT}
 BENCH = {"ZDBS.tor": ("amcc.hrc", "anae.a"), "ZDBE.tor": ("evfe.hrc", "acfe.a")}   # no sitting anims: ours
 LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # part two: each girl's undressed copy (a NEW skeleton file; her own model is untouched)
@@ -133,11 +140,11 @@ KOALA_PELVIS = 10                     # then the pelvis tipped up 10 more (user)
 KOALA_ARMS_IN, KOALA_NOD = 10, 12     # (user) arms turned in a little; the head nods with her bounce
 KOALA_FRONT, KOALA_BACK, KOALA_UP, KOALA_BOUNCE = 2.5, 1.4, 1.0, 1.5   # (BACK 2.0 -> 1.4: closer, user)    # his belly, her seat, her lift, the bounce       # arms this far forward (hands to the thighs); hip joints this far up
 GIRL_MODEL = {"Tifa": "main_n_tifa.char", "Aerith": "main_n_earith.char",   # her model entry (name suffix)
-              "Scarlet": "sub_scarlet.char", "Elena": "shinra_irena.char"}
+              "Scarlet": "sub_scarlet.char", "Elena": "shinra_irena.char", CID.NAME: CID.MODEL}
 # date fields at 16 models give a girl's undressed copy one of these unused party models' slots
 SPARE = ("main_vincent.char", "main_ketcy.char", "main_yufi.char", "main_cid.char", "main_red.char",
          "sub_siera.char", "main_ballet.char")
-GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5), "Elena": ("datiao_6", 10)}   # where a field lacks her
+GIRL_DONOR = {"Aerith": ("bwhlin", 1), "Scarlet": ("blin66_1", 5), "Elena": ("datiao_6", 10), CID.NAME: CID.DONOR}   # where a field lacks her
 # extra anims on her model for the dates (the third date's "stand" and "slap" steps):
 # Scarlet's slap = junone7's (sca script 7: CANM!2 FDID 0-0x1D, SOUND 0x76, CANM!2 0x1D-0x31)
 GIRL_EXTRA = {"Scarlet": {"stand": "ANAE.tak", "slap": "FDID.yos"}}
@@ -208,12 +215,22 @@ def _return_spot(ctx, g):
     return bx, by, bt, _dir_to(x - bx, y - by)
 
 
+def _who(gname):
+    """(index, her world data (name, field, at), affection var, date data) for a date girl or a
+    companion (`COMPANIONS`: DATE_GIRL = index + 1 too)."""
+    if gname in COMPANIONS:
+        c = COMPANIONS[gname]
+        return c.INDEX, dict(name=gname, field=c.FIELD, at=c.AT), c.AFFECTION, c.HANGOUT
+    i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
+    return i, GIRLS[i], HB_AFFECTION[i], DATES[gname]
+
+
 def _date(sec, ctx, place, i, g, d, part2):
     tier_acts, part2, acts = part2
     """The date's ops for girl i (in the director's main), ending in the MAPJUMP back;
     part2 = the ops switching to part two's models."""
     hb = _hb()
-    name, aff = g["name"], HB_AFFECTION[i]
+    name, aff = g["name"], _who(g["name"])[2]
     her = lambda t: d.get("speaker", name) + "\n" + t
     out = asm.nop()
     ops = [asm.setbyte(WRONG, 0)]
@@ -241,7 +258,7 @@ def _date(sec, ctx, place, i, g, d, part2):
                                 asm.if_byte(aff, ">", MAX, ok), asm.setbyte(aff, MAX), ok,
                                 sound(0x168)] + hb._say(sec, her(yes)) + [asm.goto(done), wrong,
                                 asm.setbyte(WRONG, 1)] + hb._say(sec, her(no)) + [done]
-        if t == 2:                                   # the choice: every answer this date right
+        if t == 2 and name not in COMPANIONS:        # the choice: every answer this date right
             plain = asm.nop()
             block += [asm.if_byte(WRONG, "==", 0, plain)] + hb._say(sec, her(d["lead"]))
             ask, first = hb._ask(sec, her("…"), ["Give into your desires.", "Leave it be."])
@@ -262,7 +279,7 @@ def _date(sec, ctx, place, i, g, d, part2):
         ops += [tier_at[t]] + block
     rx, ry, rt, rd = _return_spot(ctx, g)
     qx = importlib.import_module("600_quests")      # (user) her date quest: done when the first date ends
-    qid = "date_" + name.lower()
+    qid = QUEST_ID.get(name, "date_" + name.lower())
     qstate, skip = qx.quest_state(qid), asm.nop()
     ops += [out, asm.if_byte(qstate, "==", qx.ACCEPTED, skip)] + qx.count_ops(qid) + qx.reward_ops(sec, qid) + \
         [asm.setbyte(qstate, qx.DONE), skip]
@@ -388,7 +405,7 @@ def _field(ctx, place, group, names):
         scripts[cb][12 + k] = [Op(bytes([0xB1, first + k, 0, 0, 1])), asm.ret()]
     part2 = {}
     for gname in names:
-        i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
+        i = _who(gname)[0]
         m = next(k for k, n in enumerate(model_names) if n.endswith(GIRL_MODEL[gname]))
         ga = sit_anim(m, "lounge" if kind == "lounge" else GIRL_SIT[gname].get(kind))
         hide, end = asm.nop(), asm.nop()
@@ -408,7 +425,7 @@ def _field(ctx, place, group, names):
             an = ModelLoader.anims(loader.models[m])
             st = an.index(extra["stand"])
             nx, ny, nt = _near(mesh, cs, my)
-            standing = [asm.if_byte(HB_AFFECTION[i], ">=", TIERS[1], seated),
+            standing = [asm.if_byte(_who(gname)[2], ">=", TIERS[1], seated),
                         hb._xyzi(nx, ny, mesh.height(nt, nx, ny), nt),
                         Op(bytes([0xB3, 0, _dir_to(cs[0] - nx, cs[1] - ny)])), Op(bytes([0xA2, st, 1])),
                         Op(bytes([0xAE, st, 1])), hb._visi(1), asm.goto(end)]
@@ -452,6 +469,9 @@ def _field(ctx, place, group, names):
                 kn = an.index(extra["kneel"])
                 scripts[me][11] = [Op(bytes([0xA2, kn, 1])), Op(bytes([0xAE, kn, 1])), asm.ret()]
                 tier_acts["kneel"] = [hb._req(me, 11), hb._w(20)]
+        if gname in COMPANIONS:                      # (a friend: no part two)
+            part2[i] = (tier_acts, [], {})
+            continue
         # (user) part two in the place's position: her undressed copy (a second model and entity, or an
         # unused party model's slot at 16 models), at part two's spot, slot 4 placed + slow pose, 5 slow,
         # 6 fast, 8 held (frame 0)
@@ -494,14 +514,13 @@ def _field(ctx, place, group, names):
         init = [Op(b"\xE0\x00\x01\x00"), Op(b"\xE1\x00\x02\x00"), asm.ret()]   # BGON 1, BGOFF 2
     main = [hb._uc(1), hb._menu(1)]
     for gname in names:
-        i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
-        d = DATES[gname]
+        i, g_, _, d = _who(gname)
         nxt = asm.nop()
         main += [asm.if_byte(DATE_GIRL, "==", i + 1, nxt),
                  Op(bytes([0xF2, 0, 0, 0, 0x10, d["music"][place]]) + bytes(8)), hb._w(20)]
-        main += _date(sec, ctx, place, i, GIRLS[i], d, part2[i]) + [nxt]
+        main += _date(sec, ctx, place, i, g_, d, part2[i]) + [nxt]
     # no girl (e.g. debug travel): back to the first girl's spot
-    g0 = GIRLS[next(k for k, g in enumerate(GIRLS) if g["name"] == names[0])]
+    g0 = _who(names[0])[1]
     rx, ry, rt, rd = _return_spot(ctx, g0)
     main += [hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(g0["field"]), rx, ry, rt, rd), asm.ret()]
     scripts[0] = {0: init + main}
@@ -1255,6 +1274,10 @@ def apply(ctx):
     _kneel(ctx, "ZDKD.tor", "auff.hrc", "avbf.a", 1, bow=BOW)
     for group, names in enumerate(GROUPS):
         arrive = {p: _field(ctx, p, group, names) for p in PLACES}
+        ARRIVE[group] = arrive
+        ctx.date_arrive = ARRIVE                     # (661 reads it: patches load as separate modules)
         for gname in names:
+            if gname in COMPANIONS:                  # (his own talk: 661)
+                continue
             i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
             _offer(ctx, i, GIRLS[i], arrive, group)

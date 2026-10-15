@@ -16,6 +16,7 @@ menu: a big two-page text box.
 import importlib
 import struct
 
+import _cid as CID
 from _config import HB_AFFECTION, HB_HIRED
 from _honey_bee_data import GIRLS
 from ff7 import asm
@@ -36,19 +37,24 @@ SKIP = {"whitebg1", "whitebg2", "blin69_2", "trap", "junmon", "subin_4",       #
 MAX_TEXTS, MAX_ENTITIES = 254, 48
 
 
+# (user, since) Cid after the girls: "????" until you've met him (`_cid.MET`) or he has affection
+PEOPLE = [dict(name=g["name"], tag=g["tag"], aff=HB_AFFECTION[i], known=((HB_HIRED[0], HB_HIRED[1] + i // 8), i % 8))
+          for i, g in enumerate(GIRLS)] + [dict(name=CID.NAME, tag="friend", aff=CID.AFFECTION, known=CID.MET)]
+
+
 def _label(g):
     return "%s (%s): " % (g["name"], g["tag"])
 
 
 def _longest():
     """The longest list the opcode can write (every girl known, two-digit affection), as text."""
-    lines = [_label(g) + "20" + OF for g in GIRLS]
+    lines = [_label(g) + "20" + OF for g in PEOPLE]
     return HEADER + "\n" + "\n".join(lines[:PER_PAGE]) + "{NEW}" + HEADER + "\n" + "\n".join(lines[PER_PAGE:])
 
 
 def _data():
-    strings = [HEADER, UNKNOWN, OF] + [_label(g) for g in GIRLS]
-    head = 20 + 16 * len(GIRLS)
+    strings = [HEADER, UNKNOWN, OF] + [_label(g) for g in PEOPLE]
+    head = 20 + 16 * len(PEOPLE)
     ptrs, blob, at = [], b"", AFFDATA + head
     for s in strings:
         e = encode(s)
@@ -56,12 +62,11 @@ def _data():
         ptrs.append(at)
         blob += e
         at += len(e)
-    out = struct.pack("<3I2I", ptrs[0], ptrs[1], ptrs[2], len(GIRLS), PER_PAGE)
-    for i, g in enumerate(GIRLS):
-        (bank, aff) = HB_AFFECTION[i]
-        assert bank == 1 and HB_HIRED[0] == 1
-        hired = VARS + HB_HIRED[1] + i // 8
-        out += struct.pack("<3IB3x", ptrs[3 + i], VARS + aff, hired, 1 << (i % 8))
+    out = struct.pack("<3I2I", ptrs[0], ptrs[1], ptrs[2], len(PEOPLE), PER_PAGE)
+    for i, g in enumerate(PEOPLE):
+        (bank, aff), ((kbank, kaddr), kbit) = g["aff"], g["known"]
+        assert bank == 1 and kbank == 1
+        out += struct.pack("<3IB3x", ptrs[3 + i], VARS + aff, VARS + kaddr, 1 << kbit)
     assert len(out) == head
     return out + blob
 

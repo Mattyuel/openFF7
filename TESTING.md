@@ -479,6 +479,13 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Group shoot broke at its start** (fix; untested in-game, user): its models now carry only the
   animations the group plays (26-36 each instead of 63-71). Check the group shoot starts and every part
   (head, head reverse, end) shows the right poses.
+- **Cid as a friend** (new; untested in-game, user): on the launch pad north of Rocket Town, Cid stands by the
+  fuel tank at the rocket's foot with a quest star. Talk: he introduces himself once, then Just chat (his
+  affection shows) / Hang out (gondola, capsule, cannon or beach: he sits / lounges / stands like the girls and
+  has three conversations by affection, questions +1; no intimacy) / Give him something (gifts: practical +2,
+  beautiful +1, sweet 0). The first hang-out completes "Hanging Out with Cid" (500 gil). He appears in the
+  Square affection list as "Cid (friend)" once you've met him. Check his spot, the hang-outs in all four
+  places (seated pose, back by the rocket afterwards) and the gift menu.
 - **Longer hold** (tweak; untested in-game, user): a hold now lasts 9 s (was 7). After her first muffled line she
   squirms twice more (hips wriggling, then a desperate struggle pushing at him) with another muffled line and a
   more desperate one, then pulls away as before. In every shoot with the hold (solo, group, special).

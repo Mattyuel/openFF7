@@ -734,6 +734,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_hb()` 
 - `_near(mesh, cs, my)` (x, y, tri) WALK_TO of the way from Cloud's seat cs towards hers, or the nearest floor
 - `_return_spot(ctx, g)` (x, y, tri, dir) beside her in her world field, facing her.
+- `_who(gname)` (index, her world data (name, field, at), affection var, date data) for a date girl or a
 - `_date(sec, ctx, place, i, g, d, part2)` 
 - `_field(ctx, place, group, names)` 
 - `_offer(ctx, i, g, arrive, group)` Her world talk: "Just chat." / "Ask her on a date." first.
@@ -750,6 +751,13 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_elena_fours(ctx)` ZDEF (Elena on all fours) and ZCTP (Cloud on one knee beside her, spanking); see SPANK_*, KNEEL_*.
 - `_turn_round(ctx, name, hrc)` `name`.a turned 180 about the vertical: for a pose laid out facing Cloud (DIR + 128)
 - `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
+- `apply(ctx)` 
+
+## `patches/661_cid.py`
+(user) Cid as a friend (data `_cid.py`): his NPC by the rocket on the launch pad north of Rocket
+
+- `_gifts(sec, hb)` His gift menu (ops ending at their own end label): nothing at MAX or with no gift held.
+- `_talk(ctx, hb, dt, sec)` 
 - `apply(ctx)` 
 
 ## `patches/670_movie.py`
@@ -869,6 +877,10 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_unlocks_phs(op)` 
 - `_hides_phs_show(op)` Story scenes (Kalm inn, cargo ship) add PHS to the menu (OR2 var[2][28]);
 - `apply(ctx)` 
+
+## `patches/_cid.py`
+(user) Cid as a friend: hang-outs (660's date places, no intimacy ending), gifts, affection (0-20,
+
 
 ## `patches/_config.py`
 Shared openFF7 settings used by the patch modules.

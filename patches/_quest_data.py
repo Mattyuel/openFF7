@@ -871,4 +871,15 @@ for _name, _level, _where in DATE_QUESTS:
                      desc=["Ask %s out on a date and see it" % _name, "through to the end. Anywhere you",
                            "like: she'll be glad you asked."],
                      reward=dict(gil=500))]))
+# (user) Cid's first hang-out (661 / 660): his star by the rocket; accepted on asking him to hang
+# out, done when that hang-out ends
+import _cid as _CID
+EXTERNAL_GIVERS.append(dict(
+    field=_CID.FIELD, name="cidhang", external=True, level=30, at=_CID.AT, dir=0, who="Cid",
+    where="Rocket Town, the launch pad",
+    quests=[dict(id="hangout_cid", kind="count", late=True, label="First hang-out", count=1,
+                 title="Hanging Out with Cid",
+                 desc=["Cid's by his rocket, pretending he", "doesn't want company. Ask him to",
+                       "hang out and see it through."],
+                 reward=dict(gil=500))]))
 GIVERS += EXTERNAL_GIVERS
