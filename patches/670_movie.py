@@ -553,7 +553,8 @@ PARM, PT = (5, 139), (6, 142)                       # (user, since) this positio
 SQ, SQH, IWIN, IT = (5, 146), (5, 147), (5, 157), (6, 148)   # (user) the hold: Square pressed in the icon's
                                                     # window / Square held / the window open / the next icon's frame
 SQUARE_KEY = 0x80                                   # (the original scripts' {SQUARE} choices test keys=128)
-ICON_FRAMES = 15                                    # (user) the icon shows half a second
+ICON_FRAMES = 45                                    # (user) the icon shows half a second (user, since: + 1 s)
+SLP = (5, 158)                                      # (user) Square pressed in a slap prompt's window (IWIN 2): pay it
 ICON_FIRST, ICON_EVERY = (30, 45), (380, 20)        # first icon at 30 + k*45 (k 0..7: in the first 15 s), then every
                                                     # 380 + k*20 frames (12.7-17.3 s: ~15 s apart)
 ICON_PX, ICON_Y = 16, -50                           # on-screen size; screen y from the view centre (below the gauge)
@@ -622,22 +623,29 @@ def _pause_ops(hb, sec, actors, hush, lines, cond, icon, bonus):
     no = asm.nop()
     icon_ops = cond(no) + [asm.if_byte(RUN, "==", 1, no), asm.if_word(FR, ">=", IT, no), asm.setbyte(SQ, 0),
                            hb._req(icon, 3, wait=False)] + _icon_next(hb, *ICON_EVERY) + [no]
+    no2 = asm.nop()                              # (user) a slap prompt answered: the hold's bonus, any position
+    slap_ops = [asm.if_byte(SLP, "==", 1, no2), asm.setbyte(SLP, 0)] + \
+        bonus(lambda gil: [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil))]) + [no2]
     return _stop_ops(hb, sec, actors, hush, lines, cond, "pause", bonus) + \
-        _stop_ops(hb, sec, actors, hush, lines, cond, "hold", bonus) + icon_ops
+        _stop_ops(hb, sec, actors, hush, lines, cond, "hold", bonus) + icon_ops + slap_ops
 
 
 def _stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus):
     """pause: she pulls back (slot 4) and says a PAUSES line. hold (user): the bonus (GOLDU), Cloud
     holds deep (slot 5) and says a HOLD_CLOUD line; at 2 s his stern HOLD_STERN; at 4 s she tries to
-    pull back (her slot 6) and can't, a HOLD_MUFFLED line; at sum(HOLD_FRAMES) (7 s) she pulls away
-    (slot 4) with a HOLDS line. The hold's windows are closed by hush3's slot 3 (HOLD_SAY)."""
+    pull back (her slot 6) and can't, a HOLD_MUFFLED line; at HOLD_AT['end'] (7 s) she pulls away
+    (slot 4) with a HOLDS line. The hold's windows are closed by hush3's slot 3 (HOLD_SAY). (User,
+    since) stern at 3 s, muffled at 5 s, her struggle at 6 s: slot 6 is REQ'd with the muffled line
+    and waits `hold_try_delay()` itself (the line's MESSAGE holds the director).
+    Also (user) the slap prompt's pay: SLP set by `sqkey` -> the same bonus, no lines."""
     no = asm.nop()
     w0, w1, w2 = GR.PAUSE_FRAMES
     assert w0 == 0                               # (user) her line the moment it happens: no wait first
-    h0, h1, h2 = GR.HOLD_FRAMES
-    assert GR.HOLD_SAY < min(h0, h1, h2)
+    at = GR.HOLD_AT
+    assert GR.HOLD_SAY <= at["stern"] and at["stern"] + GR.HOLD_SAY <= at["muffled"] <= at["struggle"] and \
+        at["muffled"] + GR.HOLD_SAY <= at["end"] and at["struggle"] <= at["end"]
     table = GR.PAUSES if kind == "pause" else GR.HOLDS
-    total = w0 + w1 + w2 + 10 + (h0 + h1 + h2 if kind == "hold" else 0)
+    total = w0 + w1 + w2 + 10 + (GR.HOLD_AT["end"] if kind == "hold" else 0)
 
     def say3(t, slot=3):                         # (hush3 slot 3: closed HOLD_SAY frames in)
         return [Op(b"\x52\x03\x00\x01"), hb._window(t, 3, 8, LINE_Y), hb._req(hush, slot, wait=False),
@@ -666,9 +674,10 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus):
             return [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil))] + \
                 _chain(RND2, [say3("{CLOUD}\n“%s”\nHold bonus: %d gil" % (t, gil)) for t in GR.HOLD_CLOUD])
         rnd3 = [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 3]))]
-        ops += bonus(make) + [hb._w(h0 - GR.HOLD_SAY)] + rnd3 + \
-            _chain(RND2, [say3("{CLOUD}\n“%s”" % t) for t in GR.HOLD_STERN]) + [hb._w(h1 - GR.HOLD_SAY)] + \
-            [hb._req(e, 6, wait=False) for e in actors[1:]] + rnd3 + lines(muffled) + [hb._w(h2 - GR.HOLD_SAY)]
+        ops += bonus(make) + [hb._w(at["stern"] - GR.HOLD_SAY)] + rnd3 + \
+            _chain(RND2, [say3("{CLOUD}\n“%s”" % t) for t in GR.HOLD_STERN]) + \
+            [hb._w(at["muffled"] - at["stern"] - GR.HOLD_SAY)] + [hb._req(e, 6, wait=False) for e in actors[1:]] + \
+            rnd3 + lines(muffled) + [hb._w(at["end"] - at["muffled"] - GR.HOLD_SAY)]
         others = [PT, IT]
     return ops + [hb._req(e, 4, wait=False) for e in actors] + \
         [Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
@@ -679,19 +688,22 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus):
 
 def _hold_entities(hb, model, sprite_dir, place):
     """(user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
-    = place ops (its XYZI for the position), slot 3 = shown ICON_FRAMES with IWIN set) and `sqkey`
-    (once a frame: Square held (IFKEY 0x80) going from up to down while IWIN = a hold: SQ 1, the
-    materia sound, the window closed)."""
+    = place ops (its XYZI for the position), slot 3 = shown ICON_FRAMES with IWIN 1 (a hold), slot 4
+    = the same with IWIN 2 (a slap prompt: REQ'd by the voice with a slap / spank / smack line)) and
+    `sqkey` (once a frame: Square held (IFKEY 0x80) going from up to down while IWIN 1 = a hold: SQ 1,
+    the materia sound; while IWIN 2 = a slap: SLP 1, the slap sound; the window closed)."""
     hide = [Op(b"\x7E\x01"), Op(b"\xC7\x01")]
     icon = {0: [Op(bytes([0xA1, model])), hb._visi(0), Op(bytes([0xB3, 0, sprite_dir]))] + hide + [asm.ret(), asm.ret()],
             2: place + [asm.ret()],
-            3: [asm.setbyte(IWIN, 1), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()]}
+            3: [asm.setbyte(IWIN, 1), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()],
+            4: [asm.setbyte(IWIN, 2), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()]}
     wait = hb._w(1)
-    back, up = asm.goto_back(wait), asm.setbyte(SQH, 0)
+    back, up, slap = asm.goto_back(wait), asm.setbyte(SQH, 0), asm.nop()
     sqkey = {0: [asm.ret(), wait, Op(bytes([0x30]) + struct.pack("<H", SQUARE_KEY) + b"\x00", target=up),
-                 asm.if_byte(SQH, "==", 0, back), asm.setbyte(SQH, 1), asm.if_byte(IWIN, "==", 1, back),
-                 asm.setbyte(SQ, 1), sound(MATERIA_SOUND), asm.setbyte(IWIN, 0), back,
-                 up, asm.goto_back(wait), asm.ret()]}
+                 asm.if_byte(SQH, "==", 0, back), asm.setbyte(SQH, 1), asm.if_byte(IWIN, "==", 1, slap),
+                 asm.setbyte(SQ, 1), sound(MATERIA_SOUND), asm.setbyte(IWIN, 0), asm.goto_back(wait),
+                 slap, asm.if_byte(IWIN, "==", 2, back), asm.setbyte(SLP, 1), sound(SLAP_SOUND),
+                 asm.setbyte(IWIN, 0), back, up, asm.goto_back(wait), asm.ret()]}
     return icon, sqkey
 
 
@@ -731,6 +743,11 @@ def _speeds(ctx):
         _try_anim(ctx, POSITIONS[p]["girl"][0], name)
         girl.append(name + ".tor")
     return girl, cloud
+
+
+def hold_try_delay():
+    """Frames her struggle (slot 6) waits after being REQ'd with the hold's muffled line."""
+    return GR.HOLD_AT["struggle"] - GR.HOLD_AT["muffled"]
 
 
 def hold_index(first, pn, kind=0):
@@ -1504,7 +1521,7 @@ def _shoot(ctx, back, cast=None):
     for key, model, first, test in girls:
         scripts[ents[key]] = {0: [Op(bytes([0xA1, model])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: pose(first, "girl", "gdir", test), 4: hold(first), 5: hold(first, 1),
-                              6: hold(first, 2)}
+                              6: [hb._w(hold_try_delay())] + hold(first, 2)}
     scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, icon_model, sprite_dir,
                                                                    by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     imesh, icam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
@@ -1573,8 +1590,9 @@ def _shoot(ctx, back, cast=None):
                 if t not in texts:
                     texts[t] = sec.add_string(_encode(t))
                 out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y),
-                            hb._req(ents["hush"], 2, wait=False), asm.message(1, texts[t])]
-                           + ([sound(SLAP_SOUND)] if _slaps(text) else []))   # (user) a slap after such lines
+                            hb._req(ents["hush"], 2, wait=False)] +
+                           ([hb._req(ents["icon"], 4, wait=False)] if _slaps(text) else []) +   # (user) a slap prompt
+                           [asm.message(1, texts[t])])
             return _chain(K, out)
         return line
     if cast:
@@ -1727,7 +1745,8 @@ SLAP_SOUND = 0x76                                    # the slap (660's dates, Sc
 
 
 def _slaps(text):
-    """A line about slapping / spanking (user: a slap sound after it)."""
+    """A line about slapping / spanking (user: a slap sound after it; since: a Square prompt instead, the
+    slap sound and the hold's bonus if pressed: `_hold_entities`)."""
     return any(w in text.lower() for w in ("slap", "spank", "smack"))
 
 
@@ -2012,7 +2031,7 @@ def _group(ctx, back):
                               5: [asm.if_byte(E, "==", k, idle5)] +
                               _chain(PH, [loop_(hold_index(first, n, 1)) for n in ("head", "headrev")]) +
                               [idle5, asm.ret()],
-                              6: [asm.if_byte(E, "==", k, idle6)] +       # (user) her try: once, then the deepest
+                              6: [hb._w(hold_try_delay()), asm.if_byte(E, "==", k, idle6)] +   # (user) her try: once, then the deepest
                               _chain(PH, [[_animb(), Op(bytes([0xA2, hold_index(first, n, 1), 1])),
                                            Op(bytes([0xAE, hold_index(first, n, 2), 1]))] for n in ("head", "headrev")]) +
                               [idle6, asm.ret()],
@@ -2045,8 +2064,8 @@ def _group(ctx, back):
                         text.startswith("Hn") or text.startswith("Gk") else "“%s”" % text)
         if t not in texts:
             texts[t] = sec.add_string(_encode(t))
-        return [Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y), hb._req(ents["hush"], 2, wait=False),
-                asm.message(1, texts[t])] + ([sound(SLAP_SOUND)] if _slaps(text) else [])
+        return [Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, LINE_Y), hb._req(ents["hush"], 2, wait=False)] + \
+            ([hb._req(ents["icon"], 4, wait=False)] if _slaps(text) else []) + [asm.message(1, texts[t])]   # (user) slap prompt
     vl, vdone, other, picked = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     voice = [asm.ret(), vl, hb._w(SAY_EVERY), asm.if_byte(RUN, "==", 1, vdone),
              Op(bytes([0x95, K[0], K[1]])), Op(bytes([0x8D, K[0] << 4, K[1], 6])),

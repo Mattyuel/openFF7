@@ -540,7 +540,8 @@ def _special(ctx, key, back):
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1)}
     scripts[ents["girl"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                             2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst), 5: hold(gfirst, 1), 6: hold(gfirst, 2)}
+                             2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst), 5: hold(gfirst, 1),
+                             6: [hb._w(mv.hold_try_delay())] + hold(gfirst, 2)}
     scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 7, sprite_dir,
                                                                       by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     scripts[ents["girlc"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
@@ -619,8 +620,9 @@ def _special(ctx, key, back):
             raw = lines[k_ % len(lines)]
             t = text_of(name, raw)
             out.append([Op(b"\x52\x01\x00\x01"), hb._window(t, 1, 8, mv.LINE_Y),
-                        hb._req(ents["hush"], 2, wait=False), asm.message(1, texts[t])]
-                       + ([sound(mv.SLAP_SOUND)] if mv._slaps(raw) else []))
+                        hb._req(ents["hush"], 2, wait=False)] +
+                       ([hb._req(ents["icon"], 4, wait=False)] if mv._slaps(raw) else []) +   # (user) a slap prompt
+                       [asm.message(1, texts[t])])
         return mv._chain(K, out)
     voice += by_p(line) + [vdone, asm.goto_back(vl), asm.ret()]
     scripts[ents["voice"]] = {0: voice}

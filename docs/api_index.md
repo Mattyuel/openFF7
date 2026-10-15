@@ -776,6 +776,7 @@ The movie minigame (user's design).
 - `_stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus)` pause: she pulls back (slot 4) and says a PAUSES line. hold (user): the bonus (GOLDU), Cloud
 - `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
+- `hold_try_delay()` Frames her struggle (slot 6) waits after being REQ'd with the hold's muffled line.
 - `hold_index(first, pn, kind=0)` The anim index of position pn's stop pose in a model whose `_speeds` anims start at first:
 - `_gauge_pixels()` 
 - `_cursor_pixels()` 
@@ -799,7 +800,7 @@ The movie minigame (user's design).
 - `_place(ctx, pos)` Spots worked out from both poses: "69" her (head over his pelvis, facing from his head to it),
 - `_retarget(ctx, names, prefix, hrc, stand, head_down=None)` (user: the four more co-stars) Ruby's position anims (`names`, on RUBY_HRC) copied onto
 - `_shoot(ctx, back, cast=None)` The movie set: FIELD with Ruby / Skye, or (cast = a _movie_girls entry) her own set.
-- `_slaps(text)` A line about slapping / spanking (user: a slap sound after it).
+- `_slaps(text)` A line about slapping / spanking (user: a slap sound after it; since: a Square prompt instead, the
 - `_encode(t)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
 - `_tree(var, lo, hi, leaf)` Binary search on word var in lo..hi (values past hi take hi's leaf).

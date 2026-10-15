@@ -134,14 +134,15 @@ HOLDS = {
                "(She comes up for air, coughing.)\n“Whew! You're mean. ...Continue?”",
                "(She gasps, clears her throat, smiles.)\n“I'm okay! Keep going.”"],
 }
-HOLD_FRAMES = (60, 60, 90)         # (user, since: 7 s) his line (held deep); at 2 s his stern reminder (HOLD_STERN);
-                                   # at 4 s her try to pull back with a muffled line (HOLD_MUFFLED); at 7 s she pulls
+HOLD_AT = dict(stern=90, muffled=150, struggle=180, end=210)   # (user, since) frames into the hold: his line at 0
+                                   # (held deep); his stern reminder (HOLD_STERN) at 3 s; her muffled line
+                                   # (HOLD_MUFFLED) at 5 s; her struggle to pull back at 6 s; at 7 s she pulls
                                    # away, then hers as PAUSE_FRAMES. Each line's window closes HOLD_SAY frames in.
                                    # (User, since) the hold is the player's: Square while the icon shows (670
                                    # `_pause_ops`), not a random 50%
 HOLD_SAY = 50
 HOLD_STERN = ["I said HOLD it.", "Don't you dare pull away.", "Stay. Right. There."]
-HOLD_MUFFLED = {   # (user) 4 s in: muffled, struggling
+HOLD_MUFFLED = {   # (user) 5 s in: muffled, struggling
     "ruby": ["Mmmph! Mmff... mmh!!", "Nnnh... mmph! Mmmh!!", "Mmh-mmh! Mmmmff!"],
     "skye": ["Mmmp! Mmh-mmh-mmh!!", "Nnnmph! Mmmff!!", "Mmmh?! Mmmph!"],
     "elena": ["Mmph! Mmmh... mmff!!", "Nnngh! Mmh-mmh!", "Mmmff... mmph!!"],
