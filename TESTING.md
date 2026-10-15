@@ -432,7 +432,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
-- **Slap prompts, hold timing** (new; untested in-game, user): the Square icon now stays 1.5 s. When a girl's
+- **Slap prompts, hold timing** (new; untested in-game, user): the Square icon now stays 1 s. When a girl's
   line says slap / spank / smack, the icon flashes with it (no automatic slap sound any more): Square plays
   the slap and pays the same bonus as a hold. Hold: stern reminder at 3 s, muffled line at 5 s, her
   struggle at 6 s, pull away at 7 s.

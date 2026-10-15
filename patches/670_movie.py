@@ -553,7 +553,7 @@ PARM, PT = (5, 139), (6, 142)                       # (user, since) this positio
 SQ, SQH, IWIN, IT = (5, 146), (5, 147), (5, 157), (6, 148)   # (user) the hold: Square pressed in the icon's
                                                     # window / Square held / the window open / the next icon's frame
 SQUARE_KEY = 0x80                                   # (the original scripts' {SQUARE} choices test keys=128)
-ICON_FRAMES = 45                                    # (user) the icon shows half a second (user, since: + 1 s)
+ICON_FRAMES = 30                                    # (user) the icon shows 1 s (was 0.5 s, then 1.5 s)
 SLP = (5, 158)                                      # (user) Square pressed in a slap prompt's window (IWIN 2): pay it
 ICON_FIRST, ICON_EVERY = (30, 45), (380, 20)        # first icon at 30 + k*45 (k 0..7: in the first 15 s), then every
                                                     # 380 + k*20 frames (12.7-17.3 s: ~15 s apart)
