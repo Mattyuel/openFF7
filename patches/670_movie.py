@@ -565,29 +565,63 @@ MATERIA_SOUND = 0x1EA                               # (user) the press's sound (
 
 def _try_anim(ctx, base, name):
     """(user: "after 4 seconds ... the girl's head pulls back slightly to try to come back, but
-    can't") her pose `base` (15 frames: 0 pulled back, 7 deepest) as GR.TRY_FRAMES frames: from the
-    deepest frame eased TRY_PULL of the way towards frame 0, straining there (a small tremble), and
-    eased back to the deepest. Written to `name`."""
+    can't"; since: two more squirms, the hold 2 s longer) her pose `base` (15 frames: 0 pulled back,
+    7 deepest; on Ruby's skeleton) as `len(GR.SQUIRMS)` x GR.TRY_FRAMES frames, one motion after
+    another, each from the deepest frame and back to it: eased `pull` of the way towards frame 0 and
+    straining there (a tremble every `shake` frames); `sway`: her legs swung that many degrees each
+    way about her body's long axis (hips wriggling, `cycles` times); `push`: her arms swung that many
+    degrees about her side axis, alternately (pushing at him). Her head stays on him. Written to `name`."""
     from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1"))
+    I = [b_[0] for b_ in sk].index
     a = fa.Anim(ctx.char_file(base.lower() + ".a"))
     (rr, p0, r0), (_, p7, r7) = a.frames[0], a.frames[7]
     ang = lambda x, y, w: x + w * (((y - x + 180) % 360) - 180)
     n, up = GR.TRY_FRAMES, GR.TRY_FRAMES // 4
-    frames, ws = [], []
-    for t in range(n):
-        if t < up:
-            w = (1 - math.cos(math.pi * t / up)) / 2
-        elif t < n - up:
-            w = 1 - 0.15 * (1 - math.cos(2 * math.pi * (t - up) / 6)) / 2        # straining: a tremble
-        else:
-            w = (1 + math.cos(math.pi * (t - (n - up)) / (up - 1))) / 2
-        w *= GR.TRY_PULL
-        ws.append(w)
-        frames.append((rr, [p7[k] + w * (p0[k] - p7[k]) for k in range(3)],
-                       [[ang(x, y, w) for x, y in zip(b7, b0)] for b7, b0 in zip(r7, r0)]))
-    assert ws[0] == 0 and abs(ws[-1]) < 1e-9 and max(ws) <= GR.TRY_PULL, ws     # starts and ends at the deepest
+    sub = lambda u, v: [u[k] - v[k] for k in range(3)]
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+    kids = lambda root: {b_[0] for b_ in sk if b_[0] == root or _under(sk, b_[0], root)}
+    legs = {s_: kids(s_ + "_femur") for s_ in "lr"}
+    arms = {s_: kids(s_ + "_uparm") for s_ in "lr"}
+    frames = []
+    for sq in GR.SQUIRMS:
+        ws = []
+        for t in range(n):
+            env = (1 - math.cos(math.pi * t / up)) / 2 if t < up else \
+                (1 + math.cos(math.pi * (t - (n - up)) / (up - 1))) / 2 if t >= n - up else 1.0
+            w = env * (1 - 0.15 * (1 - math.cos(2 * math.pi * t / sq["shake"])) / 2) * sq["pull"]
+            ws.append(w)
+            pos = [p7[k] + w * (p0[k] - p7[k]) for k in range(3)]
+            rots = [[ang(x, y, w) for x, y in zip(b7, b0)] for b7, b0 in zip(r7, r0)]
+            ph = math.sin(2 * math.pi * sq["cycles"] * t / n) * env
+            if sq["sway"] or sq["push"]:
+                F = fa.forward(sk, rr, pos, rots)
+                W = [m for m, _, _ in F]
+                along = unit(sub(F[I("chest")][2], F[I("hip")][1]))
+                side = unit(sub(F[I("l_femur")][1], F[I("r_femur")][1]))
+                for s_, sgn in (("l", 1), ("r", -1)):
+                    for bones, axis, deg, at in ((legs[s_], along, sq["sway"] * ph, s_ + "_femur"),
+                                                 (arms[s_], side, sq["push"] * ph * sgn, s_ + "_uparm")):
+                        if deg:
+                            R = fa.axis_angle(axis, deg)
+                            W = [fa._mul(R, m) if sk[i][0] in bones else m for i, m in enumerate(W)]
+                rots = fa.local_rotations(sk, rr, W)
+                G = fa.forward(sk, rr, pos, rots)
+                assert math.dist(G[I("head")][2], F[I("head")][2]) < 1e-3, "her head stays on him"
+            frames.append((rr, pos, rots))
+        assert ws[0] == 0 and abs(ws[-1]) < 1e-9 and max(ws) <= sq["pull"], ws     # starts and ends at the deepest
     a.frames = frames
     ctx.char_file(name.lower() + ".a", a.build())
+
+
+def _under(sk, bone, root):
+    """bone is below root in the skeleton."""
+    par = dict((b_[0], b_[1]) for b_ in sk)
+    while bone in par:
+        bone = par[bone]
+        if bone == root:
+            return True
+    return False
 
 
 def _pause_arm(hb, length):
@@ -740,7 +774,8 @@ def _there_refuse(hb, say, pr, kind, loss):
         say(pr["there_no"], -loss) + [end]
 
 
-def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None):
+def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None,
+               desperate=3):
     """(user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
     argument unless the position is one of them): the rare pause (`_movie_group.PAUSES`), then the
     hold (Square pressed while the icon showed: SQ), then the icon (every ~15 s, `ICON_EVERY`; entity
@@ -759,14 +794,16 @@ def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda
     slap_ops = [asm.if_byte(SLP, "==", 1, no2), asm.setbyte(SLP, 0)] + \
         lines(lambda key: [Op(bytes([0x39, 0x00]) + struct.pack("<I", rate_of(key) * HOLD_BONUS))]) + [no2]
     args = (hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy)
-    return _stop_ops(*args, kind="pause") + _stop_ops(*args, kind="hold") + icon_ops + slap_ops
+    return _stop_ops(*args, kind="pause") + _stop_ops(*args, kind="hold", desperate=desperate) + icon_ops + slap_ops
 
 
-def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind):
+def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3):
     """pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
     (user): if she takes it (`_hold_check`), the bonus (GOLDU, her profile's `gain`), Cloud holds deep
     (slot 5) and says a HOLD_CLOUD line; his stern HOLD_STERN; she tries to pull back (her slot 6)
-    and can't, a HOLD_MUFFLED line; at HOLD_AT['end'] she pulls away (slot 4) with a HOLDS line.
+    and can't, a HOLD_MUFFLED line, (user, since) another (the next HOLD_MUFFLED one) and a HOLD_DESPERATE
+    one (the first `desperate` of hers: the group has no text room for more), each window closed
+    MUFFLED_SAY in by hush3's slot 4; at HOLD_AT['end'] she pulls away (slot 4) with a HOLDS line.
     If she doesn't: she pulls straight off (slot 4) with her profile's `refuse` line, `loss` x her
     gil a press taken, +1 annoyance (`_annoy`: leave(key) at LEAVE_AT). The hold's windows are closed
     by hush3's slot 3 (HOLD_SAY). Slot 6 is REQ'd with the muffled line and waits
@@ -776,7 +813,9 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
     assert w0 == 0                               # (user) her line the moment it happens: no wait first
     at = GR.HOLD_AT
     assert GR.HOLD_SAY <= at["stern"] and at["stern"] + GR.HOLD_SAY <= at["muffled"] <= at["struggle"] and \
-        at["muffled"] + GR.HOLD_SAY <= at["end"] and at["struggle"] <= at["end"]
+        at["muffled"] + GR.MUFFLED_SAY <= at["muffled2"] and at["muffled2"] + GR.MUFFLED_SAY <= at["desperate"] and \
+        at["desperate"] + GR.MUFFLED_SAY <= at["end"] and \
+        at["struggle"] + len(GR.SQUIRMS) * GR.TRY_FRAMES <= at["end"]
     table = GR.PAUSES if kind == "pause" else GR.HOLDS
     total = w0 + w1 + w2 + 10 + (GR.HOLD_AT["end"] if kind == "hold" else 0)
 
@@ -784,8 +823,14 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
         return [Op(b"\x52\x03\x00\x01"), hb._window(t, 3, 8, LINE_Y), hb._req(hush, slot, wait=False),
                 asm.message(3, _text_id(sec, t))]
 
-    def muffled(key):                            # (her struggling line in the hold, RND2)
-        return _chain(RND2, [say3(GR.NAMES[key] + "\n" + t) for t in GR.HOLD_MUFFLED[key]])
+    def muffled(key):                            # (her struggling line in the hold, RND2; hush3 slot 4)
+        return _chain(RND2, [say3(GR.NAMES[key] + "\n" + t, 4) for t in GR.HOLD_MUFFLED[key]])
+
+    gap = lambda n: [hb._w(n)] if n else []      # (no WAIT 0)
+
+    def desperate_(key):                         # (user) the last, more desperate one
+        ts = GR.HOLD_DESPERATE[key][:desperate]
+        return _chain(RND2, [say3(GR.NAMES[key] + "\n" + ts[r % len(ts)], 4) for r in range(3)])
 
     def block(key):
         u_ = uneasy(key) if kind == "pause" and uneasy else None
@@ -818,7 +863,10 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
         ops += lines(pay) + [hb._w(at["stern"] - GR.HOLD_SAY)] + rnd3 + \
             _chain(RND2, [say3("{CLOUD}\n“%s”" % t) for t in GR.HOLD_STERN]) + \
             [hb._w(at["muffled"] - at["stern"] - GR.HOLD_SAY)] + [hb._req(e, 6, wait=False) for e in actors[1:]] + \
-            rnd3 + lines(muffled) + [hb._w(at["end"] - at["muffled"] - GR.HOLD_SAY)]
+            rnd3 + lines(muffled) + gap(at["muffled2"] - at["muffled"] - GR.MUFFLED_SAY) + \
+            [Op(bytes([0x85, RND2[0] << 4, RND2[1], 1])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 3]))] + \
+            lines(muffled) + gap(at["desperate"] - at["muffled2"] - GR.MUFFLED_SAY) + \
+            rnd3 + lines(desperate_) + gap(at["end"] - at["desperate"] - GR.MUFFLED_SAY)
         others = [PT, IT]
     ops += [hb._req(e, 4, wait=False) for e in actors] + \
         [Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
@@ -1834,7 +1882,8 @@ def _shoot(ctx, back, cast=None):
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
     scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()],
-                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()]}
+                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()],
+                              4: [hb._w(GR.MUFFLED_SAY), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
@@ -2364,7 +2413,8 @@ def _group(ctx, back):
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
     scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()],
-                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()]}
+                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()],
+                              4: [hb._w(GR.MUFFLED_SAY), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
@@ -2437,7 +2487,7 @@ def _group(ctx, back):
         return ops + [skip]
     pause = _pause_ops(hb, sec, actors, ents["hush3"],
                        lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [], ents["icon"],
-                       lambda key: GR.RATE, slot_of=GR.ORDER.index, leave=leave, uneasy=uneasy)
+                       lambda key: GR.RATE, slot_of=GR.ORDER.index, leave=leave, uneasy=uneasy, desperate=1)
     # (user: a long delay before the fade-in) all at once, not each waited on in turn (11 entities)
     place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"],
                                                              ents["gauge"], ents["icon"])] + [hb._w(6)]

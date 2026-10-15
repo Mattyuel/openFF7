@@ -764,6 +764,7 @@ The movie minigame (user's design).
 - `_skye_limbs(ctx, hrc)` 
 - `_skye_shape(ctx, hrc)` 
 - `_try_anim(ctx, base, name)` (user: "after 4 seconds ... the girl's head pulls back slightly to try to come back, but
+- `_under(sk, bone, root)` bone is below root in the skeleton.
 - `_pause_arm(hb, length)` At a position's start (or a group turn's): (user: "a 50% chance that a girl has to stop
 - `_icon_next(hb, base, step)` IT = FR + base + k * step, k random 0..7.
 - `_ann(k)` 
@@ -776,8 +777,8 @@ The movie minigame (user's design).
 - `_there_arm(hb)` At a position's start: no "there" prompt shown yet, the first at FR + THERE_FIRST.
 - `_there_ops(hb, sec, key, rate, cond, icon, hush, leave)` (user) The special shoots' "there" prompt (672: parts one and three, two a part): the
 - `_there_refuse(hb, say, pr, kind, loss)` Her refusal line: Scarlet's third try on (`there_push`) vs her first (`there_no`).
-- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
-- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
+- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None, desperate=3)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
+- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
 - `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `end_index(cloud, k)` Offset (from a model's first `_speeds` anim) of the group's "end" anim k: 0-3 the speeds,

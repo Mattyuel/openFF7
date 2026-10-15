@@ -479,6 +479,9 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Group shoot broke at its start** (fix; untested in-game, user): its models now carry only the
   animations the group plays (26-36 each instead of 63-71). Check the group shoot starts and every part
   (head, head reverse, end) shows the right poses.
+- **Longer hold** (tweak; untested in-game, user): a hold now lasts 9 s (was 7). After her first muffled line she
+  squirms twice more (hips wriggling, then a desperate struggle pushing at him) with another muffled line and a
+  more desperate one, then pulls away as before. In every shoot with the hold (solo, group, special).
 - **Head reverse Cloud's arms** (tweak; untested in-game, user): in the movie's head reverse (solo and group)
   Cloud's arms are straight out in front at 90 degrees to his torso (angled down with his lean), turned in
   halfway at the shoulders, and stay steady while he thrusts, as if holding her back.
