@@ -2038,6 +2038,28 @@ def _group(ctx, back):
 
     # models: 2 bare Cloud, 3-8 the girls (ORDER), 9 cameraman, 10 gauge, 11 cursor
     girl_anims, cloud_anims = _BUILT["anims"]
+    # per part (head, head reverse, end): its four speed anims and its stop poses (kind 0 pulled back,
+    # 1 deepest, 2 her try), as offsets into the full `_speeds` lists; each model gets only those
+    # (user: the scene broke at its start once part three took the girls to 63-71 anims each, the
+    # original game's most being 47: now 18 + 2 still poses for a girl, 16 for Cloud)
+    HEAD_P, HEADREV_P = [p["name"] for p in POSITIONS].index("head"), [p["name"] for p in POSITIONS].index("headrev")
+
+    def raw_stroke(ph, cloud):
+        if ph < 2:
+            p = HEAD_P if ph == 0 else HEADREV_P
+            return [4 * p + s_ for s_ in range(4)]
+        return [end_index(cloud, s_) for s_ in range(4)]
+
+    def raw_stop(ph, kind, cloud):
+        if ph < 2:
+            return hold_index(0, ("head", "headrev")[ph], kind)
+        return end_index(cloud, 4 + kind)
+    used = {c: sorted({o for ph in range(GR.PHASES) for o in raw_stroke(ph, c) +
+                       [raw_stop(ph, kd, c) for kd in ((0, 1) if c else (0, 1, 2))]}) for c in (False, True)}
+    remap = {c: {o: i for i, o in enumerate(used[c])} for c in (False, True)}
+    trim = lambda full, c: [full[o] for o in used[c]]
+    n_used = len(used[False])
+    cloud_anims = trim(cloud_anims, True)
     cl0 = loader.models[0]
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC,
                                                                      ModelLoader.name(cl0)[:-5] + "_b.char"), cloud_anims))
@@ -2051,11 +2073,13 @@ def _group(ctx, back):
         else:
             df, dm, _ = by_key[key]["donor"]
             hrc, anims = by_key[key]["hrc"], _BUILT["cast"][key]
+        assert len(anims) == len(girl_anims) + len(STILL), (key, len(anims))
+        anims = trim(anims, False) + anims[len(girl_anims):]
         m = loader.add_from(ModelLoader(ctx.field(df).section("models")), dm)
         loader.models[m] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[m], hrc,
                                                                        ModelLoader.name(loader.models[m])[:-5] + "_b.char"),
                                                   anims)
-        assert len(anims) == len(girl_anims) + len(STILL), (key, len(anims))
+        assert len(anims) == n_used + len(STILL) and len(ModelLoader.anims(loader.models[m])) <= 47, (key, len(anims))
         gfirst[key] = len(ModelLoader.anims(loader.models[m])) - len(anims)
     cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
@@ -2075,24 +2099,13 @@ def _group(ctx, back):
     xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
     by_q = lambda make: _chain(P, [make(q) for q in range(GR.PHASES * n_g)])
     loop_ = lambda i: [_animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
-    HEAD_P, HEADREV_P = [p["name"] for p in POSITIONS].index("head"), [p["name"] for p in POSITIONS].index("headrev")
     centre = _spot(mesh, (GR.HEAD_X[0] + GR.HEAD_X[1]) // 2, GR.HEAD_YS[1], 0, True)
     scripts = {}
     scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*centre), hb._visi(0), asm.ret(), asm.ret()],
                    2: by_q(lambda q: [xyzi(*focus[q])]) + [asm.ret()], 3: [xyzi(*centre), asm.ret()]}
     scripts[CH] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()]}
-    # per part (head, head reverse, end): its four speed anims and its stop poses (kind 0 pulled back,
-    # 1 deepest, 2 her try), offsets from a model's first `_speeds` anim
-    def stroke(first, ph, cloud):
-        if ph < 2:
-            p = HEAD_P if ph == 0 else HEADREV_P
-            return [first + 4 * p + s_ for s_ in range(4)]
-        return [first + end_index(cloud, s_) for s_ in range(4)]
-
-    def stop(first, ph, kind, cloud):
-        if ph < 2:
-            return hold_index(first, ("head", "headrev")[ph], kind)
-        return first + end_index(cloud, 4 + kind)
+    stroke = lambda first, ph, cloud: [first + remap[cloud][o] for o in raw_stroke(ph, cloud)]
+    stop = lambda first, ph, kind, cloud: first + remap[cloud][raw_stop(ph, kind, cloud)]
     steps = lambda first, ph, cloud=False: _chain(STEP, [loop_(i) for i in stroke(first, ph, cloud)])
     scripts[ents["cloudb"]] = {
         0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
@@ -2104,7 +2117,7 @@ def _group(ctx, back):
     for k, key in enumerate(GR.ORDER):
         first = gfirst[key]
         b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
-        still_lie, still_kneel = first + len(girl_anims) + b_, first + len(girl_anims) + b_ + 1
+        still_lie, still_kneel = first + n_used + b_, first + n_used + b_ + 1
 
         def place(ph, k=k, first=first, still_lie=still_lie, still_kneel=still_kneel):
             q = ph * n_g + k
