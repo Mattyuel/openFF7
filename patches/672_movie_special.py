@@ -51,6 +51,7 @@ INTRO_AT = {"cam": (-110, 60)}                # the cameraman during the intro (
 # less tipped than the chest, head HEAD_UP degrees above the horizontal (tilted back), arms straight
 # back. ENTRY: the point at the bottom of her seat, from her root in her stand pose's frame
 KNEE_PAD, SHOULDER_PAD, PELVIS_LAG, HEAD_UP, ENTRY = 0.7, 1.3, 35, 40, (0.0, 1.2, 1.0)
+INSERT_ROCK = 6                              # (user) her pelvis rocks this many degrees each way with his stroke
 # insert, Cloud (Cloud's skeleton): feet FOOT_X either side, FOOT_Z behind her root; upper body and
 # pelvis leaning LEAN forward; he travels STROKE along his member's line, DEPTH inside at the bottom;
 # hands on his knees (KNEE_HAND up / forward of the knee joint), head tilted HEAD_BACK back
@@ -245,6 +246,31 @@ def _cloud_insert(ctx, entry, n, name):
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
 
+def _girl_insert_rock(ctx, n, name):
+    """(user: "animate the insert girls subtle rocking their pelvises") ZRIA over n frames (one of
+    Cloud's insert strokes): her pelvis (the hip bone) tilts `INSERT_ROCK` degrees each way about her
+    side axis in time with his stroke (back to meet him as he goes in), every other bone keeping its
+    turn, so her thighs, shins and arms stay put (the torso rides on the pelvis's end, a little)."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(RUBY_HRC).decode("latin-1"))
+    I = [b[0] for b in sk].index
+    a = fa.Anim(ctx.char_file("zria.a"))
+    rr, rp, rots = a.frames[0]
+    W = [m for m, _, _ in fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], rots)]
+    frames = []
+    for t in range(n):
+        e = (1 - math.cos(2 * math.pi * t / n)) / 2                                # his stroke: 0 out .. 1 in
+        Wt = list(W)
+        Wt[I("hip")] = fa._mul(fa.axis_angle([1.0, 0.0, 0.0], INSERT_ROCK * (2 * e - 1)), W[I("hip")])
+        frames.append((rr, rp, fa.local_rotations(sk, rr, Wt)))
+    F0 = fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], frames[0][2])
+    F1 = fa.forward(sk, rr, [rp[0], -rp[1], rp[2]], frames[n // 2][2])
+    for s in "lr":                                                                 # knees and feet stay
+        assert math.dist(F0[I(s + "_tibia")][2], F1[I(s + "_tibia")][2]) < 0.05, ("legs still", s)
+    a.frames = frames
+    ctx.char_file(name, a.build())
+
+
 def _cloud_still(ctx):
     """ZCTW: Cloud on his back, still (ZCTD's first frame, 15 frames)."""
     from ff7 import fieldanim as fa
@@ -342,10 +368,8 @@ def poses(ctx):
     _girl_finisher(ctx)
     mv = _mv()
     girl, cloud = [], []
-    for s, n in enumerate(SP.INSERT_FRAMES):                                       # insert: hers is still
-        a = fa.Anim(ctx.char_file("zria.a"))
-        a.frames = a.frames[:1] * n
-        ctx.char_file("zmp%d.a" % s, a.build())
+    for s, n in enumerate(SP.INSERT_FRAMES):              # insert: (user, since) her pelvis rocks with his stroke
+        _girl_insert_rock(ctx, n, "zmp%d.a" % s)
         girl.append("ZMP%d.tor" % s)
         cloud.append("ZNP%d.tor" % s)
     for letter, g_, c_ in (("Q", "zrta.a", "zctq.a"), ("R", "zrfa.a", "zctd.a")):

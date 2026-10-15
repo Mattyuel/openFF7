@@ -826,6 +826,7 @@ The movie minigame (user's design).
 - `_girl_insert(ctx)` ZRIA (her insert pose, static) on Ruby's skeleton. Returns her ENTRY point (model space).
 - `_member(ctx, fa)` Cloud's member (620 zcmp.p, on the hip bone): (base, tip) in the hip bone's frame.
 - `_cloud_insert(ctx, entry, n, name)` Cloud's insert (Cloud's skeleton), n frames a stroke: frame 0 out (top), n/2 in.
+- `_girl_insert_rock(ctx, n, name)` (user: "animate the insert girls subtle rocking their pelvises") ZRIA over n frames (one of
 - `_cloud_still(ctx)` ZCTW: Cloud on his back, still (ZCTD's first frame, 15 frames).
 - `_girl_finisher(ctx)` ZRFA (Ruby's skeleton) astride Cloud thrusting in ZCTD (his frames: she rides his hips).
 - `poses(ctx)` Every special pose; (girl anim names, Cloud anim names) on Ruby's / Cloud's skeleton, 4 per
