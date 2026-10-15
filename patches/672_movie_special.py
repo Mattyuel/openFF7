@@ -396,6 +396,7 @@ def poses(ctx):
             out.append("Z%sQ%s.tor" % (who, digit))
     mv._try_anim(ctx, "ZRTA", "ZMQ7")             # (user) her try to pull back during the hold (hers only)
     girl.append("ZMQ7.tor")
+    cloud.append("ZNJL.tor")                      # (user) his lesson in the head (670's, from ZCTQ), last
     return girl, cloud
 
 
@@ -567,8 +568,11 @@ def _special(ctx, key, back):
     hold = lambda first, kind=0: mv._chain(P, [[], anim(first + 4 * len(POSITIONS) + kind) if kind < 2 else
                                                [mv._animb(), Op(bytes([0xA2, first + 4 * len(POSITIONS) + 1, 1])),
                                                 Op(bytes([0xAE, first + 4 * len(POSITIONS) + 2, 1]))], []]) + [asm.ret()]
+    lesson = cfirst + len(cloud_anims) - 1                           # (user) the lesson: head only, waited for
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1)}
+                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1),
+                               7: mv._chain(P, [[], [mv._animb(), Op(bytes([0xA2, lesson, 1])), Op(bytes([0xA3, lesson, 1]))],
+                                                []]) + [asm.ret()]}
     scripts[ents["girl"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                              2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst), 5: hold(gfirst, 1),
                              6: [hb._w(mv.hold_try_delay())] + hold(gfirst, 2)}

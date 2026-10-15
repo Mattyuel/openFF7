@@ -479,6 +479,11 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Group shoot broke at its start** (fix; untested in-game, user): its models now carry only the
   animations the group plays (26-36 each instead of 63-71). Check the group shoot starts and every part
   (head, head reverse, end) shows the right poses.
+- **Lesson** (new; untested in-game, user): in every position with the hold (solo, group, special head, Blast-off's
+  first two), after she stops, breaks free at a hold's end, or refuses a hold, the Square icon shows for a second.
+  Square: Cloud swings his right arm out to his side then down in front, the slap sound, then her reaction
+  (Skye and Scarlet like it, Tifa and Aerith don't: a strike towards leaving; Ruby 50/50; Elena fine unless
+  "No funny stuff"). Check it can't be interrupted and the shoot carries on after.
 - **Blast-off** (new; untested in-game, user): the cameraman now always asks Normal / Special / Blast-off after
   picking a single co-star (???? while locked; picking ???? asks again). Blast-off needs Cid at 20 affection
   (debug: Honey Bee page "All affection 20" sets his too). It plays in the space capsule with Cid's Theme:

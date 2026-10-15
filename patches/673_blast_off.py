@@ -111,6 +111,7 @@ def _poses(ctx):
         mv._try_anim(ctx, f_, "ZM%s7" % letter)
         out["girl"].append("ZM%s7.tor" % letter)
     out["girl"] += ["ZMV0.tor", "ZMV1.tor"]
+    out["cloud"] += [mv._lesson_anim(ctx, "ZNSA", "ZNSL"), "ZNJL.tor"]   # (user) his lessons (670's head one)
     return out, lay
 
 
@@ -119,6 +120,7 @@ SPEED = lambda p, s: 4 * p + s
 STOP = lambda p, kind: 12 + 2 * kind + p          # kind 0 pulled back, 1 deepest; p 0 / 1
 TRY = lambda p: 16 + p
 TURN = lambda k: 18 + k
+LESSON = lambda p: 12 + 4 + p                   # Cloud's: after his speeds and stops (S, T)
 
 
 def _blast(ctx, built, back):
@@ -278,6 +280,7 @@ def _blast(ctx, built, back):
         return by_p(make) + [asm.ret()]
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: man(cfirst, "cloud", "cdir", 0), 4: man_stop(cfirst, 0, 0), 5: man_stop(cfirst, 1, 0),
+                               7: by_p(lambda p, pl: once(cfirst + LESSON(p)) if p < 2 else []) + [asm.ret()],
                                3: [xyzi(*on_floor(*INTRO["cloud"][:2])), d_(INTRO["cloud"][2]), hb._visi(1)] + anim(0) + [asm.ret()]}
     scripts[ents["cidb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                              2: man(kfirst, "cid", "ciddir", 1), 4: man_stop(kfirst, 0, 1), 5: man_stop(kfirst, 1, 1),

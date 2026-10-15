@@ -652,6 +652,7 @@ def _icon_next(hb, base, step):
 LEFT, RULES, CTRL, TP, ANN0 = (5, 170), (5, 171), (5, 172), (5, 174), 176
 WALKED = "“She walked off my set?! CUT!\n ...Fine. We'll sell what we've got.”"   # (one-girl / special shoots)
 GLO, GHI = (6, 184), (6, 186)
+LSN = (5, 192)                                       # (user) the lesson prompt answered (IWIN 4)
 THR, TC, TSC, TT = (5, 159), (5, 175), (5, 173), (6, 190)   # (user, 672) "there": pressed; prompts this
                                                     # part; Scarlet's tries this shoot; the next prompt's frame
 THERE_FIRST, THERE_NEXT = (150, 60), (600, 60)      # (user: 2 a part) first at 5-19 s, the second 20-34 s later
@@ -794,11 +795,13 @@ def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda
     slap_ops = [asm.if_byte(SLP, "==", 1, no2), asm.setbyte(SLP, 0)] + \
         lines(lambda key: [Op(bytes([0x39, 0x00]) + struct.pack("<I", rate_of(key) * HOLD_BONUS))]) + [no2]
     args = (hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy)
-    return _stop_ops(*args, kind="pause") + _stop_ops(*args, kind="hold", desperate=desperate, speaker=speaker) + \
+    return _stop_ops(*args, kind="pause", icon=icon) + \
+        _stop_ops(*args, kind="hold", desperate=desperate, speaker=speaker, icon=icon) + \
         icon_ops + slap_ops
 
 
-def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3, speaker=None):
+def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3, speaker=None,
+              icon=None):
     """pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
     (user): if she takes it (`_hold_check`), the bonus (GOLDU, her profile's `gain`), Cloud holds deep
     (slot 5) and says a HOLD_CLOUD line; his stern HOLD_STERN; she tries to pull back (her slot 6)
@@ -856,7 +859,7 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
         ops += [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(GR.HOLD_CLOUD)]))]
 
         voices = [("{CLOUD}", GR.HOLD_CLOUD, GR.HOLD_STERN)] if speaker is None else speaker[1]
-        by_voice = (lambda make_: make_(voices[0])) if speaker is None else \
+        by_voice = (lambda make_: make_(voices[0])) if speaker is None or speaker[0] is None else \
             (lambda make_: _chain(speaker[0], [make_(v) for v in voices]))
         nr = len(GR.HOLD_CLOUD)                  # (RND2 mod this; a voice with fewer lines repeats them: one text)
 
@@ -876,9 +879,10 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
             lines(muffled) + gap(at["desperate"] - at["muffled2"] - GR.MUFFLED_SAY) + \
             rnd3 + lines(desperate_) + gap(at["end"] - at["desperate"] - GR.MUFFLED_SAY)
         others = [PT, IT]
+    lesson = _lesson_ops(hb, sec, actors[0], icon, hush, lines, slot_of, leave) if icon is not None else []
     ops += [hb._req(e, 4, wait=False) for e in actors] + \
         [Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
-        lines(block) + resume(total, others)
+        lines(block) + lesson + resume(total, others)
     if kind == "hold":                           # (user) she won't: straight off, her line, the loss, annoyed
         def refused(key):
             pr = PF.PROFILES[key]
@@ -890,9 +894,89 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
             return [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(texts)]))] + \
                 _chain(RND2, texts) + _take_gil(loss) + _annoy(k, leave(key) if leave else [])
         length = w0 + w1 + w2 + 10
-        ops += [asm.goto(no), refuse] + [hb._req(e, 4, wait=False) for e in actors] + lines(refused) + \
+        lesson2 = _lesson_ops(hb, sec, actors[0], icon, hush, lines, slot_of, leave) if icon is not None else []
+        ops += [asm.goto(no), refuse] + [hb._req(e, 4, wait=False) for e in actors] + lines(refused) + lesson2 + \
             resume(length, [PT, IT])
     return ops + [no]
+
+
+LESSON_RAISE, LESSON_SWING, LESSON_HOLD = 6, 6, 10   # frames: arm out to his side, the swing, held at the end
+LESSON_DOWN = 45                                    # (user) the swing ends 45 degrees down, in front of him
+LESSON_SAY = GR.PAUSE_FRAMES[1]                     # her reaction's window (closed by hush3's slot 2)
+
+
+def _lesson_anim(ctx, base, name, hrc="zcla.hrc"):
+    """(user) Cloud's lesson: frame 0 of his stroke `base` (pulled back) held, his right arm straight,
+    raised out to his right side, then swung to LESSON_DOWN down in front of him (his body's own axes:
+    up = pelvis to neck, right = between the shoulders, so it works lying down too), held."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
+    I = [b[0] for b in sk].index
+    a = fa.Anim(ctx.char_file(base.lower() + ".a"))
+    rr, rp, rots = a.frames[0]
+    root = [rp[0], -rp[1], rp[2]]
+    F = fa.forward(sk, rr, root, rots)
+    W = [m for m, _, _ in F]
+    unit = lambda v: [c / math.sqrt(sum(q * q for q in v)) for c in v]
+    sub = lambda u, v: [u[k] - v[k] for k in range(3)]
+    up = unit(sub(F[I("chest")][2], F[I("hip")][1]))
+    right = unit(sub(F[I("r_uparm")][1], F[I("l_uparm")][1]))
+    right = unit(sub(right, [up[k] * sum(right[j] * up[j] for j in range(3)) for k in range(3)]))
+    fwd = [up[1] * right[2] - up[2] * right[1], up[2] * right[0] - up[0] * right[2], up[0] * right[1] - up[1] * right[0]]
+    # (up x right: his forward if right is his right; checked below on a standing pose: -z)
+    a_ = math.radians(LESSON_DOWN)
+    side = right
+    front = unit([fwd[k] * math.cos(a_) - up[k] * math.sin(a_) for k in range(3)])
+    arm = ("r_uparm", "r_foarm", "r_hand")
+    bdir = lambda m: fa._vec(m, [0, 0, -1])
+    start = unit(bdir(W[I("r_uparm")]))
+
+    def pose(d):
+        Wt = list(W)
+        for n in arm:
+            Wt[I(n)] = fa._mul(_align(fa, bdir(W[I(n)]), d), W[I(n)])
+        return (rr, rp, fa.local_rotations(sk, rr, Wt))
+    lerp = lambda u, v, w: unit([u[k] + (v[k] - u[k]) * w for k in range(3)])
+    frames = [pose(lerp(start, side, (t + 1) / LESSON_RAISE)) for t in range(LESSON_RAISE)]
+    frames += [pose(lerp(side, front, ((t + 1) / LESSON_SWING) ** 2)) for t in range(LESSON_SWING)]   # (speeding up)
+    frames += [pose(front)] * LESSON_HOLD
+    a.frames = frames
+    ctx.char_file(name.lower() + ".a", a.build())
+    return name + ".tor"
+
+
+def _lesson_ops(hb, sec, cloud, icon, hush, lines, slot_of, leave):
+    """(user) After she stops, breaks free of a hold or refuses one: the lesson prompt (the icon's
+    slot 6, IWIN 4) for ICON_FRAMES; Square in it (LSN, `sqkey`) = Cloud's slot 7 (his lesson anim
+    for this position, waited for: nothing interrupts it), the slap sound, her reaction by her
+    profile's `lesson` (a "no" = a strike: +1 annoyance, leave(key) at LEAVE_AT). The position's time
+    (NEXT) and the next prompts (PT, IT, TT) move on by what it took."""
+    no, done = asm.nop(), asm.nop()
+    ops = [asm.setbyte(LSN, 0), hb._req(icon, 6)] + [hb._arith(0x86, v, ICON_FRAMES) for v in (NEXT, PT, IT, TT)]
+    ops += [asm.if_byte(LSN, "==", 1, no), hb._req(cloud, 7), sound(SLAP_SOUND)]
+
+    def react(key):
+        pr = PF.PROFILES[key]
+        kind, k = pr.get("lesson", "likes"), slot_of(key)
+        yes_l, no_l = asm.nop(), asm.nop()
+        say = lambda t: [Op(b"\x52\x03\x00\x01"), hb._window(GR.NAMES[key] + "\n" + t, 3, 8, LINE_Y),
+                         hb._req(hush, 2, wait=False), asm.message(3, _text_id(sec, GR.NAMES[key] + "\n" + t))]
+        out = []
+        if kind == "dislikes":
+            out += [asm.goto(no_l)]
+        elif kind == "mood":
+            out += [Op(bytes([0x99, RND2[0], RND2[1]])), asm.if_byte(RND2, "<", pr["lesson_odds"], no_l)]
+        elif kind == "rules":
+            out += [asm.if_byte(RULES, "!=", 0, no_l)]
+        if kind != "dislikes":
+            out += [yes_l] + say(pr["lesson_yes"]) + [asm.goto(done)]
+        if kind != "likes":
+            out += [no_l] + say(pr["lesson_no"]) + _annoy(k, leave(key) if leave else [])
+        return out + [asm.goto(done)]
+    ops += lines(react) + [done]
+    extra = LESSON_RAISE + LESSON_SWING + LESSON_HOLD + LESSON_SAY
+    ops += [hb._arith(0x86, v, extra) for v in (NEXT, PT, IT, TT)] + [no]
+    return ops
 
 
 def _hold_entities(hb, model, sprite_dir, place):
@@ -906,15 +990,18 @@ def _hold_entities(hb, model, sprite_dir, place):
             2: place + [asm.ret()],
             3: [asm.setbyte(IWIN, 1), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()],
             4: [asm.setbyte(IWIN, 2), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()],
-            5: [asm.setbyte(IWIN, 3), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()]}
+            5: [asm.setbyte(IWIN, 3), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()],
+            6: [asm.setbyte(IWIN, 4), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()]}
     wait = hb._w(1)
-    back, up, slap, there = asm.goto_back(wait), asm.setbyte(SQH, 0), asm.nop(), asm.nop()
+    back, up, slap, there, lesson = asm.goto_back(wait), asm.setbyte(SQH, 0), asm.nop(), asm.nop(), asm.nop()
     sqkey = {0: [asm.ret(), wait, Op(bytes([0x30]) + struct.pack("<H", SQUARE_KEY) + b"\x00", target=up),
                  asm.if_byte(SQH, "==", 0, back), asm.setbyte(SQH, 1), asm.if_byte(IWIN, "==", 1, slap),
                  asm.setbyte(SQ, 1), sound(MATERIA_SOUND), asm.setbyte(IWIN, 0), asm.goto_back(wait),
                  slap, asm.if_byte(IWIN, "==", 2, there), asm.setbyte(SLP, 1), sound(SLAP_SOUND),
                  asm.setbyte(IWIN, 0), asm.goto_back(wait),
-                 there, asm.if_byte(IWIN, "==", 3, back), asm.setbyte(THR, 1), sound(MATERIA_SOUND),   # (user) "there"
+                 there, asm.if_byte(IWIN, "==", 3, lesson), asm.setbyte(THR, 1), sound(MATERIA_SOUND),   # (user) "there"
+                 asm.setbyte(IWIN, 0), asm.goto_back(wait),
+                 lesson, asm.if_byte(IWIN, "==", 4, back), asm.setbyte(LSN, 1), sound(MATERIA_SOUND),    # (user) the lesson
                  asm.setbyte(IWIN, 0), back, up, asm.goto_back(wait), asm.ret()]}
     return icon, sqkey
 
@@ -973,7 +1060,20 @@ def _speeds(ctx):
         if who == "girl":
             _try_anim(ctx, base, pre + "7")
             out.append(pre + "7.tor")
+    # (user) Cloud's lessons, last of all (`lesson_index`): from each hold position's pulled-back frame
+    for pn in LESSON_POS:
+        base = "ZCTZ" if pn == "end" else POSITIONS[names.index(pn)]["cloud"][0]
+        letter = END_LETTER if pn == "end" else chr(ord("A") + names.index(pn))
+        cloud.append(_lesson_anim(ctx, base, "ZN%sL" % letter))
     return girl, cloud
+
+
+LESSON_POS = PAUSE_POS + ["end"]                    # (user) where Cloud's lesson plays (`lesson_index`)
+
+
+def lesson_index(cloud_first, pn):
+    """Cloud's lesson anim for position pn ("end": the group's part three) in his `_speeds` list."""
+    return cloud_first + 4 * len(POSITIONS) + 2 * len(PAUSE_POS) + 6 + LESSON_POS.index(pn)
 
 
 END_LETTER = "O"                                    # (ZM/ZN A..J the positions, K..N the group's still poses)
@@ -1793,8 +1893,11 @@ def _shoot(ctx, back, cast=None):
             return [_animb(), Op(bytes([0xA2, hold_index(first, pnames[p], 1) if kind == 2 else i, 1])),
                     Op(bytes([0xAE, i, 1]))]
         return by_p(make) + [asm.ret()]
+    lesson7 = by_p(lambda p, pl: [_animb(), Op(bytes([0xA2, lesson_index(cfirst, pnames[p]), 1])),
+                                  Op(bytes([0xA3, lesson_index(cfirst, pnames[p]), 1]))] if pnames[p] in PAUSE_POS else [])
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1)}
+                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1),
+                               7: lesson7 + [asm.ret()]}                  # (user) the lesson (ANIME1: waited for)
     for key, model, first, test in girls:
         scripts[ents[key]] = {0: [Op(bytes([0xA1, model])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: pose(first, "girl", "gdir", test), 4: hold(first), 5: hold(first, 1),
@@ -2272,8 +2375,10 @@ def _group(ctx, back):
         if ph < 2:
             return hold_index(0, ("head", "headrev")[ph], kind)
         return end_index(cloud, 4 + kind)
+    lesson_of = lambda ph: lesson_index(0, ("head", "headrev", "end")[ph])      # (user) Cloud's lessons
     used = {c: sorted({o for ph in range(GR.PHASES) for o in raw_stroke(ph, c) +
-                       [raw_stop(ph, kd, c) for kd in ((0, 1) if c else (0, 1, 2))]}) for c in (False, True)}
+                       [raw_stop(ph, kd, c) for kd in ((0, 1) if c else (0, 1, 2))] +
+                       ([lesson_of(ph)] if c else [])}) for c in (False, True)}
     remap = {c: {o: i for i, o in enumerate(used[c])} for c in (False, True)}
     trim = lambda full, c: [full[o] for o in used[c]]
     n_used = len(used[False])
@@ -2331,7 +2436,10 @@ def _group(ctx, back):
                 steps(cfirst, q // n_g, True)) + [asm.ret()],
         3: [xyzi(*centre), d_(facing_screen(cam, *centre[:3], (0, 1))), hb._visi(1)] + loop_(0) + [asm.ret()],
         4: _chain(PH, [loop_(stop(cfirst, ph, 0, True)) for ph in range(GR.PHASES)]) + [asm.ret()],
-        5: _chain(PH, [loop_(stop(cfirst, ph, 1, True)) for ph in range(GR.PHASES)]) + [asm.ret()]}
+        5: _chain(PH, [loop_(stop(cfirst, ph, 1, True)) for ph in range(GR.PHASES)]) + [asm.ret()],
+        7: _chain(PH, [[_animb(), Op(bytes([0xA2, cfirst + remap[True][lesson_of(ph)], 1])),
+                        Op(bytes([0xA3, cfirst + remap[True][lesson_of(ph)], 1]))] for ph in range(GR.PHASES)])
+        + [asm.ret()]}
     for k, key in enumerate(GR.ORDER):
         first = gfirst[key]
         b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
@@ -2495,7 +2603,8 @@ def _group(ctx, back):
         return ops + [skip]
     pause = _pause_ops(hb, sec, actors, ents["hush3"],
                        lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [], ents["icon"],
-                       lambda key: GR.RATE, slot_of=GR.ORDER.index, leave=leave, uneasy=uneasy, desperate=1)
+                       lambda key: GR.RATE, slot_of=GR.ORDER.index, leave=leave, uneasy=uneasy, desperate=1,
+                       speaker=(None, [("{CLOUD}", GR.HOLD_CLOUD[:1], GR.HOLD_STERN)]))   # (one hold line: texts)
     # (user: a long delay before the fade-in) all at once, not each waited on in turn (11 entities)
     place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"],
                                                              ents["gauge"], ents["icon"])] + [hb._w(6)]

@@ -22,6 +22,10 @@ three, two prompts a part: Cloud tries to stick it in the back door), the same k
 with "Backdoor is wide-open." (RULES 2); `there_yes` / `there_no` her reactions (paid `there_gain`,
 default 10, / costing `there_loss` x gil a press; a refusal annoys her as a refused hold does)."""
 
+# (user, since) the "lesson" (670 `_lesson_ops`): after she stops, breaks free of a hold or refuses
+# one, Square in the prompt = Cloud's slap; `lesson` = "likes" / "dislikes" / "mood" (RANDOM < lesson_odds) /
+# "rules" (Elena: fine unless "No funny stuff", RULES 0); `lesson_yes` / `lesson_no` her line (one each:
+# the group's texts); a "no" is a strike (+1 annoyance, LEAVE_AT)
 LEAVE_AT = 2                                        # (user) e.g. two refused holds and she's gone
 
 PROFILES = {
@@ -35,6 +39,9 @@ PROFILES = {
         refuse=["(She pulls off and smirks.)\n“Nice try. I decide when I'm beaten.”",
                 "(She slips free.)\n“Not now. I'm winning.”"],
         leave="(She grabs her robe.)\n“Forget it. Call me when you want a winner.”",
+        lesson="mood", lesson_odds=128,
+        lesson_yes="(She looks back, eyes blazing.)\n“Ha! Is that all you've got? Again!”",
+        lesson_no="(She whirls round.)\n“Hit me again and you'll be the loser\n here, hotshot.”",
         there="mood", there_odds=192, there_loss=5,           # (user: Ruby and Skye swapped: Skye's hold reaction)
         there_yes=["(She glances back and smirks.)\n“The back door? Bold. ...Fine. I can take\n anything you've got.”",
                    "(She arches back into it.)\n“Going in the back? Watch me not flinch.”"],
@@ -50,6 +57,7 @@ PROFILES = {
         refuse=["(She wriggles free, laughing.)\n“Wait wait wait... nope! Changed my mind!”",
                 "(She pops off.)\n“Okay that was... no. Nope. Sorry!”"],
         leave="(She hops off the bed.)\n“Okay, this stopped being fun. Bye!”",
+        lesson="likes", lesson_yes="(She yelps, then giggles.)\n“Ow! Ohmygosh. Do that again!”",
         there="likes",                                    # (user: always; Ruby's hold reaction)
         there_yes=["(She squeals.)\n“Ooh, the back door?! YES. Wait... yes!\n Yes yes yes!”",
                    "(She wiggles her hips back at him.)\n“Round the back? Ohmygosh, do it!”"]),
@@ -63,6 +71,9 @@ PROFILES = {
         refuse=["(She pulls back sharply.)\n“That was not part of the agreed... No.\n Don't do that.”",
                 "(She pushes his hand away.)\n“I need to know what's happening first.”"],
         leave="(She stands, arms folded.)\n“I'm withdrawing. Professionally.\n ...I'm done.”",
+        lesson="rules",
+        lesson_yes="(She flinches, then nods.)\n“...Within the agreed rules. Noted.\n Understood, sir.”",
+        lesson_no="(She glares.)\n“No funny stuff. We AGREED.\n That was funny stuff.”",
         there="rules",                                   # only with "Backdoor is wide-open." agreed
         there_yes=["(She takes a breath.)\n“The back door... as agreed. Proceed.\n Carefully.”",
                    "(She nods, flushed.)\n“That's... within the agreed parameters.”"],
@@ -78,6 +89,7 @@ PROFILES = {
         refuse=["(She shoves his hand off her head.)\n“Darling. I set the pace. Not you.”",
                 "(She pulls free, eyes flashing.)\n“Once was a gift. Don't push your luck.”"],
         leave="(She sweeps off the set.)\n“Kyahaha... no. You've lost your leading lady.”",
+        lesson="likes", lesson_yes="(She purrs.)\n“Kyahaha! Finally, some spine.\n Again, darling.”",
         there="second",                                  # (user) no the first time, yes the second, 3rd on: pushing it
         there_no=["(She slaps his hand away.)\n“The back door? Without asking? How\n presumptuous, darling.”"],
         there_yes=["(A slow, wicked smile.)\n“The back door again... persistent.\n Fine, darling. Impress me.”"],
@@ -93,6 +105,7 @@ PROFILES = {
         refuse=["(She pulls back and holds up a hand.)\n“Hey. Not like that, okay?”",
                 "(She eases off, firm.)\n“Cloud. Ask first. Seriously.”"],
         leave="(She gets up, quietly.)\n“I'm sitting the rest out. You know why.”",
+        lesson="dislikes", lesson_no="(She catches his wrist.)\n“Hey. No. We don't do that.”",
         there="mood", there_odds=128, there_loss=5,         # (user) 50/50, her mood
         there_yes=["(She laughs, surprised.)\n“The back? ...You know what? Okay.\n Go slow.”",
                    "(She glances back, blushing.)\n“Round the back, huh? ...Alright. Gentle.”"],
@@ -109,6 +122,7 @@ PROFILES = {
         refuse=["(She slips free with a giggle.)\n“Ah-ah! You'll have to catch me first.”",
                 "(She pulls back, smiling, but means it.)\n“Nope. Not today, mister.”"],
         leave="(She waves from the door.)\n“That's my cue! Have fun without me!”",
+        lesson="dislikes", lesson_no="(She pouts and rubs the spot.)\n“Ow! Meanie. That's not how you\n treat a lady.”",
         there="dislikes", there_loss=5,                   # (user) never, and she mocks the try
         there_no=["(She giggles and wriggles away.)\n“Wrong door, mister! Did you get lost\n back there? Need a map?”",
                   "(She glances back, grinning.)\n“Sneaking in the back? Ooh, so daring.\n ...No. The front's that way!”"]),

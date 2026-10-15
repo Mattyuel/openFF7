@@ -786,9 +786,12 @@ The movie minigame (user's design).
 - `_there_ops(hb, sec, key, rate, cond, icon, hush, leave)` (user) The special shoots' "there" prompt (672: parts one and three, two a part): the
 - `_there_refuse(hb, say, pr, kind, loss)` Her refusal line: Scarlet's third try on (`there_push`) vs her first (`there_no`).
 - `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None, desperate=3, speaker=None)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
-- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3, speaker=None)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
+- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3, speaker=None, icon=None)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
+- `_lesson_anim(ctx, base, name, hrc='zcla.hrc')` (user) Cloud's lesson: frame 0 of his stroke `base` (pulled back) held, his right arm straight,
+- `_lesson_ops(hb, sec, cloud, icon, hush, lines, slot_of, leave)` (user) After she stops, breaks free of a hold or refuses one: the lesson prompt (the icon's
 - `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
+- `lesson_index(cloud_first, pn)` Cloud's lesson anim for position pn ("end": the group's part three) in his `_speeds` list.
 - `end_index(cloud, k)` Offset (from a model's first `_speeds` anim) of the group's "end" anim k: 0-3 the speeds,
 - `_end_poses(ctx)` ZREN (Ruby) and ZCTZ (bare Cloud) for the group's "end"; returns (gap, right): her origin in
 - `hold_try_delay()` Frames her struggle (slot 6) waits after being REQ'd with the hold's muffled line.
