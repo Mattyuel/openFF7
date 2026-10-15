@@ -2557,7 +2557,8 @@ def _group(ctx, back):
         nx, chk = asm.nop(), asm.nop()
         voice += [asm.if_byte(CC, "==", k, nx), asm.if_byte(E, "==", k, chk), asm.goto(vdone), chk,
                   asm.if_byte(LEFT, "bit_on", k, nx), asm.goto(vdone), nx]
-    voice += _chain(CC, [_chain(PH, [_chain(K, [line(key, GR.COMMENTS[key][ph][j]) for j in range(6)])
+    voice += _chain(CC, [_chain(PH, [_chain(K, [line(key, GR.COMMENTS[key][ph][j % len(GR.COMMENTS[key][ph])])
+                                                for j in range(6)])
                                      for ph in range(GR.PHASES)]) for key in GR.ORDER])
     voice += [vdone, asm.goto_back(vl), asm.ret()]
     scripts[ents["voice"]] = {0: voice}
@@ -2636,7 +2637,7 @@ def _group(ctx, back):
 
     def scene(sc):                                   # (user) everyone stops: an argument, Cloud's call
         skip = asm.nop()
-        ops = [asm.if_byte(PH, "==", sc["part"], skip), asm.if_byte(TP, "==", GR.SCENE_AT_TURN, skip)] + \
+        ops = [asm.if_byte(PH, "==", sc["part"], skip), asm.if_byte(TP, "==", sc.get("turn", GR.SCENE_AT_TURN), skip)] + \
             [asm.if_byte(LEFT, "bit_off", GR.ORDER.index(g), skip) for g in sc["girls"]]
         ops += [hb._req(e, 4, wait=False) for e in actors] + hb._say(sec, sc["talk"]) + \
             choose(sc["ask"], sc["choices"], back=True) + [hb._req(e, 2, wait=False) for e in actors]

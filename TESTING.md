@@ -496,6 +496,9 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Date revelation** (new): at affection 20, after a video with her has been paid out by the cameraman, her next
   date (any place) opens with a scene about how it felt, with Tifa's Theme, one choice for Cloud, and then the
   date ends (no intimacy). Once per girl.
+- **Group shoot conflicts** (new): one more argument in each part, at the fourth turn: Scarlet grabs Tifa's neck
+  (part one), Scarlet needles Elena about stopping while Ruby wants her place (part two), Aerith and Tifa turn
+  on each other (part three). Each has Cloud's three-way call. The sideline comments are 5 a set now.
 - **Hidden histories** (new): small hints now show as extra pages after the first and second dates' closing
   lines, after her last line in each date's intimate scene, and after her movie aftermath; the revelations are
   much longer. Check the extra pages show the right speaker name and fit their windows.

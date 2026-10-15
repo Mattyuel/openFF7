@@ -35,49 +35,26 @@ TURN = 450                    # frames each girl (15 s)
 # the others watching (user: they comment too; "fun, sexy, competitive, complimenting each
 # other's abilities in explicit ways"), in character; part one ("head") / part two ("head reverse") /
 # part three ("end")
+# (user, since) 5 a set (the group's texts: room for the conflict scenes); the voice cycles them
 COMMENTS = {
-    "ruby": (["Take that cock, girl.", "All the way, babe.",
-              "I'll make him beg.", "Lick it.",
-              "Go deeper.", "So sloppy."],
-             ["Right down the throat.", "Her throat is bulging.",
-              "Don't stop, star!", "Love it.",
-              "She's not even blinking.", "Me next!"],
-             ["Fuck that throat.", 'Pin the bitch down.', "Lucky girl.", 'Choke on it, babe.', "My throat is ready.", 'Yes, yes, take it!']),
-    "skye": (["Fuck it, fuck it!", "Stick that tongue out, girl.",
-              "Little whore loves it.", "Bring that cock.",
-              "Hahahaha oh god.", "Swallow it whole."],
-             ["Balls deep.", "Such a pretty whore.",
-              "You're such a cutie.", "Aaaaaah",
-              "Aww a single tear.", "Okay, she's amazing.."],
-             ["I want that.", 'Is that even possible?', 'Stand over ME next!', "Fuck her head!", "She's totally stuck! So hot!", 'Do me like that! Pleeease!']),
-    "elena": (["How is she not gagging?", "Can I try that?",
-               "She looks cute like that.", "What a pro.",
-               "Hope my endurance training pays off.", "I'm not gonna hold back."],
-              ["Where am I?", "That angle's ... efficient.",
-               "No gag reflex at all!", "I wasn't trained for this.",
-               "Okay. I'm impressed.", "Am I supposed to do that?"],
-              ["Oh my.", "She can't even move.", "He's dominating her.", "I'm taking notes.", "I've never seen anything like this.", 'Is this making love?']),
-    "scarlet": (["Kyahaha! Cute.", "She's a sloppy one.",
-                 "Grab her hair, darling.", "Bad girl.",
-                 "Stay still, let him work.", "Is that all you've got?"],
-                ["Do I need to hold you still?", "Hang her lower, darling.",
-                 "Fuck her face stupid.", "Awww, little cutie-pie.",
-                 "Pound her throat, darling.", "That's my girl! Kyahaha!"],
-                ['Sit on her face, darling!', 'Hold her head down.', 'Look at her squirm.', "That's how you treat a girl.", "Don't you dare be gentle on me.", "She's in love, how cute."]),
-    "tifa": (["Work, girl.", "Don't you dare finish before me!",
-              "That's... impressive.", "He can do that?",
-              "You like it like this?", "Breathe through your nose."],
-             ["That's...different", "Is she ok?",
-              "This is next level.", "I didn't train for this.",
-              "Her body's perfect.", "Give it to her."],
-             ["Cloud, you're crushing her.", "You're fucking her...head.", 'Breath out around it.', 'Should I hold her head for you?', 'Squat lower!', "Okay, she's good."]),
-    "aerith": (["Ooh, that's really something.", "She's shaking, how cute!",
-                "She's glowing.", "Look at her eyes watering.",
-                "Hey, no hogging!", "Save some for me."],
-               ["Upside down and still smiling.", "Her toes are curling!",
-                "Ooh, he's buried in her face.", "I'll take him to the Promised Land.",
-                "I'll try my best.", "Everyone's so talented!"],
-               ["I've never seen anything like this.", 'I wonder what that feels like.', "He's so gentle.", 'Ooh, me next?', "She's turning all red.", "Everyone's so naughty."]),
+    "ruby": (['Take that cock, girl.', 'All the way, babe.', "I'll make him beg.", 'Lick it.', 'Go deeper.'],
+          ['Right down the throat.', 'Her throat is bulging.', "Don't stop, star!", 'Love it.', "She's not even blinking."],
+          ['Fuck that throat.', 'Pin the bitch down.', 'Lucky girl.', 'Choke on it, babe.', 'My throat is ready.']),
+    "skye": (['Fuck it, fuck it!', 'Stick that tongue out, girl.', 'Little whore loves it.', 'Bring that cock.', 'Hahahaha oh god.'],
+          ['Balls deep.', 'Such a pretty whore.', "You're such a cutie.", 'Aaaaaah', 'Aww a single tear.'],
+          ['I want that.', 'Is that even possible?', 'Stand over ME next!', 'Fuck her head!', "She's totally stuck! So hot!"]),
+    "elena": (['How is she not gagging?', 'Can I try that?', 'She looks cute like that.', 'What a pro.', 'Hope my endurance training pays off.'],
+          ['Where am I?', "That angle's ... efficient.", 'No gag reflex at all!', "I wasn't trained for this.", "Okay. I'm impressed."],
+          ['Oh my.', "She can't even move.", "He's dominating her.", "I'm taking notes.", "I've never seen anything like this."]),
+    "scarlet": (['Kyahaha! Cute.', "She's a sloppy one.", 'Grab her hair, darling.', 'Bad girl.', 'Stay still, let him work.'],
+          ['Do I need to hold you still?', 'Hang her lower, darling.', 'Fuck her face stupid.', 'Awww, little cutie-pie.', 'Pound her throat, darling.'],
+          ['Sit on her face, darling!', 'Hold her head down.', 'Look at her squirm.', "That's how you treat a girl.", "Don't you dare be gentle on me."]),
+    "tifa": (['Work, girl.', "Don't you dare finish before me!", "That's... impressive.", 'He can do that?', 'You like it like this?'],
+          ["That's...different", 'Is she ok?', 'This is next level.', "I didn't train for this.", "Her body's perfect."],
+          ["Cloud, you're crushing her.", "You're fucking her...head.", 'Breath out around it.', 'Should I hold her head for you?', 'Squat lower!']),
+    "aerith": (["Ooh, that's really something.", "She's shaking, how cute!", "She's glowing.", 'Look at her eyes watering.', 'Hey, no hogging!'],
+          ['Upside down and still smiling.', 'Her toes are curling!', "Ooh, he's buried in her face.", "I'll take him to the Promised Land.", "I'll try my best."],
+          ["I've never seen anything like this.", 'I wonder what that feels like.', "He's so gentle.", 'Ooh, me next?', "She's turning all red."]),
 }
 # the engaged girl (user: muffled)
 MUFFLED = {"ruby": ["Mmph... mmm! Gk...glk...", "Mmf... mmh, mmh...", "Hnn... mmph!"],
@@ -272,7 +249,60 @@ SCENES = [
                   ("Tifa, talk to her.",
                    "Tifa\n(She sits by Elena and whispers.){NEW}Elena\n“...Okay. Okay. I'm in.”", dict(gil=5, rules=True))]),
 ]
-SCENE_AT_TURN = 2                  # the part's second turn
+SCENE_AT_TURN = 2                  # the part's second turn (a scene's own `turn` overrides it)
+# (user, since) real conflicts between the women, from their hidden histories (`_backstories`): each
+# hits a nerve without telling the secret (that's for the final dates' revelations); one more per part,
+# at its fourth turn
+SCENES += [
+    dict(part=0, turn=4, girls=["scarlet", "tifa", "aerith"],
+         talk="Scarlet\n(She steps behind Tifa and grabs the\n back of her neck to 'position' her.)\n“Head down, sweetie. Like this.”{NEW}"
+              "Tifa\n(She's on her feet before anyone sees\n her move.) “Don't. Touch. My neck.”{NEW}"
+              "Scarlet\n“Kyahaha... it's a movie, darling.\n Relax.”{NEW}"
+              "Aerith\n(She steps between them, smiling, and\n not smiling at all.) “She said don't.”",
+         ask="Scarlet\n“Well? Whose set is this, puppy?”",
+         choices=[("Scarlet, hands off. Now.",
+                   "Scarlet\n(A long pause.) “...Fine.”{NEW}Tifa\n(She mouths 'thank you' and doesn't\n look at anyone else.)",
+                   dict(annoy=["scarlet"])),
+                  ("Tifa, it's part of the scene.",
+                   "Tifa\n“...Right. Sorry.”{NEW}Tifa\n(She finishes the scene smiling. Her\n eyes are a long way away. She never\n once looks at you.)",
+                   dict(gil=10, annoy=["tifa"])),
+                  ("Everybody take five.",
+                   "Tifa\n(She breathes, slowly, in and out.){NEW}Scarlet\n(Quietly, so only Tifa hears.)\n“...I didn't know. Sorry.”{NEW}Aerith\n“Huh. She CAN say it.”",
+                   dict(gil=-5))]),
+    dict(part=1, turn=4, girls=["elena", "scarlet", "ruby", "skye"],
+         talk="Elena\n“Stop. Can we... stop for a second?”{NEW}"
+              "Scarlet\n“Stop? A Turk doesn't say stop.\n Did Tseng teach you that, or did\n somebody else?”{NEW}"
+              "Elena\n(She flinches as if she'd been hit.){NEW}"
+              "Ruby\n“If she can't take it, swap her for\n me. I don't need breaks.”{NEW}"
+              "Skye\n“Hey! Leave her alone, both of you!”",
+         ask="Ruby\n“Well? Am I in or not?”",
+         choices=[("She said stop. We stop.",
+                   "Elena\n(She stares at you as if you'd spoken\n a foreign language.) “...Thank you.”{NEW}Scarlet\n“Tch.”",
+                   dict(rules=True, annoy=["scarlet"])),
+                  ("Ruby, you're in.",
+                   "Ruby\n“Watch and learn, Turk.”{NEW}Elena\n(She sits on the edge of the bed,\n back straight, saying nothing at all.)",
+                   dict(gil=10, annoy=["elena"])),
+                  ("Scarlet, that was out of line.",
+                   "Scarlet\n“...Kyahaha. Was it?” (For once, she\n looks away first.){NEW}Skye\n(She squeezes Elena's hand.)",
+                   dict(annoy=["scarlet"]))]),
+    dict(part=2, turn=4, girls=["aerith", "tifa", "skye"],
+         talk="Aerith\n“Tifa, you're doing the voice again.”{NEW}"
+              "Tifa\n“...What voice?”{NEW}"
+              "Aerith\n“The 'everything's perfect' voice. You\n don't mean it. You never mean it.”{NEW}"
+              "Tifa\n“And you're doing the flower girl\n thing. Going all quiet. Don't pretend\n you're not using this, Aerith.”{NEW}"
+              "Aerith\n(The smile drops off her face.){NEW}"
+              "Skye\n“Um. Are we... still rolling?”",
+         ask="Skye\n“Cloud? Help?”",
+         choices=[("You two. Outside. Talk.",
+                   "Skye\n(They step off set. Two minutes later\n they're back, eyes red, holding\n hands.){NEW}Tifa\n“...We're okay.”{NEW}Aerith\n“We're okay.”",
+                   dict(gil=-10)),
+                  ("Keep rolling.",
+                   "Skye\n(Nobody says a word. Tifa's smile is\n perfect. Aerith's eyes are somewhere\n very far away.)",
+                   dict(gil=10, annoy=["tifa", "aerith"])),
+                  ("Aerith, that wasn't fair.",
+                   "Aerith\n(She opens her mouth, then shuts it.)\n“...No. It wasn't. I'm sorry, Tifa.”{NEW}Tifa\n“...It's fine.” (It isn't. Not quite.)",
+                   dict(annoy=["aerith"]))]),
+]
 
 # (user) a conversation at the end (wrap or finisher): the girls' banter if nobody walked off and a
 # bonus (`STAYED_BONUS` x gil a press), else the cameraman's remark; `WALKOUT` = everyone left (a CUT)
