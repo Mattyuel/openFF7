@@ -15,6 +15,7 @@ something new, hit a trap, or a feature's status changes.
 | What the user wants (decisions, recruit spots, travel rules) | `DESIGN.md` |
 | Every function/class signature, one line each | `docs/api_index.md` (generated) |
 | What to test in-game, install steps | `TESTING.md` |
+| How to use the tools (commands, a worked example patch, recipes) | `docs/tools_guide.md` |
 | Midgar / rest-of-world pinning plans | `docs/midgar_plan.md`, `docs/world_plan.md` |
 | Dates with the girls (gondola / space capsule): plan, decisions, FMV facts | `docs/dates_plan.md` |
 | Fields, locations, exits, battles, world map | `docs/inventory/` |
