@@ -464,6 +464,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   right pose for all four girls (head: she kneels in front of him, not inside him or too far), the beach
   loungers line up (models on the chairs, legs towards the sea), the sea still animates, and arriving at
   the beach puts Cloud on his lounger.
+  (new) On the beach the girl in the finisher sits 8 units higher, and the date's text shows at the bottom of
+  the screen: check she isn't floating and the text doesn't cover them.
 - **Special shoots: "there" prompt** (new; untested in-game, user): in parts one (insert) and three
   (finisher) the Square icon shows twice a part (first 5-19 s in, the second 20-34 s later); Square in it =
   Cloud tries the back door, and she reacts by her profile: Skye always yes, Ruby usually (3 in 4), Tifa

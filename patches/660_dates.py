@@ -19,6 +19,7 @@ are dropped, entity 0 becomes the director.
   the round window. Cloud and her on the benches either side of the gangway,
   facing each other (sitting anims borrowed from the gondola models).
 """
+import struct
 import importlib
 import math
 
@@ -58,6 +59,8 @@ PLACE_NAMES = {"gondola": "The Gold Saucer gondola.", "capsule": "The space caps
 # "head": her copy moved forward onto his spot (676 `_date_heads`), so both share one XYZI
 POSITION = {"capsule": "behind", "gondola": "head", "cannon": "holding", "beach": "finisher"}
 TURNED = {"behind": 0, "head": 128, "holding": 128, "finisher": 0}   # her DIR from his
+RAISE = {"finisher": 8}           # (user) her part-two XYZI this much higher (field units): the beach finisher
+TEXT_BOTTOM = {"beach": 224}      # (user) the place's windows at the bottom: bottom edge at this screen y
 SPEED, SPEED_FAST = 1, 3                                            # 670 SPEEDS: 15 / 8 frames a stroke
 BARE = {"Tifa": "ZTFA.HRC", "Aerith": "ZAEA.HRC", "Scarlet": "ZSCA.HRC", "Elena": "ZELA.HRC"}
 # where part two happens: (x, y) (None: Cloud's seat), plus a height (field units)
@@ -482,7 +485,8 @@ def _field(ctx, place, group, names):
         scripts[ge] = {0: [Op(bytes([0xA1, gb])), hb._visi(0), asm.ret(), asm.ret()]}
         ka = [len(ModelLoader.anims(loader.models[gb])) - 2 + k for k in range(2)]
         gface = (pdir + TURNED[POSITION[place]]) % 256
-        scripts[ge][4] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, gface])), hb._visi(1),
+        gspot = (spot[0], spot[1], spot[2] + RAISE.get(POSITION[place], 0), spot[3])
+        scripts[ge][4] = [hb._xyzi(*gspot), Op(bytes([0xB3, 0, gface])), hb._visi(1),
                           Op(bytes([0xA2, ka[0], 1])), Op(bytes([0xAE, ka[0], 1])), asm.ret()]
         for k, a_ in enumerate(ka):
             scripts[ge][5 + k] = [Op(bytes([0xA2, a_, 1])), Op(bytes([0xAE, a_, 1])), asm.ret()]
@@ -524,6 +528,16 @@ def _field(ctx, place, group, names):
     rx, ry, rt, rd = _return_spot(ctx, g0)
     main += [hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(g0["field"]), rx, ry, rt, rd), asm.ret()]
     scripts[0] = {0: init + main}
+    if place in TEXT_BOTTOM:                         # (user) the text at the bottom of the screen
+        moved = 0
+        for ent in scripts.values():
+            for ops in ent.values():
+                for o in ops:
+                    if o.op == 0x50:                 # WINDOW [win][x][y][w][h]
+                        h = struct.unpack_from("<H", o.raw, 8)[0]
+                        struct.pack_into("<H", o.raw, 4, TEXT_BOTTOM[place] - h)
+                        moved += 1
+        assert moved, place
     _blank(sec, scripts)
     if place in TILES_BACK:
         from ff7.background import Background
