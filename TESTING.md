@@ -432,6 +432,15 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Special shoots: "there" prompt** (new; untested in-game, user): in parts one (insert) and three
+  (finisher) the Square icon shows twice a part (first 5-19 s in, the second 20-34 s later); Square in it =
+  Cloud tries the back door, and she reacts by her profile: Skye always yes, Ruby usually (3 in 4), Tifa
+  50/50, Aerith never (she mocks the try), Scarlet no the first time, yes the second, refuses from the third
+  ("don't push your luck"), Elena by the rules she asks for before the first position (Backdoor is
+  wide-open = yes, but then she refuses holds; Front door wide-open = holds only; No funny stuff = neither).
+  Yes pays her gil a press x 10, no costs x 5-10 and annoys her (two annoyances, hold or there, and she
+  walks off: a CUT). Check the icon shows only in parts one and three, twice each, and the head part's
+  hold icon still works.
 - **Tifa's undressed head** (fix; untested in-game, user): her head now sits 0.8 lower, on the
   shoulders with its own short neck; the thin neck bar under it is gone. Check her in her shoot, the
   group and her date's part two: no gap at the neck when she tilts her head, nothing poking out.

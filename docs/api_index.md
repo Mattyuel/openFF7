@@ -779,6 +779,9 @@ The movie minigame (user's design).
 - `_annoy(k, leave_ops)` Girl k's annoyance +1; at `_movie_profiles.LEAVE_AT`, leave_ops (she walks off).
 - `_hold_check(key, k, refuse)` (user) Does she take the hold? Her profile's `hold`: jump to refuse if not.
 - `_text_id(sec, t)` One text id per distinct string in a field (the per-girl chains repeat lines).
+- `_there_arm(hb)` At a position's start: no "there" prompt shown yet, the first at FR + THERE_FIRST.
+- `_there_ops(hb, sec, key, rate, cond, icon, hush, leave)` (user) The special shoots' "there" prompt (672: parts one and three, two a part): the
+- `_there_refuse(hb, say, pr, kind, loss)` Her refusal line: Scarlet's third try on (`there_push`) vs her first (`there_no`).
 - `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
 - `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
 - `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2

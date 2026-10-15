@@ -36,6 +36,12 @@ from ff7.script import Op, Script
 from ff7.walkmesh import Walkmesh
 
 BASE = "colne_6"
+# (user) Elena sets the ground rules before the first position: RULES 2 = "there" OK, hold not;
+# 1 = hold OK, "there" not; 0 = neither (`_movie_profiles`: her `hold` / `there` are "rules")
+RULES_ASK = {"elena": ("“Before we roll: ground rules. Which\n entrances are... authorised?”", [
+    ("Backdoor is wide-open.", 2, "(She swallows.)\n“The back. Understood. Noted. ...Okay.”"),
+    ("Front door wide-open.", 1, "“Front only. Good. That's... manageable.”"),
+    ("No funny stuff.", 0, "(She exhales.)\n“Thank you. Strictly by the script.”")])}
 SPECIAL_MINUTE = 1800                        # frames a position (user: a minute each)
 KEEP = ("switch", "hole", "ball", "bed")     # colne_6's background-state entities: their init stays
 
@@ -678,7 +684,8 @@ def _special(ctx, key, back):
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
             asm.setbyte(STEP, 0), asm.setbyte(K, 0), asm.setword(NEXT, SPECIAL_MINUTE), asm.setbyte(FIN, 0),
-            asm.setbyte(mv.RULES, 1), asm.setbyte(mv.CTRL, 0), asm.setbyte(mv._ann(0), 0)] + \
+            asm.setbyte(mv.RULES, 0 if key in RULES_ASK else 1), asm.setbyte(mv.CTRL, 0), asm.setbyte(mv._ann(0), 0),
+            asm.setbyte(mv.THR, 0), asm.setbyte(mv.TSC, 0), asm.setbyte(mv.TC, 2)] + \
            [hb._req(e, 3) for e in (CL, ents["girlc"], ents["camera"])] + [hb._w(20)]
     main += [Op(hb.FADE_IN), Op(b"\x6C")]
     for t_ in SP.OPENING:
@@ -692,11 +699,20 @@ def _special(ctx, key, back):
         main += hb._say(sec, ("{CLOUD}" if who == "C" else name) + "\n" +
                         (t_ if t_.startswith("(") else "“%s”" % t_.replace("\n", "\n ").replace("\n  ", "\n ")))
         main += [hb._w(SP.PACE)]
+    if key in RULES_ASK:                             # (user) Elena: the ground rules first (RULES)
+        q, choices = RULES_ASK[key]
+        ops, first = hb._ask(sec, name + "\n" + q, [c[0] for c in choices])
+        rdone = asm.nop()
+        for j, (label, value, reply) in enumerate(choices):
+            nx = asm.nop()
+            ops += [asm.if_byte(mv.CHOICE, "==", first + j, nx), asm.setbyte(mv.RULES, value)] + \
+                hb._say(sec, name + "\n" + reply) + [asm.goto(rdone), nx]
+        main += ops + [rdone]
     main += [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(4), Op(hb.FADE_IN), Op(b"\x6C")]
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, mv.MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“Same rules as always: tap OK, mind the\n meter. Three positions, a minute each.\n ...And... ACTION!”")
     main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, mv.TICK)] + mv._pause_arm(hb, SPECIAL_MINUTE) + \
-        [asm.setbyte(RUN, 1)]
+        mv._there_arm(hb) + [asm.setbyte(RUN, 1)]
     wait1, go = hb._w(1), asm.nop()
     A, B, C, VMAX, DANGER = mv.A, mv.B, mv.C, mv.VMAX, mv.DANGER
     main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, mv.TICK),
@@ -732,6 +748,9 @@ def _special(ctx, key, back):
     main += [done, asm.if_byte(NEW, "!=", STEP, same), asm.setbyte(STEP, NEW)] + \
         [hb._req(e, 2, wait=False) for e in actors] + [same]
     main += pause
+    # (user) "there": parts one and three (insert, finisher), two prompts a part
+    main += mv._there_ops(hb, sec, key, rate, lambda no: [asm.if_byte(P, "!=", 1, no)], ents["icon"], ents["hush3"],
+                          leave)
     stay = asm.nop()
     main += [asm.if_word(FR, ">=", NEXT, stay),
              asm.if_byte(P, "<", len(POSITIONS) - 1, wrap),
@@ -740,7 +759,7 @@ def _special(ctx, key, back):
              asm.setword(POS, 500), asm.setword(VEL, 1000), asm.setword(RATE, 40)] + place_all() + \
             [hb._w(4), Op(mv.FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
              hb._arith(0x86, NT, mv.TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, SPECIAL_MINUTE)] + \
-            mv._pause_arm(hb, SPECIAL_MINUTE) + [asm.setbyte(RUN, 1), stay, asm.goto_back(tick)]
+            mv._pause_arm(hb, SPECIAL_MINUTE) + mv._there_arm(hb) + [asm.setbyte(RUN, 1), stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
 
     def out():

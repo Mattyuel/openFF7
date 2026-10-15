@@ -618,6 +618,9 @@ def _icon_next(hb, base, step):
 LEFT, RULES, CTRL, TP, ANN0 = (5, 170), (5, 171), (5, 172), (5, 174), 176
 WALKED = "“She walked off my set?! CUT!\n ...Fine. We'll sell what we've got.”"   # (one-girl / special shoots)
 GLO, GHI = (6, 184), (6, 186)
+THR, TC, TSC, TT = (5, 159), (5, 175), (5, 173), (6, 190)   # (user, 672) "there": pressed; prompts this
+                                                    # part; Scarlet's tries this shoot; the next prompt's frame
+THERE_FIRST, THERE_NEXT = (150, 60), (600, 60)      # (user: 2 a part) first at 5-19 s, the second 20-34 s later
 
 
 def _ann(k):
@@ -671,6 +674,70 @@ def _text_id(sec, t):
     if t not in ids:
         ids[t] = sec.add_string(_encode(t))
     return ids[t]
+
+
+def _there_arm(hb):
+    """At a position's start: no "there" prompt shown yet, the first at FR + THERE_FIRST."""
+    return [asm.setbyte(TC, 0), Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 8])),
+            asm.setword(TT, FR), hb._arith(0x86, TT, THERE_FIRST[0])] + \
+        _chain(RND2, [[hb._arith(0x86, TT, k * THERE_FIRST[1])] if k else [] for k in range(8)])
+
+
+def _there_ops(hb, sec, key, rate, cond, icon, hush, leave):
+    """(user) The special shoots' "there" prompt (672: parts one and three, two a part): the
+    Square icon (its slot 5, IWIN 3) at TT; Square in it (THR, `sqkey`) = Cloud tries the back door.
+    Her profile's `there` decides (`_movie_profiles`): yes = `there_yes` + `there_gain` x her gil a
+    press; no = `there_no` (Scarlet's third try on: `there_push`), `there_loss` x it taken, +1
+    annoyance (`_annoy`, leave(key) at LEAVE_AT). The meter is held while she reacts."""
+    pr = PF.PROFILES[key]
+    name = GR.NAMES[key]
+    no, no2, refuse, done = asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    icon_ops = cond(no) + [asm.if_byte(RUN, "==", 1, no), asm.if_byte(TC, "<", 2, no), asm.if_word(FR, ">=", TT, no),
+                           hb._req(icon, 5, wait=False), Op(bytes([0x95, TC[0], TC[1]])),
+                           Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 8])),
+                           asm.setword(TT, FR), hb._arith(0x86, TT, THERE_NEXT[0])] + \
+        _chain(RND2, [[hb._arith(0x86, TT, k * THERE_NEXT[1])] if k else [] for k in range(8)]) + [no]
+    w1 = GR.PAUSE_FRAMES[1]
+
+    def say(texts, gil):                                    # one at random, window 3, closed by hush slot 2
+        out = []
+        for t in texts:
+            t = name + "\n" + t + _gil_note(gil)
+            out.append([Op(b"\x52\x03\x00\x01"), hb._window(t, 3, 8, LINE_Y), hb._req(hush, 2, wait=False),
+                        asm.message(3, _text_id(sec, t))])
+        return [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(out)]))] + \
+            _chain(RND2, out)
+    kind = pr["there"]
+    ev = [asm.if_byte(THR, "==", 1, no2), asm.setbyte(THR, 0), asm.setbyte(RUN, 0), Op(b"\x54\x01")]
+    if kind == "dislikes":
+        ev += [asm.goto(refuse)]
+    elif kind == "mood":
+        ev += [Op(bytes([0x99, RND2[0], RND2[1]])), asm.if_byte(RND2, "<", pr["there_odds"], refuse)]
+    elif kind == "rules":
+        ev += [asm.if_byte(RULES, "==", 2, refuse)]
+    elif kind == "second":
+        ev += [Op(bytes([0x95, TSC[0], TSC[1]])), asm.if_byte(TSC, "==", 2, refuse)]
+    else:
+        assert kind == "likes", kind
+    gain = rate * pr.get("there_gain", 10)
+    if kind != "dislikes":
+        ev += say(pr["there_yes"], gain) + [Op(bytes([0x39, 0x00]) + struct.pack("<I", gain)), asm.goto(done)]
+    if kind != "likes":
+        loss = rate * pr.get("there_loss", pr.get("loss", 5))
+        ev += [refuse] + _there_refuse(hb, say, pr, kind, loss) + _take_gil(loss) + _annoy(0, leave(key))
+    length = w1 + 25
+    ev += [done, hb._w(15), hb._arith(0x86, NEXT, length), hb._arith(0x86, IT, length), hb._arith(0x86, TT, length),
+           asm.setword(PR, 0), asm.setword(NT, FR), hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1), no2]
+    return icon_ops + ev
+
+
+def _there_refuse(hb, say, pr, kind, loss):
+    """Her refusal line: Scarlet's third try on (`there_push`) vs her first (`there_no`)."""
+    if kind != "second":
+        return say(pr["there_no"], -loss)
+    first_, end = asm.nop(), asm.nop()
+    return [asm.if_byte(TSC, ">=", 3, first_)] + say(pr["there_push"], -loss) + [asm.goto(end), first_] + \
+        say(pr["there_no"], -loss) + [end]
 
 
 def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None):
@@ -782,13 +849,16 @@ def _hold_entities(hb, model, sprite_dir, place):
     icon = {0: [Op(bytes([0xA1, model])), hb._visi(0), Op(bytes([0xB3, 0, sprite_dir]))] + hide + [asm.ret(), asm.ret()],
             2: place + [asm.ret()],
             3: [asm.setbyte(IWIN, 1), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()],
-            4: [asm.setbyte(IWIN, 2), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()]}
+            4: [asm.setbyte(IWIN, 2), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()],
+            5: [asm.setbyte(IWIN, 3), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()]}
     wait = hb._w(1)
-    back, up, slap = asm.goto_back(wait), asm.setbyte(SQH, 0), asm.nop()
+    back, up, slap, there = asm.goto_back(wait), asm.setbyte(SQH, 0), asm.nop(), asm.nop()
     sqkey = {0: [asm.ret(), wait, Op(bytes([0x30]) + struct.pack("<H", SQUARE_KEY) + b"\x00", target=up),
                  asm.if_byte(SQH, "==", 0, back), asm.setbyte(SQH, 1), asm.if_byte(IWIN, "==", 1, slap),
                  asm.setbyte(SQ, 1), sound(MATERIA_SOUND), asm.setbyte(IWIN, 0), asm.goto_back(wait),
-                 slap, asm.if_byte(IWIN, "==", 2, back), asm.setbyte(SLP, 1), sound(SLAP_SOUND),
+                 slap, asm.if_byte(IWIN, "==", 2, there), asm.setbyte(SLP, 1), sound(SLAP_SOUND),
+                 asm.setbyte(IWIN, 0), asm.goto_back(wait),
+                 there, asm.if_byte(IWIN, "==", 3, back), asm.setbyte(THR, 1), sound(MATERIA_SOUND),   # (user) "there"
                  asm.setbyte(IWIN, 0), back, up, asm.goto_back(wait), asm.ret()]}
     return icon, sqkey
 
