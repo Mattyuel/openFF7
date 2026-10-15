@@ -106,6 +106,34 @@ PAUSES = {
                "(She coughs softly, then beams.)\n“Okay! Ready again. Don't hold back, okay?”",
                "(She catches her breath.)\n“Wow... I almost saw the Planet. Keep going!”"],
 }
+# (user) "another 50% to stop because cloud [pushes] the inward thrust and tells her to hold it in, after a
+# 3 second pause she pulls away and gasps for air, clears throat, says continue": his line as he holds
+# (HOLD_CLOUD, random), then hers as she pulls away (HOLDS, in turn); 670 `_stop_ops(kind="hold")`
+HOLD_CLOUD = ["Hold it... right there. Don't move.",
+              "Stay down. Hold it in... that's it.",
+              "Easy... hold it. Breathe through it."]
+HOLDS = {
+    "ruby": ["(She pulls off, gasps, clears her throat.)\n“Ahem! ...Okay. Okay. Keep going.”",
+             "(She comes up for air, coughing.)\n“Ha... you jerk. ...Continue.”",
+             "(She gasps, clears her throat.)\n“Mm-hm. I'm good. Go on.”"],
+    "skye": ["(She pops off, gasps, clears her throat.)\n“Whoa! Okay... ahem! Continue!”",
+             "(She sucks in air, coughing.)\n“I held it! Did you see? Keep going!”",
+             "(She gasps, clears her throat.)\n“Hah... ahem. Again! Go!”"],
+    "elena": ["(She pulls off, gasps, clears her throat.)\n“Ahem! ...Turk training. Continue.”",
+              "(She gasps for air, coughing.)\n“I... held it. Proceed!”",
+              "(She clears her throat, flushed.)\n“That was... fine. Continue, please.”"],
+    "scarlet": ["(She pulls off, gasps, clears her throat.)\n“Ahem. Kyahaha! Continue, darling.”",
+                "(She gasps, coughs, then smirks.)\n“Is that all you've got? Continue.”",
+                "(She clears her throat, eyes narrowed.)\n“Hah... Don't stop now. Continue.”"],
+    "tifa": ["(She pulls off, gasps, clears her throat.)\n“Ahem! ...Whew. Okay, continue.”",
+             "(She comes up for air, coughing.)\n“Cloud! ...Ahem. I'm fine. Keep going.”",
+             "(She gasps, then clears her throat.)\n“Mm... okay. Continue.”"],
+    "aerith": ["(She pulls off, gasps, clears her throat.)\n“Ahem! Hehe... okay! Continue!”",
+               "(She comes up for air, coughing.)\n“Whew! You're mean. ...Continue?”",
+               "(She gasps, clears her throat, smiles.)\n“I'm okay! Keep going.”"],
+}
+HOLD_FRAMES = (75, 15)             # his line (held deep), then still deep: 90 frames = 3 s; then hers as PAUSE_FRAMES
+HOLD_CHANCE = 128                  # a second, separate 50% per position / group turn
 PAUSE_FRAMES = (0, 75, 15)         # before her line (user: shown the moment it happens); the line; after it
 PAUSE_CHANCE = 128                 # (user, since) a 50% chance per position (or group turn) of one pause, armed
                                    # at its start for a random frame in its middle half (670 `_pause_arm`; was a

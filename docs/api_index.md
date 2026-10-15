@@ -649,6 +649,7 @@ Honey Bee Girl recruitment.
 - `_standing(ctx)` (fieldanim, skeleton, bone index, BAJB root rotation, its world matrices) for
 - `_bisect(f, lo, hi)` x in [lo, hi] with f(x) = 0 (f changes sign between lo and hi, either way).
 - `_save_pose(ctx, fa, name, root, local)` 
+- `_stroke(t, n, resist=False)` A thrust's depth 0 -> 1 -> 0 over n frames, eased ((1 - cos) / 2); resist (user: "resistance
 - `_eased(t, n=None)` 0 -> 1 -> 0 over n (POSE_FRAMES) frames, slow at both ends (frame 0 = rest).
 - `_save_frames(ctx, fa, name, frames)` frames: [(root position as FK uses it (y down), local rotations)].
 - `_bed_depth(ctx)` 
@@ -664,11 +665,11 @@ Honey Bee Girl recruitment.
 - `_smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter, straight_forearm=0)` Every uparm / foarm part of `hrc` replaced by a `_smooth_arm` copy under new names
 - `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
-- `_cloud_buck(ctx)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK.
-- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0, still_upper=False)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
+- `_cloud_buck(ctx, name=CLOUD_BUCK, resist=False)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK. resist: `_stroke`'s resisted push.
+- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0, still_upper=False, resist=False)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
-- `_cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
+- `_cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0, knee_gap=THRUST_KNEE_GAP)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
 - `_on_back(ctx, name=LIE_ANIM_SCENE, arms=LIE_ARMS, head=LIE_HEAD, head_rock=LIE_HEAD_ROCK, hip_lift=0.0, head_down=False, head_nod=0, leg_raise=LEG_RAISE, leg_spread=LEG_SPREAD, turn_out=0, v_legs=None)` dzbt.a (LIE_ANIM_SCENE): on her back, knees up and apart, feet planted;
 - `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
 - `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
@@ -767,9 +768,12 @@ The movie minigame (user's design).
 - `_bare_skye(ctx)` 
 - `_skye_limbs(ctx, hrc)` 
 - `_skye_shape(ctx, hrc)` 
+- `_head_turned(ctx, a, hrc='cbfe.hrc', turn=HEAD_TURN)` (user: "add a head turn to the side for the girls for the parts where she has pulled away")
 - `_pause_arm(hb, length)` (user: "a 50% chance that a girl has to stop momentarily" in head / head reverse / 69) at a
 - `_pause_ops(hb, sec, actors, hush, lines, cond)` (user) A rare pause (`_movie_group.PAUSES`): ops for the director's tick. cond = ops jumping to
+- `_stop_ops(hb, sec, actors, hush, lines, cond, kind)` pause: she pulls back (slot 4) and says a PAUSES line. hold: Cloud holds deep (slot 5) and says
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
+- `hold_index(first, pn, deep=False)` The anim index of position pn's pause hold (pulled back; deep: the "hold it" one) in a model
 - `_gauge_pixels()` 
 - `_cursor_pixels()` 
 - `_sprites(ctx, half_gauge, half_cursor)` The gauge bar and the cursor as one-bone sprite models (the quest markers' way).

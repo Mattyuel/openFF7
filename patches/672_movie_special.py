@@ -14,10 +14,10 @@ minute each (`SPECIAL_MINUTE`):
            (`_movie_special.INSERT_FRAMES`: 4 / 3 / 2 / 0.5 s), stepped up evenly over the minute
            by the time, not the presses.
   head     on the floor in front of the bed: the one-girl shoot's head (her ZRTA, his ZCTQ).
-  finisher on the bed: Cloud on his back, still (ZCTW = ZCTD's first frame); she kneels astride
-           him facing his feet, leaning back 45 degrees with her arms straight down to the bed
-           behind her, thighs 45 down and 30 out, shins flat back along the bed; her hips lift by
-           pivoting her torso about her shoulders (hands and ankles stay put) (ZRFA).
+  finisher on the bed: Cloud on his back, thrusting (ZCTD); she astride him facing his feet,
+           leaning back 45 degrees with her arms straight down to the bed behind her, thighs level
+           and 30 out (a V), knees bent, feet planted on the bed; her hips ride his by pivoting her
+           torso about her shoulders (hands and feet stay put) (ZRFA).
 Her poses are built on Ruby's skeleton and retargeted (670 `_retarget`) to Elena / Scarlet / Tifa /
 Aerith; Skye shares Ruby's skeleton. Meter, presses, pay, finisher, pauses (head) as the one-girl
 shoot (670 `_shoot`); a special shoot doesn't raise the star rank."""
@@ -62,7 +62,8 @@ FOOT_X, FOOT_Z, LEAN, STROKE, DEPTH, HEAD_BACK = 5.5, 1.5, 55, 2.6, 1.8, 25   # 
 SEAT, LEAN_BACK, THIGH_DOWN, THIGH_OUT, LIFT, HEAD_TILT = 2.4, 45, 45, 30, 22, 20   # (SEAT 2.6 -> 2.4: room for
                                              # his thrust with her knees on the bed)
 RIDE_EXTRA = 0.0                             # (user, since: Cloud thrusts, ZCTD) she rides his hips; this much more at his top
-KNEE_ON_BED = 0.8                            # her knee joints this far above the bed, shins flat on it
+THIGH_UP = 45                                # (user, since) thighs raised this far (from THIGH_DOWN), feet on the bed
+FOOT_ON_BED = 0.0                            # her soles this far above the bed (y 0)
 RUBY_HRC, RUBY_STAND, CLOUD_HRC = "cbfe.hrc", "dxid.a", "aaaa.hrc"
 
 
@@ -276,16 +277,25 @@ def _girl_finisher(ctx):
         for b in ("_collar", "_uparm", "_foarm", "_hand"):
             if b != "_collar":
                 W[I(s + b)] = fa._mul(_mv()._align(fa, bdir(W[I(s + b)]), d), W[I(s + b)])
-    h, v = math.radians(THIGH_DOWN), math.radians(THIGH_OUT)
+    v, up_ = math.radians(THIGH_OUT), math.radians(THIGH_DOWN - THIGH_UP)
     F = fk(W, r0)
-    hdir, shin_w, foot_w, thigh_l = {}, {}, {}, {}
-    for s, out in (("l", 1), ("r", -1)):                 # thighs down into the V; (user) shins flat on the bed
-        hdir[s] = unit([out * math.sin(v), 0.0, -math.cos(v)])                    # the thigh's way along the bed
-        thigh_l[s] = math.dist(F[I(s + "_femur")][1], F[I(s + "_femur")][2])
-        shin_w[s] = fa._mul(_mv()._align(fa, bdir(W0[I(s + "_tibia")]), unit([out * 0.25, 0.0, 0.968])),
-                            W0[I(s + "_tibia")])
-        foot_w[s] = _pitch(fa, W0[I(s + "_foot")], [0, -0.1, 1])
-    knee_y = -KNEE_ON_BED                                                         # (user) knees and shins on the bed
+    S0_ = fk(W0, root0)
+    feet = {}
+    for s, out in (("l", 1), ("r", -1)):
+        # (user, since) "legs up, forward rotated 45 degrees and the knee bent to put the feet on the
+        # ground, with legs spread in a V": each thigh turned THIGH_UP up from THIGH_DOWN (45 below the
+        # horizontal -> level), THIGH_OUT out, the shin straight down from the knee to the bed, the foot
+        # flat on it; those ankles stay planted while she rides (two-bone IK, knees up and out)
+        hip_j = F[I(s + "_femur")][1]
+        Lt = math.dist(F[I(s + "_femur")][1], F[I(s + "_femur")][2])
+        Ls = math.dist(F[I(s + "_tibia")][1], F[I(s + "_tibia")][2])
+        d = [out * math.sin(v) * math.cos(up_), math.sin(up_), -math.cos(v) * math.cos(up_)]   # (y down)
+        knee = add(hip_j, mul(d, Lt))
+        ankle_y = S0_[I(s + "_tibia")][2][1] - S0_[I(s + "_foot")][2][1] - FOOT_ON_BED   # her stand ankle height
+        drop = ankle_y - knee[1]
+        assert 0 < drop < Ls, ("feet reach the bed", s, drop, Ls)
+        ahead = math.sqrt(Ls * Ls - drop * drop)
+        feet[s] = add(knee, [out * math.sin(v) * ahead, drop, -math.cos(v) * ahead])
     # (user) Cloud thrusts (ZCTD, his hips bucking up): she rides his hips, lifted RIDE_EXTRA more at his top,
     # her torso turning about her shoulders (hands planted), knees sliding on the bed (shins flat)
     cl = fa.Anim(ctx.char_file("zctd.a")).frames
@@ -306,18 +316,15 @@ def _girl_finisher(ctx):
         Wt = [fa._mul(R, m) if sk[i][0] in upper else m for i, m in enumerate(W)]
         r = add(pivot, fa._vec(R, sub(r0, pivot)))
         assert abs(r[1] - want) < 0.05, (t, r[1], want)
+        for s, out in (("l", 1), ("r", -1)):
+            F = fk(Wt, r)
+            Wt = _two_bone(fa, Wt, I, F, s + "_femur", s + "_tibia", feet[s],
+                           [out * math.sin(v), -1.0, -math.cos(v)])              # knees up, forward and out
+            Wt[I(s + "_foot")] = W0[I(s + "_foot")]                               # flat, as she stands
         F = fk(Wt, r)
         for s in "lr":
-            hip_j = F[I(s + "_femur")][1]
-            dy = knee_y - hip_j[1]
-            assert 0 < dy < thigh_l[s], (t, s, dy)
-            k = add(hip_j, add(mul(hdir[s], math.sqrt(thigh_l[s] ** 2 - dy ** 2)), [0.0, dy, 0.0]))
-            Wt[I(s + "_femur")] = fa._mul(_mv()._align(fa, bdir(Wt[I(s + "_femur")]), sub(k, hip_j)), Wt[I(s + "_femur")])
-            Wt[I(s + "_tibia")], Wt[I(s + "_foot")] = shin_w[s], foot_w[s]
-        F = fk(Wt, r)
-        for s in "lr":
-            assert abs(F[I(s + "_tibia")][1][1] - knee_y) < 0.05 and abs(F[I(s + "_tibia")][2][1] - knee_y) < 0.3, \
-                ("shins flat", t, s)
+            assert math.dist(F[I(s + "_tibia")][2], feet[s]) < 0.05, ("feet planted", t, s)
+            assert abs(F[I(s + "_foot")][2][1] + FOOT_ON_BED) < 0.05, ("toes on the bed", t, s)
             assert math.dist(F[I(s + "_hand")][2], fk(W, r0)[I(s + "_hand")][2]) < 0.4, "hands planted"
         frames.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, Wt)))
     base.frames = frames
@@ -351,11 +358,14 @@ def poses(ctx):
                 name = "Z%s%s%d" % (who, letter, s)
                 ctx.char_file(name.lower() + ".a", a.build())
                 out.append(name + ".tor")
-    for who, src, out in (("M", "zrta.a", girl), ("N", "zctq.a", cloud)):         # the head's pause hold
-        a = fa.Anim(ctx.char_file(src))
-        a.frames = a.frames[:1]
-        ctx.char_file("z%sq9.a" % who.lower(), a.build())
-        out.append("Z%sQ9.tor" % who)
+    for digit, frame in (("9", 0), ("8", 7)):     # the head's pause hold (her head turned aside), then the deep one
+        for who, src, out in (("M", "zrta.a", girl), ("N", "zctq.a", cloud)):
+            a = fa.Anim(ctx.char_file(src))
+            a.frames = a.frames[frame:frame + 1]
+            if who == "M" and digit == "9":
+                a = mv._head_turned(ctx, a, RUBY_HRC)
+            ctx.char_file("z%sq%s.a" % (who.lower(), digit), a.build())
+            out.append("Z%sQ%s.tor" % (who, digit))
     return girl, cloud
 
 
@@ -522,11 +532,11 @@ def _special(ctx, key, back):
         def make(p, pl):
             return [xyzi(*pl[who]), d_(pl[wdir]), hb._visi(1)] + mv._chain(STEP, [anim(first + 4 * p + s_) for s_ in range(4)])
         return by_p(make) + [asm.ret()]
-    hold = lambda first: mv._chain(P, [[], anim(first + 4 * len(POSITIONS)), []]) + [asm.ret()]   # (head's pause)
+    hold = lambda first, deep=False: mv._chain(P, [[], anim(first + 4 * len(POSITIONS) + deep), []]) + [asm.ret()]   # (head's pause)
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst)}
+                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, True)}
     scripts[ents["girl"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                             2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst)}
+                             2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst), 5: hold(gfirst, True)}
     scripts[ents["girlc"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: [hb._visi(0), asm.ret()],
                               3: [xyzi(*ispot["girl"]), d_(to("girl", "cloud")), hb._visi(1)] +

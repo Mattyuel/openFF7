@@ -1280,6 +1280,25 @@ def _save_pose(ctx, fa, name, root, local):
     ctx.char_file(name.split(".")[0].lower() + ".a", out.build())
 
 
+def _stroke(t, n, resist=False):
+    """A thrust's depth 0 -> 1 -> 0 over n frames, eased ((1 - cos) / 2); resist (user: "resistance
+    to the forward thrust with sudden deceleration half through the forward push then smoothly
+    out"): the push speeds up to RESIST_AT of the depth by its halfway point, then suddenly slows,
+    creeping on to full depth, and eases back out over the second half."""
+    import math
+    if not resist:
+        return (1 - math.cos(2 * math.pi * t / n)) / 2
+    u = 2 * t / n
+    if u < 0.5:
+        return RESIST_AT * (1 - math.cos(math.pi * u))       # accelerating into it (full speed at 0.5)
+    if u < 1:
+        return RESIST_AT + (1 - RESIST_AT) * math.sin(math.pi * (u - 0.5))   # the sudden slow-down
+    return (1 + math.cos(math.pi * (u - 1))) / 2
+
+
+RESIST_AT = 0.7
+
+
 def _eased(t, n=None):
     """0 -> 1 -> 0 over n (POSE_FRAMES) frames, slow at both ends (frame 0 = rest)."""
     import math
@@ -1496,7 +1515,8 @@ def _bare_cloud_seat(ctx, hrc):
 # (ACFE frame 0, y down, facing -z): MEMBER_LEN forward from the pelvis's front-bottom
 # middle (sunk MEMBER_SINK into it), MEMBER_W wide and tall, MEMBER_UP above the pelvis's
 # lowest point; corners taken into the hip bone's own frame.
-MEMBER_LEN, MEMBER_W, MEMBER_UP, MEMBER_SINK = 3.3, 0.975, 0.45, 0.4   # (user, since) 50% bigger (was 2.2, 0.65)
+MEMBER_LEN, MEMBER_W, MEMBER_UP, MEMBER_SINK = 2.31, 0.975, 0.45, 0.4  # (user, since) 50% bigger (was 2.2, 0.65);
+                                                                       # then 30% shorter, same girth (was 3.3)
 
 
 def _bare_cloud_member(ctx, hrc):
@@ -1692,6 +1712,22 @@ def _smooth_arm(old, n=6, cylinder=None):
         V += [V0[i] for i in c]
         C += [C0[i] for i in c]
         tris += [tuple(at[i] for i in t) for t in P if t[0] in at]
+    # (user: "open geometry at the top of his hand") a kept piece's open rim (Cloud's bracer is an
+    # open-topped box whose top the old, boxier forearm hid) closed with a fan to its middle
+    edges = {}
+    for t in tris:
+        for a_, b_ in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+            edges.setdefault(tuple(sorted((a_, b_))), []).append((a_, b_))
+    rim = {e[0][0]: e[0][1] for e in edges.values() if len(e) == 1}
+    while rim:
+        loop = [next(iter(rim))]
+        while rim.get(loop[-1]) is not None and rim[loop[-1]] != loop[0]:
+            loop.append(rim.pop(loop[-1]))
+        rim.pop(loop[-1], None)
+        assert len(loop) >= 3, loop
+        V.append([sum(V[i][k] for i in loop) / len(loop) for k in range(3)])
+        C.append(C[loop[0]])
+        tris += [(loop[(k + 1) % len(loop)], loop[k], len(V) - 1) for k in range(len(loop))]
     budget = 2 * npoly - len(tris)
     rings = (budget - n - (n - 2)) // (2 * n) + 1        # n-tri top fan + (n-2)-tri bottom cap
     TP = [t for t in P if t[0] in set(tube)]
@@ -1865,8 +1901,8 @@ def _dim(ctx, field):
     f.set_section("models", loader.build())
 
 
-def _cloud_buck(ctx):
-    """zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK."""
+def _cloud_buck(ctx, name=CLOUD_BUCK, resist=False):
+    """zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK. resist: `_stroke`'s resisted push."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -1916,7 +1952,7 @@ def _cloud_buck(ctx):
     W0, S0, E0 = [m for m, _, _ in rest], [s for _, s, _ in rest], [e for _, _, e in rest]
     frames = []
     for f in range(BUCK_FRAMES):
-        h = BUCK_RISE * (1 - math.cos(2 * math.pi * f / BUCK_FRAMES)) / 2
+        h = BUCK_RISE * _stroke(f, BUCK_FRAMES, resist)
         rt = [root[0], root[1] - h, root[2]]
         Wt = list(W0)
         for n in ("chest", "l_chest", "r_chest", "l_femur", "r_femur"):   # shoulders and knees stay
@@ -1929,12 +1965,12 @@ def _cloud_buck(ctx):
             assert math.dist(top[I("head")][2], E0[I("head")]) < 0.8, "shoulders moved"
         frames.append((rr, [rt[0], -rt[1], rt[2]], local))
     base.frames = frames
-    ctx.char_file(CLOUD_BUCK.split(".")[0].lower() + ".a", base.build())
+    ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
                  lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None,
-                 elbows_out=1.0, legs_out=0, still_upper=False):
+                 elbows_out=1.0, legs_out=0, still_upper=False, resist=False):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
     the left thigh raised to `hip` degrees forward of vertical and turned `out` degrees
     outward, the shin straight down, the foot level; it stays planted while the hips
@@ -2089,7 +2125,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             grips[s] = ([tip[k] - Lh * hd[k] for k in range(3)], hd, tip)
     frames = []
     for t in range(nframes):
-        e = (1 - math.cos(2 * math.pi * t / nframes)) / 2
+        e = _stroke(t, nframes, resist)                                       # (resist: `_stroke`)
         d = thrust * e
         rt = [root[k] + fwd[k] * d for k in range(3)]                          # hips forward
         Wt = list(W)
@@ -2260,7 +2296,7 @@ def _cloud_pound(ctx):
     ctx.char_file(CLOUD_POUND.split(".")[0].lower() + ".a", base.build())
 
 
-def _cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0):
+def _cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0, knee_gap=THRUST_KNEE_GAP):
     """zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
     pivot: instead of the hips rising, the thighs swing `pivot` degrees about the line through
     both knees, so knees, shins and feet don't move at all and the pelvis thrusts forward and
@@ -2297,7 +2333,7 @@ def _cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0):
     for side in ("l", "r"):
         fe, ti, fo = I(side + "_femur"), I(side + "_tibia"), I(side + "_foot")
         s0 = S[fe]
-        want = THRUST_KNEE_GAP if dot(sub(E[fe], mid), lat) > 0 else -THRUST_KNEE_GAP
+        want = knee_gap if dot(sub(E[fe], mid), lat) > 0 else -knee_gap
         knee = lambda R: add(s0, fa._vec(R, sub(E[fe], s0)))
         side_axis = unit(cross(bdir(W[fe]), up))
         pitch = min((x / 4 for x in range(-160, 161)),                # level the knee
@@ -2773,7 +2809,11 @@ def apply(ctx):
     _cloud_stand(ctx, CLOUD_BED["standlow"], arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, step=HEAD_STEP,
                  thrust=STAND_THRUST * HEAD_THRUST, low=HEAD_LOW, lean=HEAD_LEAN, elbows_out=HEAD_ELBOWS_OUT, legs_out=HEAD_LEGS_OUT,
                  hold=("badd.hrc", "dzbk.a", HEAD_HOLD_GAP,
-                                                                     HEAD_RIGHT / 3.41), still_upper=HEAD_STILL_UPPER)   # head (user): ZCTQ, also the movie's
+                                                                     HEAD_RIGHT / 3.41), still_upper=HEAD_STILL_UPPER,
+                 resist=True)   # head (user): ZCTQ, also the movie's; (user, since) the resisted push
+    # (user) the movie's head reverse and 69: ZCTE / ZCTD with the resisted push (`_stroke`)
+    _cloud_stand(ctx, "ZCTX.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, still_upper=True, resist=True)
+    _cloud_buck(ctx, "ZCTY.tor", resist=True)
     for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)
         _cloud_stand(ctx, name, arms=AERITH_CLOUD_ARMS, arms_out=AERITH_CLOUD_IN, elbow_in=AERITH_CLOUD_ELBOW, nframes=n)
     _cloud_stand(ctx, CLOUD_EDGE, EDGE_CLOUD_ARMS, (EDGE_CLOUD_HIP, EDGE_CLOUD_OUT),

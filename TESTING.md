@@ -426,12 +426,22 @@ Existing saves load, but they keep their own story progress; use a new game.
   check sides, shocked, spin...); Skye starts lying on the floor and gets up; a short pause between
   lines. The cameraman stands still in this part (no animation) and films from the first position.
   Check: the girls' gestures (Elena / Scarlet / Tifa / Aerith get the Honey Bee dancer's gestures copied
-  onto their skeletons: watch for odd hands or hair), walks ending in place, nobody overlapping.
+  onto their skeletons: watch for odd hands or hair), nobody overlapping (since: no walks, see below).
 - **Special scenes, mission, pauses** (new; untested in-game, user): the special insert lines now go
   "there" in the role-play, with a little pain at first; insert: Cloud lower and leaning further forward;
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Hold it, no walks, group fix, poses** (new; untested in-game, user): head / head reverse / 69 (and each
+  group turn, and the special head) now have a second, separate 50% chance of a "hold it" stop: Cloud
+  pushes in deep and holds, says his line, ~3 s later she pulls away, gasps, clears her throat and says to
+  continue. When she has pulled away (both stops) her head is turned to the side. The group shoot no longer
+  gets stuck on the last girl of part one (the pause rolls overwrote its turn counter). Special intros:
+  nobody walks any more; they start a step apart and only turn and gesture. Finisher (special): her legs
+  up, knees bent, feet planted on the bed, spread in a V. Cloud: shorter member (30%, same girth), no hole
+  at the top of the hand (the bracer's open top is closed), head / head reverse / 69 thrusts push in fast,
+  slow suddenly halfway, then ease out; mission: more pelvic thrust, a bit to the right, legs apart; prone:
+  higher off the bed.
 - **Instant pose changes** (new; untested in-game, user): every movie shoot (one girl, group, special)
   ends the current animation (ANIMB) before starting the next pose. In the group shoot the engaged girl
   should switch together with Cloud, and in part two the girls should be lying in place by the fade-in.
