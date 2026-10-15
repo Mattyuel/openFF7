@@ -748,6 +748,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_scarlet_bare(ctx)` 
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
 - `_bare_elena(ctx)` 
+- `tiles_back(f)` The capsule's near background tiles (benches, rails: draw depth < 4093) pushed back just in
 - `_find_near(mesh, x, y, what)` The triangle under (x, y), else the nearest one within NEAR_FLOOR (its plane gives the height).
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_elena_fours(ctx)` ZDEF (Elena on all fours) and ZCTP (Cloud on one knee beside her, spanking); see SPANK_*, KNEEL_*.

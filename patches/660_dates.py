@@ -540,18 +540,7 @@ def _field(ctx, place, group, names):
         assert moved, place
     _blank(sec, scripts)
     if place in TILES_BACK:
-        from ff7.background import Background
-        bg = Background(f.section("background"))
-        tiles = list(bg.tiles())
-        far = next(t for t in tiles if t._get("<H", 24) == 4094)._get("<I", 38)
-        moved = 0
-        for t in tiles:
-            if t._get("<H", 24) < 4093:
-                t._set("<H", 24, 4093)
-                t._set("<I", 38, far - 1)
-                moved += 1
-        assert moved == 47, moved
-        f.set_section("background", bg.build())
+        tiles_back(f)
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()
     if not mesh.contains(cs[3], cs[0], cs[1]):       # (a lounger off the sand) arrive on its nearest floor
@@ -981,6 +970,23 @@ def _bare_elena(ctx):
 # the hit at the middle frame; SEATED_FRAMES = 0.5 s
 SEATED_FRAMES = 15
 SWING_OUT, SWING_RAISE, SWING_IN = 60, 20, 3   # (user) straight arm: out this far, raised, in over 3 frames
+
+
+def tiles_back(f):
+    """The capsule's near background tiles (benches, rails: draw depth < 4093) pushed back just in
+    front of the base layer: they drew over the characters (user; 660's capsule, 673's set)."""
+    from ff7.background import Background
+    bg = Background(f.section("background"))
+    tiles = list(bg.tiles())
+    far = next(t for t in tiles if t._get("<H", 24) == 4094)._get("<I", 38)
+    moved = 0
+    for t in tiles:
+        if t._get("<H", 24) < 4093:
+            t._set("<H", 24, 4093)
+            t._set("<I", 38, far - 1)
+            moved += 1
+    assert moved == 47, moved
+    f.set_section("background", bg.build())
 
 
 def _find_near(mesh, x, y, what):

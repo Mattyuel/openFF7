@@ -112,6 +112,9 @@ def _poses(ctx):
         out["girl"].append("ZM%s7.tor" % letter)
     out["girl"] += ["ZMV0.tor", "ZMV1.tor"]
     out["cloud"] += [mv._lesson_anim(ctx, "ZNSA", "ZNSL"), "ZNJL.tor"]   # (user) his lessons (670's head one)
+    # (user, since) Cid swings in Rocketman, and in Twin Jets whoever she faces: Cid's own lessons
+    out["cid"] += [mv._lesson_anim(ctx, "ZGSA", "ZGSL", hrc=_bare_cid.HRC.lower()),
+                   mv._lesson_anim(ctx, "ZGTA", "ZGTL", hrc=_bare_cid.HRC.lower())]
     return out, lay
 
 
@@ -120,13 +123,14 @@ SPEED = lambda p, s: 4 * p + s
 STOP = lambda p, kind: 12 + 2 * kind + p          # kind 0 pulled back, 1 deepest; p 0 / 1
 TRY = lambda p: 16 + p
 TURN = lambda k: 18 + k
-LESSON = lambda p: 12 + 4 + p                   # Cloud's: after his speeds and stops (S, T)
+LESSON = lambda p: 12 + 4 + p                   # Cloud's / Cid's: after their speeds and stops (S, T)
 
 
 def _blast(ctx, built, back):
     mv, hb, sp, dt = _mods()
     anims, lay = built
     f = ctx.field(BD.SET)
+    dt.tiles_back(f)                                              # (user: the benches drew over Twin Jets)
     sec = Script.parse(f.sections[0])
     names = [bytes(n).rstrip(b"\0").decode("latin-1") for n in sec.entity_names]
     dt._clear_texts(sec)
@@ -287,12 +291,20 @@ def _blast(ctx, built, back):
         return by_p(make) + [asm.ret()]
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: man(cfirst, "cloud", "cdir", 0), 4: man_stop(cfirst, 0, 0), 5: man_stop(cfirst, 1, 0),
-                               7: by_p(lambda p, pl: mv.lesson_slot(cfirst + LESSON(p), cfirst + STOP(p, 0)) if p < 2 else [])
+                               7: by_p(lambda p, pl: mv.lesson_slot(cfirst + LESSON(p), cfirst + STOP(p, 0)) if p == 1 else [])
                                + [asm.ret()],
                                3: [xyzi(*on_floor(*INTRO["cloud"][:2])), d_(INTRO["cloud"][2]), hb._visi(1)] + anim(0) + [asm.ret()]}
+    cid_turn, lesson_end = asm.nop(), asm.nop()
     scripts[ents["cidb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                              2: man(kfirst, "cid", "ciddir", 1), 4: man_stop(kfirst, 0, 1), 5: man_stop(kfirst, 1, 1),
                              6: [asm.ret()],
+                             # (user) the lesson's swing (sqkey REQs this): Cid's in Rocketman; in Twin Jets
+                             # the man she faces (SIDE 0 Cloud: his slot 7)
+                             7: by_p(lambda p, pl: mv.lesson_slot(kfirst + LESSON(0), kfirst + STOP(0, 0)) if p == 0 else
+                                     [asm.if_byte(SIDE, "==", 1, cid_turn), hb._req(ents["cloudb"], 7, wait=False),
+                                      asm.goto(lesson_end), cid_turn]
+                                     + mv.lesson_slot(kfirst + LESSON(1), kfirst + STOP(1, 0)) if p == 1 else [])
+                             + [lesson_end, asm.ret()],
                              3: [xyzi(*on_floor(*INTRO["cid"][:2])), d_(INTRO["cid"][2]), hb._visi(1)] + anim(0) + [asm.ret()]}
     # the girls: each acts only if she is G
     for k, key in enumerate(BD.ORDER):
@@ -317,7 +329,7 @@ def _blast(ctx, built, back):
                       2: g_(by_p(place)), 4: g_(stops(0)), 5: g_(stops(1)), 6: g_([hb._w(mv.hold_try_delay())] + tries()),
                       8: g_(turn),
                       3: g_([xyzi(*on_floor(*INTRO["girl"][:2])), d_(INTRO["girl"][2]), hb._visi(1)] + anim(0))}
-    scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 6, sprite_dir, cloud=ents["cloudb"], place=
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 6, sprite_dir, cloud=ents["cidb"], place=
                                                                       by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + anim(idle_cam) + [asm.ret(), asm.ret()],
                                2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1)] + anim(film)

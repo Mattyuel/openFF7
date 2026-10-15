@@ -489,7 +489,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   "No funny stuff"). Check it can't be interrupted and the shoot carries on after.
 - **Prompt sounds** (new, untested): a refused hold / "there" / lesson plays the greyed-PHS buzz (assumed sound id 3:
   tell me if it's a different sound), a successful one the materia sound.
-- - **Rocketman** (new): her torso 10 degrees more upright, Cid raised (floats ~4 units) and turned a little towards
+- - **Blast-off lesson / Twin Jets** (new): the benches no longer draw over the three in Twin Jets (they now draw
+  behind everyone in the set). Lesson swing: Cid swings in Rocketman; in Twin Jets whoever she is facing swings.
+- **Rocketman** (new): her torso 10 degrees more upright, Cid raised (floats ~4 units) and turned a little towards
   the camera, Cloud thrusts only his hips. The cameraman stands still through the Blast-off intro.
 **Members** (new): Cloud's and Cid's are smooth rounded tubes now; Cid's 30% shorter. Check Cid's still reaches
   in Rocketman / Twin Jets / Exhaust.
