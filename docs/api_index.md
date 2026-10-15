@@ -904,6 +904,10 @@ Quest marker models: battle-effect sprites shown in the field.
 (user) The movie minigame's "group" shoot, unlocked by a wrap with Aerith (star rank 6): Ruby,
 
 
+## `patches/_movie_profiles.py`
+(user) Personality profiles of the movie minigame's six co-stars: the reference for every line
+
+
 ## `patches/_movie_special.py`
 (user) The movie minigame's "Special" scenes (672_movie_special), data only: unlocked by a full
 
