@@ -874,7 +874,7 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_scaled(d, sxy, sz, skin, sole=None)` A copy of .p bytes d: vertices (x, y) x sxy, z (along the bone) x sz, normals kept;
 - `_bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail)` A rounded bar along a bone (local -z): rings of radius r at z0 and z1, pointed to tip0 /
 - `face_skin(ctx, hrc)` Her face's skin colour (B, G, R): the head part's most common skin-like vertex colour
-- `apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0)` See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
+- `apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0, head_drop=0.0)` See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
 - `_bust_tips(ctx)` The standard torso's tip vertex indices (left, right) (see NIPPLE_*).
 - `_chest_p(ctx, hrc)` 
 - `nipples(ctx, hrc, tag, tips=None)` `hrc` (an undressed girl's .hrc text, the standard torso on her chest bone) with a pink

@@ -164,14 +164,18 @@ def face_skin(ctx, hrc):
     return max(set(skinlike), key=skinlike.count)
 
 
-def apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0):
+def apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0, head_drop=0.0):
     """See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
     colours (Scarlet's stockings). Her torso bones (pelvis, chest, both shoulder and collar
     bones, the hip joints) are set to the standard's x her figure (user: Tifa's long pelvis
     bone stretched the pelvis and her neck floated; Elena's long chest bone lifted the torso's
     shoulders above her arms); her arm and leg bones stay hers. Figure = her limbs (thigh,
     shin, upper arm, forearm) / the standard's. bust: her bust's size (each torso vertex's bust
-    offset, `ctx.bust_delta` from 670, x bust; user: Tifa / Scarlet 1.5, Aerith 0.5)."""
+    offset, `ctx.bust_delta` from 670, x bust; user: Tifa / Scarlet 1.5, Aerith 0.5).
+    head_drop: her head part moved this far down its bone onto the torso, and no neck bar (user:
+    Tifa's head sat too high on a thin neck with an extra mesh at its base: her own torso ran up
+    into her neck, her head joint 0.5 below her shoulder line; on the standard torso it is 0.27
+    above it)."""
     assert len(tag) == 1 and tag.isalpha(), tag
     std = bones(ctx.char_file(STANDARD.lower()).decode("latin-1"))
     her = bones(hrc)
@@ -234,6 +238,20 @@ def apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0):
                                                  skin_c, tmpl_p[64:128], struct.unpack_from("<12H", tmpl_p, op)[10:12]))
         i = at(b)
         lines[i + 3] = lines[i + 3].replace(lines[i + 3].strip(), "1 %s" % new_r)
+    if head_drop:                                          # (user) her head lowered onto the torso
+        assert len(her["head"][1]) == 1, her["head"][1]
+        hr = ctx.char_file(her["head"][1][0].lower() + ".rsd").decode("latin-1")
+        hp = hr.split("PLY=")[1][:4]
+        d = bytearray(ctx.char_file(hp.lower() + ".p"))
+        for k in range(struct.unpack_from("<16I", d, 0)[3]):
+            x, y, z = struct.unpack_from("<3f", d, 128 + 12 * k)
+            struct.pack_into("<3f", d, 128 + 12 * k, x, y, z + head_drop)
+        new_r, new_p = new_names()
+        ctx.char_file(new_r.lower() + ".rsd", hr.replace("PLY=%s." % hp, "PLY=%s." % new_p).encode("latin-1"))
+        ctx.char_file(new_p.lower() + ".p", bytes(d))
+        i = at("head")
+        lines[i + 3] = lines[i + 3].replace(her["head"][1][0], new_r)
+        return "".join(lines)
     # the neck: a second part on the chest bone
     new_r, new_p = new_names()
     ctx.char_file(new_r.lower() + ".rsd", tmpl_r.replace("PLY=%s." % tmpl_r.split("PLY=")[1][:4], "PLY=%s." % new_p).encode("latin-1"))
