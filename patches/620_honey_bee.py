@@ -2038,7 +2038,7 @@ def _cloud_buck(ctx, name=CLOUD_BUCK, resist=False):
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
                  lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None,
-                 elbows_out=1.0, legs_out=0, still_upper=False, resist=False):
+                 elbows_out=1.0, legs_out=0, still_upper=False, resist=False, spread=0):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
     the left thigh raised to `hip` degrees forward of vertical and turned `out` degrees
     outward, the shin straight down, the foot level; it stays planted while the hips
@@ -2051,7 +2051,9 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     his right, facing him; elbows_out: how far out the elbows point, against down / back), or "still" (the hands stay where frame 0 has them: edge, user), held
     there by two-bone IK on each arm every frame (head, user). still_upper: only the pelvis
     thrusts; the chest and everything above it turn back about the pelvis's top each frame so the
-    neck keeps frame 0's forward position (the upper body still; head, user)."""
+    neck keeps frame 0's forward position (the upper body still; head, user). spread: each leg
+    swung that many degrees out sideways at the hip (feet kept flat), a wide stance (670's group
+    "end": his feet either side of her shoulders, user)."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -2122,6 +2124,14 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
                      if out * end(fk(rot(W, leg, fa.axis_angle(up, a))), s + "_femur")[0] > out * kx + 0.1)
             W = rot(W, leg, fa.axis_angle(up, a))
             flat[s] = fa._mul(fa.axis_angle(up, a), flat[s])                 # (the flat foot turned out too)
+    if spread:                                       # (user) a wide stance: each leg swung out sideways at the hip
+        for s, out in (("l", 1), ("r", -1)):
+            leg = (s + "_femur", s + "_tibia", s + "_foot")
+            ax = end(fk(W), s + "_tibia")[0]
+            a = next(a for a in (spread, -spread)
+                     if out * end(fk(rot(W, leg, fa.axis_angle(fwd, a))), s + "_tibia")[0] > out * ax + 0.1)
+            W = rot(W, leg, fa.axis_angle(fwd, a))
+            W[I(s + "_foot")] = flat[s]                                       # (the foot flat again)
     if lift:                                         # left leg up: thigh from knee / 2 to lift[0] forward,
         hip_a, out_a = lift                          # turned lift[1] out; shin down, foot level
         h_, o_ = math.radians(hip_a), math.radians(out_a)        # thigh: hip_a forward of straight down,

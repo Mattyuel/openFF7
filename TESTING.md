@@ -432,6 +432,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Group part three "end"** (new; work in progress, untested in-game, user): after head reverse, six more turns:
+  she lies on her back on the bed (knees flapping, head tilted forward and bobbing), Cloud over her shoulders
+  facing the bed's end, holding her head. Hold / pause / slap prompts work there too.
 - **Insert rocking** (new; untested in-game, user): in the special scenes' insert the girl's pelvis now rocks
   gently with Cloud's strokes (her waist dips back to meet him), at every stroke speed.
 - **Slap prompts, hold timing** (new; untested in-game, user): the Square icon now stays 1 s. When a girl's

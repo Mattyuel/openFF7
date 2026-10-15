@@ -742,7 +742,71 @@ def _speeds(ctx):
         name = "ZM" + chr(ord("A") + p) + "7"
         _try_anim(ctx, POSITIONS[p]["girl"][0], name)
         girl.append(name + ".tor")
+    # (user) the group's third part, "end" (ZREN / ZCTZ, `_end_poses`): its speeds, then its stop poses
+    # (pulled back 9, deepest 8; hers: the try 7), last of all: `end_index`
+    for who, base, out in (("girl", "ZREN", girl), ("cloud", "ZCTZ", cloud)):
+        frames = fa.Anim(ctx.char_file(base.lower() + ".a")).frames
+        assert len(frames) == 15, (base, len(frames))
+        pre = ("ZM" if who == "girl" else "ZN") + END_LETTER
+        for s, n in enumerate(SPEEDS):
+            a = fa.Anim(ctx.char_file(base.lower() + ".a"))
+            a.frames = [frames[i * len(frames) // n] for i in range(n)]
+            ctx.char_file((pre + str(s)).lower() + ".a", a.build())
+            out.append(pre + str(s) + ".tor")
+        for digit, frame in (("9", 0), ("8", 7)):
+            a = fa.Anim(ctx.char_file(base.lower() + ".a"))
+            a.frames = frames[frame:frame + 1]
+            ctx.char_file((pre + digit).lower() + ".a", a.build())
+            out.append(pre + digit + ".tor")
+        if who == "girl":
+            _try_anim(ctx, base, pre + "7")
+            out.append(pre + "7.tor")
     return girl, cloud
+
+
+END_LETTER = "O"                                    # (ZM/ZN A..J the positions, K..N the group's still poses)
+
+
+def end_index(cloud, k):
+    """Offset (from a model's first `_speeds` anim) of the group's "end" anim k: 0-3 the speeds,
+    4 pulled back, 5 deepest, 6 (hers only) the try."""
+    return 4 * len(POSITIONS) + (2 if cloud else 3) * len(PAUSE_POS) + k
+
+
+# (user) the group's third part, "end": she lies on her back as in mission's "flap" (knees falling
+# open and closed), arms straight out to her sides (`END_ARMS`), head tilted `END_HEAD` forward and
+# bobbing `END_BOB` with each stroke; Cloud stands on the bed over her shoulders facing the other way
+# from head reverse (towards her head's end), crouched to `END_LOW` of his pelvis height, legs swung
+# `END_SPREAD` out (his feet either side of her chest, inside her arms), his pelvis `END_AHEAD` behind
+# her head's middle, both hands on her head (the head position's hold), the resisted thrust
+END_HEAD, END_BOB, END_ARMS, END_SHIFT = 50, 15, 90, 4
+END_AHEAD, END_LOW, END_SPREAD = 3.0, 0.45, 30
+END_IN = 17                                         # her XYZI this much further into the bed than head reverse's
+
+
+def _end_poses(ctx):
+    """ZREN (Ruby) and ZCTZ (bare Cloud) for the group's "end"; returns (gap, right): her origin in
+    his frame for `_cloud_stand(hold=)` (her head's middle END_AHEAD ahead of his pelvis)."""
+    from ff7 import fieldanim as fa
+    hb = _hb()
+    hb._on_back(ctx, "ZREN.tor", END_ARMS, head=END_HEAD, head_rock=END_BOB)
+    a = fa.Anim(ctx.char_file("zren.a"))
+    n = len(a.frames)
+    assert n == 15, n
+    a.frames = [a.frames[(i + END_SHIFT) % n] for i in range(n)]   # (her head furthest forward at frame 7: his deepest)
+    ctx.char_file("zren.a", a.build())
+    J = _joints(ctx, RUBY_HRC, "zren.a")
+    hc = [(J["chest"][k] + J["head"][k]) / 2 for k in range(3)]            # (the head bone starts at the chest's end)
+    gap, right = END_AHEAD - hc[2], -hc[0]
+    hb._cloud_stand(ctx, "ZCTZ.tor", arms=hb.STAND_ARMS_LR, elbow_in=hb.STAND_ELBOW_IN, low=END_LOW, lean=hb.HEAD_LEAN,
+                    elbows_out=hb.HEAD_ELBOWS_OUT, spread=END_SPREAD, hold=(RUBY_HRC, "zren.a", gap, right),
+                    still_upper=True, resist=True)
+    C = _joints(ctx, hb.CLOUD_BARE_HRC.lower(), "zctz.a")
+    for s in "lr":                                   # his feet outside her chest, inside her arms
+        f = C[s + "_tibia"]
+        her = [-f[0] - right, f[1], -f[2] - gap]     # (his point in her frame)
+        assert abs(her[0]) > 3.5, ("his feet clear of her chest", s, her)
+    return gap, right
 
 
 def hold_try_delay():
@@ -1351,6 +1415,7 @@ def _shoot(ctx, back, cast=None):
         hb._on_back(ctx, "ZRHN.tor", hb.HEADREV_ARMS, hip_lift=hb.HEADREV_LIFT, head_down=True,
                     head_nod=HEADREV_NOD)                        # (user) head reverse: her head rocking
         dt._koala(ctx, "ZRKA.tor", RUBY_HRC, RUBY_STAND)         # (user) "holding": Tifa's koala hug on her
+        _BUILT["end"] = _end_poses(ctx)                          # (user) the group's "end"
         _BUILT["anims"] = _speeds(ctx)
         _still_poses(ctx)                                        # (the group shoot's waiting girls)
     f = ctx.new_field(cast["field"] if cast else FIELD, ctx.field(BASE).build())
@@ -1929,16 +1994,28 @@ def _group(ctx, back):
         cloud_at[6 + k] = _spot_or(mesh, gx, gy - GR.HEADREV_CLOUD - back_, top - GR.BEDS[0][2])   # (raised as the bed)
         gdirs[6 + k] = cdirs[6 + k] = 0x80
         cam_at[6 + k] = _spot(mesh, *GROUP_CAM[1 + b])
-    for q in range(2 * n_g):
+        # (user) part three, "end": she lies further onto the bed (head on it), Cloud on the bed over her
+        # shoulders facing the bed's end (DIR 0x00), placed from both poses (`_end_poses`: her origin in
+        # his frame); asserted on the bed piece
+        gap, right = _BUILT["end"]
+        g = _spot(mesh, gx, gy + END_IN, 0, True)
+        assert abs(g[2] - top) < 2, ("end: not on bed", b, g)
+        o = _off((-right, 0.0, -gap), 0x00)
+        c = _spot(mesh, round(g[0] - o[0]), round(g[1] - o[1]), 0, True)
+        assert abs(c[2] - top) < 2, ("end: Cloud not on the bed", b, c)
+        girl_at[2 * n_g + k], cloud_at[2 * n_g + k] = g, c
+        gdirs[2 * n_g + k], cdirs[2 * n_g + k] = 0x80, 0x00
+        cam_at[2 * n_g + k] = _spot(mesh, *GROUP_CAM[1 + b])
+    for q in range(GR.PHASES * n_g):
         cam_at[q] = cam_at[q] + (_dates()._dir_to(cloud_at[q][0] - cam_at[q][0], cloud_at[q][1] - cam_at[q][1]),)
-    focus = {q: (cloud_at[q][0], cloud_at[q][1], cloud_at[q][2], cloud_at[q][3]) for q in range(2 * n_g)}
+    focus = {q: (cloud_at[q][0], cloud_at[q][1], cloud_at[q][2], cloud_at[q][3]) for q in range(GR.PHASES * n_g)}
     # gauge / cursor per q (as `_shoot`)
     left, top_, right, bottom = screen_range(f.section("triggers"))
     near = min(_view_depth(cam, v) for t in mesh.tris for v in t) * 0.8
     donor_loader = ModelLoader(ctx.field(mm.DONOR_FIELD).section("models"))
     sprite_scale = round(ModelLoader.entry_scale(donor_loader.models[mm.DONOR_MODEL]) * loader.scale / donor_loader.scale)
     gauge, cursor, icon = {}, {}, {}
-    for q in range(2 * n_g):
+    for q in range(GR.PHASES * n_g):
         sx, sy = cam.project(*focus[q][:3])
         sx = min(max(sx, left + 160), right - 160)
         sy = min(max(sy, top_ + 120), bottom - 120)
@@ -1996,7 +2073,7 @@ def _group(ctx, back):
     CL, CH = 3, 4
     hide = lambda: [Op(b"\x7E\x01"), Op(b"\xC7\x01")]
     xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
-    by_q = lambda make: _chain(P, [make(q) for q in range(2 * n_g)])
+    by_q = lambda make: _chain(P, [make(q) for q in range(GR.PHASES * n_g)])
     loop_ = lambda i: [_animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
     HEAD_P, HEADREV_P = [p["name"] for p in POSITIONS].index("head"), [p["name"] for p in POSITIONS].index("headrev")
     centre = _spot(mesh, (GR.HEAD_X[0] + GR.HEAD_X[1]) // 2, GR.HEAD_YS[1], 0, True)
@@ -2004,14 +2081,26 @@ def _group(ctx, back):
     scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*centre), hb._visi(0), asm.ret(), asm.ret()],
                    2: by_q(lambda q: [xyzi(*focus[q])]) + [asm.ret()], 3: [xyzi(*centre), asm.ret()]}
     scripts[CH] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()]}
-    steps = lambda first, p: _chain(STEP, [loop_(first + 4 * p + s_) for s_ in range(4)])
+    # per part (head, head reverse, end): its four speed anims and its stop poses (kind 0 pulled back,
+    # 1 deepest, 2 her try), offsets from a model's first `_speeds` anim
+    def stroke(first, ph, cloud):
+        if ph < 2:
+            p = HEAD_P if ph == 0 else HEADREV_P
+            return [first + 4 * p + s_ for s_ in range(4)]
+        return [first + end_index(cloud, s_) for s_ in range(4)]
+
+    def stop(first, ph, kind, cloud):
+        if ph < 2:
+            return hold_index(first, ("head", "headrev")[ph], kind)
+        return first + end_index(cloud, 4 + kind)
+    steps = lambda first, ph, cloud=False: _chain(STEP, [loop_(i) for i in stroke(first, ph, cloud)])
     scripts[ents["cloudb"]] = {
         0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: by_q(lambda q: [xyzi(*cloud_at[q]), d_(cdirs[q]), hb._visi(1)] +
-                steps(cfirst, HEAD_P if q < n_g else HEADREV_P)) + [asm.ret()],
+                steps(cfirst, q // n_g, True)) + [asm.ret()],
         3: [xyzi(*centre), d_(facing_screen(cam, *centre[:3], (0, 1))), hb._visi(1)] + loop_(0) + [asm.ret()],
-        4: _chain(PH, [loop_(hold_index(cfirst, n)) for n in ("head", "headrev")]) + [asm.ret()],
-        5: _chain(PH, [loop_(hold_index(cfirst, n, 1)) for n in ("head", "headrev")]) + [asm.ret()]}
+        4: _chain(PH, [loop_(stop(cfirst, ph, 0, True)) for ph in range(GR.PHASES)]) + [asm.ret()],
+        5: _chain(PH, [loop_(stop(cfirst, ph, 1, True)) for ph in range(GR.PHASES)]) + [asm.ret()]}
     for k, key in enumerate(GR.ORDER):
         first = gfirst[key]
         b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
@@ -2021,19 +2110,19 @@ def _group(ctx, back):
             q = ph * n_g + k
             idle = asm.nop()
             return [xyzi(*girl_at[q]), d_(gdirs[q]), hb._visi(1), asm.if_byte(E, "==", k, idle)] + \
-                steps(first, HEAD_P if ph == 0 else HEADREV_P) + [asm.ret(), idle] + \
+                steps(first, ph) + [asm.ret(), idle] + \
                 loop_(still_kneel if ph == 0 else still_lie) + [asm.ret()]
         idle4, idle5, idle6 = asm.nop(), asm.nop(), asm.nop()
         scripts[ents[key]] = {0: [Op(bytes([0xA1, 3 + k])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                              2: _chain(PH, [place(0), place(1)]) + [asm.ret()],
+                              2: _chain(PH, [place(ph) for ph in range(GR.PHASES)]) + [asm.ret()],
                               4: [asm.if_byte(E, "==", k, idle4)] +
-                              _chain(PH, [loop_(hold_index(first, n)) for n in ("head", "headrev")]) + [idle4, asm.ret()],
+                              _chain(PH, [loop_(stop(first, ph, 0, False)) for ph in range(GR.PHASES)]) + [idle4, asm.ret()],
                               5: [asm.if_byte(E, "==", k, idle5)] +
-                              _chain(PH, [loop_(hold_index(first, n, 1)) for n in ("head", "headrev")]) +
+                              _chain(PH, [loop_(stop(first, ph, 1, False)) for ph in range(GR.PHASES)]) +
                               [idle5, asm.ret()],
                               6: [hb._w(hold_try_delay()), asm.if_byte(E, "==", k, idle6)] +   # (user) her try: once, then the deepest
-                              _chain(PH, [[_animb(), Op(bytes([0xA2, hold_index(first, n, 1), 1])),
-                                           Op(bytes([0xAE, hold_index(first, n, 2), 1]))] for n in ("head", "headrev")]) +
+                              _chain(PH, [[_animb(), Op(bytes([0xA2, stop(first, ph, 1, False), 1])),
+                                           Op(bytes([0xAE, stop(first, ph, 2, False), 1]))] for ph in range(GR.PHASES)]) +
                               [idle6, asm.ret()],
                               3: [xyzi(*girl_at[k]), d_(gdirs[k]), hb._visi(1)] + loop_(still_kneel) + [asm.ret()]}
     scripts[ents["camera"]] = {
@@ -2077,7 +2166,7 @@ def _group(ctx, back):
         nx = asm.nop()
         voice += [asm.if_byte(E, "==", k, nx), asm.if_byte(CC, "==", k, nx), asm.setbyte(CC, (k + 1) % n_g), nx]
     voice += _chain(CC, [_chain(PH, [_chain(K, [line(key, GR.COMMENTS[key][ph][j]) for j in range(6)])
-                                     for ph in range(2)]) for key in GR.ORDER])
+                                     for ph in range(GR.PHASES)]) for key in GR.ORDER])
     voice += [vdone, asm.goto_back(vl), asm.ret()]
     scripts[ents["voice"]] = {0: voice}
     scripts[ents["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(SAY_FOR), Op(b"\x54\x01"), asm.ret()]}
@@ -2110,8 +2199,8 @@ def _group(ctx, back):
                     asm.setbyte(E, k), asm.biton(USED, k), asm.goto(found), taken,
                     asm.setbyte(RND, (k + 1) % n_g), nxt]
         ops += [found] + _chain(E, [[asm.setbyte(P, k)] for k in range(n_g)])
-        two = asm.nop()
-        return ops + [asm.if_byte(PH, "==", 1, two), Op(bytes([0x85, P[0] << 4, P[1], n_g])), two]
+        return ops + _chain(PH, [[Op(bytes([0x85, P[0] << 4, P[1], ph * n_g]))] if ph else []
+                                 for ph in range(GR.PHASES)])                  # P = phase * 6 + girl
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
             asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, GR.TURN), asm.setbyte(FIN, 0),
@@ -2140,7 +2229,7 @@ def _group(ctx, back):
              asm.setword(POS, S), hb._arith(0x88, POS, 1000),
              asm.if_word(POS, "<=", 1000 - DANGER, hi_red)]
     no_call = asm.nop()
-    main += [asm.if_byte(TN, "==", 2 * n_g - 1, no_call), asm.if_byte(FIN, "==", 0, no_call),
+    main += [asm.if_byte(TN, "==", GR.PHASES * n_g - 1, no_call), asm.if_byte(FIN, "==", 0, no_call),
              asm.setword(FT, FR), hb._arith(0x86, FT, FINISH_FRAMES), asm.if_word(FT, ">=", NEXT, no_call),
              asm.setbyte(FIN, 1), hb._req(ents["shout"], 2, wait=False), no_call]
     done, same = asm.nop(), asm.nop()
@@ -2151,14 +2240,15 @@ def _group(ctx, back):
     main += [done, asm.if_byte(NEW, "!=", STEP, same), asm.setbyte(STEP, NEW),
              hb._req(ents["cloudb"], 2, wait=False)] + [hb._req(e, 2, wait=False) for e in girl_ents] + [same]
     main += pause                                    # (user) now and then she needs a moment
-    # the next girl every TURN frames; after six, part two; after twelve, the wrap
-    stay, part2 = asm.nop(), asm.nop()
+    # the next girl every TURN frames; after six, part two; after twelve, part three (end); after 18, the wrap
+    stay, part2, part3 = asm.nop(), asm.nop(), asm.nop()
     # (user: a long switch cut into the next girl's turn) her turn counts from the fade-in
     main += [asm.if_word(FR, ">=", NEXT, stay),
-             asm.if_byte(TN, "<", 2 * n_g - 1, wrap),
+             asm.if_byte(TN, "<", GR.PHASES * n_g - 1, wrap),
              asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(FAST_OUT), Op(b"\x6C"),
              Op(bytes([0x85, TN[0] << 4, TN[1], 1])),
-             asm.if_byte(TN, "==", n_g, part2), asm.setbyte(PH, 1), asm.setbyte(USED, 0), part2] + pick() + \
+             asm.if_byte(TN, "==", n_g, part2), asm.setbyte(PH, 1), asm.setbyte(USED, 0), part2,
+             asm.if_byte(TN, "==", 2 * n_g, part3), asm.setbyte(PH, 2), asm.setbyte(USED, 0), part3] + pick() + \
             [asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
             [hb._w(4), Op(FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
              hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN)] + _pause_arm(hb, GR.TURN) + [asm.setbyte(RUN, 1),
