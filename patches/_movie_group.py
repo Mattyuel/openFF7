@@ -14,9 +14,10 @@ NAMES = {"ruby": "Ruby", "skye": "Skye", "elena": "Elena", "scarlet": "Scarlet",
          "aerith": "Aerith"}
 
 # part one: the middle bed's top (walkmesh piece z 100, x -45..81, y -181..29); the girls kneel
-# HEAD_GAP from Cloud as in the one-girl "head" (38 ahead, 6 to his right): line one at x -20
-# facing +x, line two at x 56 facing -x, Cloud between them at x 18
-HEAD_X, HEAD_YS = (-20, 56), (-125, -85, -45)    # (user, since) up the bed, away from its end
+# HEAD_GAP from Cloud as in the one-girl "head" (38 ahead, 6 to his right): line one at x -40
+# facing +x (the screen-left line), line two at x 56 facing -x, each Cloud HEAD_GAP from his girl
+HEAD_X, HEAD_YS = (-40, 56), (-125, -85, -45)    # (user, since) up the bed, away from its end; (user, since)
+                                                 # line one a pace back (was -20), near the bed's edge (-45)
 HEAD_SEAT = {"ruby": 0, "skye": 3, "elena": 2, "scarlet": 1, "tifa": 4, "aerith": 5}   # part one: girl -> spot
                                              # (0-2 line one by HEAD_YS, 3-5 line two; user: Skye and Scarlet swapped)
 HEAD_GAP, HEAD_RIGHT = 38, 1                 # (user, since) his pelvis on her face (was 6)
