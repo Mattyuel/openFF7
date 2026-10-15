@@ -432,6 +432,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Affection list on Square** (new; untested in-game, user): in any field where Triangle would open the
+  menu, Square shows a two-page box: "Name (personality): N/20" for each Honey Bee girl, "????" for one
+  you haven't hired or dated. Check: it doesn't open during scenes / conversations, the menu still opens on
+  Triangle, the numbers match the lounges, and it never shows in the movie sets (Square is the prompt there).
 - **Quest markers, several at once** (fix; untested in-game, user): every quest giver has their own star /
   heart. In the Sector 7 station (Wymer + the cameraman) and Upper Midgar's station (Station Manager +
   Shinra Deserter) both givers' markers should show together. Check nothing else in those two fields

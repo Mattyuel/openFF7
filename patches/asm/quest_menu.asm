@@ -12,7 +12,8 @@
 ; `1D [text id][u16 offset][byte]`: writes the byte into that text of the loaded field
 ; (FIELD_TEXTS: u16 count, u16 offsets, as MESSAGE/ASK read it, 0x6316E6), so a menu can
 ; change a character before it opens (620_honey_bee.py: the "*" of a girl whose devoted scene
-; was seen). The bike and balloon hooks
+; was seen), CODE+45 field opcode 0x1E AFFTEXT, CODE+50 the Square hook (affection list,
+; 680_affection.py). The bike and balloon hooks
 ; count made-up enemy ids (BIKE_ID, BALLOON_ID) through the same kill table,
 ; so those quests are ordinary kill quests in 600_quests.py.
 ;
@@ -107,6 +108,20 @@ PLAY_SECONDS  equ 0xDC08B8        ; savemap 0x0B80: play time in seconds
 CLOCK_BACK    equ 0x40ABFD
 CLOCK_MINUTES equ VARS + 247      ; field var[2][247] (bank 1, u16)
 
+; affection list (680_affection.py): field opcode 1E AFFTEXT [text id] writes the list into that text;
+; Square in a field (hooked where Triangle opens the menu, 0x63C46C, same conditions) sets bit 2 of
+; field var[1][213] for the field's `affmenu` entity. AFFDATA (built by 680_affection.py):
+;   +0 ptr header  +4 ptr "????"  +8 ptr "/20"  +12 u32 girls  +16 u32 girls on the first page
+;   +20 girls, 16 bytes each: +0 ptr label ("Name (personality): ")  +4 ptr affection byte
+;       +8 ptr hired byte  +12 u8 hired bit mask
+; Texts FF7 text, 0xFF-terminated. Unknown (no affection and not hired): "????".
+AFFDATA       equ 0xFE8000
+AFF_FLAG      equ VARS + 213
+PAD_NEW       equ 0xCC0E08        ; buttons newly pressed this frame (field, 0x6499F7)
+MENU_LOCK_B   equ 0xCC0DBC        ; (the Triangle check's conditions)
+MENU_LOCK_W   equ 0xCC1638
+TRIANGLE_BACK equ 0x63C472
+
 org CODE
 
 entry_init:   jmp near q_init
@@ -118,6 +133,8 @@ entry_snow_b: jmp near q_snow_b
 entry_clock:  jmp near q_clock
 entry_bounty: jmp near b_op
 entry_txpoke: jmp near t_op
+entry_afftext: jmp near a_op
+entry_sqhook: jmp near s_hook
 
 %macro TEXT 4                 ; x, y, text ptr, colour
     push Z_TEXT
@@ -720,6 +737,108 @@ t_op:
     add word [SCRIPT_POS + eax*2], 5
     xor eax, eax
     ret
+
+; field opcode 1E [text id]: the affection list (AFFDATA) into that text of the loaded field
+a_op:
+    push ebx
+    push esi
+    push edi
+    movzx eax, byte [CUR_ENTITY]
+    movzx ecx, word [SCRIPT_POS + eax*2]
+    mov edx, [SCRIPT_BASE]
+    movzx eax, byte [edx + ecx + 1]     ; text id
+    mov ecx, [FIELD_TEXTS]
+    movzx eax, word [ecx + eax*2 + 2]
+    lea edi, [ecx + eax]                ; the text
+    mov esi, [AFFDATA]                  ; header
+    call a_copy
+    xor ebx, ebx
+.girl:
+    cmp ebx, [AFFDATA + 12]
+    jae .end
+    mov al, 0xE7                        ; new line
+    cmp ebx, [AFFDATA + 16]
+    jne .nl
+    mov byte [edi], 0xE8                ; second page: new page, the header again
+    inc edi
+    mov esi, [AFFDATA]
+    call a_copy
+    mov al, 0xE7
+.nl:
+    mov [edi], al
+    inc edi
+    mov edx, ebx
+    shl edx, 4
+    add edx, AFFDATA + 20
+    mov ecx, [edx + 4]
+    cmp byte [ecx], 0                   ; any affection: known
+    jne .known
+    mov ecx, [edx + 8]
+    mov al, [ecx]
+    test al, [edx + 12]                 ; hired: known
+    jnz .known
+    mov esi, [AFFDATA + 4]              ; "????"
+    call a_copy
+    jmp .next
+.known:
+    push edx
+    mov esi, [edx]
+    call a_copy
+    pop edx
+    mov ecx, [edx + 4]
+    movzx eax, byte [ecx]
+    xor edx, edx
+    mov ecx, 10
+    div ecx                             ; eax tens, edx units
+    test eax, eax
+    jz .units
+    add al, 0x10                        ; FF7 text '0' = 0x10
+    mov [edi], al
+    inc edi
+.units:
+    add dl, 0x10
+    mov [edi], dl
+    inc edi
+    mov esi, [AFFDATA + 8]              ; "/20"
+    call a_copy
+.next:
+    inc ebx
+    jmp .girl
+.end:
+    mov byte [edi], 0xFF
+    movzx eax, byte [CUR_ENTITY]
+    add word [SCRIPT_POS + eax*2], 2
+    pop edi
+    pop esi
+    pop ebx
+    xor eax, eax
+    ret
+
+a_copy:                                 ; esi: 0xFF-terminated text, copied to edi (no 0xFF)
+    mov al, [esi]
+    cmp al, 0xFF
+    je .done
+    mov [edi], al
+    inc esi
+    inc edi
+    jmp a_copy
+.done:
+    ret
+
+; from 0x63C46C (the field's Triangle check, [ebp-0x18] = buttons held): Square newly pressed with
+; the menu allowed -> the affection list's flag; then the replaced instructions
+s_hook:
+    test byte [PAD_NEW], 0x80
+    jz .orig
+    cmp byte [MENU_LOCK_B], 0
+    jne .orig
+    cmp word [MENU_LOCK_W], 0
+    jne .orig
+    or byte [AFF_FLAG], 4
+.orig:
+    mov edx, [ebp - 0x18]
+    and edx, 0x10
+    jmp TRIANGLE_BACK
 
 b_op:
     push ebp

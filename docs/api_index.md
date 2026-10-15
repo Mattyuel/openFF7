@@ -862,6 +862,15 @@ The movie minigame (user's design).
 - `_check(ctx)` Every anim named by a date field's models exists in char.lgp (the poses come from later patches).
 - `apply(ctx)` 
 
+## `patches/680_affection.py`
+(user) The affection list: Square in a field shows every Honey Bee girl's name, personality and
+
+- `_label(g)` 
+- `_longest()` The longest list the opcode can write (every girl known, two-digit affection), as text.
+- `_data()` 
+- `_entity(sec, hb, placeholder)` 
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
