@@ -671,11 +671,14 @@ def _special(ctx, key, back):
     def pause_cond(no):                              # head only
         doit = asm.nop()
         return [asm.if_byte(P, "!=", 1, doit), asm.goto(no), doit]
+    walkout = asm.nop()                          # (user, profiles) she's had enough: a CUT
+    leave = lambda key_: hb._say(sec, GR.NAMES[key_] + "\n" + mv.PF.PROFILES[key_]["leave"]) + [asm.goto(walkout)]
     pause = mv._pause_ops(hb, sec, list(actors), ents["hush3"], lambda block: block(key), pause_cond, ents["icon"],
-                          lambda make: make(rate * mv.HOLD_BONUS))
+                          lambda key_: rate, leave=leave)
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
-            asm.setbyte(STEP, 0), asm.setbyte(K, 0), asm.setword(NEXT, SPECIAL_MINUTE), asm.setbyte(FIN, 0)] + \
+            asm.setbyte(STEP, 0), asm.setbyte(K, 0), asm.setword(NEXT, SPECIAL_MINUTE), asm.setbyte(FIN, 0),
+            asm.setbyte(mv.RULES, 1), asm.setbyte(mv.CTRL, 0), asm.setbyte(mv._ann(0), 0)] + \
            [hb._req(e, 3) for e in (CL, ents["girlc"], ents["camera"])] + [hb._w(20)]
     main += [Op(hb.FADE_IN), Op(b"\x6C")]
     for t_ in SP.OPENING:
@@ -755,6 +758,9 @@ def _special(ctx, key, back):
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
     main += say("“CUT! CUT! You broke character, man!\n ...Fine. We'll sell what we've got.”")
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += [walkout, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)] + say(mv.WALKED)
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]

@@ -772,8 +772,15 @@ The movie minigame (user's design).
 - `_try_anim(ctx, base, name)` (user: "after 4 seconds ... the girl's head pulls back slightly to try to come back, but
 - `_pause_arm(hb, length)` At a position's start (or a group turn's): (user: "a 50% chance that a girl has to stop
 - `_icon_next(hb, base, step)` IT = FR + base + k * step, k random 0..7.
-- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, bonus)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
-- `_stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus)` pause: she pulls back (slot 4) and says a PAUSES line. hold (user): the bonus (GOLDU), Cloud
+- `_ann(k)` 
+- `_gil_note(gil)` 
+- `_take_gil(amount)` GOLDD amount, or all the gil the party has if that's less (CHGLD lo/hi).
+- `_gil_ops(gil)` +gil paid (GOLDU), -gil taken (`_take_gil`).
+- `_annoy(k, leave_ops)` Girl k's annoyance +1; at `_movie_profiles.LEAVE_AT`, leave_ops (she walks off).
+- `_hold_check(key, k, refuse)` (user) Does she take the hold? Her profile's `hold`: jump to refuse if not.
+- `_text_id(sec, t)` One text id per distinct string in a field (the per-girl chains repeat lines).
+- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
+- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
 - `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `end_index(cloud, k)` Offset (from a model's first `_speeds` anim) of the group's "end" anim k: 0-3 the speeds,

@@ -432,6 +432,26 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Group shoot broke at its start** (fix; untested in-game, user): its models now carry only the
+  animations the group plays (26-36 each instead of 63-71). Check the group shoot starts and every part
+  (head, head reverse, end) shows the right poses.
+- **Girls' personalities in the shoots** (new; untested in-game, user; profiles in
+  `patches/_movie_profiles.py`): the Square hold now depends on who you hold, in every shoot (one girl,
+  group, special): Ruby always plays along; Skye usually (1 in 4 she changes her mind); Scarlet the first
+  time (bigger bonus), then she refuses; Aerith 50/50; Tifa never; Elena only once the rules are agreed
+  (in one-girl and special shoots the briefing counts, so she plays along). A refusal: she pulls straight
+  off with her line, you lose gil (shown under it; never more than you have), and she's annoyed. Two
+  annoyances and she walks off: a one-girl or special shoot ends as a CUT ("She walked off my set?!");
+  in the group she's hidden for the rest of it, her turns are skipped, the others don't mention her.
+  Group only: an intro conversation before the cameraman's rules, ending in Elena's question (agree
+  rules / no rules); one argument per part, at the start of its second turn (everyone freezes, then a
+  3-way choice with gil / annoyance / rules / Elena sitting out); Elena and Tifa are uneasy: a stop 3 s
+  into each of their turns with "Check she's okay." / "Keep going." (checking: Tifa goes on, Elena goes on
+  only with the rules agreed, else she sits her turn out; keep going: she stops anyway, gil lost,
+  annoyed, turn over); at the end the girls' banter + a 1,400 gil bonus if nobody walked off, else the
+  cameraman's remark; everyone gone = a CUT. Check: the choices appear and can be picked, refusing girls
+  really pull off, a girl who walked off stays hidden through part changes, the finisher still comes in
+  the last turn when girls have left, gil never goes wrong.
 - **Group part three "end"** (new; work in progress, untested in-game, user): after head reverse, six more turns:
   she lies on her back on the bed (knees flapping, head tilted forward and bobbing), Cloud over her shoulders
   facing the bed's end, holding her head. Hold / pause / slap prompts work there too.
