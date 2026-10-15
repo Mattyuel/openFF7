@@ -249,7 +249,7 @@ SCENES = [
                   ("Let's ask everyone first.",
                    "Tifa\n“Thank you.”{NEW}Elena\n“...Yes. Ground rules. Good.”", dict(rules=True))]),
     dict(part=1, girls=["ruby", "skye", "aerith", "tifa"],
-         talk="Ruby\n(Everyone stops. She sits up.)\n“I lasted longest upside down.\n Admit it.”{NEW}"
+         talk="Ruby\n(Everyone stops)\n“I lasted longest upside down.\n Admit it.”{NEW}"
               "Skye\n“Did not! I... wait, did you? Who was\n timing?”{NEW}"
               "Aerith\n“Cloud was. Weren't you, Cloud?”",
          ask="Ruby\n“Well? Who's best?”",
