@@ -134,8 +134,22 @@ HOLDS = {
                "(She comes up for air, coughing.)\n“Whew! You're mean. ...Continue?”",
                "(She gasps, clears her throat, smiles.)\n“I'm okay! Keep going.”"],
 }
-HOLD_FRAMES = (75, 15)             # his line (held deep), then still deep: 90 frames = 3 s; then hers as PAUSE_FRAMES
-HOLD_CHANCE = 128                  # a second, separate 50% per position / group turn
+HOLD_FRAMES = (60, 60, 90)         # (user, since: 7 s) his line (held deep); at 2 s his stern reminder (HOLD_STERN);
+                                   # at 4 s her try to pull back with a muffled line (HOLD_MUFFLED); at 7 s she pulls
+                                   # away, then hers as PAUSE_FRAMES. Each line's window closes HOLD_SAY frames in.
+                                   # (User, since) the hold is the player's: Square while the icon shows (670
+                                   # `_pause_ops`), not a random 50%
+HOLD_SAY = 50
+HOLD_STERN = ["I said HOLD it.", "Don't you dare pull away.", "Stay. Right. There."]
+HOLD_MUFFLED = {   # (user) 4 s in: muffled, struggling
+    "ruby": ["Mmmph! Mmff... mmh!!", "Nnnh... mmph! Mmmh!!", "Mmh-mmh! Mmmmff!"],
+    "skye": ["Mmmp! Mmh-mmh-mmh!!", "Nnnmph! Mmmff!!", "Mmmh?! Mmmph!"],
+    "elena": ["Mmph! Mmmh... mmff!!", "Nnngh! Mmh-mmh!", "Mmmff... mmph!!"],
+    "scarlet": ["Mmmph! Mmh... MMPH!!", "Nnnh! Mmmff... mmh!", "Mmmh-MMH! Mmff!"],
+    "tifa": ["Mmph! Mmmh... mmff!!", "Nnnh... mmh! Mmmph!", "Mmh! Mmh-mmh!!"],
+    "aerith": ["Mmmh! Mmph... mmff!", "Nnnmh! Mmmph!!", "Mmh-mmh! Mmmff..."],
+}
+TRY_FRAMES, TRY_PULL = 30, 0.3     # (user) at 4 s her head pulls back slightly (30% of the way out) and can't
 PAUSE_FRAMES = (0, 75, 15)         # before her line (user: shown the moment it happens); the line; after it
 PAUSE_CHANCE = 128                 # (user, since) a 50% chance per position (or group turn) of one pause, armed
                                    # at its start for a random frame in its middle half (670 `_pause_arm`; was a

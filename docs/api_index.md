@@ -663,7 +663,8 @@ Honey Bee Girl recruitment.
 - `_limb(old, rings, n, top=None, bottom=None, rnd=0.85)` A limb part remade as a loft in its own bone frame (the bone runs down local -z from the
 - `_smooth_arm(old, n=6, cylinder=None)` (user) an arm part subdivided once and smoothed: each connected piece of the old .p that
 - `_smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter, straight_forearm=0)` Every uparm / foarm part of `hrc` replaced by a `_smooth_arm` copy under new names
-- `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375))` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
+- `_orient(V, tris, c)` The triangles wound so each one's cross product points into its piece. (User: "open geometry
+- `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False)` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx, name=CLOUD_BUCK, resist=False)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK. resist: `_stroke`'s resisted push.
 - `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0, still_upper=False, resist=False)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
@@ -768,17 +769,21 @@ The movie minigame (user's design).
 - `_bare_skye(ctx)` 
 - `_skye_limbs(ctx, hrc)` 
 - `_skye_shape(ctx, hrc)` 
-- `_head_turned(ctx, a, hrc='cbfe.hrc', turn=HEAD_TURN)` (user: "add a head turn to the side for the girls for the parts where she has pulled away")
-- `_pause_arm(hb, length)` (user: "a 50% chance that a girl has to stop momentarily" in head / head reverse / 69) at a
-- `_pause_ops(hb, sec, actors, hush, lines, cond)` (user) A rare pause (`_movie_group.PAUSES`): ops for the director's tick. cond = ops jumping to
-- `_stop_ops(hb, sec, actors, hush, lines, cond, kind)` pause: she pulls back (slot 4) and says a PAUSES line. hold: Cloud holds deep (slot 5) and says
+- `_try_anim(ctx, base, name)` (user: "after 4 seconds ... the girl's head pulls back slightly to try to come back, but
+- `_pause_arm(hb, length)` At a position's start (or a group turn's): (user: "a 50% chance that a girl has to stop
+- `_icon_next(hb, base, step)` IT = FR + base + k * step, k random 0..7.
+- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, bonus)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
+- `_stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus)` pause: she pulls back (slot 4) and says a PAUSES line. hold (user): the bonus (GOLDU), Cloud
+- `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
-- `hold_index(first, pn, deep=False)` The anim index of position pn's pause hold (pulled back; deep: the "hold it" one) in a model
+- `hold_index(first, pn, kind=0)` The anim index of position pn's stop pose in a model whose `_speeds` anims start at first:
 - `_gauge_pixels()` 
 - `_cursor_pixels()` 
-- `_sprites(ctx, half_gauge, half_cursor)` The gauge bar and the cursor as one-bone sprite models (the quest markers' way).
+- `_icon_pixels()` (user) The hold's Square icon: a dark tile with a pink square outline (the PlayStation button).
+- `_sprites(ctx, half_gauge, half_cursor, half_icon=None)` The gauge bar and the cursor as one-bone sprite models (the quest markers' way).
 - `_spot(mesh, x, y, dz=0, high=False)` (x, y, z, tri) on the highest (a bed piece) or lowest (the floor) triangle under (x, y).
 - `_unproject(cam, sx, sy, depth)` Field point at screen (sx, sy) (pixels from the background centre) and view depth.
+- `_icon_at(cam, mesh, sx, sy, near)` (user) The hold icon's spot: ICON_Y below the view centre (sx, sy), at the gauge's depth.
 - `_view_depth(cam, p)` 
 - `_nearest_tri(mesh, x, y)` 
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.

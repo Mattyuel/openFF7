@@ -550,76 +550,101 @@ SKYE_LINES = {
 PAUSE_POS = ["headrev", "69", "head"]               # (user) where she may need a moment (`_pause_ops`)
 PCNT, RND2 = (5, 144), (5, 145)                     # the pause lines' turn; the pause roll
 PARM, PT = (5, 139), (6, 142)                       # (user, since) this position's pause: armed; its frame
-HARM, HT = (5, 146), (6, 148)                       # (user) the "hold it" stop: armed; its frame
-HEAD_TURN = 35                                      # (user) her head turned this far to the side, pulled away
+SQ, SQH, IWIN, IT = (5, 146), (5, 147), (5, 157), (6, 148)   # (user) the hold: Square pressed in the icon's
+                                                    # window / Square held / the window open / the next icon's frame
+SQUARE_KEY = 0x80                                   # (the original scripts' {SQUARE} choices test keys=128)
+ICON_FRAMES = 15                                    # (user) the icon shows half a second
+ICON_FIRST, ICON_EVERY = (30, 45), (380, 20)        # first icon at 30 + k*45 (k 0..7: in the first 15 s), then every
+                                                    # 380 + k*20 frames (12.7-17.3 s: ~15 s apart)
+ICON_PX, ICON_Y = 16, -50                           # on-screen size; screen y from the view centre (below the gauge)
+HOLD_BONUS = 10                                     # (user) a hold pays the shoot's gil per press x 10 on the spot
+MATERIA_SOUND = 0x1EA                               # (user) the press's sound (the game's materia-get sound)
 
 
-def _head_turned(ctx, a, hrc="cbfe.hrc", turn=HEAD_TURN):
-    """(user: "add a head turn to the side for the girls for the parts where she has pulled away")
-    Anim a's frames with the head (and what hangs on it: hair) turned `turn` degrees about the head
-    bone's own axis (the neck): she looks to one side."""
+def _try_anim(ctx, base, name):
+    """(user: "after 4 seconds ... the girl's head pulls back slightly to try to come back, but
+    can't") her pose `base` (15 frames: 0 pulled back, 7 deepest) as GR.TRY_FRAMES frames: from the
+    deepest frame eased TRY_PULL of the way towards frame 0, straining there (a small tremble), and
+    eased back to the deepest. Written to `name`."""
     from ff7 import fieldanim as fa
-    sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
-    names = [b[0] for b in sk]
-    h = names.index("head")
-    under = {h}
-    for i, b in enumerate(sk):                                   # (parents come first)
-        if b[1] in [names[j] for j in under]:
-            under.add(i)
-    out = []
-    for rr, rp, rots in a.frames:
-        root = [rp[0], -rp[1], rp[2]]
-        W = [m_ for m_, _, _ in fa.forward(sk, rr, root, rots)]
-        R = fa.axis_angle(fa._vec(W[h], [0, 0, -1]), turn)
-        W = [fa._mul(R, m_) if i in under else m_ for i, m_ in enumerate(W)]
-        out.append((rr, rp, fa.local_rotations(sk, rr, W)))
-    a.frames = out
-    return a
+    a = fa.Anim(ctx.char_file(base.lower() + ".a"))
+    (rr, p0, r0), (_, p7, r7) = a.frames[0], a.frames[7]
+    ang = lambda x, y, w: x + w * (((y - x + 180) % 360) - 180)
+    n, up = GR.TRY_FRAMES, GR.TRY_FRAMES // 4
+    frames, ws = [], []
+    for t in range(n):
+        if t < up:
+            w = (1 - math.cos(math.pi * t / up)) / 2
+        elif t < n - up:
+            w = 1 - 0.15 * (1 - math.cos(2 * math.pi * (t - up) / 6)) / 2        # straining: a tremble
+        else:
+            w = (1 + math.cos(math.pi * (t - (n - up)) / (up - 1))) / 2
+        w *= GR.TRY_PULL
+        ws.append(w)
+        frames.append((rr, [p7[k] + w * (p0[k] - p7[k]) for k in range(3)],
+                       [[ang(x, y, w) for x, y in zip(b7, b0)] for b7, b0 in zip(r7, r0)]))
+    assert ws[0] == 0 and abs(ws[-1]) < 1e-9 and max(ws) <= GR.TRY_PULL, ws     # starts and ends at the deepest
+    a.frames = frames
+    ctx.char_file(name.lower() + ".a", a.build())
 
 
 def _pause_arm(hb, length):
-    """(user: "a 50% chance that a girl has to stop momentarily" in head / head reverse / 69) at a
-    position's start: with `_movie_group.PAUSE_CHANCE` / 256, arm one pause (PARM 1) for a frame PT
-    somewhere in the middle half of its `length` frames (eight steps); `_pause_ops` fires it."""
+    """At a position's start (or a group turn's): (user: "a 50% chance that a girl has to stop
+    momentarily" in head / head reverse / 69) with `_movie_group.PAUSE_CHANCE` / 256, arm one pause
+    (PARM 1) for a frame PT somewhere in the middle half of its `length` frames (eight steps);
+    `_pause_ops` fires it. And (user) the hold icon's first frame IT, somewhere in the first 15 s."""
     no = asm.nop()
     ops = [asm.setbyte(PARM, 0), Op(bytes([0x99, RND2[0], RND2[1]])),
-                          asm.if_byte(RND2, "<", GR.PAUSE_CHANCE, no), asm.setbyte(PARM, 1),
-                          Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 8])),
-                          asm.setword(PT, FR), hb._arith(0x86, PT, length // 4)]
+           asm.if_byte(RND2, "<", GR.PAUSE_CHANCE, no), asm.setbyte(PARM, 1),
+           Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 8])),
+           asm.setword(PT, FR), hb._arith(0x86, PT, length // 4)]
     ops += _chain(RND2, [[hb._arith(0x86, PT, k * length // 16)] if k else [] for k in range(8)]) + [no]
-    no2 = asm.nop()                                  # (user) and, separately, a "hold it" stop (HARM / HT)
-    ops += [asm.setbyte(HARM, 0), Op(bytes([0x99, RND2[0], RND2[1]])),
-            asm.if_byte(RND2, "<", GR.HOLD_CHANCE, no2), asm.setbyte(HARM, 1),
-            Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 8])),
-            asm.setword(HT, FR), hb._arith(0x86, HT, length // 4)]
-    return ops + _chain(RND2, [[hb._arith(0x86, HT, k * length // 16)] if k else [] for k in range(8)]) + [no2]
+    return ops + [asm.setbyte(SQ, 0)] + _icon_next(hb, *ICON_FIRST)
 
 
-def _pause_ops(hb, sec, actors, hush, lines, cond):
-    """(user) A rare pause (`_movie_group.PAUSES`): ops for the director's tick. cond = ops jumping to
-    their argument unless a pause may happen here; actors = entities whose slot 4 holds the pulled-
-    back pose (her head turned aside), slot 5 the deepest one and slot 2 resumes; lines(t_block) =
-    ops picking her line block by the shoot's girl (t_block(key) = the ops showing her line PCNT).
-    Meter frozen (RUN 0) and the position's time (NEXT) extended by the pause, so it costs nothing.
-    Then (user) the "hold it" stop the same way (`_hold_ops`)."""
-    return _stop_ops(hb, sec, actors, hush, lines, cond, "pause") + \
-        _stop_ops(hb, sec, actors, hush, lines, cond, "hold")
+def _icon_next(hb, base, step):
+    """IT = FR + base + k * step, k random 0..7."""
+    return [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 8])),
+            asm.setword(IT, FR), hb._arith(0x86, IT, base)] + \
+        _chain(RND2, [[hb._arith(0x86, IT, k * step)] if k else [] for k in range(8)])
 
 
-def _stop_ops(hb, sec, actors, hush, lines, cond, kind):
-    """pause: she pulls back (slot 4) and says a PAUSES line. hold: Cloud holds deep (slot 5) and says
-    a HOLD_CLOUD line (HOLD_FRAMES: 3 s in all), then she pulls back (slot 4) with a HOLDS line."""
+def _pause_ops(hb, sec, actors, hush, lines, cond, icon, bonus):
+    """(user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
+    argument unless the position is one of them): the rare pause (`_movie_group.PAUSES`), then the
+    hold (Square pressed while the icon showed: SQ), then the icon (every ~15 s, `ICON_EVERY`; entity
+    `icon` slot 3 shows it ICON_FRAMES with IWIN set). actors = [Cloud's entity, the girls']: slot 4
+    holds the pulled-back pose, slot 5 the deepest one, the girls' slot 6 her try to pull back, slot 2
+    resumes; lines(t_block) = ops picking her line block by the shoot's girl (t_block(key) = the ops
+    showing her line PCNT); bonus(make) = ops paying make(gil)'s amount by the shoot's girl (make(gil)
+    = the ops for that amount). Meter frozen (RUN 0) and the position's time (NEXT) extended by each
+    stop, so it costs nothing."""
+    no = asm.nop()
+    icon_ops = cond(no) + [asm.if_byte(RUN, "==", 1, no), asm.if_word(FR, ">=", IT, no), asm.setbyte(SQ, 0),
+                           hb._req(icon, 3, wait=False)] + _icon_next(hb, *ICON_EVERY) + [no]
+    return _stop_ops(hb, sec, actors, hush, lines, cond, "pause", bonus) + \
+        _stop_ops(hb, sec, actors, hush, lines, cond, "hold", bonus) + icon_ops
+
+
+def _stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus):
+    """pause: she pulls back (slot 4) and says a PAUSES line. hold (user): the bonus (GOLDU), Cloud
+    holds deep (slot 5) and says a HOLD_CLOUD line; at 2 s his stern HOLD_STERN; at 4 s she tries to
+    pull back (her slot 6) and can't, a HOLD_MUFFLED line; at sum(HOLD_FRAMES) (7 s) she pulls away
+    (slot 4) with a HOLDS line. The hold's windows are closed by hush3's slot 3 (HOLD_SAY)."""
     no = asm.nop()
     w0, w1, w2 = GR.PAUSE_FRAMES
     assert w0 == 0                               # (user) her line the moment it happens: no wait first
-    assert GR.HOLD_FRAMES[0] == w1               # (hush3 closes either window after w1)
-    arm, at, other = (PARM, PT, HT) if kind == "pause" else (HARM, HT, PT)
+    h0, h1, h2 = GR.HOLD_FRAMES
+    assert GR.HOLD_SAY < min(h0, h1, h2)
     table = GR.PAUSES if kind == "pause" else GR.HOLDS
-    total = w0 + w1 + w2 + 10 + (sum(GR.HOLD_FRAMES) if kind == "hold" else 0)
+    total = w0 + w1 + w2 + 10 + (h0 + h1 + h2 if kind == "hold" else 0)
 
-    def say3(t):
-        return [Op(b"\x52\x03\x00\x01"), hb._window(t, 3, 8, LINE_Y), hb._req(hush, 2, wait=False),
+    def say3(t, slot=3):                         # (hush3 slot 3: closed HOLD_SAY frames in)
+        return [Op(b"\x52\x03\x00\x01"), hb._window(t, 3, 8, LINE_Y), hb._req(hush, slot, wait=False),
                 asm.message(3, sec.add_string(_encode(t)))]
+
+    def muffled(key):                            # (her struggling line in the hold, RND2)
+        return _chain(RND2, [say3(GR.NAMES[key] + "\n" + t) for t in GR.HOLD_MUFFLED[key]])
 
     def block(key):
         out = []
@@ -628,17 +653,46 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, kind):
                         hb._req(hush, 2, wait=False),
                         asm.message(3, sec.add_string(_encode(GR.NAMES[key] + "\n" + t)))])
         return _chain(PCNT, out)
-    ops = cond(no) + [asm.if_byte(arm, "==", 1, no), asm.if_word(FR, ">=", at, no), asm.setbyte(arm, 0),
-                      asm.setbyte(RUN, 0), Op(b"\x54\x01")]
-    if kind == "hold":                           # in deep, held; his line; then she pulls away
+    if kind == "pause":
+        ops = cond(no) + [asm.if_byte(PARM, "==", 1, no), asm.if_word(FR, ">=", PT, no), asm.setbyte(PARM, 0),
+                          asm.setbyte(RUN, 0), Op(b"\x54\x01")]
+        others = [IT]
+    else:                                        # in deep, held: the bonus and his line; she tries; she pulls away
+        ops = cond(no) + [asm.if_byte(SQ, "==", 1, no), asm.setbyte(SQ, 0), asm.setbyte(RUN, 0), Op(b"\x54\x01")]
         ops += [hb._req(e, 5, wait=False) for e in actors]
         ops += [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(GR.HOLD_CLOUD)]))]
-        ops += _chain(RND2, [say3("{CLOUD}\n“%s”" % t) for t in GR.HOLD_CLOUD]) + [hb._w(GR.HOLD_FRAMES[1])]
+
+        def make(gil):
+            return [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil))] + \
+                _chain(RND2, [say3("{CLOUD}\n“%s”\nHold bonus: %d gil" % (t, gil)) for t in GR.HOLD_CLOUD])
+        rnd3 = [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 3]))]
+        ops += bonus(make) + [hb._w(h0 - GR.HOLD_SAY)] + rnd3 + \
+            _chain(RND2, [say3("{CLOUD}\n“%s”" % t) for t in GR.HOLD_STERN]) + [hb._w(h1 - GR.HOLD_SAY)] + \
+            [hb._req(e, 6, wait=False) for e in actors[1:]] + rnd3 + lines(muffled) + [hb._w(h2 - GR.HOLD_SAY)]
+        others = [PT, IT]
     return ops + [hb._req(e, 4, wait=False) for e in actors] + \
         [Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
-        lines(block) + [hb._w(w2), hb._arith(0x86, NEXT, total), hb._arith(0x86, other, total)] + \
-        [hb._req(e, 2) for e in actors] + [asm.setword(PR, 0), asm.setword(NT, FR), hb._arith(0x86, NT, TICK),
-                                           asm.setbyte(RUN, 1), no]
+        lines(block) + [hb._w(w2), hb._arith(0x86, NEXT, total)] + [hb._arith(0x86, v, total) for v in others] + \
+        [hb._req(e, 2) for e in actors] + [asm.setbyte(SQ, 0), asm.setword(PR, 0), asm.setword(NT, FR),
+                                           hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1), no]
+
+
+def _hold_entities(hb, model, sprite_dir, place):
+    """(user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
+    = place ops (its XYZI for the position), slot 3 = shown ICON_FRAMES with IWIN set) and `sqkey`
+    (once a frame: Square held (IFKEY 0x80) going from up to down while IWIN = a hold: SQ 1, the
+    materia sound, the window closed)."""
+    hide = [Op(b"\x7E\x01"), Op(b"\xC7\x01")]
+    icon = {0: [Op(bytes([0xA1, model])), hb._visi(0), Op(bytes([0xB3, 0, sprite_dir]))] + hide + [asm.ret(), asm.ret()],
+            2: place + [asm.ret()],
+            3: [asm.setbyte(IWIN, 1), hb._visi(1), hb._w(ICON_FRAMES), hb._visi(0), asm.setbyte(IWIN, 0), asm.ret()]}
+    wait = hb._w(1)
+    back, up = asm.goto_back(wait), asm.setbyte(SQH, 0)
+    sqkey = {0: [asm.ret(), wait, Op(bytes([0x30]) + struct.pack("<H", SQUARE_KEY) + b"\x00", target=up),
+                 asm.if_byte(SQH, "==", 0, back), asm.setbyte(SQH, 1), asm.if_byte(IWIN, "==", 1, back),
+                 asm.setbyte(SQ, 1), sound(MATERIA_SOUND), asm.setbyte(IWIN, 0), back,
+                 up, asm.goto_back(wait), asm.ret()]}
+    return icon, sqkey
 
 
 def _speeds(ctx):
@@ -658,9 +712,9 @@ def _speeds(ctx):
                 a.frames = [frames[i * len(frames) // n] for i in range(n)]
                 ctx.char_file(name.lower() + ".a", a.build())
                 out.append(name + ".tor")
-    # (user) the pauses: each pause position's frame 0 (pulled back, her head turned aside: `_head_turned`),
-    # held: ZM<p>9 / ZN<p>9, after the rest; then (user: "hold it") its deepest frame (the stroke's
-    # middle) held: ZM<p>8 / ZN<p>8 (`hold_index`)
+    # (user) the stops: each pause position's frame 0 (pulled back) held: ZM<p>9 / ZN<p>9, after the
+    # rest; then (user: the hold) its deepest frame (the stroke's middle) held: ZM<p>8 / ZN<p>8; then
+    # hers only, her try to pull back (`_try_anim`): ZM<p>7 (`hold_index`)
     names = [p_["name"] for p_ in POSITIONS]
     for digit, frame in (("9", 0), ("8", 7)):
         for pn in PAUSE_POS:
@@ -668,18 +722,21 @@ def _speeds(ctx):
             for who, base, out in (("girl", POSITIONS[p]["girl"][0], girl), ("cloud", POSITIONS[p]["cloud"][0], cloud)):
                 a = fa.Anim(ctx.char_file(base.lower() + ".a"))
                 a.frames = a.frames[frame:frame + 1]
-                if who == "girl" and digit == "9":
-                    a = _head_turned(ctx, a)
                 name = ("ZM" if who == "girl" else "ZN") + chr(ord("A") + p) + digit
                 ctx.char_file(name.lower() + ".a", a.build())
                 out.append(name + ".tor")
+    for pn in PAUSE_POS:
+        p = names.index(pn)
+        name = "ZM" + chr(ord("A") + p) + "7"
+        _try_anim(ctx, POSITIONS[p]["girl"][0], name)
+        girl.append(name + ".tor")
     return girl, cloud
 
 
-def hold_index(first, pn, deep=False):
-    """The anim index of position pn's pause hold (pulled back; deep: the "hold it" one) in a model
-    whose `_speeds` anims start at first."""
-    return first + 4 * len(POSITIONS) + (len(PAUSE_POS) if deep else 0) + PAUSE_POS.index(pn)
+def hold_index(first, pn, kind=0):
+    """The anim index of position pn's stop pose in a model whose `_speeds` anims start at first:
+    kind 0 pulled back, 1 the deepest (the hold), 2 her try to pull back (girls only)."""
+    return first + 4 * len(POSITIONS) + kind * len(PAUSE_POS) + PAUSE_POS.index(pn)
 
 
 GAUGE_W, GAUGE_H = 64, 8                    # texture pixels (in a 64 x 64 texture)
@@ -688,9 +745,10 @@ GAUGE_PX, CURSOR_PX, CURSOR_UP = 45, 6, 6   # (user: cursor 50%: 12 -> 6)  # on-
 GAUGE_Y = -80                               # the bar's screen y from the view centre (user: at +88 it was below
                                             # the screen: the view sits higher than the centred guess)
 LINE_Y = 168                                # Ruby's lines: window at the bottom (the gauge is at the top)
-SPRITES = {"QGAA": ("QGAB", "QGAC", "QGAD"), "QCUA": ("QCUB", "QCUC", "QCUD")}
+SPRITES = {"QGAA": ("QGAB", "QGAC", "QGAD"), "QCUA": ("QCUB", "QCUC", "QCUD"), "QHOA": ("QHOB", "QHOC", "QHOD")}
 PALETTE = [(0, 0, 0, 0), (255, 255, 255, 255), (40, 40, 230, 255), (60, 200, 60, 255),
-           (40, 230, 255, 255), (30, 30, 30, 255)]       # B, G, R, A: clear, white, red, green, yellow, dark
+           (40, 230, 255, 255), (30, 30, 30, 255), (200, 120, 255, 255)]   # B, G, R, A: clear, white, red, green,
+                                                                             # yellow, dark, pink (the Square icon)
 
 
 def _gauge_pixels():
@@ -714,7 +772,17 @@ def _cursor_pixels():
     return px
 
 
-def _sprites(ctx, half_gauge, half_cursor):
+def _icon_pixels():
+    """(user) The hold's Square icon: a dark tile with a pink square outline (the PlayStation button)."""
+    px = bytearray(64 * 64)
+    for y in range(16):
+        for x in range(16):
+            ring = min(x, y, 15 - x, 15 - y)
+            px[y * 64 + x] = 1 if ring == 0 else 6 if ring in (3, 4) else 5
+    return px
+
+
+def _sprites(ctx, half_gauge, half_cursor, half_icon=None):
     """The gauge bar and the cursor as one-bone sprite models (the quest markers' way).
     Returns {hrc: loader entry (the Glacier Map entry, unscaled)}."""
     donor_p = ctx.char_file(mm.DONOR_P)
@@ -729,8 +797,10 @@ def _sprites(ctx, half_gauge, half_cursor):
         except KeyError:
             pass
         gauge = hrc.startswith("QG")                   # (QGAA; 672: QGEA)
-        crop = (0, 0, GAUGE_W - 1, GAUGE_H - 1) if gauge else (0, 0, 15, 11)
-        half = half_gauge if gauge else half_cursor
+        icon = hrc.startswith("QH")                    # (QHOA; 672: QHEA: the hold's Square)
+        crop = (0, 0, GAUGE_W - 1, GAUGE_H - 1) if gauge else (0, 0, 15, 15) if icon else (0, 0, 15, 11)
+        half = half_gauge if gauge else half_icon if icon else half_cursor
+        assert half is not None, hrc
         ctx.char_file(hrc.lower() + ".hrc",
                       hrc_text.replace("icemap_sk", hrc.lower() + "_sk").replace("1 GUJD", "1 " + rsd).encode("latin1"))
         ctx.char_file(rsd.lower() + ".rsd",
@@ -740,7 +810,7 @@ def _sprites(ctx, half_gauge, half_cursor):
         head = bytearray(template[:0xEC])
         struct.pack_into("<II", head, 0x3C, 64, 64)
         pal = b"".join(bytes(c) for c in PALETTE).ljust(16 * 4, b"\0")
-        ctx.char_file(tex.lower() + ".tex", bytes(head) + pal + bytes(_gauge_pixels() if gauge else _cursor_pixels()))
+        ctx.char_file(tex.lower() + ".tex", bytes(head) + pal + bytes(_gauge_pixels() if gauge else _icon_pixels() if icon else _cursor_pixels()))
         out[hrc] = donor.replace(mm.DONOR_HRC, (hrc + ".HRC").encode("ascii"))
     return out
 
@@ -761,6 +831,12 @@ def _unproject(cam, sx, sy, depth):
     n = [sum(a * a for a in cam.axes[r]) / 4096 ** 2 for r in range(3)]
     assert all(abs(x - 1) < 0.01 for x in n), n
     return v
+
+
+def _icon_at(cam, mesh, sx, sy, near):
+    """(user) The hold icon's spot: ICON_Y below the view centre (sx, sy), at the gauge's depth."""
+    q = _unproject(cam, sx, sy + ICON_Y, near)
+    return round(q[0]), round(q[1]), round(q[2]), _nearest_tri(mesh, q[0], q[1])
 
 
 def _view_depth(cam, p):
@@ -1310,6 +1386,7 @@ def _shoot(ctx, back, cast=None):
         gy = sy + GAUGE_Y
         g = _unproject(cam, sx, gy, near)
         pl["gauge"] = (round(g[0]), round(g[1]), round(g[2]), _nearest_tri(mesh, g[0], g[1]))
+        pl["icon"] = _icon_at(cam, mesh, sx, sy, near)
         pl["cursor"] = []
         for b in range(21):                                  # bucket b = POS // 50
             off = ((b * 50 + 25) - 500) / 1000 * GAUGE_PX
@@ -1362,7 +1439,7 @@ def _shoot(ctx, back, cast=None):
     cm = loader.add_from(cd, CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
     if "sprites" not in _BUILT:                  # (the same base field: the same sizes for every set)
-        _BUILT["sprites"] = _sprites(ctx, half, half_cursor)
+        _BUILT["sprites"] = _sprites(ctx, half, half_cursor, ICON_PX / 2 * near / cam.zoom / unit)
     sprites = _BUILT["sprites"]
     for hrc in ("QGAA", "QCUA"):
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
@@ -1378,6 +1455,8 @@ def _shoot(ctx, back, cast=None):
         sfirst = len(ModelLoader.anims(loader.models[sk])) - len(girl_anims) - 1   # (then DXID: she stands, intro)
         assert len(loader.models) == 8 and sk == 7
         girls = [("ruby", 3, gfirst, "ruby"), ("skye", 7, sfirst, "skye")]
+    icon_model = len(loader.models)                  # (user) the hold's Square icon, last
+    loader.models.append(ModelLoader.with_scale(sprites["QHOA"], sprite_scale))
     # (user) the intro: everyone standing at the foot of the left bed (slot 3), the girl's stand =
     # her model's anim 0 (Skye's donor sits: her DXID, appended last)
     stand_of = {g[0]: 0 for g in girls}
@@ -1386,7 +1465,7 @@ def _shoot(ctx, back, cast=None):
 
     ents = {}
     for name in ("cloudb", girls[0][0], "camera", "gauge", "cursor", "keys", "voice", "hush") + \
-            tuple(g[0] for g in girls[1:]) + ("shout", "hush2", "hush3"):
+            tuple(g[0] for g in girls[1:]) + ("shout", "hush2", "hush3", "icon", "sqkey"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -1412,14 +1491,22 @@ def _shoot(ctx, back, cast=None):
             head = [asm.if_byte(MOVIE_GIRL, "bit_off" if girl == "ruby" else "bit_on", 1, off)]
         return head + by_p(make) + [asm.ret()] + ([off, hb._visi(0), asm.ret()] if girl else [])
     pnames = [p_["name"] for p_ in POSITIONS]
-    hold = lambda first, deep=False: by_p(lambda p, pl: ([_animb(), Op(bytes([0xA2, hold_index(first, pnames[p], deep), 1])),
-                                                          Op(bytes([0xAE, hold_index(first, pnames[p], deep), 1]))]
-                                                         if pnames[p] in PAUSE_POS else [])) + [asm.ret()]
+    def hold(first, kind=0):                     # kind 2 (her try): DFANM the deepest, play the try once
+        def make(p, pl):
+            if pnames[p] not in PAUSE_POS:
+                return []
+            i = hold_index(first, pnames[p], kind)
+            return [_animb(), Op(bytes([0xA2, hold_index(first, pnames[p], 1) if kind == 2 else i, 1])),
+                    Op(bytes([0xAE, i, 1]))]
+        return by_p(make) + [asm.ret()]
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, True)}
+                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1)}
     for key, model, first, test in girls:
         scripts[ents[key]] = {0: [Op(bytes([0xA1, model])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                              2: pose(first, "girl", "gdir", test), 4: hold(first), 5: hold(first, True)}
+                              2: pose(first, "girl", "gdir", test), 4: hold(first), 5: hold(first, 1),
+                              6: hold(first, 2)}
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, icon_model, sprite_dir,
+                                                                   by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     imesh, icam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
     ispot = {k: _spot(imesh, *xy) for k, xy in INTRO.items()}
     idir = {k: facing_screen(icam, *v[:3], (0, 1)) for k, v in ispot.items()}
@@ -1507,14 +1594,15 @@ def _shoot(ctx, back, cast=None):
                                   hb._req(ents["hush2"], 2, wait=False), asm.message(2, sec.add_string(_encode(shout))),
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
-    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()]}
+    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()],
+                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
     # (user: speed up the switch) all at once, not each waited on in turn
     place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *(ents[g[0]] for g in girls),
-                                                             ents["camera"], ents["gauge"])] + [hb._w(6)]
+                                                             ents["camera"], ents["gauge"], ents["icon"])] + [hb._w(6)]
 
     def pause_cond(no):                              # only in PAUSE_POS
         doit = asm.nop()
@@ -1526,8 +1614,14 @@ def _shoot(ctx, back, cast=None):
         skye_, done_ = asm.nop(), asm.nop()
         return [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_)] + block("ruby") + [asm.goto(done_), skye_] + \
             block("skye") + [done_]
+    def bonus(make):                             # (user) the hold's bonus: the girl's gil per press x HOLD_BONUS
+        if cast:
+            return make(cast["rate"] * HOLD_BONUS)
+        skye_, done_ = asm.nop(), asm.nop()
+        return [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_)] + make(PAY_RATE * HOLD_BONUS) + [asm.goto(done_), skye_] + \
+            make(PAY_RATE * SKYE_PAY * HOLD_BONUS) + [done_]
     pause = _pause_ops(hb, sec, [ents["cloudb"]] + [ents[g[0]] for g in girls], ents["hush3"], pause_lines,
-                       pause_cond)
+                       pause_cond, ents["icon"], bonus)
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
             asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE), asm.setbyte(FIN, 0)] + \
@@ -1824,7 +1918,7 @@ def _group(ctx, back):
     near = min(_view_depth(cam, v) for t in mesh.tris for v in t) * 0.8
     donor_loader = ModelLoader(ctx.field(mm.DONOR_FIELD).section("models"))
     sprite_scale = round(ModelLoader.entry_scale(donor_loader.models[mm.DONOR_MODEL]) * loader.scale / donor_loader.scale)
-    gauge, cursor = {}, {}
+    gauge, cursor, icon = {}, {}, {}
     for q in range(2 * n_g):
         sx, sy = cam.project(*focus[q][:3])
         sx = min(max(sx, left + 160), right - 160)
@@ -1832,6 +1926,7 @@ def _group(ctx, back):
         gy = sy + GAUGE_Y
         g = _unproject(cam, sx, gy, near)
         gauge[q] = (round(g[0]), round(g[1]), round(g[2]), _nearest_tri(mesh, g[0], g[1]))
+        icon[q] = _icon_at(cam, mesh, sx, sy, near)
         cursor[q] = []
         for b in range(21):
             off = ((b * 50 + 25) - 500) / 1000 * GAUGE_PX
@@ -1869,12 +1964,13 @@ def _group(ctx, back):
     cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
     sprites = _BUILT["sprites"]
-    for hrc in ("QGAA", "QCUA"):
+    for hrc in ("QGAA", "QCUA", "QHOA"):
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
-    assert len(loader.models) == 12 and cm == 9, len(loader.models)
+    assert len(loader.models) == 13 and cm == 9, len(loader.models)      # (12: the hold's Square icon)
 
     ents = {}
-    for name in ("cloudb", *GR.ORDER, "camera", "gauge", "cursor", "keys", "voice", "hush", "shout", "hush2", "hush3"):
+    for name in ("cloudb", *GR.ORDER, "camera", "gauge", "cursor", "keys", "voice", "hush", "shout", "hush2", "hush3",
+                 "icon", "sqkey"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -1896,7 +1992,7 @@ def _group(ctx, back):
                 steps(cfirst, HEAD_P if q < n_g else HEADREV_P)) + [asm.ret()],
         3: [xyzi(*centre), d_(facing_screen(cam, *centre[:3], (0, 1))), hb._visi(1)] + loop_(0) + [asm.ret()],
         4: _chain(PH, [loop_(hold_index(cfirst, n)) for n in ("head", "headrev")]) + [asm.ret()],
-        5: _chain(PH, [loop_(hold_index(cfirst, n, True)) for n in ("head", "headrev")]) + [asm.ret()]}
+        5: _chain(PH, [loop_(hold_index(cfirst, n, 1)) for n in ("head", "headrev")]) + [asm.ret()]}
     for k, key in enumerate(GR.ORDER):
         first = gfirst[key]
         b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
@@ -1908,20 +2004,25 @@ def _group(ctx, back):
             return [xyzi(*girl_at[q]), d_(gdirs[q]), hb._visi(1), asm.if_byte(E, "==", k, idle)] + \
                 steps(first, HEAD_P if ph == 0 else HEADREV_P) + [asm.ret(), idle] + \
                 loop_(still_kneel if ph == 0 else still_lie) + [asm.ret()]
-        idle4, idle5 = asm.nop(), asm.nop()
+        idle4, idle5, idle6 = asm.nop(), asm.nop(), asm.nop()
         scripts[ents[key]] = {0: [Op(bytes([0xA1, 3 + k])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: _chain(PH, [place(0), place(1)]) + [asm.ret()],
                               4: [asm.if_byte(E, "==", k, idle4)] +
                               _chain(PH, [loop_(hold_index(first, n)) for n in ("head", "headrev")]) + [idle4, asm.ret()],
                               5: [asm.if_byte(E, "==", k, idle5)] +
-                              _chain(PH, [loop_(hold_index(first, n, True)) for n in ("head", "headrev")]) +
+                              _chain(PH, [loop_(hold_index(first, n, 1)) for n in ("head", "headrev")]) +
                               [idle5, asm.ret()],
+                              6: [asm.if_byte(E, "==", k, idle6)] +       # (user) her try: once, then the deepest
+                              _chain(PH, [[_animb(), Op(bytes([0xA2, hold_index(first, n, 1), 1])),
+                                           Op(bytes([0xAE, hold_index(first, n, 2), 1]))] for n in ("head", "headrev")]) +
+                              [idle6, asm.ret()],
                               3: [xyzi(*girl_at[k]), d_(gdirs[k]), hb._visi(1)] + loop_(still_kneel) + [asm.ret()]}
     scripts[ents["camera"]] = {
         0: [Op(bytes([0xA1, 9]))] + hide() + [xyzi(*cam_at[0][:4]), d_(cam_at[0][4])] + loop_(film) + [asm.ret(), asm.ret()],
         2: by_q(lambda q: [xyzi(*cam_at[q][:4]), d_(cam_at[q][4])]) + [asm.ret()]}
     scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 10])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
                               2: by_q(lambda q: [xyzi(*gauge[q])]) + [hb._visi(1), asm.ret()]}
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, 12, sprite_dir, by_q(lambda q: [xyzi(*icon[q])]))
     loop, idle = asm.nop(), asm.nop()
     cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50)]
     cur += by_q(lambda q: _tree(BKT, 0, 20, lambda b: [xyzi(*cursor[q][b])]) + [hb._visi(1), hb._w(1),
@@ -1967,17 +2068,19 @@ def _group(ctx, back):
                                   hb._req(ents["hush2"], 2, wait=False), asm.message(2, sec.add_string(_encode(shout))),
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
-    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()]}
+    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()],
+                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
     girl_ents = [ents[key] for key in GR.ORDER]
     pause = _pause_ops(hb, sec, [ents["cloudb"]] + girl_ents, ents["hush3"],
-                       lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [])
+                       lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [], ents["icon"],
+                       lambda make: make(GR.RATE * HOLD_BONUS))
     # (user: a long delay before the fade-in) all at once, not each waited on in turn (11 entities)
     place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"],
-                                                             ents["gauge"])] + [hb._w(6)]
+                                                             ents["gauge"], ents["icon"])] + [hb._w(6)]
 
     def pick():                                       # E = a girl not yet used this part, at random; P = q
         found, ops = asm.nop(), [Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], n_g]))]

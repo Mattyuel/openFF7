@@ -1284,19 +1284,23 @@ def _stroke(t, n, resist=False):
     """A thrust's depth 0 -> 1 -> 0 over n frames, eased ((1 - cos) / 2); resist (user: "resistance
     to the forward thrust with sudden deceleration half through the forward push then smoothly
     out"): the push speeds up to RESIST_AT of the depth by its halfway point, then suddenly slows,
-    creeping on to full depth, and eases back out over the second half."""
+    creeping on to full depth, and eases back out over the second half. (User, since) the slow-down
+    more pronounced (RESIST_AT 0.8, the rest crept in over RESIST_CREEP of the push) and a very
+    slight pause at full depth to end each thrust (the push's last part held at 1)."""
     import math
     if not resist:
         return (1 - math.cos(2 * math.pi * t / n)) / 2
     u = 2 * t / n
     if u < 0.5:
         return RESIST_AT * (1 - math.cos(math.pi * u))       # accelerating into it (full speed at 0.5)
+    if u < 0.5 + RESIST_CREEP:                               # the sudden slow-down, creeping in
+        return RESIST_AT + (1 - RESIST_AT) * math.sin(math.pi / 2 * (u - 0.5) / RESIST_CREEP)
     if u < 1:
-        return RESIST_AT + (1 - RESIST_AT) * math.sin(math.pi * (u - 0.5))   # the sudden slow-down
+        return 1.0                                           # (the slight pause at the end of the thrust)
     return (1 + math.cos(math.pi * (u - 1))) / 2
 
 
-RESIST_AT = 0.7
+RESIST_AT, RESIST_CREEP = 0.8, 0.3
 
 
 def _eased(t, n=None):
@@ -1815,31 +1819,95 @@ def _smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter, straight_forearm=0):
             elbow[bone[0]] = bottom                       # (each hrc lists uparm before foarm)
         h = struct.unpack_from("<16I", d, 0)
         op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
-        ctx.char_file(new_p.lower() + ".p", _p_file(V, tris, C, d[64:128], struct.unpack_from("<12H", d, op)[10:12]))
+        ctx.char_file(new_p.lower() + ".p", _p_file(V, tris, C, d[64:128], struct.unpack_from("<12H", d, op)[10:12],
+                                                    orient=True))
     assert done == 4, done
     return hrc
 
 
-def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375)):
+def _orient(V, tris, c):
+    """The triangles wound so each one's cross product points into its piece. (User: "open geometry
+    at the top of his hand": wound by the whole part's centre, the bracer's cap lay level with it
+    and faced the wrong way, culled.) Each connected piece is made consistent across its shared
+    edges, then turned inward by its signed volume; a piece that isn't closed and consistent
+    keeps the old rule (away from the whole part's centre c)."""
+    import collections
+    tris = [tuple(t) for t in tris]
+    by_edge = collections.defaultdict(list)
+    for j, t in enumerate(tris):
+        for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+            by_edge[frozenset((a, b))].append(j)
+    out, seen = list(tris), set()
+    flip = lambda t: (t[0], t[2], t[1])
+    sub = lambda a, b: [a[k] - b[k] for k in range(3)]
+    cross = lambda u, w: [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]
+    dot = lambda u, w: sum(u[k] * w[k] for k in range(3))
+    for s in range(len(tris)):
+        if s in seen:
+            continue
+        piece, todo, ok = [s], [s], True
+        seen.add(s)
+        while todo:                                   # same direction across each shared edge = flip
+            j = todo.pop()
+            t = out[j]
+            for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+                for k in by_edge[frozenset((a, b))]:
+                    if k == j:
+                        continue
+                    u = out[k]
+                    same = (a, b) in ((u[0], u[1]), (u[1], u[2]), (u[2], u[0]))
+                    if k not in seen:
+                        if same:
+                            out[k] = flip(u)
+                        seen.add(k)
+                        piece.append(k)
+                        todo.append(k)
+                    elif same:
+                        ok = False
+        closed = ok and all(len(by_edge[frozenset(e)]) == 2 for j in piece
+                            for e in ((out[j][0], out[j][1]), (out[j][1], out[j][2]), (out[j][2], out[j][0])))
+        pc = [sum(V[i][k] for j in piece for i in out[j]) / (3 * len(piece)) for k in range(3)]
+        if closed:
+            vol = sum(dot(sub(V[out[j][0]], pc), cross(sub(V[out[j][1]], pc), sub(V[out[j][2]], pc))) for j in piece)
+            if vol > 0:                               # (outward by the right-hand rule: turn the piece round)
+                for j in piece:
+                    out[j] = flip(out[j])
+        else:
+            for j in piece:
+                a, b, d_ = (V[i] for i in out[j])
+                n = cross(sub(b, a), sub(d_, a))
+                if dot(n, sub([(a[k] + b[k] + d_[k]) / 3 for k in range(3)], c)) > 0:
+                    out[j] = flip(out[j])
+    return out
+
+
+def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False):
     """A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
     any winding), every vertex colour bgr; laid out as the games' own untextured parts
     (zcmb.p / Skye's zslb.p: header 1,1,1; one group; one normal per vertex, the vertex's
     face normals averaged, pointing out; the triangles wound as there, the cross product
     pointing inwards, i.e. towards the mesh's centre; bgr may be a list, one per vertex: each
     triangle takes its first vertex's); `tail` = the 128-byte header's second
-    half and `poly_tail` each poly's last two words, copied from such a part."""
+    half and `poly_tail` each poly's last two words, copied from such a part. orient: wind each
+    closed piece by `_orient` (the smoothed arms) instead of by the whole part's centre."""
     import math
     c = [sum(v[k] for v in V) / len(V) for k in range(3)]
     sub = lambda a, b: [a[k] - b[k] for k in range(3)]
     cross = lambda u, w: [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]
-    wound, acc = [], [[0.0, 0.0, 0.0] for _ in V]
-    for t in tris:
+    if orient:
+        wound = _orient(V, tris, c)
+    else:
+        wound = []
+        for t in tris:
+            a, b, d_ = (V[i] for i in t)
+            n = cross(sub(b, a), sub(d_, a))
+            if sum(n[k] * x for k, x in enumerate(sub([(a[k] + b[k] + d_[k]) / 3 for k in range(3)], c))) > 0:
+                t = (t[0], t[2], t[1])
+            wound.append(t)
+    acc = [[0.0, 0.0, 0.0] for _ in V]
+    for t in wound:
         a, b, d_ = (V[i] for i in t)
         n = cross(sub(b, a), sub(d_, a))
-        out = sub([(a[k] + b[k] + d_[k]) / 3 for k in range(3)], c)
-        if sum(n[k] * out[k] for k in range(3)) > 0:
-            t, n = (t[0], t[2], t[1]), [-x for x in n]
-        wound.append(t)
         for i in t:                                   # n points inwards: the outward normal is -n
             acc[i] = [acc[i][k] - n[k] for k in range(3)]
     normals = []

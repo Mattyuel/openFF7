@@ -432,6 +432,15 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Hold button, hand, thrust** (new; untested in-game, user): in head / head reverse / 69 (one-girl
+  shoots, the group, the special head) a pink Square icon flashes below the gauge for half a second,
+  first somewhere in each position's first 15 s, then about every 15 s. Press Square while it shows:
+  the materia sound, Cloud holds deep (bonus on the spot: gil per press x 10, shown in his line), at
+  2 s he sternly tells her to hold, at 4 s she tries to pull back and can't (muffled), at 7 s she pulls
+  away, gasps and says to continue. The random "hold it" stop and the head turned aside are gone (the
+  50% gag pause stays). Check: the icon's spot and size, Square registering (keyboard: the Square /
+  Switch key), the window timings. Cloud's thrust in those positions: sharper slow-down halfway and a
+  tiny pause at full depth. Cloud's hand: the bracer's top cap now faces outwards (it was culled).
 - **Group part one seats** (new; untested in-game, user): Skye and Scarlet have swapped places on the
   middle bed in part one.
 - **Hold it, no walks, group fix, poses** (new; untested in-game, user): head / head reverse / 69 (and each

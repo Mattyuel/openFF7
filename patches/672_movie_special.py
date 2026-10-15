@@ -358,20 +358,20 @@ def poses(ctx):
                 name = "Z%s%s%d" % (who, letter, s)
                 ctx.char_file(name.lower() + ".a", a.build())
                 out.append(name + ".tor")
-    for digit, frame in (("9", 0), ("8", 7)):     # the head's pause hold (her head turned aside), then the deep one
+    for digit, frame in (("9", 0), ("8", 7)):     # the head's pause hold, then the deep one (the hold)
         for who, src, out in (("M", "zrta.a", girl), ("N", "zctq.a", cloud)):
             a = fa.Anim(ctx.char_file(src))
             a.frames = a.frames[frame:frame + 1]
-            if who == "M" and digit == "9":
-                a = mv._head_turned(ctx, a, RUBY_HRC)
             ctx.char_file("z%sq%s.a" % (who.lower(), digit), a.build())
             out.append("Z%sQ%s.tor" % (who, digit))
+    mv._try_anim(ctx, "ZRTA", "ZMQ7")             # (user) her try to pull back during the hold (hers only)
+    girl.append("ZMQ7.tor")
     return girl, cloud
 
 
 # ---- the set ----------------------------------------------------------------------------------
 POSITIONS = ["insert", "head", "finisher"]
-SPRITES = {"QGEA": ("QGEB", "QGEC", "QGED"), "QCEA": ("QCEB", "QCEC", "QCED")}   # colne_6's own gauge sizes
+SPRITES = {"QGEA": ("QGEB", "QGEC", "QGED"), "QCEA": ("QCEB", "QCEC", "QCED"), "QHEA": ("QHEB", "QHEC", "QHED")}   # colne_6's own gauge sizes
 _BUILT = {}
 
 
@@ -429,6 +429,7 @@ def _special(ctx, key, back):
         gy = sy + mv.GAUGE_Y
         g = mv._unproject(cam, sx, gy, near)
         pl["gauge"] = (round(g[0]), round(g[1]), round(g[2]), mv._nearest_tri(mesh, g[0], g[1]))
+        pl["icon"] = mv._icon_at(cam, mesh, sx, sy, near)
         pl["cursor"] = []
         for b in range(21):
             off = ((b * 50 + 25) - 500) / 1000 * mv.GAUGE_PX
@@ -497,14 +498,14 @@ def _special(ctx, key, back):
     idle_cam = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_STILL)
     if "sprites" not in _BUILT:
         mv.SPRITES = SPRITES
-        _BUILT["sprites"] = mv._sprites(ctx, half, half_cursor)
+        _BUILT["sprites"] = mv._sprites(ctx, half, half_cursor, mv.ICON_PX / 2 * near / cam.zoom / unit)
     for hrc in SPRITES:
         loader.models.append(ModelLoader.with_scale(_BUILT["sprites"][hrc], sprite_scale))
-    assert (r, rc, cm, len(loader.models)) == (2, 3, 4, 7), (r, rc, cm, len(loader.models))
+    assert (r, rc, cm, len(loader.models)) == (2, 3, 4, 8), (r, rc, cm, len(loader.models))   # (7: the Square icon)
 
     ents = {}
     for name in ("cloudb", "girl", "girlc", "camera", "gauge", "cursor", "keys", "voice", "hush",
-                 "shout", "hush2", "hush3"):
+                 "shout", "hush2", "hush3", "icon", "sqkey"):
         ents[name] = len(sec.entity_names)
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
@@ -532,11 +533,16 @@ def _special(ctx, key, back):
         def make(p, pl):
             return [xyzi(*pl[who]), d_(pl[wdir]), hb._visi(1)] + mv._chain(STEP, [anim(first + 4 * p + s_) for s_ in range(4)])
         return by_p(make) + [asm.ret()]
-    hold = lambda first, deep=False: mv._chain(P, [[], anim(first + 4 * len(POSITIONS) + deep), []]) + [asm.ret()]   # (head's pause)
+    # (head's stops) kind 0 pulled back (Q9), 1 the deepest (Q8: the hold), 2 her try (Q7, once, then Q8)
+    hold = lambda first, kind=0: mv._chain(P, [[], anim(first + 4 * len(POSITIONS) + kind) if kind < 2 else
+                                               [mv._animb(), Op(bytes([0xA2, first + 4 * len(POSITIONS) + 1, 1])),
+                                                Op(bytes([0xAE, first + 4 * len(POSITIONS) + 2, 1]))], []]) + [asm.ret()]
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, True)}
+                               2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1)}
     scripts[ents["girl"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                             2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst), 5: hold(gfirst, True)}
+                             2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst), 5: hold(gfirst, 1), 6: hold(gfirst, 2)}
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 7, sprite_dir,
+                                                                      by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     scripts[ents["girlc"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: [hb._visi(0), asm.ret()],
                               3: [xyzi(*ispot["girl"]), d_(to("girl", "cloud")), hb._visi(1)] +
@@ -625,19 +631,22 @@ def _special(ctx, key, back):
                                   hb._req(ents["hush2"], 2, wait=False), asm.message(2, sec.add_string(mv._encode(shout))),
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(mv.FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
-    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()]}
+    scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()],
+                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
     actors = (ents["cloudb"], ents["girl"])
-    place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, *actors, ents["girlc"], ents["camera"], ents["gauge"])] \
+    place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, *actors, ents["girlc"], ents["camera"], ents["gauge"],
+                                                             ents["icon"])] \
         + [hb._w(6)]
 
     def pause_cond(no):                              # head only
         doit = asm.nop()
         return [asm.if_byte(P, "!=", 1, doit), asm.goto(no), doit]
-    pause = mv._pause_ops(hb, sec, list(actors), ents["hush3"], lambda block: block(key), pause_cond)
+    pause = mv._pause_ops(hb, sec, list(actors), ents["hush3"], lambda block: block(key), pause_cond, ents["icon"],
+                          lambda make: make(rate * mv.HOLD_BONUS))
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
             asm.setbyte(STEP, 0), asm.setbyte(K, 0), asm.setword(NEXT, SPECIAL_MINUTE), asm.setbyte(FIN, 0)] + \
