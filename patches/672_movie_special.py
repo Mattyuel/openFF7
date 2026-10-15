@@ -664,7 +664,8 @@ def _special(ctx, key, back):
                                   asm.ret()]}
     scripts[ents["hush2"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(mv.FINISH_SAY_FOR), Op(b"\x54\x02"), asm.ret()]}
     scripts[ents["hush3"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GR.PAUSE_FRAMES[1]), Op(b"\x54\x03"), asm.ret()],
-                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()]}
+                              3: [hb._w(GR.HOLD_SAY), Op(b"\x54\x03"), asm.ret()],
+                              4: [hb._w(GR.MUFFLED_SAY), Op(b"\x54\x03"), asm.ret()]}
 
     # director
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()

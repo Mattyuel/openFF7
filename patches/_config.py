@@ -72,8 +72,8 @@ HB_MINUTES, HB_LAST = (2, 247), (2, 249)
 # HB_AFFECTION[i]. Bank 1 188-223 has no exe absolute refs and no world map
 # use; original field scripts use 197-199 and 208-209, so those are skipped.
 HB_AFFECTION = [(1, b) for b in list(range(188, 197)) + list(range(200, 208)) + list(range(210, 213))]
-# bit per girl: her devoted (affection 20) scene was seen -> a kid stands next
-# to her (622_hb_kids). Bank 1 214-216.
+# bit per girl: her final intimacy scene was seen (her Honey Bee devoted scene, or a date's part
+# two): the movie's unlock (670), the manager's '*'. Bank 1 214-216.
 HB_KID = [((1, 214 + i // 8), i % 8) for i in range(20)]
 DATE_GIRL = (1, 217)               # girl index + 1 on a date (660_dates; 0 = none)
 # The movie minigame (670_movie): 0 nothing owed, 1 the cut is owed, 2 just back

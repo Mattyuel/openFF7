@@ -596,7 +596,8 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_marker_loop(entries, offer, accepted)` Main loop of a field's marker entity: every 10 frames the first of
 - `_spot(ctx, field, x, y)` 
 - `_marker_model(ctx, field, hrc)` Add marker model `hrc` to `field`; its index.
-- `_add_markers(ctx, field, givers)` The quest markers of every giver in `field` ([(giver, pos)]): one star
+- `_reuse_marker(ctx, field, entity, suffix, init_ops, main_ops)` A marker on hidden entity `entity`: its model entry becomes the marker's (STAR / HEART by
+- `_add_markers(ctx, field, givers)` The quest markers of every giver in `field` ([(giver, pos)]): (user, since) a star and a heart
 - `_kill_table()` {u16 enemy id, u16 state var, u16 counter var, u8 count, pad}..., 0xFFFF.
 - `_quest_log_data(base)` DATA block for quest_menu.asm (layout documented there).
 - `_quest_menu(ctx)` 
@@ -667,7 +668,7 @@ Honey Bee Girl recruitment.
 - `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False)` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx, name=CLOUD_BUCK, resist=False)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK. resist: `_stroke`'s resisted push.
-- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0, still_upper=False, resist=False, spread=0)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
+- `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0, still_upper=False, resist=False, spread=0, reach=None)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
 - `_cloud_spread(ctx)` zctc.a (CLOUD_SPREAD) on Cloud's skeleton: see CLOUD_SPREAD.
 - `_cloud_pound(ctx)` zctb.a (CLOUD_POUND) on Cloud's skeleton: see CLOUD_POUND.
 - `_cloud_thrust(ctx, name=CLOUD_THRUST, pivot=0, knee_gap=THRUST_KNEE_GAP)` zcta.a (CLOUD_THRUST) on Cloud's skeleton (AAAA.HRC), from AVDD: see CLOUD_THRUST.
@@ -675,15 +676,6 @@ Honey Bee Girl recruitment.
 - `_fours(ctx)` dzbf.a (FOURS_ANIM): on all fours, rocking back POSE_ROCK on the knees and
 - `_ride(ctx)` dzbr.a (RIDE_ANIM): kneeling astride, rocking; RIDE_FRAMES frames.
 - `_bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=EDGE_ARMS_DOWN)` dzbg.a (EDGE_ANIM): standing, knees bent EDGE_KNEE, bent EDGE_BEND forward at
-- `apply(ctx)` 
-
-## `patches/622_hb_kids.py`
-Honey Bee kids: after a girl's devoted (affection 20) scene, a child stands
-
-- `_at_screen(ctx, field, x, y, dx, dy)` Floor (x, y, z, tri) near (x, y) whose screen position is (dx, dy) pixels from it.
-- `_beside(ctx, field, x, y)` Floor (x, y, z, tri) next to (x, y) as seen on screen: about GAP pixels
-- `_talk(line)` 
-- `_hidden_unless(i)` 
 - `apply(ctx)` 
 
 ## `patches/625_gift_shops.py`
@@ -772,6 +764,7 @@ The movie minigame (user's design).
 - `_skye_limbs(ctx, hrc)` 
 - `_skye_shape(ctx, hrc)` 
 - `_try_anim(ctx, base, name)` (user: "after 4 seconds ... the girl's head pulls back slightly to try to come back, but
+- `_under(sk, bone, root)` bone is below root in the skeleton.
 - `_pause_arm(hb, length)` At a position's start (or a group turn's): (user: "a 50% chance that a girl has to stop
 - `_icon_next(hb, base, step)` IT = FR + base + k * step, k random 0..7.
 - `_ann(k)` 
@@ -784,8 +777,8 @@ The movie minigame (user's design).
 - `_there_arm(hb)` At a position's start: no "there" prompt shown yet, the first at FR + THERE_FIRST.
 - `_there_ops(hb, sec, key, rate, cond, icon, hush, leave)` (user) The special shoots' "there" prompt (672: parts one and three, two a part): the
 - `_there_refuse(hb, say, pr, kind, loss)` Her refusal line: Scarlet's third try on (`there_push`) vs her first (`there_no`).
-- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
-- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
+- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None, desperate=3)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
+- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
 - `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `end_index(cloud, k)` Offset (from a model's first `_speeds` anim) of the group's "end" anim k: 0-3 the speeds,
@@ -859,6 +852,15 @@ The movie minigame (user's design).
 
 - `_date_heads(ctx)` 
 - `_check(ctx)` Every anim named by a date field's models exists in char.lgp (the poses come from later patches).
+- `apply(ctx)` 
+
+## `patches/680_affection.py`
+(user) The affection list: Square in a field shows every Honey Bee girl's name, personality and
+
+- `_label(g)` 
+- `_longest()` The longest list the opcode can write (every girl known, two-digit affection), as text.
+- `_data()` 
+- `_entity(sec, hb, placeholder)` 
 - `apply(ctx)` 
 
 ## `patches/900_phs.py`

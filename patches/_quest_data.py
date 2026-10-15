@@ -830,7 +830,7 @@ GIVERS += WORLD_GIVERS
 # entries but not the NPC; the giver's own patch moves the state with `quest_state` /
 # `count_ops` / `reward_ops`): the Honey Bee manager (620) and the cameraman (670). `gate`: offer
 # conditions besides the previous quest being done ((kind, var, value): "eq" byte == value,
-# "bits" all of those bits set), here every Honey Bee kid born (_config.HB_KID)
+# "bits" all of those bits set), here every girl's final scene seen (_config.HB_KID)
 EXTERNAL_GIVERS = [
     dict(field="onna_4", name="hbmgr", external=True, level=8, at=(104, -48), dir=0,
          who="Honey Bee Manager", where="Wall Market, Honey Bee Inn",
@@ -856,4 +856,19 @@ EXTERNAL_GIVERS = [
                       gate=[("eq", (1, 214), 0xFF), ("eq", (1, 215), 0xFF), ("bits", (1, 216), [0, 1, 2, 3])],
                       reward=dict(gil=1000))]),
 ]
+# (user) a quest per date girl: her star where you meet her for dates; the first date (660) accepts it
+# when you ask her out and completes it when the date ends. External: 660 moves the state
+import _honey_bee_data as _HB
+DATE_QUESTS = [("Tifa", 30, "Nibelheim, the old house"), ("Aerith", 35, "Temple of the Ancients"),
+               ("Scarlet", 8, "Shinra HQ, 66F"), ("Elena", 20, "Junon, Shinra Member's Bar")]
+for _name, _level, _where in DATE_QUESTS:
+    _g = next(g for g in _HB.GIRLS if g["name"] == _name)
+    EXTERNAL_GIVERS.append(dict(
+        field=_g["field"], name=_name.lower()[:6] + "dt", external=True, level=_level, at=_g["at"], dir=_g["dir"],
+        who=_name, where=_where,
+        quests=[dict(id="date_" + _name.lower(), kind="count", late=True, label="First date", count=1,
+                     title="A Date with %s" % _name,
+                     desc=["Ask %s out on a date and see it" % _name, "through to the end. Anywhere you",
+                           "like: she'll be glad you asked."],
+                     reward=dict(gil=500))]))
 GIVERS += EXTERNAL_GIVERS

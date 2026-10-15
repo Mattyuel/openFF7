@@ -341,6 +341,10 @@ CLOUD_STAND, STAND_KNEE, STAND_LEAN, STAND_ARMS, STAND_ARMS_IN, STAND_THRUST, ST
 # leans back EDGE_LEAN_BACK at the deepest point to take it
 # head's Cloud since (user): right arm up about 70, left about 30, both bent in a bit at the elbow
 STAND_ARMS_LR, STAND_ELBOW_IN = {"l": 30, "r": 70}, 20
+# the movie's head reverse Cloud (ZCTX, user): arms straight out in front at 90 degrees to his torso
+# (so angled down as he leans back), steady, turned in
+# at the shoulders halfway (fingertips half way from the shoulder's side to his middle): holding her back
+HEADREV_REACH = 0.5
 CLOUD_EDGE, EDGE_CLOUD_ARMS, EDGE_CLOUD_HIP, EDGE_CLOUD_OUT = "ZCTF.tor", 60, 100, 10
 EDGE_THRUST, EDGE_LEAN_BACK = 2.5, 12
 HOLD_STILL_IN = 0.12                          # hold="still": the hands this much nearer the shoulders (bent elbows)
@@ -1032,7 +1036,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
             else:
                 raise ValueError(step)
         if field == DEVOTED_ROOM:
-            ops.append(asm.biton(*HB_KID[i]))          # 622: a kid appears next to her
+            ops.append(asm.biton(*HB_KID[i]))          # her final scene seen (670's unlock, the '*')
         ops += [asm.goto(finale), nxt]
     ops += [asm.goto(stop), finale, _w(30),
             Op(bytes.fromhex("6b0000000000080200")), Op(b"\x6C"), _w(20),       # FADE out, FADEW
@@ -2038,7 +2042,7 @@ def _cloud_buck(ctx, name=CLOUD_BUCK, resist=False):
 
 def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0,
                  lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None,
-                 elbows_out=1.0, legs_out=0, still_upper=False, resist=False, spread=0):
+                 elbows_out=1.0, legs_out=0, still_upper=False, resist=False, spread=0, reach=None):
     """zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
     the left thigh raised to `hip` degrees forward of vertical and turned `out` degrees
     outward, the shin straight down, the foot level; it stays planted while the hips
@@ -2053,7 +2057,11 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     thrusts; the chest and everything above it turn back about the pelvis's top each frame so the
     neck keeps frame 0's forward position (the upper body still; head, user). spread: each leg
     swung that many degrees out sideways at the hip (feet kept flat), a wide stance (670's group
-    "end": his feet either side of her shoulders, user)."""
+    "end": his feet either side of her shoulders, user). reach: instead of `arms`, both arms straight
+    (shoulder to fingertips in one line) out in front, level, turned in at the shoulder until the
+    fingertips are `reach` of the way from the shoulder's side to the middle, at 90 degrees to the torso
+    (pelvis to neck: angled down as far as he leans back), and held there (no
+    closing in as he thrusts: 670's head reverse, holding her back, user)."""
     import math
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file("aaaa.hrc").decode("latin-1"))
@@ -2150,7 +2158,27 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
     head0 = end(fk(W), "head")
     sense = 1 if lean > 0 else -1                    # lean < 0: torso back
     W = signed(W, upper, abs(lean), lambda F: sense * dot(end(F, "head"), fwd) > sense * dot(head0, fwd) + 1)
-    for s, out in (("l", 1), ("r", -1)):
+    reach_dir = {}
+    for s in "lr" if reach is not None else ():  # (user) straight out in front, square to the torso, turned in
+        F = fk(W)
+        arm = [I(s + n) for n in ("_uparm", "_foarm", "_hand")]
+        sh = F[arm[0]][1]
+        L = sum(math.dist(F[i][1], F[i][2]) for i in arm)
+        x = sh[0] * (1 - reach)
+        dx = x - sh[0]
+        ci = I("chest")                                                       # (user) 90 to his torso
+        ax_ = sub(F[ci][2], F[I("hip")][1])
+        ax_ = [c / math.sqrt(dot(ax_, ax_)) for c in ax_]
+        f_ = sub(fwd, [dot(fwd, ax_) * c for c in ax_])
+        f_ = [c / math.sqrt(dot(f_, f_)) for c in f_]
+        k_ = math.sqrt(L * L - dx * dx) / L
+        d = [dx / L + k_ * f_[0], k_ * f_[1], k_ * f_[2]]                     # forward square to the torso, in
+        for i in arm:
+            W[i] = fa._mul(align(bdir(W[i]), d), W[i])
+        reach_dir[s] = d
+        F = fk(W)
+        assert abs(F[arm[2]][2][0] - x) < 0.05 and abs(dot(sub(F[arm[2]][2], sh), ax_)) < 0.05, ("reach", s)
+    for s, out in (("l", 1), ("r", -1)) if reach is None else ():
         arm = (s + "_uparm", s + "_foarm", s + "_hand")
         hand0 = end(fk(W), s + "_hand")
         angle = arms[s] if isinstance(arms, dict) else arms
@@ -2250,6 +2278,9 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             Wt = rot(Wt, {"head"}, fa.axis_angle(side, -sense * (lo_ + hi_) / 2))    # the head level again
             assert abs(dot(end(fk(Wt, rt), "chest"), fwd) - n0) < 0.02, "upper body still"
             assert math.dist(end(fk(Wt, rt), "head"), E0[I("head")]) < 0.5, "head still"
+        for s, d_ in reach_dir.items():                                        # (reach) the arms kept level, steady
+            for n in ("_uparm", "_foarm", "_hand"):
+                Wt[I(s + n)] = fa._mul(align(bdir(Wt[I(s + n)]), d_), Wt[I(s + n)])
         for s, out in (("l", 1), ("r", -1)) if hold else ():                  # hands on her head
             wrist, hd, _ = grips[s]
             Fh = fk(Wt, rt)
@@ -2269,7 +2300,7 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
             Wt[j] = fa._mul(align(bdir(Wt[j]), sub(wrist, K)), Wt[j])
             h_ = I(s + "_hand")
             Wt[h_] = fa._mul(align(bdir(Wt[h_]), hd), Wt[h_])
-        for s, out in (("l", 1), ("r", -1)) if not hold else ():              # arms close in as he thrusts
+        for s, out in (("l", 1), ("r", -1)) if not hold and reach is None else ():   # arms close in as he thrusts
             arm = {s + "_uparm", s + "_foarm", s + "_hand"}
             for sign in (1, -1):
                 M = rot(Wt, arm, fa.axis_angle(up, sign * STAND_ARMS_IN * e))
@@ -2283,6 +2314,8 @@ def _cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAN
                 assert math.dist(top[I(s + "_tibia")][2], E0[I(s + "_tibia")]) < 0.6, s       # feet planted
                 if hold:
                     assert math.dist(top[I(s + "_hand")][2], grips[s][2]) < 0.1, s           # on her head
+                if reach_dir:
+                    assert math.dist(top[I(s + "_hand")][2], E0[I(s + "_hand")]) < 0.6, s    # steady
         frames.append((rr, [rt[0], -rt[1], rt[2]], local))
     base.frames = frames
     ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
@@ -2890,7 +2923,7 @@ def apply(ctx):
                                                                      HEAD_RIGHT / 3.41), still_upper=HEAD_STILL_UPPER,
                  resist=True)   # head (user): ZCTQ, also the movie's; (user, since) the resisted push
     # (user) the movie's head reverse and 69: ZCTE / ZCTD with the resisted push (`_stroke`)
-    _cloud_stand(ctx, "ZCTX.tor", arms=STAND_ARMS_LR, elbow_in=STAND_ELBOW_IN, still_upper=True, resist=True)
+    _cloud_stand(ctx, "ZCTX.tor", still_upper=True, resist=True, reach=HEADREV_REACH)   # (user, since) arms out, holding her back
     _cloud_buck(ctx, "ZCTY.tor", resist=True)
     for name, n in (("ZCTJ.tor", STAND_FRAMES), ("ZCTK.tor", 8)):       # Aerith's date (user: hands on her head)
         _cloud_stand(ctx, name, arms=AERITH_CLOUD_ARMS, arms_out=AERITH_CLOUD_IN, elbow_in=AERITH_CLOUD_ELBOW, nframes=n)

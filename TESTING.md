@@ -432,6 +432,25 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Kids removed** (user): no kid NPC appears next to any girl any more (coloss's arena kid and nivl_3's
+  cloaked man are back as in the game). Seeing a girl's final scene still counts for the movie unlock.
+- **Candy and Elena moved** (user): Candy is in North Corel (town, right of centre); Elena is in Junon's
+  Shinra Member's Bar where Candy stood. Check both can be talked to, hired and (Elena) dated, and that
+  dates bring you back beside Elena in the bar.
+- **Date quests** (new; untested in-game, user): Tifa, Aerith, Scarlet and Elena each have a star where you
+  meet them; asking her on a date accepts "A Date with <name>" (heart), and the date's end completes it
+  (500 gil + Sources). Check the Quests screen lists them.
+- **Affection list on Square** (new; untested in-game, user): in any field where Triangle would open the
+  menu, Square shows a two-page box: "Name (personality): N/20" for each Honey Bee girl, "????" for one
+  you haven't hired or dated. Check: it doesn't open during scenes / conversations, the menu still opens on
+  Triangle, the numbers match the lounges, and it never shows in the movie sets (Square is the prompt there).
+- **Quest markers, several at once** (fix; untested in-game, user): every quest giver has their own star /
+  heart. In the Sector 7 station (Wymer + the cameraman) and Upper Midgar's station (Station Manager +
+  Shinra Deserter) both givers' markers should show together. Check nothing else in those two fields
+  changed (they reuse the hidden party-member entities).
+- **Movie unlock via dates** (new; untested in-game, user): Tifa, Aerith, Elena and Scarlet count for the
+  movie unlock once you've seen their final scene on a date (part two) or in the Honey Bee Inn; the other
+  16 still need their Honey Bee devoted scene. A date's part two also makes her Honey Bee kid appear.
 - **Honey Bee devoted positions by personality** (new; untested in-game, user): Elena now mission (face to
   face, her rules), Scarlet on top (she sets the pace), Tifa cowgirl, Aurora mission; their devoted scenes
   rewritten. Check those four scenes' bed layouts and that nothing else changed.
@@ -460,6 +479,14 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Group shoot broke at its start** (fix; untested in-game, user): its models now carry only the
   animations the group plays (26-36 each instead of 63-71). Check the group shoot starts and every part
   (head, head reverse, end) shows the right poses.
+- **Longer hold** (tweak; untested in-game, user): a hold now lasts 9 s (was 7). After her first muffled line she
+  squirms twice more (hips wriggling, then a desperate struggle pushing at him) with another muffled line and a
+  more desperate one, then pulls away as before. In every shoot with the hold (solo, group, special).
+- **Head reverse Cloud's arms** (tweak; untested in-game, user): in the movie's head reverse (solo and group)
+  Cloud's arms are straight out in front at 90 degrees to his torso (angled down with his lean), turned in
+  halfway at the shoulders, and stay steady while he thrusts, as if holding her back.
+- **Group part one, left line** (tweak; untested in-game, user): the three girls on the screen-left side of
+  the middle bed kneel a pace further back (x -40, was -20), near its edge; their Cloud moves with them.
 - **Girls' personalities in the shoots** (new; untested in-game, user; profiles in
   `patches/_movie_profiles.py`): the Square hold now depends on who you hold, in every shoot (one girl,
   group, special): Ruby always plays along; Skye usually (1 in 4 she changes her mind); Scarlet the first

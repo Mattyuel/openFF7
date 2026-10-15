@@ -135,7 +135,7 @@ def _menu(sec, dests):
     ops += [on, asm.bitoff(DEBUG_FLAGS, 0), asm.battles_enabled(True), asm.goto(done)]
     ops += [hb] + _ask(sec, "Honey Bee / Hunter", ["Job + hire all 20 girls", "All affection 0",
                                                    "All affection 10", "All affection 20", "All 12 gifts",
-                                                   "All 20 kids", "Hunter points +50", "Star rank +1",
+                                                   "All 20 final scenes", "Hunter points +50", "Star rank +1",
                                                    "Time +30 min", "Rescue scene: always", "Back"])
     hb_acts = [asm.nop() for _ in range(10)]
     for k, label in enumerate(hb_acts):

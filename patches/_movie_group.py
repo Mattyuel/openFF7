@@ -14,9 +14,10 @@ NAMES = {"ruby": "Ruby", "skye": "Skye", "elena": "Elena", "scarlet": "Scarlet",
          "aerith": "Aerith"}
 
 # part one: the middle bed's top (walkmesh piece z 100, x -45..81, y -181..29); the girls kneel
-# HEAD_GAP from Cloud as in the one-girl "head" (38 ahead, 6 to his right): line one at x -20
-# facing +x, line two at x 56 facing -x, Cloud between them at x 18
-HEAD_X, HEAD_YS = (-20, 56), (-125, -85, -45)    # (user, since) up the bed, away from its end
+# HEAD_GAP from Cloud as in the one-girl "head" (38 ahead, 6 to his right): line one at x -40
+# facing +x (the screen-left line), line two at x 56 facing -x, each Cloud HEAD_GAP from his girl
+HEAD_X, HEAD_YS = (-40, 56), (-125, -85, -45)    # (user, since) up the bed, away from its end; (user, since)
+                                                 # line one a pace back (was -20), near the bed's edge (-45)
 HEAD_SEAT = {"ruby": 0, "skye": 3, "elena": 2, "scarlet": 1, "tifa": 4, "aerith": 5}   # part one: girl -> spot
                                              # (0-2 line one by HEAD_YS, 3-5 line two; user: Skye and Scarlet swapped)
 HEAD_GAP, HEAD_RIGHT = 38, 1                 # (user, since) his pelvis on her face (was 6)
@@ -142,13 +143,16 @@ HOLDS = {
                "(She comes up for air, coughing.)\n“You meanie... more please.”",
                "(She gasps)\n“I'm... okay... back in.”"],
 }
-HOLD_AT = dict(stern=90, muffled=150, struggle=180, end=210)   # (user, since) frames into the hold: his line at 0
-                                   # (held deep); his stern reminder (HOLD_STERN) at 3 s; her muffled line
-                                   # (HOLD_MUFFLED) at 5 s; her struggle to pull back at 6 s; at 7 s she pulls
-                                   # away, then hers as PAUSE_FRAMES. Each line's window closes HOLD_SAY frames in.
+HOLD_AT = dict(stern=90, muffled=150, struggle=180, muffled2=190, desperate=230, end=270)
+                                   # (user, since) frames into the hold: his line at 0 (held deep); his stern
+                                   # reminder (HOLD_STERN) at 3 s; her muffled line (HOLD_MUFFLED) at 5 s; her
+                                   # struggle (`SQUIRMS`, 3 s) from 6 s; (user, since: 2 s longer) another muffled
+                                   # line (a different HOLD_MUFFLED one) at 6.3 s, a desperate one
+                                   # (HOLD_DESPERATE) at 7.7 s; at 9 s she pulls away, then hers as PAUSE_FRAMES.
+                                   # His lines' windows close HOLD_SAY frames in, hers MUFFLED_SAY.
                                    # (User, since) the hold is the player's: Square while the icon shows (670
                                    # `_pause_ops`), not a random 50%
-HOLD_SAY = 50
+HOLD_SAY, MUFFLED_SAY = 50, 40
 HOLD_STERN = ["I said hold it.", "Do not pull away.", "Stay. Right. There."]
 HOLD_MUFFLED = {   # (user) 5 s in: muffled, struggling
     "ruby": ["Mmmph! Mmff... mmh!!", "Nnnh... mmph! Mmmh!!", "Mmh-mmh! Mmmmff!"],
@@ -158,7 +162,21 @@ HOLD_MUFFLED = {   # (user) 5 s in: muffled, struggling
     "tifa": ["Mmph! Mmmh... mmff!!", "Nnnh... mmh! Mmmph!", "Mmh! Mmh-mmh!!"],
     "aerith": ["Mmmh! Mmph... mmff!", "Nnnmh! Mmmph!!", "Mmh-mmh! Mmmff..."],
 }
+HOLD_DESPERATE = {   # (user) the hold's last line, 7.7 s in: more desperate (the group uses only the first: texts)
+    "ruby": ["MMMPH!! MMH-MMH-MMH!!", "Nnnngh!! MMMFF!! Mmh!!", "MMH! MMH! MMMMPH!!"],
+    "skye": ["MMMMH!! Mmh-MMH!! Mmmph!!", "Nnnh-NNH!! MMMFF!!", "MMPH?! MMMH!! MMH!!"],
+    "elena": ["MMMPH!! Mmh-mmh-MMH!!", "Nnngh!! MMMFF!! (Tap tap tap!)", "MMH! MMMH!! Mmmph!!"],
+    "scarlet": ["MMMMPH!! MMH!! MMMFF!!", "NNNGH!! Mmh-MMH!!", "MMPH! MMMPH!! MMH!!"],
+    "tifa": ["MMMPH!! Mmh-MMH!!", "Nnnngh!! MMMFF!! Mmh!!", "MMH! MMH-MMH!! Mmmph!!"],
+    "aerith": ["MMMMH!! Mmph-MMPH!!", "Nnnnmh!! MMMFF!! Mmh!!", "MMH?! MMMMPH!! Mmh!!"],
+}
 TRY_FRAMES, TRY_PULL = 30, 0.3     # (user) at 4 s her head pulls back slightly (30% of the way out) and can't
+# (user, since) her struggle, one after another in her try anim (670 `_try_anim`), TRY_FRAMES each: the pull
+# back; a squirm (her hips wriggling: legs swayed about her body's axis); a desperate one (a harder pull,
+# a fast tremble, her arms pushing at him, legs thrashing)
+SQUIRMS = [dict(pull=TRY_PULL, shake=6, sway=0, push=0, cycles=0),
+           dict(pull=0.15, shake=10, sway=14, push=0, cycles=2),
+           dict(pull=0.45, shake=3, sway=20, push=25, cycles=3)]
 PAUSE_FRAMES = (0, 75, 15)         # before her line (user: shown the moment it happens); the line; after it
 PAUSE_CHANCE = 128                 # (user, since) a 50% chance per position (or group turn) of one pause, armed
                                    # at its start for a random frame in its middle half (670 `_pause_arm`; was a

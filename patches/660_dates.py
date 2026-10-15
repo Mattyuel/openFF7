@@ -22,7 +22,7 @@ are dropped, entity 0 becomes the director.
 import importlib
 import math
 
-from _config import DATE_GIRL, HB_AFFECTION
+from _config import DATE_GIRL, HB_AFFECTION, HB_KID
 from _dates_data import DATES
 import _movie_girls as MG
 from _honey_bee_data import GIRLS
@@ -253,13 +253,20 @@ def _date(sec, ctx, place, i, g, d, part2):
                     block += acts[line] + [hb._w(20)]
                 else:
                     block += hb._say(sec, (her(line) if who == "G" else "{CLOUD}\n" + line)) + [hb._w(20)]
-            block += [hb._w(30), Op(hb.FADE_OUT), Op(b"\x6C")] + hb._say(sec, d["desire"][place])
+            # (user) her final intimacy scene, seen: counts for the movie's unlock as her Honey Bee
+            # devoted scene does (HB_KID)
+            block += [asm.biton(*HB_KID[i]), hb._w(30), Op(hb.FADE_OUT), Op(b"\x6C")] + hb._say(sec, d["desire"][place])
             block += [asm.goto(out), leave] + hb._say(sec, her(d["leave"]))
             block += [asm.goto(out), plain]
         block += hb._say(sec, her(tier["close"])) + [asm.goto(out)]
         ops += [tier_at[t]] + block
     rx, ry, rt, rd = _return_spot(ctx, g)
-    ops += [out, asm.setbyte(DATE_GIRL, 0), hb._uc(0), hb._menu(0),
+    qx = importlib.import_module("600_quests")      # (user) her date quest: done when the first date ends
+    qid = "date_" + name.lower()
+    qstate, skip = qx.quest_state(qid), asm.nop()
+    ops += [out, asm.if_byte(qstate, "==", qx.ACCEPTED, skip)] + qx.count_ops(qid) + qx.reward_ops(sec, qid) + \
+        [asm.setbyte(qstate, qx.DONE), skip]
+    ops += [asm.setbyte(DATE_GIRL, 0), hb._uc(0), hb._menu(0),
             asm.mapjump(ctx.maplist.index(g["field"]), rx, ry, rt, rd), asm.ret()]
     return ops
 
@@ -539,10 +546,13 @@ def _offer(ctx, i, g, arrive, group):
     ask, first = hb._ask(sec, her(d["where"]), [PLACE_NAMES[p] for p in PLACES] + ["Never mind."])
     ops += ask
     never = asm.nop()
+    qx = importlib.import_module("600_quests")      # (user) her date quest: accepted on asking her out
+    qstate, new = qx.quest_state("date_" + g["name"].lower()), asm.nop()
+    ops_accept = [asm.if_byte(qstate, "==", qx.NEW, new), asm.setbyte(qstate, qx.ACCEPTED), new]
     for k, p in enumerate(PLACES):
         nxt = asm.nop()
         (x, y, z, tri), adir = arrive[p]
-        ops += [asm.if_byte(CHOICE, "==", first + k, nxt), asm.setbyte(DATE_GIRL, i + 1), hb._uc(0),
+        ops += [asm.if_byte(CHOICE, "==", first + k, nxt)] + ops_accept + [asm.setbyte(DATE_GIRL, i + 1), hb._uc(0),
                 asm.mapjump(ctx.maplist.index(FIELDS[(p, group)]), x, y, tri, adir), asm.ret(), nxt]
     ops += [never, hb._uc(0), asm.ret()]
     sec.insert_after(talk[2], ops)

@@ -12,6 +12,7 @@ OPCODES = {
     0x0E: ("DSKCG", 2), 0x0F: ("SPECIAL", None),
     0x1C: ("BOUNTY", 5),   # openFF7: unused in the game; 630_bounties.py points it at quest_menu.asm
     0x1D: ("TXPOKE", 5),   # openFF7: unused in the game; 620_honey_bee.py points it at quest_menu.asm
+    0x1E: ("AFFTEXT", 2),  # openFF7: unused in the game; 680_affection.py points it at quest_menu.asm (a_op)
     0x10: ("JMPF", 2), 0x11: ("JMPFL", 3), 0x12: ("JMPB", 2), 0x13: ("JMPBL", 3),
     0x14: ("IFUB", 6), 0x15: ("IFUBL", 7), 0x16: ("IFSW", 8), 0x17: ("IFSWL", 9),
     0x18: ("IFUW", 8), 0x19: ("IFUWL", 9),
