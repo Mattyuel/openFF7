@@ -413,7 +413,8 @@ def _blast(ctx, built, back):
     there = by_g(lambda key_: mv._there_ops(hb, sec, key_, rate[key_], lambda no: [asm.if_byte(P, "==", 2, no)],
                                             ents["icon"], ents["hush3"], leave))
     gone = asm.nop()
-    main = [asm.if_byte(BLAST_ON[0], "bit_on", BLAST_ON[1], gone), asm.bitoff(*BLAST_ON)]
+    main = [asm.if_byte(BLAST_ON[0], "bit_on", BLAST_ON[1], gone), asm.bitoff(*BLAST_ON),
+            asm.biton(*CID.BLASTED)]                     # (user) Cloud's talk with Cid can come (660)
     main += [Op(b"\xE0\x00\x01\x00"), Op(b"\xE1\x00\x02\x00")]          # space through the window (as 660)
     main += [asm.setbyte(G, 0)]
     for k, key in enumerate(BD.ORDER[1:], 1):

@@ -247,6 +247,8 @@ def _date(sec, ctx, place, i, g, d, part2):
         block = []
         if t == 2 and name in RV.REVEAL:             # (user) her revelation, once, after a video with Cloud
             block += _reveal(sec, name, her, out)
+        if t == 2 and name == CID.NAME:              # (user) Cloud's talk with Cid, once, after a Blast-off
+            block += _cid_talk(sec, her)
         block += hb._say(sec, her(tier["open"]))
         for st in tier["steps"]:
             if st[0] == "G":
@@ -313,6 +315,29 @@ def _reveal(sec, name, her, out):
     ops += [done] + pages(r["end"]) + [asm.biton(REVEAL, 4 + k), hb._w(20), Op(hb.FADE_OUT), Op(b"\x6C")] + \
         hb._say(sec, RV.AFTER) + [asm.goto(out), skip]
     return ops
+
+
+def _cid_talk(sec, his):
+    """(user) Ops: Cid asks what's eating Cloud (`_cid.TALK`) once Blast-off happened (`_cid.BLASTED`) and
+    until they've talked (`_cid.TALKED`); "It's nothing." carries on into the usual hang-out."""
+    hb = _hb()
+    T, skip = CID.TALK, asm.nop()
+    pages = lambda ps: hb._say(sec, "{NEW}".join(his(t) if w == "G" else "{CLOUD}\n" + t for w, t in ps))
+    ops = [asm.if_byte(CID.TALKED[0], "bit_off", CID.TALKED[1], skip),
+           asm.if_byte(CID.BLASTED[0], "bit_on", CID.BLASTED[1], skip)]
+    ask, first = hb._ask(sec, his(T["ask"][0]), T["ask"][1])
+    no = asm.nop()
+    ops += ask + [asm.if_byte(CHOICE, "==", first, no),
+                  Op(bytes([0xF2, 0, 0, 0, 0x10, CID.TALK_MUSIC]) + bytes(8)), hb._w(20)] + pages(T["pages"])
+    q, choices = T["stance"]
+    ask, first = hb._ask(sec, his(q), [c for c, _ in choices])
+    ops += ask
+    done = asm.nop()
+    for n, (_, reply) in enumerate(choices):
+        nxt = asm.nop()
+        ops += [asm.if_byte(CHOICE, "==", first + n, nxt)] + pages(reply) + [asm.goto(done), nxt]
+    ops += [done] + pages(T["end"]) + [asm.biton(*CID.TALKED), asm.goto(skip), no] + hb._say(sec, his(T["nothing"]))
+    return ops + [skip]
 
 
 def _field(ctx, place, group, names):

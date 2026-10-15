@@ -90,3 +90,42 @@ HANGOUT = {
         },
     ],
 }
+
+
+# (user) Cloud's own reckoning: once Cid is at affection 20 and they've done a Blast-off together
+# (BLASTED, set when the set is entered), a third-tier hang-out opens with Cid asking what's eating him.
+# "Tell him." -> Cloud talks about why he's drawn to holding women down, hurting and controlling them
+# (Hojo's tank, Sephiroth's voice, the lesson slaps, Elena's "stop"); Cid, understanding and not
+# excusing, owns what he did to Shera and draws the line between a game two people agree on and
+# taking your fear out on someone. "It's nothing." -> the usual hang-out (offered again next time).
+# Once (TALKED). Every line Cloud's ("C") or Cid's ("G").
+BLASTED = ((1, 111), 2)          # bit: a Blast-off shoot happened
+TALKED = ((1, 111), 3)           # bit: the talk happened
+TALK_MUSIC = 20                  # SIDO: Cid's Theme
+TALK = dict(
+    ask=("“You've been quiet all night, Spiky.\n Quieter'n usual, which is sayin'\n somethin'. What's eatin' you?”",
+         ["Tell him.", "“It's nothing.”"]),
+    nothing="“...Sure it is. Offer stands. Anytime.”",
+    pages=[("C", "“...The shoots. The holding. The\n slaps. I'm good at it, Cid. And I\n like it. That's what's eating me.”"),
+           ("G", "(Cid lights a cigarette and doesn't\n say anything. He just waits.)"),
+           ("C", "“When she can't pull away... I feel\n solid. Like I'm actually me. Like\n nothing's going to slip.”"),
+           ("C", "“Five years in Hojo's tank. I couldn't\n move a finger. Things were just...\n done to me.”"),
+           ("C", "“And then that voice in my head,\n making me move. Making me hand it\n the Black Materia.”"),
+           ("C", "“So when I'm the one holding her\n down, nobody's moving me. For once\n I'm the one in control.”"),
+           ("C", "“Elena said stop, once. And there\n was a second where I didn't want to.\n That scared me more than anything.”"),
+           ("G", "(Cid lets out a long breath of smoke.)\n “...Alright. My turn to say somethin'\n I ain't proud of.”"),
+           ("G", "“After the launch got scrapped, I\n spent years makin' Shera feel small.\n Yellin'. Orderin'. Every damn day.”"),
+           ("G", "“Wasn't about her. I was scared I was\n nothin' but a washed-up pilot. So I\n made sure somebody felt smaller.”"),
+           ("G", "“Here's the thing, Spiky. Some folks\n like bein' held down. That's a deal\n two people make, out loud.”"),
+           ("G", "“Takin' your fear out on somebody\n who never made that deal? That ain't\n control. That's the tank, again.”"),
+           ("C", "“...And if the part of me that likes\n it is the part Hojo made?”"),
+           ("G", "“Then you're the part askin' the\n question. That one's all yours.”")],
+    stance=("“So what're you gonna do about it?”",
+            [("“I want to change.”",
+              [("G", "“Good. Start like I did with Shera:\n say sorry first. Mean it later. Keep\n at it till the two match.”")]),
+             ("“I don't know if I want to stop.”",
+              [("G", "“Honest. I'll take honest.” (He taps\n his ash.) “Then find someone who\n wants it too. And make damn sure.”"),
+               ("G", "“Ask. Every time. And if you can't\n stand hearin' no... that's your sign,\n kid. That's the tank talkin'.”")])]),
+    end=[("C", "“...Thanks, Cid.”"),
+         ("G", "“Don't thank me. Just don't make me\n regret tellin' you about Shera.\n She'd kill me.”")],
+)

@@ -739,6 +739,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_who(gname)` (index, her world data (name, field, at), affection var, date data) for a date girl or a
 - `_date(sec, ctx, place, i, g, d, part2)` 
 - `_reveal(sec, name, her, out)` (user) Ops: her revelation (`_dates_reveal`) if she made a video with Cloud and hasn't told it
+- `_cid_talk(sec, his)` (user) Ops: Cid asks what's eating Cloud (`_cid.TALK`) once Blast-off happened (`_cid.BLASTED`) and
 - `_field(ctx, place, group, names)` 
 - `_offer(ctx, i, g, arrive, group)` Her world talk: "Just chat." / "Ask her on a date." first.
 - `_pose_anims(place, gname)` (user) The anims of the place's position (`POSITION`): [slow, fast] for girl gname (her
