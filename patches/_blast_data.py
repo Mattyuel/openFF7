@@ -17,7 +17,7 @@ TITLES = {"rocketman": "Rocketman", "twinjets": "Twin Jets", "exhaust": "Exhaust
 MINUTE = 1800                     # frames a position (user: a minute each)
 SWITCH = 300                      # Twin Jets: she turns to the other man every 10 s (user), 6 halves
 PAY_X = 2                         # (user) her gil a press x 2: two men on set
-THEME = 20                        # SIDO: Cid's Theme (user)
+THEME = 89                        # (user, since) RO: the rocket launch (rcktin5 plays id 90 after the launch movie starts); was Cid's Theme SIDO 20
 
 OPENING = ["“Blast-off, people! Cid Highwind, our\n guest star, built this capsule himself.”",
            "“He says if anybody touches the red\n button we all die. So... don't.”"]

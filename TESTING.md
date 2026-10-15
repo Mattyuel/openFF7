@@ -497,7 +497,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   in Rocketman / Twin Jets / Exhaust.
 - **Blast-off** (new; untested in-game, user): the cameraman now always asks Normal / Special / Blast-off after
   picking a single co-star (???? while locked; picking ???? asks again). Blast-off needs Cid at 20 affection
-  (debug: Honey Bee page "All affection 20" sets his too). It plays in the space capsule with Cid's Theme:
+  (debug: Honey Bee page "All affection 20" sets his too). It plays in the space capsule with the rocket launch music (Launching a Dream into Space):
   Rocketman (Cloud on the left bench, she in his lap bent forward to Cid; Cid's hold prompts), Twin Jets (she
   kneels between them and turns to the other man every 10 s; one hold prompt per man, his own lines), Exhaust
   (the carry, Cid behind her; "there" twice). A minute each, pay doubled. Check the placements, her turn,
