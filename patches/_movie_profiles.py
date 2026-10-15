@@ -1,0 +1,84 @@
+"""(user) Personality profiles of the movie minigame's six co-stars: the reference for every line
+they say and for how each reacts in the shoots' character-driven moments (the group's arguments,
+the hold, the slap prompts). Data only; write new lines for a girl against her profile.
+
+Fields: `role` (one-line archetype), `drive` (what she wants in a scene), `profile` (the user's
+text), `weakness`, `style` (how she talks), and `hold` = how she takes the Square hold:
+  "likes"    plays along, the hold pays (`gain` x the shoot's gil a press)
+  "dislikes" taps out at once and says why; costs `loss` x gil a press
+  "mood"     either, at random (`odds` = chance in 256 of "likes")
+  "rules"    dislikes it until she has agreed the rules in this shoot (an argument's outcome), then likes
+  "control"  likes it the first time in a shoot, dislikes it after (she wants to set the pace)
+(User, since: confirmed.) Read by 670 / 672 (`_hold_check`, `_refuse_block`).
+`refuse`: her lines when she taps out of a hold (two, at random; the gil lost is added below
+them); `leave`: her line when she's had enough (`LEAVE_AT` annoyances in one shoot: each refused
+hold, a bad choice in a group argument) and walks off the set (one-girl shoot: it ends as a CUT;
+group: she's gone for the rest of it). `uneasy` (group): she isn't comfortable with what she's
+doing at all: extra stops (670 `_group`: `_movie_group.UNEASY`)."""
+
+LEAVE_AT = 2                                        # (user) e.g. two refused holds and she's gone
+
+PROFILES = {
+    "ruby": dict(
+        role="The competitor", drive="Challenges others",
+        profile="Treats everything as a contest. She compares performances, makes confident predictions, "
+                "and dislikes being overshadowed.",
+        weakness="She can become so focused on winning that she forgets to enjoy herself.",
+        style="Short, confident, teasing; rarely admits uncertainty.",
+        hold="likes", gain=10,
+        refuse=["(She pulls off and smirks.)\n“Nice try. I decide when I'm beaten.”",
+                "(She slips free.)\n“Not now. I'm winning.”"],
+        leave="(She grabs her robe.)\n“Forget it. Call me when you want a winner.”"),
+    "skye": dict(
+        role="The enthusiastic wildcard", drive="Embraces novelty",
+        profile="Reacts impulsively, gets carried away, interrupts herself, and sometimes changes her mind "
+                "halfway through a sentence. Her enthusiasm is genuine.",
+        weakness="She doesn't always think things through.",
+        style="Quick, excitable, exaggerated; occasional unexpected sincerity.",
+        hold="mood", odds=192, gain=10, loss=5,          # (changes her mind: 1 in 4 she taps out)
+        refuse=["(She wriggles free, laughing.)\n“Wait wait wait... nope! Changed my mind!”",
+                "(She pops off.)\n“Okay that was... no. Nope. Sorry!”"],
+        leave="(She hops off the bed.)\n“Okay, this stopped being fun. Bye!”"),
+    "elena": dict(
+        role="The cautious professional", drive="Sets limits",
+        profile="Wants to understand what's happening before participating. She might attempt to establish "
+                "rules, ask practical questions, or withdraw when a situation becomes uncomfortable.",
+        weakness="Her pride means she hates admitting that she's nervous.",
+        style="Measured, formal, self-correcting; nervousness leaks through her professional vocabulary.",
+        hold="rules", gain=10, loss=10, uneasy=True,
+        refuse=["(She pulls back sharply.)\n“That was not part of the agreed... No.\n Don't do that.”",
+                "(She pushes his hand away.)\n“I need to know what's happening first.”"],
+        leave="(She stands, arms folded.)\n“I'm withdrawing. Professionally.\n ...I'm done.”"),
+    "scarlet": dict(
+        role="The controlling showwoman", drive="Seeks control",
+        profile="Wants to direct the event, control the pace, and decide how everyone else should behave. "
+                "She can be theatrical and provocative.",
+        weakness="An unexpected refusal or someone else's confidence can puncture her composure.",
+        style="Polished commands, theatrical laughter, cutting remarks, occasional flashes of irritation.",
+        hold="control", gain=15, loss=10,
+        refuse=["(She shoves his hand off her head.)\n“Darling. I set the pace. Not you.”",
+                "(She pulls free, eyes flashing.)\n“Once was a gift. Don't push your luck.”"],
+        leave="(She sweeps off the set.)\n“Kyahaha... no. You've lost your leading lady.”"),
+    "tifa": dict(
+        role="The mediator", drive="Keeps things grounded",
+        profile="Notices when someone is uncomfortable and tries to keep the group from getting carried away. "
+                "She can be competitive too, but she is more likely to question whether the situation is fair "
+                "or whether everyone is comfortable.",
+        weakness="",
+        style="Conversational, warm, direct; humour often softens a serious observation.",
+        hold="dislikes", loss=5, uneasy=True,
+        refuse=["(She pulls back and holds up a hand.)\n“Hey. Not like that, okay?”",
+                "(She eases off, firm.)\n“Cloud. Ask first. Seriously.”"],
+        leave="(She gets up, quietly.)\n“I'm sitting the rest out. You know why.”"),
+    "aerith": dict(
+        role="The playful instigator", drive="Changes the mood",
+        profile="Uses humour and apparently innocent questions to expose tensions in the group. She might tease "
+                "Scarlet's need for control or notice Elena's nerves before anyone else does.",
+        weakness="",
+        style="Light, perceptive, mischievous; occasionally disarmingly direct. Her playfulness doesn't mean "
+              "she automatically agrees to everything.",
+        hold="mood", odds=128, gain=10, loss=5,
+        refuse=["(She slips free with a giggle.)\n“Ah-ah! You'll have to catch me first.”",
+                "(She pulls back, smiling, but means it.)\n“Nope. Not today, mister.”"],
+        leave="(She waves from the door.)\n“That's my cue! Have fun without me!”"),
+}

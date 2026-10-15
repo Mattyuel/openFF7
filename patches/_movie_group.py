@@ -163,3 +163,108 @@ PAUSE_FRAMES = (0, 75, 15)         # before her line (user: shown the moment it 
 PAUSE_CHANCE = 128                 # (user, since) a 50% chance per position (or group turn) of one pause, armed
                                    # at its start for a random frame in its middle half (670 `_pause_arm`; was a
                                    # per-tick RANDOM < 2)
+
+# ---- (user) character-driven moments, written against `_movie_profiles` (drafts: the user edits) ----
+# Window text: "Name\n..." per speaker, "{NEW}" = the next page (the player presses OK); keep each
+# line under ~40 characters. Gil amounts are added by 670 from the effects.
+
+# (user) "some girls should also not be comfortable with what they're doing at all and there are
+# more stops": an uneasy girl (profile `uneasy`) gets a stop early in every turn of hers (and
+# another `UNEASY_AGAIN` frames after one she goes on from); Cloud picks "Check she's okay." /
+# "Keep going." `ask` = her line (one at random); `checked` = her answer and whether she goes on
+# ("go") or sits the rest of her turn out ("out"; Elena goes on only once the rules are agreed:
+# "rules"); `pushed` = keep going: she stops anyway, annoyed (+1, `loss` x gil a press), turn over.
+UNEASY_FIRST, UNEASY_AGAIN = 90, 210   # her first stop 3 s into her turn; the next 7 s after one she goes on from
+UNEASY = {
+    "elena": dict(
+        ask=["(She stiffens and pulls back.)\n“Hold on. I need a second. This is a lot\n more than the briefing said.”",
+             "(She pulls back, flushed.)\n“Can we... clarify what happens next?\n Procedurally?”",
+             "(Her hands are shaking.)\n“I'm fine. I'm... I'm not fine. Wait.”"],
+        checked="rules",
+        go="(She takes a slow breath.)\n“...Thank you. We agreed the rules.\n I can do this. Continue.”",
+        out="(She shakes her head.)\n“Honestly? No. I'd like to sit this one\n out.” (She moves aside.)",
+        pushed="(She pulls away.)\n“I said WAIT.”", loss=10),
+    "tifa": dict(
+        ask=["(She pulls back, frowning.)\n“Hang on. Is this actually okay with\n everyone? I'm not sure it is.”",
+             "(She sits back on her heels.)\n“Sorry. I just need a breather.”",
+             "(She pauses.)\n“Cloud, this feels like a lot.\n Can we slow down?”"],
+        checked="go",
+        go="(She smiles a little.)\n“Thanks for asking. ...Okay. Slower.”",
+        pushed="(She gets up.)\n“Wow. Okay.”", loss=5),
+}
+CHOICE_CHECK, CHOICE_PUSH = "Check she's okay.", "Keep going."
+
+# (user) an introduction conversation, before the cameraman's rules: everyone standing by the bed;
+# then Elena's question; "rules" agreed = RULES (Elena takes holds, and goes on when checked)
+INTRO_TALK = ("Scarlet\n“Positions, ladies! I'll be directing.”{NEW}"
+              "Ruby\n“Says who? I've got more takes than\n all of you put together.”{NEW}"
+              "Skye\n“Ooh, is it a contest? I love contests!\n ...Wait, what are we competing at?”{NEW}"
+              "Aerith\n“Elena, you've read that call sheet\n six times. Nervous?”{NEW}"
+              "Elena\n“I am NOT... I'm reviewing it.\n Thoroughly.”{NEW}"
+              "Tifa\n“Hey. Nobody does anything they don't\n want to. Right, Cloud?”")
+INTRO_ASK = "Elena\n“Before we start... what are the rules?”"
+# choices: (label, reply, effects); effects: gil = x gil a press (+ paid / - taken), annoy = [girls]
+# (+1 each; LEAVE_AT and she leaves), rules = agreed, leave = [girls] (she leaves now, no penalty)
+INTRO_CHOICES = [
+    ("Let's agree some ground rules.",
+     "Elena\n“...Thank you. That helps.”{NEW}Scarlet\n“Rules. How dull, darling.”", dict(rules=True)),
+    ("No rules. Let's just have fun.",
+     "Scarlet\n“Kyahaha! Now THAT'S a director.”{NEW}Elena\n“...Fine.”\n(She doesn't look fine.)", dict(annoy=["elena"])),
+]
+
+# (user) "moments where the sexual acts stop momentarily while a conflict or discussion occurs":
+# one per part, at the start of its second turn (`at_turn`), if everyone in `girls` is still there;
+# everyone holds still, `talk`, then `ask` (the last speaker's question to Cloud) with `choices`
+SCENES = [
+    dict(part=0, girls=["scarlet", "elena", "aerith", "tifa"],
+         talk="Scarlet\n(The action stops. She's on her feet.)\n“Hold her head, darling. Make her take\n all of it.”{NEW}"
+              "Elena\n“That was not discussed.”{NEW}"
+              "Aerith\n“Ooh. Someone wants to be the director.”{NEW}"
+              "Scarlet\n“Someone IS the director.”",
+         ask="Tifa\n“Cloud? Your call.”",
+         choices=[("I set the pace, Scarlet.",
+                   "Scarlet\n(Her smile freezes.)\n“...Of course. Darling.”{NEW}Tifa\n“Nice.”",
+                   dict(gil=10, annoy=["scarlet"])),
+                  ("We'll do it Scarlet's way.",
+                   "Scarlet\n“Kyahaha! Finally, a man who listens.”{NEW}Elena\n(She says nothing. Her jaw is tight.)",
+                   dict(gil=-10, annoy=["elena"])),
+                  ("Let's ask everyone first.",
+                   "Tifa\n“Thank you.”{NEW}Elena\n“...Yes. Ground rules. Good.”", dict(rules=True))]),
+    dict(part=1, girls=["ruby", "skye", "aerith", "tifa"],
+         talk="Ruby\n(Everyone stops. She sits up.)\n“I lasted longest upside down.\n Admit it.”{NEW}"
+              "Skye\n“Did not! I... wait, did you? Who was\n timing?”{NEW}"
+              "Aerith\n“Cloud was. Weren't you, Cloud?”",
+         ask="Ruby\n“Well? Who's best?”",
+         choices=[("Ruby, easily.",
+                   "Ruby\n“Obviously.”{NEW}Skye\n“Rematch! ...Later. Maybe.”", dict(gil=10)),
+                  ("Skye, by a mile.",
+                   "Skye\n“WHAT! YES!”{NEW}Ruby\n(She goes very quiet.)", dict(gil=5, annoy=["ruby"])),
+                  ("It's not a contest.",
+                   "Tifa\n“Thank you.”{NEW}Ruby\n“...Fine. Maybe I'll actually enjoy it.”", dict(gil=5))]),
+    dict(part=2, girls=["aerith", "elena", "scarlet", "tifa"],
+         talk="Aerith\n(She raises a hand. Everyone stops.)\n“Elena, you've been holding your breath\n for a whole minute.”{NEW}"
+              "Elena\n“That's... a breathing technique.”{NEW}"
+              "Scarlet\n“Kyahaha! She's terrified, darling.”",
+         ask="Tifa\n“Cloud?”",
+         choices=[("Elena, sit this out if you like.",
+                   "Elena\n“...Thank you.”\n(She steps off the set.){NEW}Scarlet\n“One down.”", dict(leave=["elena"])),
+                  ("She's fine. Keep going.",
+                   "Elena\n“...Right. Fine.”{NEW}Aerith\n(She gives Cloud a long look.)",
+                   dict(gil=-10, annoy=["elena"])),
+                  ("Tifa, talk to her.",
+                   "Tifa\n(She sits by Elena and whispers.){NEW}Elena\n“...Okay. Okay. I'm in.”", dict(gil=5, rules=True))]),
+]
+SCENE_AT_TURN = 2                  # the part's second turn
+
+# (user) a conversation at the end (wrap or finisher): the girls' banter if nobody walked off and a
+# bonus (`STAYED_BONUS` x gil a press), else the cameraman's remark; `WALKOUT` = everyone left (a CUT)
+END_TALK = ("Tifa\n“That was... actually fun.”{NEW}"
+            "Ruby\n“I was best.”{NEW}"
+            "Aerith\n“Ruby was best at telling us she was best.”{NEW}"
+            "Scarlet\n“Same time next week, darlings. I'll direct.”{NEW}"
+            "Elena\n“...I'd like that in writing.”{NEW}"
+            "Skye\n“Group hug! ...Is that weird now? Group hug!”")
+STAYED_BONUS = 20
+END_STAYED = "Cameraman\n“Nobody walked off my set. That's a first!\n Bonus: {gil:,} gil.”"
+END_LEFT = "Cameraman\n“Next time, read the room, star.\n Walkouts cost me money.”"
+WALKOUT = "Cameraman\n“...They ALL walked?! CUT!\n We'll sell what we've got.”"

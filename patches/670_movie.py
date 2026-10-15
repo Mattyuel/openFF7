@@ -45,6 +45,7 @@ import _marker_models as mm
 from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_RANK, MOVIE_STATE, SPECIAL_ON
 import _movie_girls as MG
 import _movie_group as GR
+import _movie_profiles as PF
 from _recruit import sound
 from _travel import CHOICE, beside, reuse_npc, screen_step
 
@@ -610,34 +611,99 @@ def _icon_next(hb, base, step):
         _chain(RND2, [[hb._arith(0x86, IT, k * step)] if k else [] for k in range(8)])
 
 
-def _pause_ops(hb, sec, actors, hush, lines, cond, icon, bonus):
+# (user) the girls' reactions (`_movie_profiles`): temp vars, this field only. LEFT bit k = girl k
+# walked off (group); RULES 1 = the rules are agreed (Elena); CTRL bit k = held once already
+# (Scarlet); TP = turn within the part (group); ANN0 + k = girl k's annoyance (solo: k 0); GLO/GHI
+# = CHGLD's two words (a loss never takes more gil than there is)
+LEFT, RULES, CTRL, TP, ANN0 = (5, 170), (5, 171), (5, 172), (5, 174), 176
+WALKED = "“She walked off my set?! CUT!\n ...Fine. We'll sell what we've got.”"   # (one-girl / special shoots)
+GLO, GHI = (6, 184), (6, 186)
+
+
+def _ann(k):
+    return (5, ANN0 + k)
+
+
+def _gil_note(gil):
+    return "" if not gil else "\n(%s%s gil)" % ("+" if gil > 0 else "-", "{:,}".format(abs(gil)))
+
+
+def _take_gil(amount):
+    """GOLDD amount, or all the gil the party has if that's less (CHGLD lo/hi)."""
+    full, done = asm.nop(), asm.nop()
+    return [Op(bytes([0x3B, 0x66, GLO[1], GHI[1]])), asm.if_word(GHI, "==", 0, full),
+            asm.if_word(GLO, "<", amount, full), Op(bytes([0x3A, 0x60]) + struct.pack("<I", GLO[1])),
+            asm.goto(done), full, Op(bytes([0x3A, 0x00]) + struct.pack("<I", amount)), done]
+
+
+def _gil_ops(gil):
+    """+gil paid (GOLDU), -gil taken (`_take_gil`)."""
+    if gil > 0:
+        return [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil)), sound(0x168)]
+    return _take_gil(-gil) if gil < 0 else []
+
+
+def _annoy(k, leave_ops):
+    """Girl k's annoyance +1; at `_movie_profiles.LEAVE_AT`, leave_ops (she walks off)."""
+    stay = asm.nop()
+    return [Op(bytes([0x95, 5, ANN0 + k])), asm.if_byte(_ann(k), ">=", PF.LEAVE_AT, stay)] + leave_ops + [stay]
+
+
+def _hold_check(key, k, refuse):
+    """(user) Does she take the hold? Her profile's `hold`: jump to refuse if not."""
+    pr = PF.PROFILES[key]
+    kind = pr["hold"]
+    if kind == "likes":
+        return []
+    if kind == "dislikes":
+        return [asm.goto(refuse)]
+    if kind == "mood":                                # RANDOM < odds: she plays along
+        return [Op(bytes([0x99, RND2[0], RND2[1]])), asm.if_byte(RND2, "<", pr["odds"], refuse)]
+    if kind == "rules":
+        return [asm.if_byte(RULES, "==", 1, refuse)]
+    assert kind == "control", kind                    # the first time only
+    return [asm.if_byte(CTRL, "bit_off", k, refuse), asm.biton(CTRL, k)]
+
+
+def _text_id(sec, t):
+    """One text id per distinct string in a field (the per-girl chains repeat lines)."""
+    ids = sec.__dict__.setdefault("_openff7_ids", {})
+    if t not in ids:
+        ids[t] = sec.add_string(_encode(t))
+    return ids[t]
+
+
+def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None):
     """(user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
     argument unless the position is one of them): the rare pause (`_movie_group.PAUSES`), then the
     hold (Square pressed while the icon showed: SQ), then the icon (every ~15 s, `ICON_EVERY`; entity
     `icon` slot 3 shows it ICON_FRAMES with IWIN set). actors = [Cloud's entity, the girls']: slot 4
     holds the pulled-back pose, slot 5 the deepest one, the girls' slot 6 her try to pull back, slot 2
-    resumes; lines(t_block) = ops picking her line block by the shoot's girl (t_block(key) = the ops
-    showing her line PCNT); bonus(make) = ops paying make(gil)'s amount by the shoot's girl (make(gil)
-    = the ops for that amount). Meter frozen (RUN 0) and the position's time (NEXT) extended by each
-    stop, so it costs nothing."""
+    resumes; lines(block) = ops picking block(key) by the shoot's girl; rate_of(key) = her gil a
+    press; slot_of(key) = her index for the per-girl temps (`_ann`, CTRL bits). (User, since) the
+    hold by her profile (`_hold_check`): refused = she taps out at once, a loss, +1 annoyance, and at
+    LEAVE_AT leave(key) (ops: she walks off). uneasy(key) = her stop's ops instead of a PAUSES line
+    (group: `_movie_group.UNEASY`), or None. Meter frozen (RUN 0) and the position's time (NEXT)
+    extended by each stop, so it costs nothing."""
     no = asm.nop()
     icon_ops = cond(no) + [asm.if_byte(RUN, "==", 1, no), asm.if_word(FR, ">=", IT, no), asm.setbyte(SQ, 0),
                            hb._req(icon, 3, wait=False)] + _icon_next(hb, *ICON_EVERY) + [no]
     no2 = asm.nop()                              # (user) a slap prompt answered: the hold's bonus, any position
     slap_ops = [asm.if_byte(SLP, "==", 1, no2), asm.setbyte(SLP, 0)] + \
-        bonus(lambda gil: [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil))]) + [no2]
-    return _stop_ops(hb, sec, actors, hush, lines, cond, "pause", bonus) + \
-        _stop_ops(hb, sec, actors, hush, lines, cond, "hold", bonus) + icon_ops + slap_ops
+        lines(lambda key: [Op(bytes([0x39, 0x00]) + struct.pack("<I", rate_of(key) * HOLD_BONUS))]) + [no2]
+    args = (hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy)
+    return _stop_ops(*args, kind="pause") + _stop_ops(*args, kind="hold") + icon_ops + slap_ops
 
 
-def _stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus):
-    """pause: she pulls back (slot 4) and says a PAUSES line. hold (user): the bonus (GOLDU), Cloud
-    holds deep (slot 5) and says a HOLD_CLOUD line; at 2 s his stern HOLD_STERN; at 4 s she tries to
-    pull back (her slot 6) and can't, a HOLD_MUFFLED line; at HOLD_AT['end'] (7 s) she pulls away
-    (slot 4) with a HOLDS line. The hold's windows are closed by hush3's slot 3 (HOLD_SAY). (User,
-    since) stern at 3 s, muffled at 5 s, her struggle at 6 s: slot 6 is REQ'd with the muffled line
-    and waits `hold_try_delay()` itself (the line's MESSAGE holds the director).
-    Also (user) the slap prompt's pay: SLP set by `sqkey` -> the same bonus, no lines."""
+def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind):
+    """pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
+    (user): if she takes it (`_hold_check`), the bonus (GOLDU, her profile's `gain`), Cloud holds deep
+    (slot 5) and says a HOLD_CLOUD line; his stern HOLD_STERN; she tries to pull back (her slot 6)
+    and can't, a HOLD_MUFFLED line; at HOLD_AT['end'] she pulls away (slot 4) with a HOLDS line.
+    If she doesn't: she pulls straight off (slot 4) with her profile's `refuse` line, `loss` x her
+    gil a press taken, +1 annoyance (`_annoy`: leave(key) at LEAVE_AT). The hold's windows are closed
+    by hush3's slot 3 (HOLD_SAY). Slot 6 is REQ'd with the muffled line and waits
+    `hold_try_delay()` itself (the line's MESSAGE holds the director)."""
     no = asm.nop()
     w0, w1, w2 = GR.PAUSE_FRAMES
     assert w0 == 0                               # (user) her line the moment it happens: no wait first
@@ -647,26 +713,31 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus):
     table = GR.PAUSES if kind == "pause" else GR.HOLDS
     total = w0 + w1 + w2 + 10 + (GR.HOLD_AT["end"] if kind == "hold" else 0)
 
-    def say3(t, slot=3):                         # (hush3 slot 3: closed HOLD_SAY frames in)
+    def say3(t, slot=3):                         # (hush3 slot 3: closed HOLD_SAY frames in; slot 2: w1)
         return [Op(b"\x52\x03\x00\x01"), hb._window(t, 3, 8, LINE_Y), hb._req(hush, slot, wait=False),
-                asm.message(3, sec.add_string(_encode(t)))]
+                asm.message(3, _text_id(sec, t))]
 
     def muffled(key):                            # (her struggling line in the hold, RND2)
         return _chain(RND2, [say3(GR.NAMES[key] + "\n" + t) for t in GR.HOLD_MUFFLED[key]])
 
     def block(key):
-        out = []
-        for j, t in enumerate(table[key]):
-            out.append([Op(b"\x52\x03\x00\x01"), hb._window(GR.NAMES[key] + "\n" + t, 3, 8, LINE_Y),
-                        hb._req(hush, 2, wait=False),
-                        asm.message(3, sec.add_string(_encode(GR.NAMES[key] + "\n" + t)))])
-        return _chain(PCNT, out)
+        u_ = uneasy(key) if kind == "pause" and uneasy else None
+        if u_ is not None:
+            return u_
+        return _chain(PCNT, [say3(GR.NAMES[key] + "\n" + t, 2) for t in table[key]])
+
+    def resume(length, others):
+        return [hb._w(w2), hb._arith(0x86, NEXT, length)] + [hb._arith(0x86, v, length) for v in others] + \
+            [hb._req(e, 2) for e in actors] + [asm.setbyte(SQ, 0), asm.setword(PR, 0), asm.setword(NT, FR),
+                                               hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1)]
+    refuse = asm.nop()
     if kind == "pause":
         ops = cond(no) + [asm.if_byte(PARM, "==", 1, no), asm.if_word(FR, ">=", PT, no), asm.setbyte(PARM, 0),
                           asm.setbyte(RUN, 0), Op(b"\x54\x01")]
         others = [IT]
     else:                                        # in deep, held: the bonus and his line; she tries; she pulls away
         ops = cond(no) + [asm.if_byte(SQ, "==", 1, no), asm.setbyte(SQ, 0), asm.setbyte(RUN, 0), Op(b"\x54\x01")]
+        ops += lines(lambda key: _hold_check(key, slot_of(key), refuse))
         ops += [hb._req(e, 5, wait=False) for e in actors]
         ops += [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(GR.HOLD_CLOUD)]))]
 
@@ -674,16 +745,31 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, kind, bonus):
             return [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil))] + \
                 _chain(RND2, [say3("{CLOUD}\n“%s”\nHold bonus: %d gil" % (t, gil)) for t in GR.HOLD_CLOUD])
         rnd3 = [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 3]))]
-        ops += bonus(make) + [hb._w(at["stern"] - GR.HOLD_SAY)] + rnd3 + \
+        def pay(key):                            # (his lines are one text per distinct amount: `_text_id`)
+            gil = rate_of(key) * PF.PROFILES[key].get("gain", 10)
+            return make(gil)
+        ops += lines(pay) + [hb._w(at["stern"] - GR.HOLD_SAY)] + rnd3 + \
             _chain(RND2, [say3("{CLOUD}\n“%s”" % t) for t in GR.HOLD_STERN]) + \
             [hb._w(at["muffled"] - at["stern"] - GR.HOLD_SAY)] + [hb._req(e, 6, wait=False) for e in actors[1:]] + \
             rnd3 + lines(muffled) + [hb._w(at["end"] - at["muffled"] - GR.HOLD_SAY)]
         others = [PT, IT]
-    return ops + [hb._req(e, 4, wait=False) for e in actors] + \
+    ops += [hb._req(e, 4, wait=False) for e in actors] + \
         [Op(bytes([0x95, PCNT[0], PCNT[1]])), Op(bytes([0x8D, PCNT[0] << 4, PCNT[1], 3]))] + \
-        lines(block) + [hb._w(w2), hb._arith(0x86, NEXT, total)] + [hb._arith(0x86, v, total) for v in others] + \
-        [hb._req(e, 2) for e in actors] + [asm.setbyte(SQ, 0), asm.setword(PR, 0), asm.setword(NT, FR),
-                                           hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1), no]
+        lines(block) + resume(total, others)
+    if kind == "hold":                           # (user) she won't: straight off, her line, the loss, annoyed
+        def refused(key):
+            pr = PF.PROFILES[key]
+            if pr["hold"] == "likes":
+                return []
+            loss = rate_of(key) * pr["loss"]
+            k = slot_of(key)
+            texts = [say3(GR.NAMES[key] + "\n" + t + _gil_note(-loss), 2) for t in pr["refuse"]]
+            return [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(texts)]))] + \
+                _chain(RND2, texts) + _take_gil(loss) + _annoy(k, leave(key) if leave else [])
+        length = w0 + w1 + w2 + 10
+        ops += [asm.goto(no), refuse] + [hb._req(e, 4, wait=False) for e in actors] + lines(refused) + \
+            resume(length, [PT, IT])
+    return ops + [no]
 
 
 def _hold_entities(hb, model, sprite_dir, place):
@@ -1697,17 +1783,18 @@ def _shoot(ctx, back, cast=None):
         skye_, done_ = asm.nop(), asm.nop()
         return [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_)] + block("ruby") + [asm.goto(done_), skye_] + \
             block("skye") + [done_]
-    def bonus(make):                             # (user) the hold's bonus: the girl's gil per press x HOLD_BONUS
-        if cast:
-            return make(cast["rate"] * HOLD_BONUS)
-        skye_, done_ = asm.nop(), asm.nop()
-        return [asm.if_byte(MOVIE_GIRL, "bit_off", 1, skye_)] + make(PAY_RATE * HOLD_BONUS) + [asm.goto(done_), skye_] + \
-            make(PAY_RATE * SKYE_PAY * HOLD_BONUS) + [done_]
+    def rate_of(key):                            # the girl's gil a press
+        return cast["rate"] if cast else PAY_RATE * (SKYE_PAY if key == "skye" else 1)
+    # (user) she's had enough (`_movie_profiles`): her line, then the shoot ends as a CUT
+    walkout = asm.nop()
+    leave = lambda key: hb._say(sec, GR.NAMES[key] + "\n" + PF.PROFILES[key]["leave"]) + [asm.goto(walkout)]
     pause = _pause_ops(hb, sec, [ents["cloudb"]] + [ents[g[0]] for g in girls], ents["hush3"], pause_lines,
-                       pause_cond, ents["icon"], bonus)
+                       pause_cond, ents["icon"], rate_of, leave=leave)
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
-            asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE), asm.setbyte(FIN, 0)] + \
+            asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, MINUTE), asm.setbyte(FIN, 0),
+            # (user, profiles) one-girl shoots: the cameraman's briefing counts as the rules (Elena)
+            asm.setbyte(RULES, 1), asm.setbyte(CTRL, 0), asm.setbyte(_ann(0), 0)] + \
            [hb._req(e, 3) for e in (CL, ents["cloudb"], *(ents[g[0]] for g in girls), ents["camera"])] + \
            [hb._w(20)]                               # (user) the intro: all standing by the left bed
     main += [Op(hb.FADE_IN), Op(b"\x6C")]            # (user: the first position showed the models move too)
@@ -1792,6 +1879,10 @@ def _shoot(ctx, back, cast=None):
     # the cut; only a full shoot raises the star rank
     main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
     main += say("“CUT! CUT! You lost it, man!\n ...Fine. We'll sell what we've got.”")
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += [walkout, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]          # (user) she walked off
+    main += say(WALKED)
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
@@ -2038,6 +2129,28 @@ def _group(ctx, back):
 
     # models: 2 bare Cloud, 3-8 the girls (ORDER), 9 cameraman, 10 gauge, 11 cursor
     girl_anims, cloud_anims = _BUILT["anims"]
+    # per part (head, head reverse, end): its four speed anims and its stop poses (kind 0 pulled back,
+    # 1 deepest, 2 her try), as offsets into the full `_speeds` lists; each model gets only those
+    # (user: the scene broke at its start once part three took the girls to 63-71 anims each, the
+    # original game's most being 47: now 18 + 2 still poses for a girl, 16 for Cloud)
+    HEAD_P, HEADREV_P = [p["name"] for p in POSITIONS].index("head"), [p["name"] for p in POSITIONS].index("headrev")
+
+    def raw_stroke(ph, cloud):
+        if ph < 2:
+            p = HEAD_P if ph == 0 else HEADREV_P
+            return [4 * p + s_ for s_ in range(4)]
+        return [end_index(cloud, s_) for s_ in range(4)]
+
+    def raw_stop(ph, kind, cloud):
+        if ph < 2:
+            return hold_index(0, ("head", "headrev")[ph], kind)
+        return end_index(cloud, 4 + kind)
+    used = {c: sorted({o for ph in range(GR.PHASES) for o in raw_stroke(ph, c) +
+                       [raw_stop(ph, kd, c) for kd in ((0, 1) if c else (0, 1, 2))]}) for c in (False, True)}
+    remap = {c: {o: i for i, o in enumerate(used[c])} for c in (False, True)}
+    trim = lambda full, c: [full[o] for o in used[c]]
+    n_used = len(used[False])
+    cloud_anims = trim(cloud_anims, True)
     cl0 = loader.models[0]
     loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC,
                                                                      ModelLoader.name(cl0)[:-5] + "_b.char"), cloud_anims))
@@ -2051,11 +2164,13 @@ def _group(ctx, back):
         else:
             df, dm, _ = by_key[key]["donor"]
             hrc, anims = by_key[key]["hrc"], _BUILT["cast"][key]
+        assert len(anims) == len(girl_anims) + len(STILL), (key, len(anims))
+        anims = trim(anims, False) + anims[len(girl_anims):]
         m = loader.add_from(ModelLoader(ctx.field(df).section("models")), dm)
         loader.models[m] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[m], hrc,
                                                                        ModelLoader.name(loader.models[m])[:-5] + "_b.char"),
                                                   anims)
-        assert len(anims) == len(girl_anims) + len(STILL), (key, len(anims))
+        assert len(anims) == n_used + len(STILL) and len(ModelLoader.anims(loader.models[m])) <= 47, (key, len(anims))
         gfirst[key] = len(ModelLoader.anims(loader.models[m])) - len(anims)
     cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
@@ -2075,24 +2190,13 @@ def _group(ctx, back):
     xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
     by_q = lambda make: _chain(P, [make(q) for q in range(GR.PHASES * n_g)])
     loop_ = lambda i: [_animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
-    HEAD_P, HEADREV_P = [p["name"] for p in POSITIONS].index("head"), [p["name"] for p in POSITIONS].index("headrev")
     centre = _spot(mesh, (GR.HEAD_X[0] + GR.HEAD_X[1]) // 2, GR.HEAD_YS[1], 0, True)
     scripts = {}
     scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*centre), hb._visi(0), asm.ret(), asm.ret()],
                    2: by_q(lambda q: [xyzi(*focus[q])]) + [asm.ret()], 3: [xyzi(*centre), asm.ret()]}
     scripts[CH] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()]}
-    # per part (head, head reverse, end): its four speed anims and its stop poses (kind 0 pulled back,
-    # 1 deepest, 2 her try), offsets from a model's first `_speeds` anim
-    def stroke(first, ph, cloud):
-        if ph < 2:
-            p = HEAD_P if ph == 0 else HEADREV_P
-            return [first + 4 * p + s_ for s_ in range(4)]
-        return [first + end_index(cloud, s_) for s_ in range(4)]
-
-    def stop(first, ph, kind, cloud):
-        if ph < 2:
-            return hold_index(first, ("head", "headrev")[ph], kind)
-        return first + end_index(cloud, 4 + kind)
+    stroke = lambda first, ph, cloud: [first + remap[cloud][o] for o in raw_stroke(ph, cloud)]
+    stop = lambda first, ph, kind, cloud: first + remap[cloud][raw_stop(ph, kind, cloud)]
     steps = lambda first, ph, cloud=False: _chain(STEP, [loop_(i) for i in stroke(first, ph, cloud)])
     scripts[ents["cloudb"]] = {
         0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
@@ -2104,7 +2208,7 @@ def _group(ctx, back):
     for k, key in enumerate(GR.ORDER):
         first = gfirst[key]
         b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
-        still_lie, still_kneel = first + len(girl_anims) + b_, first + len(girl_anims) + b_ + 1
+        still_lie, still_kneel = first + n_used + b_, first + n_used + b_ + 1
 
         def place(ph, k=k, first=first, still_lie=still_lie, still_kneel=still_kneel):
             q = ph * n_g + k
@@ -2113,8 +2217,11 @@ def _group(ctx, back):
                 steps(first, ph) + [asm.ret(), idle] + \
                 loop_(still_kneel if ph == 0 else still_lie) + [asm.ret()]
         idle4, idle5, idle6 = asm.nop(), asm.nop(), asm.nop()
+        present = asm.nop()                               # (user) walked off (LEFT): stays hidden
         scripts[ents[key]] = {0: [Op(bytes([0xA1, 3 + k])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                              2: _chain(PH, [place(ph) for ph in range(GR.PHASES)]) + [asm.ret()],
+                              2: [asm.if_byte(LEFT, "bit_on", k, present), hb._visi(0), asm.ret(), present] +
+                              _chain(PH, [place(ph) for ph in range(GR.PHASES)]) + [asm.ret()],
+                              7: [hb._visi(0), asm.ret()],
                               4: [asm.if_byte(E, "==", k, idle4)] +
                               _chain(PH, [loop_(stop(first, ph, 0, False)) for ph in range(GR.PHASES)]) + [idle4, asm.ret()],
                               5: [asm.if_byte(E, "==", k, idle5)] +
@@ -2162,9 +2269,19 @@ def _group(ctx, back):
              asm.if_byte(VV, "==", 0, other)]
     voice += _chain(E, [_chain(K, [line(key, GR.MUFFLED[key][j % 3]) for j in range(6)]) for key in GR.ORDER])
     voice += [asm.goto(vdone), other, Op(bytes([0x99, CC[0], CC[1]])), Op(bytes([0x8D, CC[0] << 4, CC[1], n_g]))]
-    for k in range(n_g):                                  # never the engaged girl: the next one instead
-        nx = asm.nop()
-        voice += [asm.if_byte(E, "==", k, nx), asm.if_byte(CC, "==", k, nx), asm.setbyte(CC, (k + 1) % n_g), nx]
+    # never the engaged girl, nor (user) one who walked off (LEFT): the next one instead; none left: no line
+    for r_ in range(n_g):
+        rend = asm.nop()
+        for k in range(n_g):
+            nx, chk = asm.nop(), asm.nop()
+            voice += [asm.if_byte(CC, "==", k, nx), asm.if_byte(E, "==", k, chk), asm.setbyte(CC, (k + 1) % n_g),
+                      asm.goto(rend), chk, asm.if_byte(LEFT, "bit_on", k, nx), asm.setbyte(CC, (k + 1) % n_g),
+                      asm.goto(rend), nx]
+        voice += [rend]
+    for k in range(n_g):
+        nx, chk = asm.nop(), asm.nop()
+        voice += [asm.if_byte(CC, "==", k, nx), asm.if_byte(E, "==", k, chk), asm.goto(vdone), chk,
+                  asm.if_byte(LEFT, "bit_on", k, nx), asm.goto(vdone), nx]
     voice += _chain(CC, [_chain(PH, [_chain(K, [line(key, GR.COMMENTS[key][ph][j]) for j in range(6)])
                                      for ph in range(GR.PHASES)]) for key in GR.ORDER])
     voice += [vdone, asm.goto_back(vl), asm.ret()]
@@ -2183,9 +2300,74 @@ def _group(ctx, back):
     lost, wrap, tick, hi_red = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     say = lambda t: hb._say(sec, "Cameraman\n" + t)
     girl_ents = [ents[key] for key in GR.ORDER]
-    pause = _pause_ops(hb, sec, [ents["cloudb"]] + girl_ents, ents["hush3"],
+    actors = [ents["cloudb"]] + girl_ents
+    # (user) the girls' moments (`_movie_profiles`, `_movie_group` UNEASY / INTRO / SCENES / END):
+    # force = the turn switch (her turn over now); walkout = everyone left; ending = wrap / finisher's end
+    force, walkout, ending = asm.nop(), asm.nop(), asm.nop()
+    to_force = lambda back: asm.goto_back(force) if back else asm.goto(force)
+
+    say_once = lambda t: [hb._window(t, 0), asm.message(0, _text_id(sec, t))]   # (one text however often used)
+
+    def leave(key, back=False, line=True):           # she walks off: hidden, her turns gone (LEFT, USED)
+        k, stay = GR.ORDER.index(key), asm.nop()
+        return (say_once(GR.NAMES[key] + "\n" + PF.PROFILES[key]["leave"]) if line else []) + \
+            [hb._req(ents[key], 7, wait=False), asm.biton(LEFT, k), asm.biton(USED, k),
+             asm.if_byte(E, "==", k, stay), to_force(back), stay]
+
+    def effects(eff, back):
+        ops = _gil_ops(eff.get("gil", 0) * GR.RATE)
+        if eff.get("rules"):
+            ops += [asm.setbyte(RULES, 1)]
+        for g in eff.get("annoy", []):
+            ops += _annoy(GR.ORDER.index(g), leave(g, back))
+        for g in eff.get("leave", []):
+            ops += leave(g, back, line=False)
+        return ops
+
+    def choose(ask, choices, back):                  # an ASK to Cloud, each reply + its effects
+        ops, first = hb._ask(sec, ask, [c[0] for c in choices])
+        done = asm.nop()
+        for j, (label, reply, eff) in enumerate(choices):
+            nx = asm.nop()
+            ops += [asm.if_byte(CHOICE, "==", first + j, nx)] + \
+                hb._say(sec, reply + _gil_note(eff.get("gil", 0) * GR.RATE)) + effects(eff, back) + [asm.goto(done), nx]
+        return ops + [done]
+
+    def uneasy(key):                                 # (user) she isn't comfortable: Check she's okay / Keep going
+        if not PF.PROFILES[key].get("uneasy"):
+            return None
+        u, k = GR.UNEASY[key], GR.ORDER.index(key)
+        check, push, go, out_ = asm.nop(), asm.nop(), asm.nop(), asm.nop()
+        asks = []
+        for t in u["ask"]:
+            ops, first = hb._ask(sec, GR.NAMES[key] + "\n" + t, [GR.CHOICE_CHECK, GR.CHOICE_PUSH])
+            asks.append(ops + [asm.if_byte(CHOICE, "==", first, push), asm.goto(check)])
+        ops = _chain(PCNT, asks) + [check]
+        if u["checked"] == "rules":
+            ops += [asm.if_byte(RULES, "==", 1, out_)]
+        ops += hb._say(sec, GR.NAMES[key] + "\n" + u["go"]) + \
+            [asm.setbyte(PARM, 1), asm.setword(PT, FR), hb._arith(0x86, PT, GR.UNEASY_AGAIN), asm.goto(go)]
+        if u["checked"] == "rules":
+            ops += [out_] + hb._say(sec, GR.NAMES[key] + "\n" + u["out"]) + [asm.goto(force)]
+        loss = GR.RATE * u["loss"]
+        ops += [push] + hb._say(sec, GR.NAMES[key] + "\n" + u["pushed"] + _gil_note(-loss)) + _take_gil(loss) + \
+            _annoy(k, leave(key)) + [asm.goto(force), go]
+        return ops
+
+    def uneasy_arm():                                # her stop early in each of her turns
+        return _chain(E, [[asm.setbyte(PARM, 1), asm.setword(PT, FR), hb._arith(0x86, PT, GR.UNEASY_FIRST)]
+                          if PF.PROFILES[key].get("uneasy") else [] for key in GR.ORDER])
+
+    def scene(sc):                                   # (user) everyone stops: an argument, Cloud's call
+        skip = asm.nop()
+        ops = [asm.if_byte(PH, "==", sc["part"], skip), asm.if_byte(TP, "==", GR.SCENE_AT_TURN, skip)] + \
+            [asm.if_byte(LEFT, "bit_off", GR.ORDER.index(g), skip) for g in sc["girls"]]
+        ops += [hb._req(e, 4, wait=False) for e in actors] + hb._say(sec, sc["talk"]) + \
+            choose(sc["ask"], sc["choices"], back=True) + [hb._req(e, 2, wait=False) for e in actors]
+        return ops + [skip]
+    pause = _pause_ops(hb, sec, actors, ents["hush3"],
                        lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [], ents["icon"],
-                       lambda make: make(GR.RATE * HOLD_BONUS))
+                       lambda key: GR.RATE, slot_of=GR.ORDER.index, leave=leave, uneasy=uneasy)
     # (user: a long delay before the fade-in) all at once, not each waited on in turn (11 entities)
     place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"],
                                                              ents["gauge"], ents["icon"])] + [hb._w(6)]
@@ -2204,15 +2386,19 @@ def _group(ctx, back):
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
             asm.setword(TOT, 0), asm.setword(PR, 0), asm.setword(FR, 0), asm.setword(RATE, 40), asm.setbyte(P, 0),
             asm.setbyte(STEP, 1), asm.setbyte(K, 0), asm.setword(NEXT, GR.TURN), asm.setbyte(FIN, 0),
-            asm.setbyte(PH, 0), asm.setbyte(TN, 0), asm.setbyte(USED, 0), asm.setbyte(E, 255), asm.setbyte(VV, 0)] + \
+            asm.setbyte(PH, 0), asm.setbyte(TN, 0), asm.setbyte(USED, 0), asm.setbyte(E, 255), asm.setbyte(VV, 0),
+            asm.setbyte(LEFT, 0), asm.setbyte(RULES, 0), asm.setbyte(CTRL, 0), asm.setbyte(TP, 0)] + \
+           [asm.setbyte(_ann(k), 0) for k in range(n_g)] + \
            [hb._req(e, 3) for e in (CL, ents["cloudb"], *girl_ents)] + [hb._w(20)]
     main += [Op(hb.FADE_IN), Op(b"\x6C")]
+    main += hb._say(sec, GR.INTRO_TALK) + choose(GR.INTRO_ASK, GR.INTRO_CHOICES, back=False)   # (user) the intro talk
     for t_ in GR.INTRO:
         main += say(t_)
-    main += pick() + [Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C")]
+    main += pick() + [Op(bytes([0x95, TP[0], TP[1]])), Op(hb.FADE_OUT), Op(b"\x6C")] + place_all() + \
+        [hb._w(10), Op(hb.FADE_IN), Op(b"\x6C")]
     main += [Op(bytes([0xF2, 0, 0, 0, 0x10, MUSIC]) + bytes(8)), hb._w(15)]
     main += say("“...And... ACTION!”")
-    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK)] + _pause_arm(hb, GR.TURN) + \
+    main += [asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, TICK)] + _pause_arm(hb, GR.TURN) + uneasy_arm() + \
         [asm.setbyte(RUN, 1)]
     wait1, go = hb._w(1), asm.nop()
     main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, TICK),
@@ -2229,7 +2415,9 @@ def _group(ctx, back):
              asm.setword(POS, S), hb._arith(0x88, POS, 1000),
              asm.if_word(POS, "<=", 1000 - DANGER, hi_red)]
     no_call = asm.nop()
-    main += [asm.if_byte(TN, "==", GR.PHASES * n_g - 1, no_call), asm.if_byte(FIN, "==", 0, no_call),
+    # (user) the last turn: part three with every girl done or gone (girls may walk off)
+    main += [asm.if_byte(PH, "==", GR.PHASES - 1, no_call), asm.if_byte(USED, "==", 63, no_call),
+             asm.if_byte(FIN, "==", 0, no_call),
              asm.setword(FT, FR), hb._arith(0x86, FT, FINISH_FRAMES), asm.if_word(FT, ">=", NEXT, no_call),
              asm.setbyte(FIN, 1), hb._req(ents["shout"], 2, wait=False), no_call]
     done, same = asm.nop(), asm.nop()
@@ -2243,16 +2431,24 @@ def _group(ctx, back):
     # the next girl every TURN frames; after six, part two; after twelve, part three (end); after 18, the wrap
     stay, part2, part3 = asm.nop(), asm.nop(), asm.nop()
     # (user: a long switch cut into the next girl's turn) her turn counts from the fade-in
-    main += [asm.if_word(FR, ">=", NEXT, stay),
-             asm.if_byte(TN, "<", GR.PHASES * n_g - 1, wrap),
+    # (user, since) a part ends when every girl has had her turn or walked off (USED, which LEFT joins);
+    # everyone gone = walkout; the last part's end = the wrap
+    not_last, same_part = asm.nop(), asm.nop()
+    main += [asm.if_word(FR, ">=", NEXT, stay), force,
+             asm.if_byte(LEFT, "!=", 63, walkout),
+             asm.if_byte(PH, "==", GR.PHASES - 1, not_last), asm.if_byte(USED, "==", 63, not_last), asm.goto(wrap),
+             not_last,
              asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(FAST_OUT), Op(b"\x6C"),
              Op(bytes([0x85, TN[0] << 4, TN[1], 1])),
-             asm.if_byte(TN, "==", n_g, part2), asm.setbyte(PH, 1), asm.setbyte(USED, 0), part2,
-             asm.if_byte(TN, "==", 2 * n_g, part3), asm.setbyte(PH, 2), asm.setbyte(USED, 0), part3] + pick() + \
-            [asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
-            [hb._w(4), Op(FAST_IN), Op(b"\x6C"), asm.setword(PR, 0), asm.setword(NT, FR),
-             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN)] + _pause_arm(hb, GR.TURN) + [asm.setbyte(RUN, 1),
-             stay, asm.goto_back(tick)]
+             asm.if_byte(USED, "==", 63, same_part), Op(bytes([0x85, PH[0] << 4, PH[1], 1])),
+             asm.setbyte(USED, LEFT), asm.setbyte(TP, 0), same_part] + pick() + \
+            [Op(bytes([0x95, TP[0], TP[1]])), asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
+            [hb._w(4), Op(FAST_IN), Op(b"\x6C")]
+    for sc in GR.SCENES:                             # (user) the part's argument, once
+        main += scene(sc)
+    main += [asm.setword(PR, 0), asm.setword(NT, FR),
+             hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN)] + _pause_arm(hb, GR.TURN) + \
+        uneasy_arm() + [asm.setbyte(RUN, 1), stay, asm.goto_back(tick)]
     rx, ry, rz, rt, rdir = back
 
     def out():
@@ -2265,17 +2461,22 @@ def _group(ctx, back):
     main += say("“WOW! What a FINISHER!\n That's going straight on the poster!”")
     main += [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil)), sound(0x168)]
     main += say("“Here's a bonus, on the spot:\n {:,} gil. You earned it, star!”".format(gil))
-    main += hb._say(sec, GR.AFTERMATH)
-    main += [asm.biton(*SPECIAL_ON)]             # (user) a full group shoot unlocks the special scenes (672)
-    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
-             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += hb._say(sec, GR.AFTERMATH) + [asm.goto(ending)]
     main += [lost, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
     main += say("“CUT! CUT! You lost it, man!\n ...Fine. We'll sell what we've got.”")
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    main += [walkout, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)] + hb._say(sec, GR.WALKOUT)   # (user)
+    main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
+             Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     main += [wrap, asm.setbyte(RUN, 0), Op(b"\x54\x01"), hb._w(10)]
     main += say("“...That's a WRAP! Magnificent!”")
-    main += [asm.biton(*SPECIAL_ON)]
+    # (user) the end conversation: everyone stayed = their banter and a bonus, else his remark
+    someone, edone = asm.nop(), asm.nop()
+    stayed = GR.RATE * GR.STAYED_BONUS
+    main += [ending, asm.if_byte(LEFT, "==", 0, someone)] + hb._say(sec, GR.END_TALK) + _gil_ops(stayed) + \
+        hb._say(sec, GR.END_STAYED.format(gil=stayed)) + [asm.goto(edone), someone] + hb._say(sec, GR.END_LEFT) + [edone]
+    main += [asm.biton(*SPECIAL_ON)]             # (user) a full group shoot unlocks the special scenes (672)
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
     black = Op(bytes.fromhex("6b00000000000104" "00"))
