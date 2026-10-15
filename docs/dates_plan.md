@@ -56,7 +56,7 @@ User decisions (asked 2026-10-13):
 - **New fields:** `ctx.new_field` needs a maplist name with no file. 16 are free besides the
   wmN / dummy / Honey Bee names:
   qe, blackbga, blackbgf, blackbgg, whitebg1 (used: 670's movie set), whitebg2, blin69_2, trap, junmon, subin_4,
-  pass, hyou14, xmvtes, fallp, m_endo, fship_26.
+  pass, hyou14, xmvtes, fallp, m_endo, fship_26 (the beach date, 660). None left.
 - **Limits:** 16 models and ~255 texts per field. So one field can't hold all 20 girls
   (plus their undressed copies), and dates are spread over several copies.
 - **Girls' models:**

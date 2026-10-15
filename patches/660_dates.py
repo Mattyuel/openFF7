@@ -19,10 +19,12 @@ are dropped, entity 0 becomes the director.
   the round window. Cloud and her on the benches either side of the gangway,
   facing each other (sitting anims borrowed from the gondola models).
 """
+import importlib
 import math
 
 from _config import DATE_GIRL, HB_AFFECTION
 from _dates_data import DATES
+import _movie_girls as MG
 from _honey_bee_data import GIRLS
 from _recruit import sound
 from _travel import CHOICE, beside, screen_step
@@ -36,15 +38,26 @@ from ff7.walkmesh import Walkmesh
 
 MAX = 20
 WRONG = (5, 246)                       # temp: an answer this date was wrong
-SLAPS = (5, 244)                       # temp: cloudb's main sounds a slap every stroke while 1
 TIERS = (10, 20)                       # affection where the second / third dates start
 # date fields: (place, group) -> new field name (free maplist names, docs/dates_plan.md)
 GROUPS = [["Tifa", "Aerith", "Scarlet", "Elena"]]
-FIELDS = {("gondola", 0): "blackbga", ("capsule", 0): "blackbgf", ("cannon", 0): "blackbgg"}
-BASE = {"gondola": "bwhlin", "capsule": "rcktin7", "cannon": "junone7"}   # (user) the cannon replaced the water tower
-PLACES = ("gondola", "capsule", "cannon")
+FIELDS = {("gondola", 0): "blackbga", ("capsule", 0): "blackbgf", ("cannon", 0): "blackbgg", ("beach", 0): "fship_26"}
+BASE = {"gondola": "bwhlin", "capsule": "rcktin7", "cannon": "junone7",   # (user) the cannon replaced the water tower
+        "beach": "del3"}                                                  # (user) Costa del Sol's beach, empty
+PLACES = ("gondola", "capsule", "cannon", "beach")
 PLACE_NAMES = {"gondola": "The Gold Saucer gondola.", "capsule": "The space capsule.",
-               "cannon": "The Junon cannon."}
+               "cannon": "The Junon cannon.", "beach": "The beach at Costa del Sol."}
+# (user) one position per place, the same for every girl: the movie's poses (670 `POSITIONS`, each
+# girl's retargeted copies; "finisher" = 672's special part three: she astride him lying back);
+# "head": her copy moved forward onto his spot (676 `_date_heads`), so both share one XYZI
+POSITION = {"capsule": "behind", "gondola": "head", "cannon": "holding", "beach": "finisher"}
+TURNED = {"behind": 0, "head": 128, "holding": 128, "finisher": 0}   # her DIR from his
+SPEED, SPEED_FAST = 1, 3                                            # 670 SPEEDS: 15 / 8 frames a stroke
+BARE = {"Tifa": "ZTFA.HRC", "Aerith": "ZAEA.HRC", "Scarlet": "ZSCA.HRC", "Elena": "ZELA.HRC"}
+# where part two happens: (x, y) (None: Cloud's seat), plus a height (field units)
+PLACE_SPOT = {"capsule": (52, 227),                     # (user) Scarlet's seat: where her wall scene was
+              "gondola": None, "cannon": None,          # Cloud's seat (Aerith's / Tifa's scenes)
+              "beach": None}                            # Cloud's lounger (LOUNGE_Z above the sand)
 # seats: (x, y, tri, dir) for Cloud and her (tri None: found; dir None: facing each other)
 SEATS = {
     # the original date's XYZIs and DIRs (Cloud is the player: the MAPJUMP's direction
@@ -55,10 +68,14 @@ SEATS = {
     # (ti MOVE to (3,447), sca MOVE to (-17,720)): Cloud in Tifa's place, she in Scarlet's,
     # standing, facing each other
     "cannon": {"cloud": (3, 447, None, None, 0), "girl": (-17, 720, None, None, 0)},
+    # (user) the two loungers on the left with the table between, both lounging (del3: off the sand's
+    # walkmesh by 9 / 15: the nearest triangle), facing the sea (down the screen)
+    "beach": {"cloud": (-190, 384, None, 240, "lounge"), "girl": (-458, 415, None, 240, "lounge")},   # (along the loungers)
 }
+LOUNGE_Z = 6                          # the loungers' seats above the sand (field units)
 # part two (user's test scene): Cloud standing (bare, ZCTE thrusting) at his seat, she
 # koala-hugging him (same XYZI, turned round; her height is in the anim): his DIR there
-STAND_DIR = {"gondola": 0x80, "capsule": None, "cannon": None}
+STAND_DIR = {"gondola": 0x80, "capsule": None, "cannon": None, "beach": None}
 SCALE = {}                            # per place model scale (the water tower had 0.85)
 GIRL_SCALE = {}                        # per-girl model scale (Scarlet 1.12 was tried; user: keep her size)
 # a girl's own seat in a place (x, y): Scarlet further left and nearer the camera in the gondola (user)
@@ -67,11 +84,6 @@ GIRL_SCALE = {}                        # per-girl model scale (Scarlet 1.12 was 
 GIRL_SEAT = {("gondola", "Scarlet"): (-5198, -6900), ("capsule", "Scarlet"): (52, 227),   # (user: the capsule too)
              ("gondola", "Elena"): (-5198, -6884), ("capsule", "Elena"): (57, 209)}
 NEAR_FLOOR = 20                       # a seat may be this far off the floor's edge (field units)
-# (user) part two/three somewhere else than her seat: Elena's capsule seat (45,209) put her (ahead
-# of him, towards the camera) off the bottom of the screen: the far end of that floor strip
-PART2_SPOT = {("capsule", "Elena"): (50, 130),
-              # (user) the gondola: further from the camera and a bit right (screen ~(-19,81), was (-48,105))
-              ("gondola", "Elena"): (-5150, -6925)}
 WALK_TO = 0.35                        # "stand": she walks over to Cloud, this far from him along the way
 # places whose near background tiles (draw depth < 4093: the capsule's benches and rails, ids
 # 52-87) drew over the characters (user): pushed back just in front of the base layer
@@ -79,10 +91,17 @@ TILES_BACK = {"capsule"}
 # original entities kept as they were (scripts 0 and 1): the cannon's SEA cycles the sea's
 # background states (param 1 states 1-7, then param 2 states 0-2)
 KEEP = {"cannon": ("SEA",)}
+# (the beach's waves: entity 0 `wave` cycles the sea's BG states, but entity 0 is the director: its
+# scripts go to `direct`, which has no model)
+KEEP_AS = {"beach": {"direct": "wave"}}
 # "bench" = sitting: the gondola models' own sitting anims (feet on the floor), or ours;
 # "stand" (user: on the cannon they stand) = each model's own anim 0 (its standing idle)
-SIT_KIND = {"gondola": "bench", "capsule": "bench", "cannon": "stand"}
-CLOUD_SIT = {"bench": "GDAB.chi", "stand": None}             # bwhlin cloud DFANM 03
+SIT_KIND = {"gondola": "bench", "capsule": "bench", "cannon": "stand", "beach": "lounge"}
+CLOUD_SIT = {"bench": "GDAB.chi", "stand": None}             # bwhlin cloud DFANM 03 (lounging: `_lounge`)
+# (user) lounging on a beach lounger (`_lounge`): legs straight out level, the upper body leant back
+# LOUNGE_BACK; one per skeleton, built from the model's own standing anim
+LOUNGE_BACK = 50
+LOUNGE = {}                                                  # skeleton -> its anim, built by `_field` (ZDL*)
 GIRL_SIT = {"Tifa": {"bench": "GDEE.chi"},                    # bwhlin tifa DFANM 03
             "Aerith": {"bench": "GDBE.chi"},                  # bwhlin earith DFANM 03
             "Scarlet": {"bench": "ZDBS.tor"},                 # ours
@@ -92,31 +111,7 @@ LEDGE_ARMS, LEDGE_SEAT = 25, 1.5
 # part two: each girl's undressed copy (a NEW skeleton file; her own model is untouched)
 # and her pose; Tifa: AAGB with the chest part's white top (vertex colour B,G,R 204) in her
 # skin colour (167,190,248): new zfta.hrc -> ztfb.rsd -> ztgb.p
-# part two per girl: her undressed copy's skeleton (None: her own model), her poses (the first
-# is where it starts, the last is the "fast" one), Cloud's pose and his fast one (CLOUD_PART2 keys)
-CLOUD_PART2 = ["standk", "stand", "standf", "standa", "standaf",   # 620's CLOUD_BED: koala, head (x2), Aerith's (x2)
-               "standspank"]                                         # ours: Elena's
-CLOUD_SEATED = {"standspank": "ZCTP.tor"}                            # bare Cloud standing, spanking her (_elena_fours)
-CLOUD_SEATED_AT = {"gondola": {"standspank": "ZCTR.tor"}}           # (user) there his head turned to his right
 HEAD_RIGHT = 40
-PART2 = {
-    "Tifa": {"bare": "ZTFA.HRC", "anims": ["ZDKT.tor"], "cloud": "standk"},
-    # (user) the "head" scene again, in her own model: she kneels before standing Cloud, rocking
-    # (user, since) her undressed copy too: ZAEA.HRC = the standard female body on her AUFF (675)
-    "Aerith": {"bare": "ZAEA.HRC", "anims": ["ZDKA.tor", "ZDKC.tor", "ZDKB.tor"], "cloud": "standa", "cloud_fast": "standaf",
-               "acts": {"look": "ZDKC.tor"}},     # (user) she looks up at him when he tells her to
-    # (user) Elena standing, in every place: on all fours, Cloud standing behind and to her side,
-    # leaning down, spanking her (one swing + the slap sound per "spank"), then (fade, "part3")
-    # Tifa's koala hug ("holding") with a slap every stroke
-    "Elena": {"bare": "ZELA.HRC", "anims": ["ZDEF.tor", "ZDEK.tor"], "cloud": "standspank", "cloud_still": True,
-              "same_way": True, "once": {"spank": "standspank"},
-              "switch": {"part3": ("standk", "ZDEK.tor")}, "slap_loop": True,
-              # (user) both on the left of the screen (at her seat) and turned the other way
-              "at_her_seat": True, "turn": 128 - 21},   # (user, since) then 30 more to their right (DIR -21)
-    # (user) skirtless Scarlet in front of standing Cloud, facing the same way, against a wall
-    "Scarlet": {"bare": "ZSCA.HRC", "anims": ["ZDSW.tor", "ZDSX.tor"], "cloud": "stand", "cloud_fast": "standf",
-                "same_way": True, "at_her_seat": True},   # (user) on the left of the screen: at her seat
-}
 TIFA_TOP, TIFA_SKIN = (204, 204, 204), (167, 190, 248)
 # her skirt (user: skin colour, contoured to her body): the hip part AAGC (aagd.p: skirt
 # 25,25,25 and its waistband 76,76,76) -> ztfc.rsd -> ztgc.p, all in skin colour, the flared
@@ -253,12 +248,12 @@ def _date(sec, ctx, place, i, g, d, part2):
             leave = asm.nop()
             block += ask + [asm.if_byte(CHOICE, "==", first, leave)]
             block += part2
-            for who, line in d["part2"]:
+            for who, line in d["part2"][place]:
                 if who == "act":                     # "stop" / "fast"
                     block += acts[line] + [hb._w(20)]
                 else:
                     block += hb._say(sec, (her(line) if who == "G" else "{CLOUD}\n" + line)) + [hb._w(20)]
-            block += [hb._w(30), Op(hb.FADE_OUT), Op(b"\x6C")] + hb._say(sec, d["desire"])
+            block += [hb._w(30), Op(hb.FADE_OUT), Op(b"\x6C")] + hb._say(sec, d["desire"][place])
             block += [asm.goto(out), leave] + hb._say(sec, her(d["leave"]))
             block += [asm.goto(out), plain]
         block += hb._say(sec, her(tier["close"])) + [asm.goto(out)]
@@ -291,6 +286,9 @@ def _field(ctx, place, group, names):
 
     def seat(who):
         x, y, tri, _, dz = SEATS[place][who]
+        if dz == "lounge":                       # (on a lounger, off the sand's walkmesh)
+            tri = _find_near(mesh, x, y, (place, who))
+            return x, y, mesh.height(tri, x, y) + LOUNGE_Z, tri
         if tri is None:
             tri = mesh.find(x, y)
         assert tri is not None and mesh.contains(tri, x, y), (name, who, x, y)
@@ -299,6 +297,12 @@ def _field(ctx, place, group, names):
     def sit_anim(m, anim):
         if anim is None:                         # standing: the model's own idle
             return 0
+        if anim == "lounge":                     # (user) lounging (beach): built for this model's skeleton
+            hrc = ModelLoader.hrc(loader.models[m]).lower()
+            anim = LOUNGE.get(hrc) or next("ZDL%s.tor" % c for c in "ABCDEFGHIJ" if "ZDL%s.tor" % c not in LOUNGE.values())
+            if hrc not in LOUNGE:
+                LOUNGE[hrc] = anim
+                _lounge(ctx, anim, hrc, ModelLoader.anims(loader.models[m])[0].split(".")[0].lower() + ".a")
         anims = ModelLoader.anims(loader.models[m])
         if anim not in anims:
             loader.models[m] = ModelLoader.with_anims(loader.models[m], [anim])
@@ -311,17 +315,32 @@ def _field(ctx, place, group, names):
     cam = Camera(f.sections[1])
     if SEATS[place]["cloud"][3] is not None:
         cdir = SEATS[place]["cloud"][3]
-    # girls whose model the base field lacks: copied from GIRL_DONOR, with a new entity
+    def slot(entry, ename):
+        """A model slot + its entity for entry: a new one while under 16 models, else the slot of a
+        model the date doesn't use (not Cloud, not a date girl's; party models first, `SPARE`), its
+        entity taken over (a date's script is blank). (user: the beach, del3, has 13 of its own)"""
+        if len(loader.models) < 16:
+            k = len(loader.models)
+            loader.models.append(entry)
+            model_names.append(ModelLoader.name(entry))
+            e = len(sec.entity_names)
+            sec.entity_names.append(ename.encode("latin-1")[:8].ljust(8, b"\0"))
+            sec.entry.append([None] * 32)
+            chars[e], model_ent[k] = k, e
+            return k, e
+        keep = {0} | spare_used | {k for k, n in enumerate(model_names) if any(n.endswith(GIRL_MODEL[g]) for g in names)}
+        k = sorted((k for k in range(len(model_names)) if k not in keep),
+                   key=lambda k: not model_names[k].endswith(SPARE))[0]
+        spare_used.add(k)
+        loader.models[k] = entry
+        model_names[k] = ModelLoader.name(entry)
+        return k, model_ent[k]
+    # girls whose model the base field lacks: copied from GIRL_DONOR
     for gname in names:
         if not any(n.endswith(GIRL_MODEL[gname]) for n in model_names):
             dfield, di = GIRL_DONOR[gname]
-            m = loader.add_from(ModelLoader(ctx.field(dfield).section("models")), di)
-            model_names.append(ModelLoader.name(loader.models[m]))
-            e = len(sec.entity_names)
-            sec.entity_names.append(gname.lower()[:8].encode("latin-1").ljust(8, b"\0"))
-            sec.entry.append([None] * 32)
-            chars[e] = m
-            model_ent[m] = e
+            entry = loader.models.pop(loader.add_from(ModelLoader(ctx.field(dfield).section("models")), di))
+            slot(entry, gname.lower())
     for gname in names:
         if gname in GIRL_SCALE:
             m = next(k for k, n in enumerate(model_names) if n.endswith(GIRL_MODEL[gname]))
@@ -332,7 +351,7 @@ def _field(ctx, place, group, names):
             loader.models[k] = ModelLoader.with_scale(e, round(ModelLoader.entry_scale(e) * SCALE[place]))
     kind = SIT_KIND[place]
     scripts = {}
-    ca = sit_anim(0, CLOUD_SIT[kind])
+    ca = sit_anim(0, "lounge" if kind == "lounge" else CLOUD_SIT[kind])
     scripts[model_ent[0]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), hb._xyzi(*cs), Op(bytes([0xB3, 0, cdir])),
                                  Op(bytes([0xA2, ca, 1])), Op(bytes([0xAE, ca, 1])), asm.ret(), asm.ret()],
                              3: [hb._visi(0), asm.ret()]}
@@ -343,44 +362,34 @@ def _field(ctx, place, group, names):
         bdir = cdir
     elif bdir == "screen-right":
         bdir = facing_screen(cam, cs[0], cs[1], cs[2], (1, 0))
-    poses = [{**hb.CLOUD_BED, **CLOUD_SEATED, **CLOUD_SEATED_AT.get(place, {})}[k] for k in CLOUD_PART2]
-    bare = len(loader.models)
-    loader.models.append(ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[0], hb.CLOUD_BARE_HRC,
-                                                                     model_names[0][:-5] + "_b.char"), poses))
+    poses = _pose_anims(place, None)                 # (user) the place's position: Cloud slow, fast
+    bare, cb = slot(ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[0], hb.CLOUD_BARE_HRC,
+                                                                 model_names[0][:-5] + "_b.char"), poses), "cloudb")
     first = len(ModelLoader.anims(loader.models[bare])) - len(poses)
-    cb = len(sec.entity_names)
-    sec.entity_names.append(b"cloudb\0\0")
-    sec.entry.append([None] * 32)
-    floor = (cs[0], cs[1], cs[2] - SEATS[place]["cloud"][4], cs[3])
-    # main: the slap sound every SEATED_FRAMES (0.5 s) while SLAPS is set (a part three's switch,
-    # "slap_loop"). It was a priority 7 REQSW of a looping slot 31, which never started (the main
-    # holds priority 7): the director waited there and the screen stayed black (user)
-    snd = Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40")
-    tick, quiet = hb._w(1), asm.nop()
-    scripts[cb] = {0: [Op(bytes([0xA1, bare])), hb._visi(0), asm.setbyte(SLAPS, 0), asm.ret(),
-                       tick, asm.if_byte(SLAPS, "==", 1, quiet), snd, hb._w(SEATED_FRAMES - 1), quiet,
-                       asm.goto_back(tick), asm.ret()],
-                   3: [hb._xyzi(*floor), Op(bytes([0xB3, 0, bdir])), hb._visi(1), asm.ret()]}
-    for k, pose in enumerate(CLOUD_PART2):     # 4+k: loop pose k; 12+k: hold its frame 0 (stop);
+    num = lambda v: 0 if v == "lounge" else v
+    floor = (cs[0], cs[1], cs[2] - num(SEATS[place]["cloud"][4]), cs[3])
+    pdir = bdir
+    spot = floor                                     # part two's spot: Cloud's seat, or the place's own
+    if PLACE_SPOT[place]:
+        px_, py_ = PLACE_SPOT[place]
+        pt_ = _find_near(mesh, px_, py_, (place, "part two"))
+        spot = (px_, py_, mesh.height(pt_, px_, py_), pt_)
+    scripts[cb] = {0: [Op(bytes([0xA1, bare])), hb._visi(0), asm.ret(), asm.ret()],
+                   3: [hb._xyzi(*spot), Op(bytes([0xB3, 0, pdir])), hb._visi(1), asm.ret()]}
+    for k in range(2):                               # 4+k: loop pose k (slow, fast); 12+k: hold its frame 0
         scripts[cb][4 + k] = [Op(bytes([0xA2, first + k, 1])), Op(bytes([0xAE, first + k, 1])), asm.ret()]
         scripts[cb][12 + k] = [Op(bytes([0xB1, first + k, 0, 0, 1])), asm.ret()]
-        # 24+k: play pose k once with the slap sound at its middle, then hold its frame 0
-        n = SEATED_FRAMES
-        scripts[cb][24 + k] = [Op(bytes([0xBC, first + k, 0, n // 2, 1])), Op(b"\xAC"),
-                               Op(bytes([0xF1, 0]) + SLAP_SOUND.to_bytes(2, "little") + b"\x40"),
-                               Op(bytes([0xBC, first + k, n // 2, n - 1, 1])), Op(b"\xAC"),
-                               Op(bytes([0xB1, first + k, 0, 0, 1])), asm.ret()]
     part2 = {}
     for gname in names:
         i = next(k for k, g in enumerate(GIRLS) if g["name"] == gname)
         m = next(k for k, n in enumerate(model_names) if n.endswith(GIRL_MODEL[gname]))
-        ga = sit_anim(m, GIRL_SIT[gname].get(kind))
+        ga = sit_anim(m, "lounge" if kind == "lounge" else GIRL_SIT[gname].get(kind))
         hide, end = asm.nop(), asm.nop()
         my = gs
         if (place, gname) in GIRL_SEAT:
             x, y = GIRL_SEAT[(place, gname)]
             t = _find_near(mesh, x, y, (place, gname))
-            my = (x, y, mesh.height(t, x, y) + SEATS[place]["girl"][4], t)
+            my = (x, y, mesh.height(t, x, y) + num(SEATS[place]["girl"][4]), t)
         tier_acts = {}
         extra = GIRL_EXTRA.get(gname, {})
         if extra:
@@ -436,70 +445,28 @@ def _field(ctx, place, group, names):
                 kn = an.index(extra["kneel"])
                 scripts[me][11] = [Op(bytes([0xA2, kn, 1])), Op(bytes([0xAE, kn, 1])), asm.ret()]
                 tier_acts["kneel"] = [hb._req(me, 11), hb._w(20)]
-        p2 = PART2[gname]
-        cpose = CLOUD_PART2.index(p2["cloud"])
-        if p2.get("bare"):                       # her undressed copy: a second model and entity
-            bare_entry = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[m], p2["bare"],
-                                                                     model_names[m][:-5] + "_b.char"), p2["anims"])
-            if len(loader.models) < 16:
-                gb = len(loader.models)
-                loader.models.append(bare_entry)
-                ge = len(sec.entity_names)
-                sec.entity_names.append(("%sb" % gname.lower()[:7]).encode("latin-1").ljust(8, b"\0"))
-                sec.entry.append([None] * 32)
-            else:                                # (16 models: the capsule) an unused party model's slot
-                gb = next(k for k, n in enumerate(model_names) if n.endswith(SPARE) and k not in spare_used)
-                spare_used.add(gb)
-                loader.models[gb] = bare_entry
-                ge = model_ent[gb]               # (its entity does nothing on a date: blank script)
-            scripts[ge] = {0: [Op(bytes([0xA1, gb])), hb._visi(0), asm.ret(), asm.ret()]}
-            hide_her = [hb._req(model_ent[m], 3)]
-        else:                                    # her own model, more anims
-            gb, ge = m, model_ent[m]
-            loader.models[m] = ModelLoader.with_anims(loader.models[m], p2["anims"])
-            hide_her = []
-        anims = ModelLoader.anims(loader.models[gb])
-        ka = [anims.index(n) for n in p2["anims"]]
-        # her slot 4: placed at Cloud's spot (turned round; her place in the anim), first pose;
-        # 5.. each pose looped; 8: hold (the first pose's frame 0)
-        pdir = (bdir + p2.get("turn", 0)) % 256      # (Elena, user: both turned the other way)
-        gface = pdir if p2.get("same_way") else (pdir + 128) % 256
-        spot = floor
-        show_cloud = 3
-        if p2.get("at_her_seat"):                    # both at her seat (cloudb gets a slot 20+ for it)
-            spot = (my[0], my[1], my[2] - SEATS[place]["girl"][4], my[3])
-            if (place, gname) in PART2_SPOT:         # (user) her seat put them off screen
-                px_, py_ = PART2_SPOT[(place, gname)]
-                pt_ = _find_near(mesh, px_, py_, (place, gname))
-                spot = (px_, py_, mesh.height(pt_, px_, py_), pt_)
-            show_cloud = 20 + names.index(gname)
-            scripts[cb][show_cloud] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, pdir])), hb._visi(1), asm.ret()]
+        # (user) part two in the place's position: her undressed copy (a second model and entity, or an
+        # unused party model's slot at 16 models), at part two's spot, slot 4 placed + slow pose, 5 slow,
+        # 6 fast, 8 held (frame 0)
+        hanims = _pose_anims(place, gname)
+        bare_entry = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[m], BARE[gname],
+                                                                 model_names[m][:-5] + "_b.char"), hanims)
+        gb, ge = slot(bare_entry, "%sb" % gname.lower()[:7])
+        scripts[ge] = {0: [Op(bytes([0xA1, gb])), hb._visi(0), asm.ret(), asm.ret()]}
+        ka = [len(ModelLoader.anims(loader.models[gb])) - 2 + k for k in range(2)]
+        gface = (pdir + TURNED[POSITION[place]]) % 256
         scripts[ge][4] = [hb._xyzi(*spot), Op(bytes([0xB3, 0, gface])), hb._visi(1),
                           Op(bytes([0xA2, ka[0], 1])), Op(bytes([0xAE, ka[0], 1])), asm.ret()]
         for k, a_ in enumerate(ka):
             scripts[ge][5 + k] = [Op(bytes([0xA2, a_, 1])), Op(bytes([0xAE, a_, 1])), asm.ret()]
         scripts[ge][8] = [Op(bytes([0xA2, ka[0], 1])), hb._canm(ka[0], 0, 0), asm.ret()]
-        acts = {"stop": [hb._req(cb, 12 + cpose), hb._req(ge, 8)],
-                "go": [hb._req(cb, 4 + cpose), hb._req(ge, 5)],           # carry on at the first pace
-                **{k: [hb._req(ge, 5 + p2["anims"].index(a_))] for k, a_ in p2.get("acts", {}).items()},
-                "fast": [hb._req(cb, 4 + CLOUD_PART2.index(p2.get("cloud_fast", p2["cloud"]))),
-                         hb._req(ge, 5 + len(ka) - 1)]}
-        for k, pose in p2.get("once", {}).items():
-            acts[k] = [hb._req(cb, 24 + CLOUD_PART2.index(pose)), hb._w(6)]
-        for k, (pose, her) in p2.get("switch", {}).items():                       # fade, both change pose
-            acts[k] = [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(cb, 4 + CLOUD_PART2.index(pose)),
-                       hb._req(ge, 5 + p2["anims"].index(her))]
-            acts[k] += [Op(hb.FADE_IN), Op(b"\x6C")]
-            if p2.get("slap_loop"):                  # (user) a slap every stroke from here (cloudb's main),
-                acts[k] += [hb._w(SEATED_FRAMES // 2), asm.setbyte(SLAPS, 1)]   # from mid-stroke
-            acts[k] += [hb._w(20)]
-        for k, snd in p2.get("sounds", {}).items():
-            acts[k] = [Op(bytes([0xF1, 0]) + snd.to_bytes(2, "little") + b"\x40"), hb._w(8)]
-        start = 12 if p2.get("cloud_still") else 4
-        part2[i] = (tier_acts, [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(model_ent[0], 3)] + hide_her
-                    + [hb._req(cb, show_cloud), hb._req(cb, start + cpose), hb._req(ge, 4),
-                       Op(bytes([0xF2, 0, 0, 0, 0x10, DATES[gname]["part2_music"]]) + bytes(8)),
-                       Op(hb.FADE_IN), Op(b"\x6C"), hb._w(30)], acts)
+        acts = {"stop": [hb._req(cb, 12), hb._req(ge, 8)],
+                "go": [hb._req(cb, 4), hb._req(ge, 5)],            # carry on at the first pace
+                "fast": [hb._req(cb, 5), hb._req(ge, 6)]}
+        part2[i] = (tier_acts, [hb._w(10), Op(hb.FADE_OUT), Op(b"\x6C"), hb._req(model_ent[0], 3), hb._req(model_ent[m], 3),
+                                hb._req(cb, 3), hb._req(cb, 4), hb._req(ge, 4),
+                                Op(bytes([0xF2, 0, 0, 0, 0x10, DATES[gname]["part2_music"]]) + bytes(8)),
+                                Op(hb.FADE_IN), Op(b"\x6C"), hb._w(30)], acts)
     for e, m in chars.items():                   # everyone else: hidden
         if e not in scripts:
             scripts[e] = {0: [Op(bytes([0xA1, m])), hb._visi(0), asm.ret(), asm.ret()]}
@@ -507,6 +474,13 @@ def _field(ctx, place, group, names):
         e = sec.entity_index(keep)
         assert e not in scripts and e not in chars, keep
         scripts[e] = {k: sec.script_ops(e, k) for k in (0, 1)}
+    for to, frm in KEEP_AS.get(place, {}).items():   # (another entity's scripts, moved: frm is entity 0)
+        e, src = sec.entity_index(to), sec.entity_index(frm)
+        assert e not in scripts and e not in chars and src not in chars, (to, frm)
+        scripts[e] = {k: sec.script_ops(src, k) for k in (0, 1)}
+        for k in (0, 1):                             # (the wave's main ends in a goto: never reached)
+            if scripts[e][k][-1].op != 0x00:
+                scripts[e][k] = scripts[e][k] + [asm.ret()]
     assert 0 not in chars, "entity 0 has a model"
     init = [asm.ret()]
     if place == "capsule":                       # space through the window
@@ -540,6 +514,11 @@ def _field(ctx, place, group, names):
         f.set_section("background", bg.build())
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()
+    if not mesh.contains(cs[3], cs[0], cs[1]):       # (a lounger off the sand) arrive on its nearest floor
+        t = mesh.tris[cs[3]]
+        ax, ay = round(sum(v[0] for v in t) / 3), round(sum(v[1] for v in t) / 3)
+        assert mesh.contains(cs[3], ax, ay), (name, ax, ay)
+        cs = (ax, ay, mesh.height(cs[3], ax, ay), cs[3])
     return cs, cdir
 
 
@@ -568,6 +547,67 @@ def _offer(ctx, i, g, arrive, group):
     ops += [never, hb._uc(0), asm.ret()]
     sec.insert_after(talk[2], ops)
     ctx.field(field).sections[0] = sec.build()
+
+
+def _pose_anims(place, gname):
+    """(user) The anims of the place's position (`POSITION`): [slow, fast] for girl gname (her
+    retargeted copies: 670 prefix + position letter + speed; "head": 676's copies moved onto his
+    spot, Y + her prefix's letter; "finisher": 672's R) or for bare Cloud (gname None: ZN...)."""
+    mv = importlib.import_module("670_movie")
+    pos = POSITION[place]
+    letter = {"finisher": "R"}.get(pos) or chr(ord("A") + [p["name"] for p in mv.POSITIONS].index(pos))
+    if gname is None:
+        return ["ZN%s%d.tor" % (letter, s_) for s_ in (SPEED, SPEED_FAST)]
+    prefix = next(g["prefix"] for g in MG.GIRLS if g["key"] == gname.lower())
+    if pos == "head":
+        prefix = "Y" + prefix[1]
+    return ["%s%s%d.tor" % (prefix, letter, s_) for s_ in (SPEED, SPEED_FAST)]
+
+
+def _lounge(ctx, name, hrc, stand):
+    """(user) Lounging on a beach lounger (`name`.a): from the standing pose, each leg swung forward
+    to level (straight: the knee stays as it was), the upper body (the pelvis bone and all above it)
+    leant back LOUNGE_BACK about the root, the hip joints LEDGE_SEAT above the root's floor."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
+    names = [b[0] for b in sk]
+    I = names.index
+    base = fa.Anim(ctx.char_file(stand))
+    rr, rp, rots = base.frames[0]
+    root = [rp[0], -rp[1], rp[2]]
+    W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+    ends = lambda W: fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W))
+    F = ends(W)
+    side = [1.0, 0.0, 0.0]
+    ahead = lambda p: -p[2]                          # field models face -z
+
+    def turned(W, bones, angle, test):
+        for sg in (1, -1):
+            M = [fa._mul(fa.axis_angle(side, sg * angle), m) if names[i] in bones else m for i, m in enumerate(W)]
+            if test(ends(M)):
+                return M
+        raise AssertionError((name, sorted(bones)))
+    upper, grow = {"hip"}, True                      # the pelvis bone and everything hanging from it
+    while grow:
+        grow = False
+        for b in sk:
+            if b[1] in upper and b[0] not in upper:
+                upper.add(b[0])
+                grow = True
+    for s_ in "lr":
+        knee0 = F[I(s_ + "_femur")][2]
+        legs = {b for b in names if b.startswith(s_ + "_") and b[2:] in ("femur", "tibia", "foot")}
+        W = turned(W, legs, 90, lambda E: ahead(E[I(s_ + "_femur")][2]) > ahead(knee0) + 1)
+    head0 = F[I("head")][2]
+    W = turned(W, upper, LOUNGE_BACK, lambda E: ahead(E[I("head")][2]) < ahead(head0) - 1)
+    E = ends(W)
+    for s_ in "lr":
+        shin = [E[I(s_ + "_tibia")][2][k] - E[I(s_ + "_femur")][1][k] for k in range(3)]
+        assert abs(shin[1]) < 0.25 * math.hypot(*shin), (name, s_, shin)                  # legs level
+    hip_y = max(E[I(s_ + "_femur")][1][1] for s_ in "lr")
+    root = [root[0], root[1] - hip_y - LEDGE_SEAT, root[2]]
+    base.frames = [(rr, [root[0], -root[1], root[2]], fa.local_rotations(sk, rr, W))]
+    ctx.char_file(name.split(".")[0].lower() + ".a", base.build())
 
 
 def _ledge(ctx, name, hrc, stand, bench=False):

@@ -432,6 +432,16 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Dates: one position per place + the beach** (new; untested in-game, user): every girl's part two now
+  happens in the place's position: space capsule = behind, gondola = head, Junon cannon = holding (Tifa's
+  old hug), beach = the special shoot's finisher. "Where to?" has a fourth place, "The beach at Costa del
+  Sol.": the empty beach (no tourists), both lounging on the two loungers left of the umbrellas with the
+  table between, Costa del Sol's music; part two on Cloud's lounger. The third dates, their lead-in and
+  every part two are rewritten to fit each girl (Aerith no longer "sir"; Elena sets ground rules instead of
+  asking to be punished; Scarlet's control slips when he's sure of himself). Check: each place shows the
+  right pose for all four girls (head: she kneels in front of him, not inside him or too far), the beach
+  loungers line up (models on the chairs, legs towards the sea), the sea still animates, and arriving at
+  the beach puts Cloud on his lounger.
 - **Special shoots: "there" prompt** (new; untested in-game, user): in parts one (insert) and three
   (finisher) the Square icon shows twice a part (first 5-19 s in, the second 20-34 s later); Square in it =
   Cloud tries the back door, and she reacts by her profile: Skye always yes, Ruby usually (3 in 4), Tifa

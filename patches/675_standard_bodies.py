@@ -19,7 +19,7 @@ GIRLS = [  # (.hrc written, from .hrc, tag, legs); skin = her face's (`_female_b
     ("ZSCA.HRC", "ZSCA.HRC", "S", {"femur": [(0.0, SCARLET_SKIN), (0.88 / 5.32, BAND), (1.63 / 5.32, STOCKING)],
                                     "tibia": [(0.0, STOCKING)]}),
     ("ZTFA.HRC", "ZTFA.HRC", "T", None),
-    ("ZAEA.HRC", "AUFF.HRC", "A", None),                # (user) Aerith's undressed copy (660 PART2)
+    ("ZAEA.HRC", "AUFF.HRC", "A", None),                # (user) Aerith's undressed copy (660 `BARE`)
     # (user) the Honey Bee girls' undressed copy of the dancer (BADD): 620's devoted room shows it
     # from the fade to the bed (entity girlb, HB_BARE_HRC)
     ("ZHBA.HRC", "BADD.HRC", "H", None),

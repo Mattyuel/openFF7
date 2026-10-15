@@ -745,6 +745,8 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_date(sec, ctx, place, i, g, d, part2)` 
 - `_field(ctx, place, group, names)` 
 - `_offer(ctx, i, g, arrive, group)` Her world talk: "Just chat." / "Ask her on a date." first.
+- `_pose_anims(place, gname)` (user) The anims of the place's position (`POSITION`): [slow, fast] for girl gname (her
+- `_lounge(ctx, name, hrc, stand)` (user) Lounging on a beach lounger (`name`.a): from the standing pose, each leg swung forward
 - `_ledge(ctx, name, hrc, stand, bench=False)` Sitting on a ledge (`name`.a): from the standing pose, each thigh swung forward to
 - `_bare_tifa(ctx)` 
 - `_kneel(ctx, name, hrc, stand, nframes, look=0, bow=None)` bow: a still bow (one frame where she is, no offset): above the knees tipped `bow`
@@ -850,6 +852,13 @@ The movie minigame (user's design).
 ## `patches/675_standard_bodies.py`
 (user) The standard female body (`_female_body`, built by 670) on the undressed
 
+- `apply(ctx)` 
+
+## `patches/676_date_poses.py`
+(user) Dates: one position per place (660 `POSITION`), using the movie's poses, which 670 / 672
+
+- `_date_heads(ctx)` 
+- `_check(ctx)` Every anim named by a date field's models exists in char.lgp (the poses come from later patches).
 - `apply(ctx)` 
 
 ## `patches/900_phs.py`
