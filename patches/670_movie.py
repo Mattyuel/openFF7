@@ -1795,8 +1795,9 @@ def _group(ctx, back):
     # spots: q = phase * 6 + girl
     girl_at, cloud_at, cam_at, gdirs, cdirs = {}, {}, {}, {}, {}
     for k in range(n_g):
-        line = 0 if k < 3 else 1
-        gx, gy = GR.HEAD_X[line], GR.HEAD_YS[k % 3]
+        seat = GR.HEAD_SEAT[GR.ORDER[k]]                 # (user: Skye and Scarlet swapped)
+        line = 0 if seat < 3 else 1
+        gx, gy = GR.HEAD_X[line], GR.HEAD_YS[seat % 3]
         g = _spot(mesh, gx, gy, 0, True)
         assert g[2] > 90, ("not on the middle bed", g)
         sgn = 1 if line == 0 else -1

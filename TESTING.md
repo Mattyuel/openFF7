@@ -432,6 +432,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Group part one seats** (new; untested in-game, user): Skye and Scarlet have swapped places on the
+  middle bed in part one.
 - **Hold it, no walks, group fix, poses** (new; untested in-game, user): head / head reverse / 69 (and each
   group turn, and the special head) now have a second, separate 50% chance of a "hold it" stop: Cloud
   pushes in deep and holds, says his line, ~3 s later she pulls away, gasps, clears her throat and says to
