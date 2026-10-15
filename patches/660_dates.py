@@ -22,7 +22,7 @@ are dropped, entity 0 becomes the director.
 import importlib
 import math
 
-from _config import DATE_GIRL, HB_AFFECTION
+from _config import DATE_GIRL, HB_AFFECTION, HB_KID
 from _dates_data import DATES
 import _movie_girls as MG
 from _honey_bee_data import GIRLS
@@ -253,7 +253,9 @@ def _date(sec, ctx, place, i, g, d, part2):
                     block += acts[line] + [hb._w(20)]
                 else:
                     block += hb._say(sec, (her(line) if who == "G" else "{CLOUD}\n" + line)) + [hb._w(20)]
-            block += [hb._w(30), Op(hb.FADE_OUT), Op(b"\x6C")] + hb._say(sec, d["desire"][place])
+            # (user) her final intimacy scene, seen: counts for the movie's unlock as her Honey Bee
+            # devoted scene does (HB_KID; 622: her kid appears too)
+            block += [asm.biton(*HB_KID[i]), hb._w(30), Op(hb.FADE_OUT), Op(b"\x6C")] + hb._say(sec, d["desire"][place])
             block += [asm.goto(out), leave] + hb._say(sec, her(d["leave"]))
             block += [asm.goto(out), plain]
         block += hb._say(sec, her(tier["close"])) + [asm.goto(out)]

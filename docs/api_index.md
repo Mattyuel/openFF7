@@ -596,7 +596,8 @@ Quests: new NPCs ("givers") offer quests; talking to them again once the
 - `_marker_loop(entries, offer, accepted)` Main loop of a field's marker entity: every 10 frames the first of
 - `_spot(ctx, field, x, y)` 
 - `_marker_model(ctx, field, hrc)` Add marker model `hrc` to `field`; its index.
-- `_add_markers(ctx, field, givers)` The quest markers of every giver in `field` ([(giver, pos)]): one star
+- `_reuse_marker(ctx, field, entity, suffix, init_ops, main_ops)` A marker on hidden entity `entity`: its model entry becomes the marker's (STAR / HEART by
+- `_add_markers(ctx, field, givers)` The quest markers of every giver in `field` ([(giver, pos)]): (user, since) a star and a heart
 - `_kill_table()` {u16 enemy id, u16 state var, u16 counter var, u8 count, pad}..., 0xFFFF.
 - `_quest_log_data(base)` DATA block for quest_menu.asm (layout documented there).
 - `_quest_menu(ctx)` 

@@ -322,10 +322,43 @@ def _marker_model(ctx, field, hrc):
     return index
 
 
+# (user: two givers' stars must show at once) fields at 16 models with several givers: hidden party
+# copies whose model slots and entities the extra markers take over (Cloud always leads, so the
+# engine never shows the other party members' PC entities)
+MARKER_SLOTS = {"md8brdg": ("tifa", "cid"), "mds7st3": ("ballet", "tifa")}
+
+
+def _reuse_marker(ctx, field, entity, suffix, init_ops, main_ops):
+    """A marker on hidden entity `entity`: its model entry becomes the marker's (STAR / HEART by
+    suffix), its init's CHAR is replaced by CHAR + init_ops + a jump over the rest of the old init
+    (its PC op too), its main is main_ops, every other slot RET (as `_travel.reuse_npc`)."""
+    from ff7.models import ModelLoader
+    sec = Script.parse(ctx.field(field).sections[0])
+    ent = sec.entity_index(entity)
+    init = sec.script_ops(ent, 0)
+    assert init[0].op == 0xA1, (field, entity, init[0].raw.hex())          # CHAR
+    m = init[0].raw[1]
+    loader = ModelLoader(ctx.field(field).section("models"))
+    donor = ModelLoader(ctx.field("snmin2").section("models"))
+    entry = _MARKER_ENTRIES[STAR if suffix == "s" else HEART]
+    loader.models[m] = loader.with_scale(entry, round(loader.entry_scale(entry) * loader.scale / donor.scale))
+    ctx.field(field).set_section("models", loader.build())
+    ret = next(o for o in init if o.op == 0x00)
+    sec.replace(init[0], [Op(bytes([0xA1, m]))] + list(init_ops) + [asm.goto(ret)])
+    old_main = init[init.index(ret) + 1]
+    sec.insert_before(old_main, list(main_ops) + [asm.ret()], retarget=True)
+    empty = asm.ret()
+    sec.ops.append(empty)
+    first = sec.entry[ent][0]
+    sec.entry[ent] = [empty] * 32
+    sec.entry[ent][0] = first
+    ctx.field(field).sections[0] = sec.build()
+
+
 def _add_markers(ctx, field, givers):
-    """The quest markers of every giver in `field` ([(giver, pos)]): one star
-    and one heart entity (or one orb) per field, each with its own model, that
-    moves to the giver it applies to. Two givers' marker entities used to
+    """The quest markers of every giver in `field` ([(giver, pos)]): (user, since) a star and a heart
+    entity per giver, each with its own model (one star / heart per field showed only one at a
+    time); short of the 16 models, the last pair moves between the rest. Two givers' marker entities used to
     share the star/heart models: md8brdg (Station Manager + Shinra Deserter)
     had 18 CHARs for 16 models and crashed on arrival with some quest states
     (the 16-model table is a static array, see CLAUDE.md)."""
@@ -337,31 +370,47 @@ def _add_markers(ctx, field, givers):
     for giver, (x, y, z, tri) in givers:
         face = facing_screen(cam, x, y, z + ORB_HEIGHT, (0, 1))      # the quads turn with DIR
         entries.append((giver, [xyzi(x, y, z + ORB_HEIGHT, tri), Op(bytes([0xB3, 0, face]))]))
-    first = entries[0][1]
-    if len(entries) == 1:
-        entries = [(entries[0][0], [])]       # placed once by init
-    name = givers[0][0]["name"][:6]
 
-    def add(model, suffix, offer, accepted):
+    slots = list(MARKER_SLOTS.get(field, ()))
+
+    def add(model, group, k, suffix, offer, accepted):
+        place = group[0][1]
+        loop = [(group[0][0], [])] if len(group) == 1 else group      # one giver: placed once by init
+        if model is None:                    # (user) a hidden party copy's model slot and entity
+            _reuse_marker(ctx, field, slots.pop(0), suffix, init_hidden + place, _marker_loop(loop, offer, accepted))
+            return
         sec = Script.parse(ctx.field(field).sections[0])
         # hidden first: placed visible, the marker that doesn't apply showed for a
         # moment on entry (a star flashing over a giver whose quest is accepted)
-        init = [Op(bytes([0xA1, model]))] + init_hidden + first + [asm.ret()]
-        sec.add_entity(name + suffix, {0: init + _marker_loop(entries, offer, accepted) + [asm.ret()]})
+        init = [Op(bytes([0xA1, model]))] + init_hidden + place + [asm.ret()]
+        sec.add_entity(group[0][0]["name"][:5] + str(k) + suffix,
+                       {0: init + _marker_loop(loop, offer, accepted) + [asm.ret()]})
         ctx.field(field).sections[0] = sec.build()
+
+    def model(hrc):                          # a taken-over slot first (later patches need the room), else new
+        nonlocal room
+        if slots:
+            return None
+        room -= 1
+        return _marker_model(ctx, field, hrc)
 
     show = [Op(b"\xA4\x01")]                                                    # VISI 01
     if QUEST_MARKERS == "orbs":
-        add(copy_model(ctx, field, *ORB_MODEL), "_q",
+        add(copy_model(ctx, field, *ORB_MODEL), entries, 0, "_q",
             show + _tint(ORB_TINT[1]), show + _tint(ORB_TINT[2]))
         return
-    count = len(ModelLoader(ctx.field(field).section("models")).models)
-    if count + 2 > MAX_MODELS:                # no room for both: the star in either mode
+    room = MAX_MODELS - len(ModelLoader(ctx.field(field).section("models")).models)
+    if room + len(slots) < 2:                 # no room for both: the star in either mode, moving
         NO_HEART.append(field)
-        add(_marker_model(ctx, field, STAR), "_s", show, show)
+        add(model(STAR), entries, 0, "s", show, show)
         return
-    add(_marker_model(ctx, field, STAR), "_s", show, None)
-    add(_marker_model(ctx, field, HEART), "_h", None, show)
+    # (user) every giver's own star and heart, so several show at once; short of models, the
+    # last pair moves between the givers left over (to the first one it applies to)
+    pairs = min(len(entries), (room + len(slots)) // 2)
+    groups = [[e] for e in entries[:pairs - 1]] + [entries[pairs - 1:]]
+    for k, group in enumerate(groups):
+        add(model(STAR), group, k, "s", show, None)
+        add(model(HEART), group, k, "h", None, show)
 
 
 # ---- Quests main-menu entry ------------------------------------------------

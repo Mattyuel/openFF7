@@ -432,6 +432,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Quest markers, several at once** (fix; untested in-game, user): every quest giver has their own star /
+  heart. In the Sector 7 station (Wymer + the cameraman) and Upper Midgar's station (Station Manager +
+  Shinra Deserter) both givers' markers should show together. Check nothing else in those two fields
+  changed (they reuse the hidden party-member entities).
+- **Movie unlock via dates** (new; untested in-game, user): Tifa, Aerith, Elena and Scarlet count for the
+  movie unlock once you've seen their final scene on a date (part two) or in the Honey Bee Inn; the other
+  16 still need their Honey Bee devoted scene. A date's part two also makes her Honey Bee kid appear.
 - **Honey Bee devoted positions by personality** (new; untested in-game, user): Elena now mission (face to
   face, her rules), Scarlet on top (she sets the pace), Tifa cowgirl, Aurora mission; their devoted scenes
   rewritten. Check those four scenes' bed layouts and that nothing else changed.
