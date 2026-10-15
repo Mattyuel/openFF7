@@ -432,6 +432,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Honey Bee devoted positions by personality** (new; untested in-game, user): Elena now mission (face to
+  face, her rules), Scarlet on top (she sets the pace), Tifa cowgirl, Aurora mission; their devoted scenes
+  rewritten. Check those four scenes' bed layouts and that nothing else changed.
 - **Dates: one position per place + the beach** (new; untested in-game, user): every girl's part two now
   happens in the place's position: space capsule = behind, gondola = head, Junon cannon = holding (Tifa's
   old hug), beach = the special shoot's finisher. "Where to?" has a fourth place, "The beach at Costa del
