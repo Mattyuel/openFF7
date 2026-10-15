@@ -397,3 +397,8 @@ DATES = {
                       ("G", "“Ah…! Report… no report.\n I'm off duty. Completely.”")]},
     },
 }
+
+
+# (user) the girls' hidden histories: hints appended as extra pages (`_backstories`)
+import _backstories  # noqa: E402
+_backstories.apply_dates(DATES)

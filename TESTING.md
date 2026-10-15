@@ -496,6 +496,9 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Date revelation** (new): at affection 20, after a video with her has been paid out by the cameraman, her next
   date (any place) opens with a scene about how it felt, with Tifa's Theme, one choice for Cloud, and then the
   date ends (no intimacy). Once per girl.
+- **Hidden histories** (new): small hints now show as extra pages after the first and second dates' closing
+  lines, after her last line in each date's intimate scene, and after her movie aftermath; the revelations are
+  much longer. Check the extra pages show the right speaker name and fit their windows.
 - **Blast-off lesson / Twin Jets** (new): the benches no longer draw over the three in Twin Jets (they now draw
   behind everyone in the set). Lesson swing: Cid swings in Rocketman; in Twin Jets whoever she is facing swings.
 - **Rocketman** (new): her torso 10 degrees more upright, Cid raised (floats ~4 units) and turned a little towards

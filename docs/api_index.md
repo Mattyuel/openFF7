@@ -897,6 +897,13 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_hides_phs_show(op)` Story scenes (Kalm inn, cargo ship) add PHS to the menu (OR2 var[2][28]);
 - `apply(ctx)` 
 
+## `patches/_backstories.py`
+(user) The four date girls' hidden histories: their traumas, what they want, and what doesn't
+
+- `_pages(line, pages)` 
+- `apply_dates(dates)` Append the hints to `_dates_data.DATES` (once: marks the dict).
+- `apply_movie(girls)` Append the aftermath hints to `_movie_girls.GIRLS` (once).
+
 ## `patches/_bare_cid.py`
 (user) Bare Cid for Blast-off (673): his field model ABDA.HRC (jacket and shirt kept) without his
 

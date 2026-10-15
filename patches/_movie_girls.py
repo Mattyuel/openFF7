@@ -151,3 +151,8 @@ GIRLS = [
                       "C:Oh god.", "(She winks up at you)\n Mmmmh!", "Mmph! Mmm..."],
          }),
 ]
+
+
+# (user) the girls' hidden histories: hints appended as extra pages (`_backstories`)
+import _backstories  # noqa: E402
+_backstories.apply_movie(GIRLS)
