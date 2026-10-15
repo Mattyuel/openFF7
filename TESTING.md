@@ -501,6 +501,9 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Group shoot conflicts** (new): one more argument in each part, at the fourth turn: Scarlet grabs Tifa's neck
   (part one), Scarlet needles Elena about stopping while Ruby wants her place (part two), Aerith and Tifa turn
   on each other (part three). Each has Cloud's three-way call. The sideline comments are 5 a set now.
+  (new) All six arguments are now staged: fade out, everyone placed (the arguing girls in front, Cloud to the
+  side, the others watching), fade in, the talk, a beat (turns, Tifa getting up, ...), Cloud's call, a reaction,
+  then a fade back into the shoot. Check the cursor still follows the meter in the group (it is computed now).
 - **Hidden histories** (new): small hints now show as extra pages after the first and second dates' closing
   lines, after her last line in each date's intimate scene, and after her movie aftermath; the revelations are
   much longer. Check the extra pages show the right speaker name and fit their windows.

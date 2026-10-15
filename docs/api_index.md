@@ -829,12 +829,14 @@ The movie minigame (user's design).
 - `_slaps(text)` A line about slapping / spanking (user: a slap sound after it; since: a Square prompt instead, the
 - `_encode(t)` 
 - `_chain(var, blocks)` if var == k: blocks[k] (each falls through to the end).
+- `_sparse(var, blocks)` As `_chain`, only the non-empty blocks tested.
 - `_tree(var, lo, hi, leaf)` Binary search on word var in lo..hi (values past hi take hi's leaf).
 - `_advance(state=3)` Ops raising the star rank one step (`MOVIE_RANK`) and setting MOVIE_STATE to `state` (None:
 - `_by_rank(blocks)` Ops running blocks[r] (lists of ops, r = 1..5) for the current star rank (none at rank 0).
 - `_unlocked_or(skip)` Ops jumping to `skip` unless all 20 HB_KID bits are set.
 - `_still_poses(ctx)` 
 - `_spot_or(mesh, x, y, z)` (x, y, z, tri): the floor / bed under (x, y) if any (its height + z), else (x, y, z) on the
+- `_stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g)` (user) The group's arguments staged with the models (`_movie_group.STAGING`): every actor's slot 9
 - `_group(ctx, back)` (user) The group shoot: see `_movie_group`.
 - `_wall_market(ctx, focus)` 
 - `_terminal(ctx)` (user) The Item Store terminal (mkt_ia line00 script 4, OK at the console): where the gun

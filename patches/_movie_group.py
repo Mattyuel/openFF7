@@ -316,3 +316,65 @@ STAYED_BONUS = 20
 END_STAYED = "Cameraman\n“Nobody walked off my set. That's a first!\n Bonus: {gil:,} gil.”"
 END_LEFT = "Cameraman\n“Next time, read the room, star.\n Walkouts cost me money.”"
 WALKOUT = "Cameraman\n“...They ALL walked?! CUT!\n We'll sell what we've got.”"
+
+
+# (user, since) the arguments staged with the models, between turns: fade out, everyone placed for the
+# scene (`set`), fade in, the talk up to page `split`, a beat (`mid`), the rest of the talk, Cloud's call,
+# a reaction (`react`, one list per choice), the reply, fade back into the shoot. Spots are screen
+# offsets in pixels (x right, y down) from `STAGE` (screen point of the widest floor, in front of the left
+# bed), each resolved to the nearest floor (asserted within 30 px, actors 12 px apart); the girls not in
+# `set` watch from `WATCH`. Entries: who: (sx, sy, pose, face) in `set`,
+# (who, pose or None, face or None) in `mid` / `react`; pose "stand" / "kneel"; face = another actor
+# ("cloud" too), "camera", "centre" or "away:<actor>" (her back to them).
+STAGE = (-100, 72)
+# (y down = towards the camera: the arguing girls in front, Cloud to one side, the watchers behind)
+WATCH = [(-80, -40), (75, -45), (-95, -5), (95, -10), (-60, 35), (60, 40)]
+STAGING = [
+    dict(split=2,     # Scarlet directs; Elena objects | Aerith teases, Scarlet insists
+         set={"scarlet": (-25, 5, "stand", "cloud"), "cloud": (50, -10, "stand", "scarlet"),
+              "elena": (-60, -20, "stand", "scarlet"), "aerith": (10, -30, "stand", "cloud"),
+              "tifa": (35, 25, "stand", "cloud")},
+         mid=[("aerith", None, "scarlet"), ("scarlet", None, "aerith"), ("tifa", None, "cloud")],
+         react=[[("scarlet", None, "away:cloud"), ("tifa", None, "scarlet")],
+                [("scarlet", None, "camera"), ("elena", None, "away:cloud")],
+                [("elena", None, "cloud"), ("tifa", None, "elena"), ("scarlet", None, "elena")]]),
+    dict(split=1,     # Ruby claims she was best | Skye protests, Aerith turns it on Cloud
+         set={"ruby": (-20, 10, "stand", "cloud"), "skye": (20, 15, "stand", "ruby"),
+              "cloud": (55, -20, "stand", "ruby"), "aerith": (-50, -25, "stand", "ruby"),
+              "tifa": (0, -35, "stand", "cloud")},
+         mid=[("skye", None, "cloud"), ("ruby", None, "skye"), ("aerith", None, "cloud")],
+         react=[[("ruby", None, "camera"), ("skye", None, "ruby")],
+                [("ruby", None, "away:skye"), ("skye", None, "cloud")],
+                [("tifa", None, "cloud"), ("ruby", None, "skye")]]),
+    dict(split=2,     # Aerith notices Elena holding her breath, Elena insists | Scarlet mocks
+         set={"elena": (0, 15, "kneel", "camera"), "aerith": (-40, -10, "stand", "elena"),
+              "scarlet": (35, -20, "stand", "elena"), "tifa": (-40, 30, "stand", "elena"),
+              "cloud": (60, 10, "stand", "elena")},
+         mid=[("scarlet", None, "elena"), ("elena", None, "away:scarlet")],
+         react=[[("elena", "stand", "away:cloud"), ("scarlet", None, "cloud")],
+                [("aerith", None, "cloud"), ("elena", None, "camera")],
+                [("tifa", "kneel", "elena"), ("elena", None, "tifa")]]),
+    dict(split=1,     # Scarlet grabs Tifa's neck from behind | Tifa is up and facing her, Aerith steps in
+         set={"tifa": (5, 15, "kneel", "cloud"), "scarlet": (-15, 10, "stand", "tifa"),
+              "cloud": (60, 0, "stand", "tifa"), "aerith": (-50, -20, "stand", "scarlet")},
+         mid=[("tifa", "stand", "scarlet"), ("aerith", None, "scarlet"), ("scarlet", None, "tifa")],
+         react=[[("scarlet", None, "away:tifa"), ("tifa", None, "cloud")],
+                [("tifa", "kneel", "cloud"), ("scarlet", None, "camera")],
+                [("tifa", None, "away:scarlet"), ("scarlet", None, "tifa"), ("aerith", None, "tifa")]]),
+    dict(split=2,     # Elena asks to stop, Scarlet needles her | she flinches, Ruby wants in, Skye defends
+         set={"elena": (0, 15, "kneel", "cloud"), "scarlet": (-40, -5, "stand", "elena"),
+              "ruby": (30, -30, "stand", "cloud"), "skye": (-45, 30, "stand", "elena"),
+              "cloud": (60, 5, "stand", "elena")},
+         mid=[("elena", None, "away:scarlet"), ("skye", None, "scarlet"), ("ruby", None, "elena")],
+         react=[[("elena", None, "cloud"), ("scarlet", None, "away:cloud")],
+                [("ruby", None, "elena"), ("elena", "stand", "away:ruby")],
+                [("scarlet", None, "camera"), ("skye", None, "elena")]]),
+    dict(split=3,     # Aerith calls out Tifa's voice | Tifa hits back, Aerith's smile drops, Skye
+         set={"aerith": (-30, 15, "stand", "tifa"), "tifa": (25, 15, "stand", "aerith"),
+              "skye": (0, -25, "stand", "cloud"), "cloud": (65, -15, "stand", "tifa")},
+         mid=[("tifa", None, "aerith"), ("aerith", None, "away:tifa"), ("skye", None, "tifa")],
+         react=[[("aerith", None, "tifa"), ("tifa", None, "aerith")],
+                [("tifa", None, "camera"), ("aerith", None, "away:tifa")],
+                [("aerith", None, "tifa"), ("tifa", None, "cloud")]]),
+]
+assert len(STAGING) == len(SCENES) and all(len(s["react"]) == len(c["choices"]) for s, c in zip(STAGING, SCENES))

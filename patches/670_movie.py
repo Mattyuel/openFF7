@@ -2190,6 +2190,16 @@ def _chain(var, blocks):
     return out + [end]
 
 
+def _sparse(var, blocks):
+    """As `_chain`, only the non-empty blocks tested."""
+    out, end = [], asm.nop()
+    for k, ops in enumerate(blocks):
+        if ops:
+            nxt = asm.nop()
+            out += [asm.if_byte(var, "==", k, nxt)] + ops + [asm.goto(end), nxt]
+    return out + [end]
+
+
 def _tree(var, lo, hi, leaf):
     """Binary search on word var in lo..hi (values past hi take hi's leaf)."""
     if lo == hi:
@@ -2318,6 +2328,86 @@ def _spot_or(mesh, x, y, z):
     return x, y, z, _nearest_tri(mesh, x, y)
 
 
+SC, RC = (5, 182), (5, 183)                          # (group) staged scene, Cloud's choice in it
+
+
+def _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g):
+    """(user) The group's arguments staged with the models (`_movie_group.STAGING`): every actor's slot 9
+    (spot, facing, pose by SC), 10 (the beat) and 11 (the reaction by RC); the player entity's slot 9 (the
+    camera on the stage) and the gauge's (hidden). Spots: screen offsets from STAGE_AT, the nearest floor."""
+    cand = []
+    for x in range(-300, 301, 6):
+        for y in range(-360, 41, 6):
+            t = mesh.find(x, y)
+            if t is not None and abs(mesh.height(t, x, y)) < 2:
+                cand.append((x, y, t) + tuple(cam.project(x, y, 0)))
+    ox, oy = GR.STAGE
+
+    def at_screen(dx, dy, taken=()):                  # the nearest floor point at least 14 px from those taken
+        free = [c for c in cand if all((c[3] - t[0]) ** 2 + (c[4] - t[1]) ** 2 >= 14 ** 2 for t in taken)]
+        c = min(free, key=lambda c: (c[3] - ox - dx) ** 2 + (c[4] - oy - dy) ** 2)
+        assert (c[3] - ox - dx) ** 2 + (c[4] - oy - dy) ** 2 < 30 ** 2, ("no floor there", dx, dy)
+        return c[0], c[1], 0, c[2]
+    centre = at_screen(0, 0)
+    who = ["cloud"] + GR.ORDER
+    ent = {k: ents["cloudb"] if k == "cloud" else ents[k] for k in who}
+
+    def anim(k, pose):
+        if k == "cloud":
+            assert pose == "stand"
+            return 0
+        g = GR.ORDER.index(k)
+        if pose == "kneel":
+            return gfirst[k] + n_used + 2 * (g % 2) + 1
+        return len(ModelLoader.anims(loader.models[3 + g])) - 1 if k == "skye" else 0
+    loop_ = lambda i: [_animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
+    xyzi, d_ = hb._xyzi, (lambda d: Op(bytes([0xB3, 0, d])))
+    slots = {k: {9: [], 10: [], 11: []} for k in who}
+    for i, st in enumerate(GR.STAGING):
+        spot, pose = {}, {}
+        watchers, taken = iter(GR.WATCH), []
+        for k in sorted(who, key=lambda k: k not in st["set"]):      # the scene's own first, then the watchers
+            sx, sy, ps, face = st["set"][k] if k in st["set"] else next(watchers) + ("stand", "centre")
+            spot[k], pose[k] = at_screen(sx, sy, taken), ps
+            taken.append(cam.project(*spot[k][:3]))
+        sp_ = {k: cam.project(*spot[k][:3]) for k in who}
+        for a in who:
+            for b in who:
+                assert a >= b or (sp_[a][0] - sp_[b][0]) ** 2 + (sp_[a][1] - sp_[b][1]) ** 2 >= 12 ** 2, \
+                    ("staged on top of each other", i, a, b)
+
+        def face_dir(k, f):
+            x, y = spot[k][:2]
+            if f == "camera":
+                return facing_screen(cam, x, y, 0, (0, 1))
+            back = f.startswith("away:")
+            tx, ty = (centre if f == "centre" else spot[f.split(":")[-1]])[:2]
+            return (dt._dir_to(tx - x, ty - y) + (128 if back else 0)) % 256
+
+        def beat(k, ps, f):
+            ops = loop_(anim(k, ps)) if ps else []
+            if f in ent and not f.startswith("away:"):
+                ops += [hb._tura(ent[f])]
+            elif f:
+                ops += [d_(face_dir(k, f))]
+            return ops
+        for k in who:
+            f = st["set"][k][3] if k in st["set"] else "centre"
+            slots[k][9].append([xyzi(*spot[k]), d_(face_dir(k, f)), hb._visi(1)] + loop_(anim(k, pose[k])))
+            slots[k][10].append([o for k2, ps, f2 in st["mid"] if k2 == k for o in beat(k, ps, f2)])
+            slots[k][11].append(_sparse(RC, [[o for k2, ps, f2 in r if k2 == k for o in beat(k, ps, f2)]
+                                            for r in st["react"]]))
+    for k in who:
+        e, gone = ent[k], asm.nop()
+        left = [] if k == "cloud" else [asm.if_byte(LEFT, "bit_off", GR.ORDER.index(k), gone),
+                                         hb._visi(0), asm.ret(), gone]
+        scripts[e][9] = left + _chain(SC, slots[k][9]) + [asm.ret()]
+        scripts[e][10] = _sparse(SC, slots[k][10]) + [asm.ret()]
+        scripts[e][11] = _sparse(SC, [b if any(o.raw[0] != 0 for o in b) else [] for b in slots[k][11]]) + [asm.ret()]
+    scripts[CL][9] = [xyzi(*centre), asm.ret()]
+    scripts[ents["gauge"]][9] = [hb._visi(0), asm.ret()]
+
+
 def _group(ctx, back):
     """(user) The group shoot: see `_movie_group`."""
     hb, dt = _hb(), _dates()
@@ -2444,6 +2534,9 @@ def _group(ctx, back):
                                                   anims)
         assert len(anims) == n_used + len(STILL) and len(ModelLoader.anims(loader.models[m])) <= 47, (key, len(anims))
         gfirst[key] = len(ModelLoader.anims(loader.models[m])) - len(anims)
+        if key == "skye":                                 # (her donor sits: DXID to stand in the staged scenes)
+            loader.models[m] = ModelLoader.with_anims(loader.models[m], ["DXID.tor"])
+            assert len(ModelLoader.anims(loader.models[m])) <= 47
     cm = loader.add_from(ModelLoader(ctx.field(CAMERA_DONOR[0]).section("models")), CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(CAMERA_FILM)
     sprites = _BUILT["sprites"]
@@ -2513,10 +2606,27 @@ def _group(ctx, back):
                               2: by_q(lambda q: [xyzi(*gauge[q])]) + [hb._visi(1), asm.ret()]}
     scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, 12, sprite_dir, by_q(lambda q: [xyzi(*icon[q])]),
                                                                    cloud=ents["cloudb"])
-    loop, idle = asm.nop(), asm.nop()
-    cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50)]
-    cur += by_q(lambda q: _tree(BKT, 0, 20, lambda b: [xyzi(*cursor[q][b])]) + [hb._visi(1), hb._w(1),
-                                                                               asm.goto_back(loop)])
+    # (user, since: the group's script was at 62.7 of 64 KB) the cursor's spot computed, not a tree of
+    # 21 XYZIs a position: unprojected at one depth its 21 spots lie on a line, spot b = first + b * step
+    # (x16 fixed point), written into temp words and placed with XYZI's variable operands (the game's own
+    # scripts do so: XYZI 66 66 after AXYZI)
+    loop, idle, capped = asm.nop(), asm.nop(), asm.nop()
+    CUR = [(6, 200), (6, 202), (6, 204)]
+    cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50),
+           asm.if_word(BKT, "<=", 20, capped), asm.setword(BKT, 20), capped]
+
+    def cur_at(q):
+        pts, ops_ = cursor[q], []
+        for a, var in enumerate(CUR):
+            step = round((pts[20][a] - pts[0][a]) * 16 / 20)
+            assert all(abs(pts[0][a] + b * step / 16 - pts[b][a]) <= 2 for b in range(21)), ("cursor line", q, a)
+            ops_ += [asm.setword(var, BKT), hb._arith(0x8A, var, abs(step)), hb._arith(0x8C, var, 16),
+                     asm.setword(CUR_T, pts[0][a] & 0xFFFF), hb._arith(0x86 if step >= 0 else 0x88, CUR_T, var),
+                     asm.setword(var, CUR_T)]
+        return ops_ + [Op(bytes([0xA5, 0x66, 0x60]) + struct.pack("<HHHH", CUR[0][1], CUR[1][1], CUR[2][1],
+                                                                  pts[10][3]))]
+    CUR_T = (6, 206)
+    cur += by_q(cur_at) + [hb._visi(1), hb._w(1), asm.goto_back(loop)]
     cur += [idle, hb._visi(0), hb._w(1), asm.goto_back(loop)]
     scripts[ents["cursor"]] = {0: [Op(bytes([0xA1, 11])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret()] + cur
                                + [asm.ret()]}
@@ -2542,7 +2652,7 @@ def _group(ctx, back):
              Op(bytes([0x95, K[0], K[1]])), Op(bytes([0x8D, K[0] << 4, K[1], 6])),
              Op(bytes([0x95, VV[0], VV[1]])), Op(bytes([0x8D, VV[0] << 4, VV[1], 2])),
              asm.if_byte(VV, "==", 0, other)]
-    voice += _chain(E, [_chain(K, [line(key, GR.MUFFLED[key][j % 3]) for j in range(6)]) for key in GR.ORDER])
+    voice += _chain(E, [_chain(K, [line(key, GR.MUFFLED[key][j % 2]) for j in range(6)]) for key in GR.ORDER])   # (texts)
     voice += [asm.goto(vdone), other, Op(bytes([0x99, CC[0], CC[1]])), Op(bytes([0x8D, CC[0] << 4, CC[1], n_g]))]
     # never the engaged girl, nor (user) one who walked off (LEFT): the next one instead; none left: no line
     for r_ in range(n_g):
@@ -2601,12 +2711,12 @@ def _group(ctx, back):
             ops += leave(g, back, line=False)
         return ops
 
-    def choose(ask, choices, back):                  # an ASK to Cloud, each reply + its effects
+    def choose(ask, choices, back, before=lambda j: []):   # an ASK to Cloud, each reply + its effects
         ops, first = hb._ask(sec, ask, [c[0] for c in choices])
         done = asm.nop()
         for j, (label, reply, eff) in enumerate(choices):
             nx = asm.nop()
-            ops += [asm.if_byte(CHOICE, "==", first + j, nx)] + \
+            ops += [asm.if_byte(CHOICE, "==", first + j, nx)] + before(j) + \
                 hb._say(sec, reply + _gil_note(eff.get("gil", 0) * GR.RATE)) + effects(eff, back) + [asm.goto(done), nx]
         return ops + [done]
 
@@ -2635,12 +2745,22 @@ def _group(ctx, back):
         return _chain(E, [[asm.setbyte(PARM, 1), asm.setword(PT, FR), hb._arith(0x86, PT, GR.UNEASY_FIRST)]
                           if PF.PROFILES[key].get("uneasy") else [] for key in GR.ORDER])
 
-    def scene(sc):                                   # (user) everyone stops: an argument, Cloud's call
-        skip = asm.nop()
+    def scene(i, sc):                                # (user) everyone stops: an argument, Cloud's call
+        # (user, since) staged with the models (`_movie_group.STAGING`): fade out, everyone to the scene's
+        # spots and poses (slot 9), fade in, the talk to its `split`, the beat (slot 10), the rest, Cloud's
+        # call, the reaction (slot 11 by RC), the reply, then back into the shoot (slot 2, as a turn switch)
+        skip, st = asm.nop(), GR.STAGING[i]
         ops = [asm.if_byte(PH, "==", sc["part"], skip), asm.if_byte(TP, "==", sc.get("turn", GR.SCENE_AT_TURN), skip)] + \
             [asm.if_byte(LEFT, "bit_off", GR.ORDER.index(g), skip) for g in sc["girls"]]
-        ops += [hb._req(e, 4, wait=False) for e in actors] + hb._say(sec, sc["talk"]) + \
-            choose(sc["ask"], sc["choices"], back=True) + [hb._req(e, 2, wait=False) for e in actors]
+        pages = sc["talk"].split("{NEW}")
+        cast_ = [CL, ents["gauge"]] + actors
+        ops += [asm.setbyte(SC, i), Op(FAST_OUT), Op(b"\x6C")] + [hb._req(e, 9, wait=False) for e in cast_] + \
+            [hb._w(8), Op(FAST_IN), Op(b"\x6C")] + hb._say(sec, "{NEW}".join(pages[:st["split"]])) + \
+            [hb._req(e, 10, wait=False) for e in actors] + [hb._w(15)] + \
+            hb._say(sec, "{NEW}".join(pages[st["split"]:])) + \
+            choose(sc["ask"], sc["choices"], back=True,
+                   before=lambda j: [asm.setbyte(RC, j)] + [hb._req(e, 11, wait=False) for e in actors] + [hb._w(15)]) + \
+            [Op(FAST_OUT), Op(b"\x6C")] + place_all() + [hb._w(4), Op(FAST_IN), Op(b"\x6C")]
         return ops + [skip]
     pause = _pause_ops(hb, sec, actors, ents["hush3"],
                        lambda block: _chain(E, [block(key) for key in GR.ORDER]), lambda no: [], ents["icon"],
@@ -2722,8 +2842,8 @@ def _group(ctx, back):
              asm.setbyte(USED, LEFT), asm.setbyte(TP, 0), same_part] + pick() + \
             [Op(bytes([0x95, TP[0], TP[1]])), asm.setword(POS, 500), asm.setword(VEL, 1000)] + place_all() + \
             [hb._w(4), Op(FAST_IN), Op(b"\x6C")]
-    for sc in GR.SCENES:                             # (user) the part's argument, once
-        main += scene(sc)
+    for i, sc in enumerate(GR.SCENES):               # (user) the part's arguments, once each
+        main += scene(i, sc)
     main += [asm.setword(PR, 0), asm.setword(NT, FR),
              hb._arith(0x86, NT, TICK), asm.setword(NEXT, FR), hb._arith(0x86, NEXT, GR.TURN)] + _pause_arm(hb, GR.TURN) + \
         uneasy_arm() + [asm.setbyte(RUN, 1), stay, asm.goto_back(tick)]
@@ -2757,6 +2877,7 @@ def _group(ctx, back):
     main += [asm.biton(*SPECIAL_ON)]             # (user) a full group shoot unlocks the special scenes (672)
     main += [asm.setword(MOVIE_PRESSES, TOT), asm.setword(MOVIE_AT, HB_MINUTES), asm.setbyte(MOVIE_STATE, 2),
              Op(hb.FADE_OUT), Op(b"\x6C")] + out()
+    _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g)
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main}
     dt._blank(sec, scripts)
