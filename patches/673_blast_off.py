@@ -229,6 +229,7 @@ def _blast(ctx, built, back):
     for hrc in SPRITES:
         loader.models.append(ModelLoader.with_scale(sprites[hrc], sprite_scale))
     gm, gfirst, rate = {}, {}, {}
+    ctx.blast_hers = {}                                           # (674 reuses each girl's retargeted list)
     for key in BD.ORDER:
         (dfield, dmodel), bare_hrc, _, r_ = sp._girl(ctx, key)
         rate[key] = r_ * BD.PAY_X
@@ -239,6 +240,7 @@ def _blast(ctx, built, back):
             g_ = next(g for g in MG.GIRLS if g["key"] == key)
             hers = mv._retarget(ctx, anims["girl"], g_["prefix"], g_["donor"][2],
                                 ModelLoader.anims(donor.models[dmodel])[0].split(".")[0].lower() + ".a", g_.get("head_down"))
+        ctx.blast_hers[key] = hers
         k = loader.add_from(donor, dmodel)
         loader.models[k] = ModelLoader.with_anims(ModelLoader.with_hrc(loader.models[k], bare_hrc,
                                                                        ModelLoader.name(loader.models[k])[:-5] + "_b.char"), hers)
@@ -538,6 +540,7 @@ def _blast(ctx, built, back):
 
 def apply(ctx):
     built = _poses(ctx)
+    ctx.blast_built = built                                       # (674: the stage show's three-person poses)
     n = _blast(ctx, built, ctx.movie_back)
     print("  673: the Blast-off set %s (%d texts)" % (BD.SET, n))
     for p, pl in zip(BD.POSITIONS, ctx.blast_places):

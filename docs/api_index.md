@@ -872,6 +872,14 @@ The movie minigame (user's design).
 - `_blast(ctx, built, back)` 
 - `apply(ctx)` 
 
+## `patches/674_stage_show.py`
+(user) The Gold Saucer stage show (data `_stage_show.py`): a live erotic fantasy on the Event Square
+
+- `_mods()` 
+- `_show(ctx, built)` 
+- `_booker(ctx)` The Booker (the play's King) in Event Square: offers the show once unlocked.
+- `apply(ctx)` 
+
 ## `patches/675_standard_bodies.py`
 (user) The standard female body (`_female_body`, built by 670) on the undressed
 
@@ -1034,6 +1042,10 @@ Shared helpers for character recruitment scenes.
 - `count_recruit()` Ops: one more character recruited; show the PHS once there are enough
 - `xyzi(x, y, z, tri)` 
 - `add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines, main=())` Add a new NPC for `char` to `field`, with the model copied from
+
+## `patches/_stage_show.py`
+(user) The Gold Saucer stage show (674): the troupe, famous from the videos, performs a live erotic
+
 
 ## `patches/_travel.py`
 Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.

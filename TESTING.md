@@ -920,3 +920,10 @@ python tools/ff7tool.py exe-test      # -> build/exe_test/ff7_en.exe (patches yo
    - Error / crash / nothing starts: Steam's DRM rejects an exe with an extra
      section; we'd need another place for the new code.
 3. Undo: delete the copied exe and rename `ff7_en.exe.original` back.
+
+- **Gold Saucer stage show** (new, untested): after a full group shoot and Cid at affection 20, the Booker (the play's King)
+  by the aisle in Event Square offers a live show. Four acts on the play's stage: a clothed scene in costume with a
+  conflict and Cloud's choice, then a fade into the undressed minigame (tavern: Tifa holding; lair: Scarlet cowgirl;
+  cave: Aerith Twin Jets with Cid; castle: Exhaust with Cid and the bride you chose), a finisher in the finale, pay on
+  the spot, back to the Booker. Check: everyone appears (clothed models, the Dragon costume, undressed), the meter
+  works on the stage, Aerith turns between the men, nothing hangs between acts.
