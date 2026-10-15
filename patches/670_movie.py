@@ -756,10 +756,11 @@ def _there_ops(hb, sec, key, rate, cond, icon, hush, leave):
         assert kind == "likes", kind
     gain = rate * pr.get("there_gain", 10)
     if kind != "dislikes":
-        ev += say(pr["there_yes"], gain) + [Op(bytes([0x39, 0x00]) + struct.pack("<I", gain)), asm.goto(done)]
+        ev += [sound(MATERIA_SOUND)] + say(pr["there_yes"], gain) + [Op(bytes([0x39, 0x00]) + struct.pack("<I", gain)),
+                                                                    asm.goto(done)]
     if kind != "likes":
         loss = rate * pr.get("there_loss", pr.get("loss", 5))
-        ev += [refuse] + _there_refuse(hb, say, pr, kind, loss) + _take_gil(loss) + _annoy(0, leave(key))
+        ev += [refuse, sound(FAIL_SOUND)] + _there_refuse(hb, say, pr, kind, loss) + _take_gil(loss) + _annoy(0, leave(key))
     length = w1 + 25
     ev += [done, hb._w(15), hb._arith(0x86, NEXT, length), hb._arith(0x86, IT, length), hb._arith(0x86, TT, length),
            asm.setword(PR, 0), asm.setword(NT, FR), hb._arith(0x86, NT, TICK), asm.setbyte(RUN, 1), no2]
@@ -854,7 +855,7 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
         others = [IT]
     else:                                        # in deep, held: the bonus and his line; she tries; she pulls away
         ops = cond(no) + [asm.if_byte(SQ, "==", 1, no), asm.setbyte(SQ, 0), asm.setbyte(RUN, 0), Op(b"\x54\x01")]
-        ops += lines(lambda key: _hold_check(key, slot_of(key), refuse))
+        ops += lines(lambda key: _hold_check(key, slot_of(key), refuse)) + [sound(MATERIA_SOUND)]   # (taken)
         ops += [hb._req(e, 5, wait=False) for e in actors]
         ops += [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(GR.HOLD_CLOUD)]))]
 
@@ -895,20 +896,25 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
                 _chain(RND2, texts) + _take_gil(loss) + _annoy(k, leave(key) if leave else [])
         length = w0 + w1 + w2 + 10
         lesson2 = _lesson_ops(hb, sec, actors[0], icon, hush, lines, slot_of, leave) if icon is not None else []
-        ops += [asm.goto(no), refuse] + [hb._req(e, 4, wait=False) for e in actors] + lines(refused) + lesson2 + \
+        ops += [asm.goto(no), refuse, sound(FAIL_SOUND)] + [hb._req(e, 4, wait=False) for e in actors] + \
+            lines(refused) + lesson2 + \
             resume(length, [PT, IT])
     return ops + [no]
 
 
-LESSON_RAISE, LESSON_SWING, LESSON_HOLD = 6, 6, 10   # frames: arm out to his side, the swing, held at the end
+LESSON_RAISE, LESSON_SWING = 4, 5                   # frames: arm out towards his side, the swing (then straight back
+                                                    # to his pulled-back pose: Cloud's slot 7, user)
 LESSON_DOWN = 45                                    # (user) the swing ends 45 degrees down, in front of him
+LESSON_OUT = 0.55                                   # (user, since: less swing) the wind-up only this far to his side
+LESSON_IN = 30                                      # (user, since) the swing ends this far in across him: her face
 LESSON_SAY = GR.PAUSE_FRAMES[1]                     # her reaction's window (closed by hush3's slot 2)
 
 
 def _lesson_anim(ctx, base, name, hrc="zcla.hrc"):
     """(user) Cloud's lesson: frame 0 of his stroke `base` (pulled back) held, his right arm straight,
-    raised out to his right side, then swung to LESSON_DOWN down in front of him (his body's own axes:
-    up = pelvis to neck, right = between the shoulders, so it works lying down too), held."""
+    a short wind-up `LESSON_OUT` of the way out to his right side, then swung to LESSON_DOWN down in
+    front of him and `LESSON_IN` in across him (her face) (his body's own axes: up = pelvis to neck,
+    right = between the shoulders, so it works lying down too). Played once (slot 7)."""
     from ff7 import fieldanim as fa
     sk = fa.skeleton(ctx.char_file(hrc).decode("latin-1"))
     I = [b[0] for b in sk].index
@@ -924,12 +930,12 @@ def _lesson_anim(ctx, base, name, hrc="zcla.hrc"):
     right = unit(sub(right, [up[k] * sum(right[j] * up[j] for j in range(3)) for k in range(3)]))
     fwd = [up[1] * right[2] - up[2] * right[1], up[2] * right[0] - up[0] * right[2], up[0] * right[1] - up[1] * right[0]]
     # (up x right: his forward if right is his right; checked below on a standing pose: -z)
-    a_ = math.radians(LESSON_DOWN)
-    side = right
-    front = unit([fwd[k] * math.cos(a_) - up[k] * math.sin(a_) for k in range(3)])
+    a_, i_ = math.radians(LESSON_DOWN), math.radians(LESSON_IN)
+    front = unit([(fwd[k] * math.cos(i_) - right[k] * math.sin(i_)) * math.cos(a_) - up[k] * math.sin(a_) for k in range(3)])
     arm = ("r_uparm", "r_foarm", "r_hand")
     bdir = lambda m: fa._vec(m, [0, 0, -1])
     start = unit(bdir(W[I("r_uparm")]))
+    side = unit([start[k] + (right[k] - start[k]) * LESSON_OUT for k in range(3)])
 
     def pose(d):
         Wt = list(W)
@@ -939,10 +945,19 @@ def _lesson_anim(ctx, base, name, hrc="zcla.hrc"):
     lerp = lambda u, v, w: unit([u[k] + (v[k] - u[k]) * w for k in range(3)])
     frames = [pose(lerp(start, side, (t + 1) / LESSON_RAISE)) for t in range(LESSON_RAISE)]
     frames += [pose(lerp(side, front, ((t + 1) / LESSON_SWING) ** 2)) for t in range(LESSON_SWING)]   # (speeding up)
-    frames += [pose(front)] * LESSON_HOLD
     a.frames = frames
     ctx.char_file(name.lower() + ".a", a.build())
     return name + ".tor"
+
+
+def lesson_slot(lesson_i, back_i):
+    """(user) Cloud's slot 7: the lesson once: its wind-up (CANM!2 frames 0..LESSON_RAISE, ANIMW), the
+    slap sound as the swing starts (user: it came late at the end), the swing, then at once his
+    pulled-back pose (back_i: the position's stop anim kind 0) again (as 660's Scarlet slap)."""
+    last = LESSON_RAISE + LESSON_SWING - 1
+    return [_animb(), Op(bytes([0xBC, lesson_i, 0, LESSON_RAISE - 1, 1])), Op(b"\xAC"), sound(SLAP_SOUND),
+            Op(bytes([0xBC, lesson_i, LESSON_RAISE - 1, last, 1])), Op(b"\xAC"),
+            _animb(), Op(bytes([0xA2, back_i, 1])), Op(bytes([0xAE, back_i, 1]))]
 
 
 def _lesson_ops(hb, sec, cloud, icon, hush, lines, slot_of, leave):
@@ -953,7 +968,7 @@ def _lesson_ops(hb, sec, cloud, icon, hush, lines, slot_of, leave):
     (NEXT) and the next prompts (PT, IT, TT) move on by what it took."""
     no, done = asm.nop(), asm.nop()
     ops = [asm.setbyte(LSN, 0), hb._req(icon, 6)] + [hb._arith(0x86, v, ICON_FRAMES) for v in (NEXT, PT, IT, TT)]
-    ops += [asm.if_byte(LSN, "==", 1, no), hb._req(cloud, 7), sound(SLAP_SOUND)]
+    ops += [asm.if_byte(LSN, "==", 1, no), hb._w(LESSON_RAISE + LESSON_SWING + 4)]   # (sqkey started his swing)
 
     def react(key):
         pr = PF.PROFILES[key]
@@ -971,15 +986,19 @@ def _lesson_ops(hb, sec, cloud, icon, hush, lines, slot_of, leave):
         if kind != "dislikes":
             out += [yes_l] + say(pr["lesson_yes"]) + [asm.goto(done)]
         if kind != "likes":
-            out += [no_l] + say(pr["lesson_no"]) + _annoy(k, leave(key) if leave else [])
+            out += [no_l, sound(FAIL_SOUND)] + say(pr["lesson_no"]) + _annoy(k, leave(key) if leave else [])
         return out + [asm.goto(done)]
     ops += lines(react) + [done]
-    extra = LESSON_RAISE + LESSON_SWING + LESSON_HOLD + LESSON_SAY
+    extra = LESSON_RAISE + LESSON_SWING + 4 + LESSON_SAY
     ops += [hb._arith(0x86, v, extra) for v in (NEXT, PT, IT, TT)] + [no]
     return ops
 
 
-def _hold_entities(hb, model, sprite_dir, place):
+FAIL_SOUND = 3                                      # (user) the menu's "can't do that" buzz (0x74580A id 3;
+                                                    # the field SOUND id assumed the same: untested)
+
+
+def _hold_entities(hb, model, sprite_dir, place, cloud=None):
     """(user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
     = place ops (its XYZI for the position), slot 3 = shown ICON_FRAMES with IWIN 1 (a hold), slot 4
     = the same with IWIN 2 (a slap prompt: REQ'd by the voice with a slap / spank / smack line)) and
@@ -996,12 +1015,13 @@ def _hold_entities(hb, model, sprite_dir, place):
     back, up, slap, there, lesson = asm.goto_back(wait), asm.setbyte(SQH, 0), asm.nop(), asm.nop(), asm.nop()
     sqkey = {0: [asm.ret(), wait, Op(bytes([0x30]) + struct.pack("<H", SQUARE_KEY) + b"\x00", target=up),
                  asm.if_byte(SQH, "==", 0, back), asm.setbyte(SQH, 1), asm.if_byte(IWIN, "==", 1, slap),
-                 asm.setbyte(SQ, 1), sound(MATERIA_SOUND), asm.setbyte(IWIN, 0), asm.goto_back(wait),
+                 asm.setbyte(SQ, 1), asm.setbyte(IWIN, 0), asm.goto_back(wait),      # (the sound: success / failure)
                  slap, asm.if_byte(IWIN, "==", 2, there), asm.setbyte(SLP, 1), sound(SLAP_SOUND),
                  asm.setbyte(IWIN, 0), asm.goto_back(wait),
-                 there, asm.if_byte(IWIN, "==", 3, lesson), asm.setbyte(THR, 1), sound(MATERIA_SOUND),   # (user) "there"
+                 there, asm.if_byte(IWIN, "==", 3, lesson), asm.setbyte(THR, 1),                         # (user) "there"
                  asm.setbyte(IWIN, 0), asm.goto_back(wait),
-                 lesson, asm.if_byte(IWIN, "==", 4, back), asm.setbyte(LSN, 1), sound(MATERIA_SOUND),    # (user) the lesson
+                 lesson, asm.if_byte(IWIN, "==", 4, back), asm.setbyte(LSN, 1)] + \
+                ([hb._req(cloud, 7, wait=False)] if cloud is not None else []) + [               # (user) the swing at once
                  asm.setbyte(IWIN, 0), back, up, asm.goto_back(wait), asm.ret()]}
     return icon, sqkey
 
@@ -1893,8 +1913,8 @@ def _shoot(ctx, back, cast=None):
             return [_animb(), Op(bytes([0xA2, hold_index(first, pnames[p], 1) if kind == 2 else i, 1])),
                     Op(bytes([0xAE, i, 1]))]
         return by_p(make) + [asm.ret()]
-    lesson7 = by_p(lambda p, pl: [_animb(), Op(bytes([0xA2, lesson_index(cfirst, pnames[p]), 1])),
-                                  Op(bytes([0xA3, lesson_index(cfirst, pnames[p]), 1]))] if pnames[p] in PAUSE_POS else [])
+    lesson7 = by_p(lambda p, pl: lesson_slot(lesson_index(cfirst, pnames[p]), hold_index(cfirst, pnames[p], 0))
+                   if pnames[p] in PAUSE_POS else [])
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1),
                                7: lesson7 + [asm.ret()]}                  # (user) the lesson (ANIME1: waited for)
@@ -1902,7 +1922,7 @@ def _shoot(ctx, back, cast=None):
         scripts[ents[key]] = {0: [Op(bytes([0xA1, model])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: pose(first, "girl", "gdir", test), 4: hold(first), 5: hold(first, 1),
                               6: [hb._w(hold_try_delay())] + hold(first, 2)}
-    scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, icon_model, sprite_dir,
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, icon_model, sprite_dir, cloud=ents["cloudb"], place=
                                                                    by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     imesh, icam = Walkmesh(f.section("walkmesh")), Camera(f.sections[1])
     ispot = {k: _spot(imesh, *xy) for k, xy in INTRO.items()}
@@ -2437,9 +2457,8 @@ def _group(ctx, back):
         3: [xyzi(*centre), d_(facing_screen(cam, *centre[:3], (0, 1))), hb._visi(1)] + loop_(0) + [asm.ret()],
         4: _chain(PH, [loop_(stop(cfirst, ph, 0, True)) for ph in range(GR.PHASES)]) + [asm.ret()],
         5: _chain(PH, [loop_(stop(cfirst, ph, 1, True)) for ph in range(GR.PHASES)]) + [asm.ret()],
-        7: _chain(PH, [[_animb(), Op(bytes([0xA2, cfirst + remap[True][lesson_of(ph)], 1])),
-                        Op(bytes([0xA3, cfirst + remap[True][lesson_of(ph)], 1]))] for ph in range(GR.PHASES)])
-        + [asm.ret()]}
+        7: _chain(PH, [lesson_slot(cfirst + remap[True][lesson_of(ph)], stop(cfirst, ph, 0, True))
+                       for ph in range(GR.PHASES)]) + [asm.ret()]}
     for k, key in enumerate(GR.ORDER):
         first = gfirst[key]
         b_ = 2 * (k % 2)                                  # (girls alternate the two idle timings)
@@ -2472,7 +2491,8 @@ def _group(ctx, back):
         2: by_q(lambda q: [xyzi(*cam_at[q][:4]), d_(cam_at[q][4])]) + [asm.ret()]}
     scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 10])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
                               2: by_q(lambda q: [xyzi(*gauge[q])]) + [hb._visi(1), asm.ret()]}
-    scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, 12, sprite_dir, by_q(lambda q: [xyzi(*icon[q])]))
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = _hold_entities(hb, 12, sprite_dir, by_q(lambda q: [xyzi(*icon[q])]),
+                                                                   cloud=ents["cloudb"])
     loop, idle = asm.nop(), asm.nop()
     cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50)]
     cur += by_q(lambda q: _tree(BKT, 0, 20, lambda b: [xyzi(*cursor[q][b])]) + [hb._visi(1), hb._w(1),

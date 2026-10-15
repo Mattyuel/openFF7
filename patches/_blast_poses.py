@@ -63,12 +63,8 @@ def _to_own(q, O):
 
 
 def _member(ctx, ply):
-    """(base, tip) of a bare man's member box (8 corners, z-major) in his hip bone's frame."""
-    d = ctx.char_file(ply)
-    assert struct.unpack_from("<16I", d, 0)[3] == 8, ply
-    V = [struct.unpack_from("<3f", d, 128 + 12 * i) for i in range(8)]
-    avg = lambda vs: [sum(v[k] for v in vs) / len(vs) for k in range(3)]
-    return avg(V[:4]), avg(V[4:])
+    """(base, tip) of a bare man's member (620 `_member_p`) in his hip bone's frame."""
+    return importlib.import_module("620_honey_bee").member_ends(ctx.char_file(ply))
 
 
 def _write(ctx, base, frames, name):

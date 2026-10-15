@@ -17,7 +17,7 @@ PELVIS, THIGHS, SHINS = "ABDB", ("ABGE", "ABHE"), ("ABHA", "ABIA")   # his parts
 SEAT_Y = (-13.85, 1.56 / 1.75)   # his hip joints' height; his pelvis bone / Cloud's (Cloud's at -13.54)
 CLOUD_HIP_Y = -13.54
 SEAT_W = 2.03 / 1.88             # his hip joints' spread / Cloud's
-MEMBER_SCALE = 1.7               # (user) 70% longer than Cloud's
+MEMBER_SCALE = 1.7 * 0.7         # (user) 70% longer than Cloud's, then 30% shorter
 MEMBER_W = 0.83                  # (user, since) its girth: half its first (1.7 x Cloud's then 0.975)
 LEG_N = 8                        # points a ring
 LEG_SCALE = 1.15                 # the profiles' widths x this (his jacket is bulky: thinner legs looked spindly)
@@ -109,7 +109,8 @@ def _member(ctx, hrc, seat_world, frame, d):
                for y in (-h, h) for x in (-h, h)]
     mt = [[m[r][c] for r in range(3)] for c in range(3)]
     local = [fa._vec(mt, [p[k] - start[k] for k in range(3)]) for p in corners]
-    ctx.char_file("zcjp.p", hb._box_p(local, SKIN, d[64:128]))
+    avg = lambda vs: [sum(v[k] for v in vs) / len(vs) for k in range(3)]
+    ctx.char_file("zcjp.p", hb._member_p(avg(local[:4]), avg(local[4:]), MEMBER_W / 2, SKIN, d[64:128]))
 
 
 def build(ctx):

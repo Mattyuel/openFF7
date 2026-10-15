@@ -189,12 +189,7 @@ def _girl_insert(ctx):
 
 def _member(ctx, fa):
     """Cloud's member (620 zcmp.p, on the hip bone): (base, tip) in the hip bone's frame."""
-    d = ctx.char_file("zcmp.p")
-    nv = struct.unpack_from("<16I", d, 0)[3]
-    assert nv == 8, nv
-    V = [struct.unpack_from("<3f", d, 128 + 12 * i) for i in range(nv)]
-    avg = lambda vs: [sum(v[k] for v in vs) / len(vs) for k in range(3)]
-    return avg(V[:4]), avg(V[4:])                                                  # (z-major corners)
+    return _hb().member_ends(ctx.char_file("zcmp.p"))
 
 
 def _cloud_insert(ctx, entry, n, name):
@@ -571,12 +566,11 @@ def _special(ctx, key, back):
     lesson = cfirst + len(cloud_anims) - 1                           # (user) the lesson: head only, waited for
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: pose(cfirst, "cloud", "cdir"), 4: hold(cfirst), 5: hold(cfirst, 1),
-                               7: mv._chain(P, [[], [mv._animb(), Op(bytes([0xA2, lesson, 1])), Op(bytes([0xA3, lesson, 1]))],
-                                                []]) + [asm.ret()]}
+                               7: mv._chain(P, [[], mv.lesson_slot(lesson, cfirst + 4 * len(POSITIONS)), []]) + [asm.ret()]}
     scripts[ents["girl"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                              2: pose(gfirst, "girl", "gdir"), 4: hold(gfirst), 5: hold(gfirst, 1),
                              6: [hb._w(mv.hold_try_delay())] + hold(gfirst, 2)}
-    scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 7, sprite_dir,
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 7, sprite_dir, cloud=ents["cloudb"], place=
                                                                       by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     scripts[ents["girlc"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                               2: [hb._visi(0), asm.ret()],

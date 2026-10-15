@@ -1559,8 +1559,54 @@ def _bare_cloud_member(ctx, hrc):
     local = [fa._vec(mt, [p[k] - start[k] for k in range(3)]) for p in corners]
     back = fa._vec(m, local[0])
     assert max(abs(start[k] + back[k] - corners[0][k]) for k in range(3)) < 1e-4, "frame"
-    ctx.char_file("zcmp.p", _box_p(local, SKIN, d[64:128]))
+    avg = lambda vs: [sum(v[k] for v in vs) / len(vs) for k in range(3)]
+    ctx.char_file("zcmp.p", _member_p(avg(local[:4]), avg(local[4:]), MEMBER_W / 2, SKIN, d[64:128]))
     return hrc
+
+
+# (user, since) members subdivided and smoothed: an 8-sided tube (MEMBER_N points a ring) from its
+# base (capped, inside the pelvis) to a rounded tip; the base ring first, the tip vertex last
+# (`member_ends`)
+MEMBER_N = 8
+MEMBER_RINGS = [(0.0, 1.0), (0.3, 1.02), (0.6, 1.0), (0.82, 0.97), (0.92, 0.82), (0.98, 0.5)]   # (along, radius x)
+
+
+def _member_p(base, tip, radius, bgr, tail):
+    """A smooth member .p (local points): rings MEMBER_RINGS of MEMBER_N round base -> tip, a cap
+    fan at the base, a fan to the tip."""
+    import math
+    axis = [tip[k] - base[k] for k in range(3)]
+    L = math.sqrt(sum(c * c for c in axis))
+    a = [c / L for c in axis]
+    ref = [1.0, 0.0, 0.0] if abs(a[0]) < 0.9 else [0.0, 1.0, 0.0]
+    cross = lambda p, q: [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]]
+    u = cross(a, ref)
+    un = math.sqrt(sum(c * c for c in u))
+    u = [c / un for c in u]
+    v = cross(a, u)
+    V, tris, n = [], [], MEMBER_N
+    for t, rs in MEMBER_RINGS:
+        c = [base[k] + axis[k] * t for k in range(3)]
+        for j in range(n):
+            ph = 2 * math.pi * j / n
+            V.append([c[k] + radius * rs * (math.cos(ph) * u[k] + math.sin(ph) * v[k]) for k in range(3)])
+    for r in range(len(MEMBER_RINGS) - 1):
+        for j in range(n):
+            p0, p1 = r * n + j, r * n + (j + 1) % n
+            tris += [(p0, p1, p1 + n), (p0, p1 + n, p0 + n)]
+    tris += [(0, j, j + 1) for j in range(1, n - 1)]                     # base cap
+    V.append(list(tip))                                                   # the tip, last
+    last = (len(MEMBER_RINGS) - 1) * n
+    tris += [(last + j, last + (j + 1) % n, len(V) - 1) for j in range(n)]
+    return _p_file(V, tris, bgr, tail)
+
+
+def member_ends(d):
+    """(base, tip) of a member .p (`_member_p`) in its bone's frame."""
+    nv = struct.unpack_from("<16I", d, 0)[3]
+    V = [struct.unpack_from("<3f", d, 128 + 12 * i) for i in range(nv)]
+    assert nv == MEMBER_N * len(MEMBER_RINGS) + 1, nv
+    return [sum(v[k] for v in V[:MEMBER_N]) / MEMBER_N for k in range(3)], list(V[-1])
 
 
 def _box_p(V, bgr, tail):

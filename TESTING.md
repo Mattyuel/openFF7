@@ -481,9 +481,14 @@ Existing saves load, but they keep their own story progress; use a new game.
   (head, head reverse, end) shows the right poses.
 - **Lesson** (new; untested in-game, user): in every position with the hold (solo, group, special head, Blast-off's
   first two), after she stops, breaks free at a hold's end, or refuses a hold, the Square icon shows for a second.
-  Square: Cloud swings his right arm out to his side then down in front, the slap sound, then her reaction
+  Square: Cloud swings at once (a short wind-up, then down and in to her face, once, straight back to the
+  pulled-back pose), the slap sound as the swing starts, then her reaction
   (Skye and Scarlet like it, Tifa and Aerith don't: a strike towards leaving; Ruby 50/50; Elena fine unless
   "No funny stuff"). Check it can't be interrupted and the shoot carries on after.
+- **Prompt sounds** (new, untested): a refused hold / "there" / lesson plays the greyed-PHS buzz (assumed sound id 3:
+  tell me if it's a different sound), a successful one the materia sound.
+- **Members** (new): Cloud's and Cid's are smooth rounded tubes now; Cid's 30% shorter. Check Cid's still reaches
+  in Rocketman / Twin Jets / Exhaust.
 - **Blast-off** (new; untested in-game, user): the cameraman now always asks Normal / Special / Blast-off after
   picking a single co-star (???? while locked; picking ???? asks again). Blast-off needs Cid at 20 affection
   (debug: Honey Bee page "All affection 20" sets his too). It plays in the space capsule with Cid's Theme:

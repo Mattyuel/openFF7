@@ -280,7 +280,8 @@ def _blast(ctx, built, back):
         return by_p(make) + [asm.ret()]
     scripts[ents["cloudb"]] = {0: [Op(bytes([0xA1, 1])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                                2: man(cfirst, "cloud", "cdir", 0), 4: man_stop(cfirst, 0, 0), 5: man_stop(cfirst, 1, 0),
-                               7: by_p(lambda p, pl: once(cfirst + LESSON(p)) if p < 2 else []) + [asm.ret()],
+                               7: by_p(lambda p, pl: mv.lesson_slot(cfirst + LESSON(p), cfirst + STOP(p, 0)) if p < 2 else [])
+                               + [asm.ret()],
                                3: [xyzi(*on_floor(*INTRO["cloud"][:2])), d_(INTRO["cloud"][2]), hb._visi(1)] + anim(0) + [asm.ret()]}
     scripts[ents["cidb"]] = {0: [Op(bytes([0xA1, 2])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
                              2: man(kfirst, "cid", "ciddir", 1), 4: man_stop(kfirst, 0, 1), 5: man_stop(kfirst, 1, 1),
@@ -309,7 +310,7 @@ def _blast(ctx, built, back):
                       2: g_(by_p(place)), 4: g_(stops(0)), 5: g_(stops(1)), 6: g_([hb._w(mv.hold_try_delay())] + tries()),
                       8: g_(turn),
                       3: g_([xyzi(*on_floor(*INTRO["girl"][:2])), d_(INTRO["girl"][2]), hb._visi(1)] + anim(0))}
-    scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 6, sprite_dir,
+    scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 6, sprite_dir, cloud=ents["cloudb"], place=
                                                                       by_p(lambda p, pl: [xyzi(*pl["icon"])]))
     scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + anim(film) + [asm.ret(), asm.ret()],
                                2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1)] + anim(film)

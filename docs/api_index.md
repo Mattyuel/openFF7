@@ -657,6 +657,8 @@ Honey Bee Girl recruitment.
 - `_bare_cloud(ctx)` 
 - `_bare_cloud_seat(ctx, hrc)` 
 - `_bare_cloud_member(ctx, hrc)` 
+- `_member_p(base, tip, radius, bgr, tail)` A smooth member .p (local points): rings MEMBER_RINGS of MEMBER_N round base -> tip, a cap
+- `member_ends(d)` (base, tip) of a member .p (`_member_p`) in its bone's frame.
 - `_box_p(V, bgr, tail)` A .p of one untextured box: 8 corners V (z-major, then y, then x), vertex colour bgr
 - `_loft(rings, angles, centre, bulge_x=(1.2, 0.85), side=1, cleft=0.0, rnd=0.75, top=False, bottom=None)` A body part as rings round a centre line (model units, y down, facing -z): each ring
 - `_centre_line(pts)` z on y (least squares) through world points: a body's centre line from its old parts.
@@ -788,8 +790,9 @@ The movie minigame (user's design).
 - `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None, desperate=3, speaker=None)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
 - `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3, speaker=None, icon=None)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
 - `_lesson_anim(ctx, base, name, hrc='zcla.hrc')` (user) Cloud's lesson: frame 0 of his stroke `base` (pulled back) held, his right arm straight,
+- `lesson_slot(lesson_i, back_i)` (user) Cloud's slot 7: the lesson once: its wind-up (CANM!2 frames 0..LESSON_RAISE, ANIMW), the
 - `_lesson_ops(hb, sec, cloud, icon, hush, lines, slot_of, leave)` (user) After she stops, breaks free of a hold or refuses one: the lesson prompt (the icon's
-- `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
+- `_hold_entities(hb, model, sprite_dir, place, cloud=None)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `lesson_index(cloud_first, pn)` Cloud's lesson anim for position pn ("end": the group's part three) in his `_speeds` list.
 - `end_index(cloud, k)` Offset (from a model's first `_speeds` anim) of the group's "end" anim k: 0-3 the speeds,
@@ -911,7 +914,7 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_mods()` 
 - `_to_shared(p, O)` 
 - `_to_own(q, O)` 
-- `_member(ctx, ply)` (base, tip) of a bare man's member box (8 corners, z-major) in his hip bone's frame.
+- `_member(ctx, ply)` (base, tip) of a bare man's member (620 `_member_p`) in his hip bone's frame.
 - `_write(ctx, base, frames, name)` 
 - `_wrist(F, I, s, tip)` The wrist for fingertips at `tip`: along the shoulder -> tip line, a hand short of it, within
 - `_cid_stroke(ctx, name, tip_at, hands, lean=CID_LEAN, at='tip')` Cid's thrust (his skeleton), N frames: his upper body leant back `lean` and steady, his
