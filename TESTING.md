@@ -478,9 +478,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   group and her date's part two: no gap at the neck when she tilts her head, nothing poking out.
 - **Group shoot broke at its start** (fix; untested in-game, user): its models now carry only the
   animations the group plays (26-36 each instead of 63-71). Check the group shoot starts and every part
+  (head, head reverse, end) shows the right poses.
 - **Group part one, left line** (tweak; untested in-game, user): the three girls on the screen-left side of
   the middle bed kneel a pace further back (x -40, was -20), near its edge; their Cloud moves with them.
-  (head, head reverse, end) shows the right poses.
 - **Girls' personalities in the shoots** (new; untested in-game, user; profiles in
   `patches/_movie_profiles.py`): the Square hold now depends on who you hold, in every shoot (one girl,
   group, special): Ruby always plays along; Skye usually (1 in 4 she changes her mind); Scarlet the first
