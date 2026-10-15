@@ -144,7 +144,12 @@ def _blast(ctx, built, back):
     rs = spot(*ROCKET_SEAT[:2])
     assert abs(rs[2] - BENCH_DROP * mv.UNIT) < 2, ("the bench", rs)
     cd = ROCKET_SEAT[2]
-    places = [dict(cloud=rs, cdir=cd, girl=rs, gdir=cd, cid=on_floor(*off(rs, lay["rocket"], cd)), ciddir=(cd + 128) % 256)]
+    ro, rface = lay["rocket"]                                     # (Cid raised and turned: his own z and DIR)
+    rx, ry, rz = (rs[k] + mv._off(ro, cd)[k] for k in range(3))
+    rfl = on_floor(rx, ry)
+    places = [dict(cloud=rs, cdir=cd, girl=rs, gdir=cd, cid=(rfl[0], rfl[1], round(rz), rfl[3]),
+                   ciddir=dt._dir_to(*mv._off(rface, cd)[:2]))]
+    assert (places[0]["ciddir"] - (cd + 128)) % 256 not in range(64, 193), places[0]["ciddir"]
     tc = on_floor(*TWIN_CLOUD[:2])
     cd = TWIN_CLOUD[2]
     tg = on_floor(*off(tc, lay["her"], cd))
@@ -213,6 +218,8 @@ def _blast(ctx, built, back):
     kfirst = len(ModelLoader.anims(loader.models[2])) - len(anims["cid"])
     cm = loader.add_from(ModelLoader(ctx.field(mv.CAMERA_DONOR[0]).section("models")), mv.CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_FILM)
+    loader.models[cm] = ModelLoader.with_anims(loader.models[cm], [mv.CAMERA_STILL])   # (user) still in the intro
+    idle_cam = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_STILL)
     mv.SPRITES = SPRITES                                          # (the capsule's own sizes)
     sprites = mv._sprites(ctx, half, half_cursor, mv.ICON_PX / 2 * near / cam.zoom / unit)
     for hrc in SPRITES:
@@ -312,11 +319,11 @@ def _blast(ctx, built, back):
                       3: g_([xyzi(*on_floor(*INTRO["girl"][:2])), d_(INTRO["girl"][2]), hb._visi(1)] + anim(0))}
     scripts[ents["icon"]], scripts[ents["sqkey"]] = mv._hold_entities(hb, 6, sprite_dir, cloud=ents["cloudb"], place=
                                                                       by_p(lambda p, pl: [xyzi(*pl["icon"])]))
-    scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + anim(film) + [asm.ret(), asm.ret()],
+    scripts[ents["camera"]] = {0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + anim(idle_cam) + [asm.ret(), asm.ret()],
                                2: by_p(lambda p, pl: [xyzi(*pl["cam"]), d_(pl["camdir"])]) + [hb._visi(1)] + anim(film)
                                + [asm.ret()],
                                3: [xyzi(*camspot), d_(dt._dir_to(INTRO["girl"][0] - camspot[0], INTRO["girl"][1] - camspot[1])),
-                                   hb._visi(1)] + anim(film) + [asm.ret()]}
+                                   hb._visi(1)] + anim(idle_cam) + [asm.ret()]}
     scripts[ents["gauge"]] = {0: [Op(bytes([0xA1, 4])), hb._visi(0), d_(sprite_dir)] + hide() + [asm.ret(), asm.ret()],
                               2: by_p(lambda p, pl: [xyzi(*pl["gauge"])]) + [hb._visi(1), asm.ret()]}
     loop, idle = asm.nop(), asm.nop()

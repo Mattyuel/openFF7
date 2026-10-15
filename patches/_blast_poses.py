@@ -32,12 +32,17 @@ e_of = lambda t: (1 - math.cos(2 * math.pi * t / N)) / 2      # 0 out .. 1 deepe
 # Rocketman
 RM_SEAT_UP = 1.6                           # Cloud's root above the bench top
 RM_LEAN = 12                               # Cloud's upper body back from upright
-RM_BOUNCE = 1.0                            # his pelvis lifts this much at his deepest
+RM_THRUST = 18                             # (user: only his hips thrust) his pelvis rocks forward this much
+                                           # (degrees) about his waist at his deepest; his upper body stays put
 RM_LAP_UP, RM_LAP_FWD = 1.5, 2.6           # her root above / ahead of his on his lap
 RM_EXTRA = 0.3                             # she rides this much higher than his lift
 RM_BOB = 1.2                               # her neck towards Cid at the deepest
 RM_REACH = 0.93                            # her pelvis + chest stretched to this of their length at the deepest
 RM_FACE_UP = 75                            # her head's crown this far up from pointing at Cid (face towards him)
+RM_TORSO_UP = 10                           # (user) her pelvis -> neck line this much more upright than Cid's
+                                           # natural height would put it; Cid raised to her mouth to match
+RM_CID_YAW = 14                            # (user: Cid slightly closer to the camera) his spot turned this much
+                                           # about her mouth, towards Cloud's right (the capsule camera's side)
 CID_LEAN = 15                              # Cid's upper body back from upright (steady)
 RM_CID_LEAN = 8                            # Rocketman: less (his longer member keeps him further off: his hand
                                            # must still reach her head)
@@ -164,7 +169,8 @@ def _cid_natural_tip(ctx, lean=CID_LEAN):
 # ---- Rocketman ------------------------------------------------------------------------------
 def rocketman(ctx, bench_drop):
     """ZNS (Cloud), ZMSA (her, Ruby's skeleton), ZGS (Cid). bench_drop = the floor below the bench
-    top (model units, > 0). Returns Cid's origin in Cloud's frame (he is turned round)."""
+    top (model units, > 0). Returns Cid's origin in Cloud's frame and his facing there (turned round
+    and RM_CID_YAW more)."""
     sp, mv, hb = _mods()
     # Cloud, seated (his bare model's skeleton = aaaa's)
     fa, sk, I, base, rr, croot0, CW0, cfk = sp._setup(ctx, "aaaa.hrc", CLOUD_STAND)
@@ -178,7 +184,22 @@ def rocketman(ctx, bench_drop):
         CW[I(s + "_femur")] = sp._pitch(fa, CW0[I(s + "_femur")], [0, 0, -1])      # thighs forward, level
         CW[I(s + "_tibia")] = sp._pitch(fa, CW0[I(s + "_tibia")], [0, 1, -0.15])   # shins hanging
         CW[I(s + "_foot")] = CW0[I(s + "_foot")]
-    croots = [[0.0, -RM_SEAT_UP - RM_BOUNCE * e_of(t), 0.0] for t in range(N)]
+    # (user) only his hips thrust: the pelvis bone rocks forward about his waist (the chest joint),
+    # every other bone keeps its world orientation, so his upper body stays still
+    cbase = [0.0, -RM_SEAT_UP, 0.0]
+    waist = cfk(CW, cbase)[I("chest")][1]
+    fwd = 1 if cfk([fa._mul(fa.axis_angle([1.0, 0, 0], 10), m) if sk[i][0] == "hip" else m
+                    for i, m in enumerate(CW)], cbase)[I("chest")][1][2] > waist[2] else -1   # root -> -z
+    CWs, croots = [], []
+    for t in range(N):
+        R = fa.axis_angle([1.0, 0, 0], fwd * RM_THRUST * e_of(t))
+        W = list(CW)
+        W[I("hip")] = fa._mul(R, CW[I("hip")])
+        croots.append(add(waist, fa._vec(R, sub(cbase, waist))))
+        CWs.append(W)
+    assert croots[N // 2][2] < croots[0][2], "his hips thrust forward"
+    for t in range(N):
+        assert math.dist(cfk(CWs[t], croots[t])[I("chest")][1], waist) < 1e-6
     feet_y = max(cfk(CW, croots[0])[I(s + "_tibia")][2][1] for s in "lr")
     assert feet_y < bench_drop, ("his feet above the floor", feet_y, bench_drop)
 
@@ -188,7 +209,7 @@ def rocketman(ctx, bench_drop):
     for s in "lr":
         GW[gI(s + "_femur")] = sp._pitch(fa, GW0[gI(s + "_femur")], [0, 0, -1])
         GW[gI(s + "_tibia")] = sp._pitch(fa, GW0[gI(s + "_tibia")], [0, 1, -0.1])
-    groots = [[0.0, croots[t][1] - RM_LAP_UP - RM_EXTRA * e_of(t), -RM_LAP_FWD] for t in range(N)]
+    groots = [[0.0, croots[t][1] - RM_LAP_UP - RM_EXTRA * e_of(t), croots[t][2] - RM_LAP_FWD] for t in range(N)]
     Lh = math.dist(*gfk(GW0, groot0)[gI("hip")][1:]) + math.dist(*gfk(GW0, groot0)[gI("chest")][1:])
 
     # Cid: his origin O (Cloud's frame) puts his natural member tip at her mouth; her neck path from it
@@ -203,6 +224,11 @@ def rocketman(ctx, bench_drop):
     deep = groots[N // 2]
     dy = neck_y - deep[1]
     assert abs(dy) < RM_REACH * Lh, ("her neck out of reach of her pelvis", dy, Lh)
+    up = math.asin(-dy / (RM_REACH * Lh)) + math.radians(RM_TORSO_UP)        # (user) her torso more upright
+    dy = -RM_REACH * Lh * math.sin(up)
+    neck_y = deep[1] + dy
+    cid_up = mouth_y - (neck_y + mouth_off[1])                                # Cid raised by this (model units)
+    assert cid_up > 0, cid_up
     neck_z = deep[2] - math.sqrt((RM_REACH * Lh) ** 2 - dy * dy)
     necks = [[0.0, neck_y, neck_z + RM_BOB * (1 - e_of(t))] for t in range(N)]     # (+z: away from him)
 
@@ -219,15 +245,23 @@ def rocketman(ctx, bench_drop):
     W7, r7 = her_pose(N // 2)
     F7 = gfk(W7, r7)
     mouth7 = add(F7[gI("chest")][2], face(W7))
-    tip_shared = _to_shared(tip_nat, [0.0, bench_drop, 0.0])
-    O = [0.0, bench_drop, mouth7[2] - tip_shared[2]]          # (x: both on his centre line)
+    tip_shared = _to_shared(tip_nat, [0.0, bench_drop - cid_up, 0.0])
+    O0 = [0.0, bench_drop - cid_up, mouth7[2] - tip_shared[2]]    # (x: both on his centre line), raised
+    # (user) turned RM_CID_YAW about the vertical through her mouth: a point of his maps to the shared
+    # frame by the straight layout (O0) and then this turn
+    Ry = fa.axis_angle([0.0, 1.0, 0.0], RM_CID_YAW)
+    turn = lambda p, R: add(mouth7, fa._vec(R, sub(p, mouth7)))
+    to_own = lambda q: _to_own(turn(q, fa._t(Ry)), O0)
+    to_shared = lambda p: turn(_to_shared(p, O0), Ry)
+    O = to_shared([0.0, 0.0, 0.0])
+    facing = fa._vec(Ry, [0.0, 0.0, 1.0])                        # his facing in the shared frame (turned round: +z)
     # Cid's tip path (his frame): her mouth each frame (it moves only towards / away from him)
     mouths = []
     for t in range(N):
         W, r = her_pose(t)
         F = gfk(W, r)
         mouths.append(add(F[gI("chest")][2], face(W)))
-    mouths_own = [_to_own(m, O) for m in mouths]
+    mouths_own = [to_own(m) for m in mouths]
     # his: tip at her mouth at the deepest, CID_STROKE back of the path at frame 0
     tip_at = lambda t: add(mouths_own[t], mul([0.0, 0.0, 1.0], CID_STROKE * (1 - e_of(t))))
 
@@ -235,7 +269,7 @@ def rocketman(ctx, bench_drop):
         W, r = her_pose(t)
         F = gfk(W, r)
         top = add(F[gI("head")][2], [0.0, -0.4, 0.0])
-        return _to_own(top, O)
+        return to_own(top)
     _cid_stroke(ctx, "ZGSA", tip_at, {"r": her_head_top, "l": None}, lean=RM_CID_LEAN)
 
     # Cid's thighs in Cloud's frame (her hands' targets), from his written frames
@@ -247,7 +281,7 @@ def rocketman(ctx, bench_drop):
         crr, crp, crots = canim.frames[t]
         F = fa.forward(csk, crr, [crp[0], -crp[1], crp[2]], crots)
         knee, hip_j = F[cI(s + "_femur")][2], F[cI(s + "_femur")][1]
-        return _to_shared([(knee[k] * 0.6 + hip_j[k] * 0.4) for k in range(3)], O)
+        return to_shared([(knee[k] * 0.6 + hip_j[k] * 0.4) for k in range(3)])
 
     # her frames: arms to his thighs (her left hand to his right thigh: they face each other)
     gframes = []
@@ -273,7 +307,7 @@ def rocketman(ctx, bench_drop):
     cframes = []
     for t in range(N):
         r = croots[t]
-        W = list(CW)
+        W = list(CWs[t])
         her = fa.Anim(ctx.char_file("zmsa.a")).frames[t]
         HF = fa.forward(gsk, her[0], [her[1][0], -her[1][1], her[1][2]], her[2])
         for s, out in (("l", 1), ("r", -1)):
@@ -284,7 +318,8 @@ def rocketman(ctx, bench_drop):
             W[I(s + "_hand")] = fa._mul(mv._align(fa, bdir(W[I(s + "_hand")]), [0.0, 0.3, -1.0]), W[I(s + "_hand")])
         cframes.append((rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, W)))
     _write(ctx, base, cframes, "ZNSA")
-    return O
+    print("  rocketman: Cid raised %.2f, turned %d" % (cid_up, RM_CID_YAW))
+    return O, facing
 
 
 # ---- Twinjets -------------------------------------------------------------------------------
