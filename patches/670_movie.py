@@ -2582,7 +2582,7 @@ def _wall_market(ctx, focus):
         spots[key] = (x, y, mesh.height(t, x, y), t)
 
     def hidden(girl, extra=()):
-        """Shown once every kid is born; "ruby": hidden once Skye is unlocked (she retired); "skye":
+        """Shown once every girl's final scene was seen (HB_KID); "ruby": hidden once Skye is unlocked (she retired); "skye":
         shown only at rank 1 (mrkt2 has no room for the later co-stars: 16 models)."""
         shown, hide = asm.nop(), asm.nop()
         who = {"ruby": [asm.if_byte(MOVIE_GIRL, "bit_off", 0, hide)],
@@ -2672,7 +2672,7 @@ def _wall_market(ctx, focus):
         paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
         ops += paid + [asm.setbyte(MOVIE_STATE, 0), asm.goto(end)]
         ops += [wait_] + say("“Still selling the footage. Come back\n a little later for your cut.”") + [asm.goto(end)]
-        # (user) he stands here from the start; until every Honey Bee kid is born he's only
+        # (user) he stands here from the start; until every girl's final scene was seen (HB_KID) he's only
         # scouting for a man with a way with the ladies
         told, fresh, scout = asm.nop(), asm.nop(), asm.nop()
         ops += [pitch] + tape(sec, say, end) + _unlocked_or(scout)

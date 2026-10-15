@@ -1032,7 +1032,7 @@ def _room(ctx, back, field=ROOM, scenes=None, final=FINAL):
             else:
                 raise ValueError(step)
         if field == DEVOTED_ROOM:
-            ops.append(asm.biton(*HB_KID[i]))          # 622: a kid appears next to her
+            ops.append(asm.biton(*HB_KID[i]))          # her final scene seen (670's unlock, the '*')
         ops += [asm.goto(finale), nxt]
     ops += [asm.goto(stop), finale, _w(30),
             Op(bytes.fromhex("6b0000000000080200")), Op(b"\x6C"), _w(20),       # FADE out, FADEW

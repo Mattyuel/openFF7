@@ -678,15 +678,6 @@ Honey Bee Girl recruitment.
 - `_bend(ctx, name=EDGE_ANIM, nframes=EDGE_FRAMES, bend=EDGE_BEND, arms_down=EDGE_ARMS_DOWN)` dzbg.a (EDGE_ANIM): standing, knees bent EDGE_KNEE, bent EDGE_BEND forward at
 - `apply(ctx)` 
 
-## `patches/622_hb_kids.py`
-Honey Bee kids: after a girl's devoted (affection 20) scene, a child stands
-
-- `_at_screen(ctx, field, x, y, dx, dy)` Floor (x, y, z, tri) near (x, y) whose screen position is (dx, dy) pixels from it.
-- `_beside(ctx, field, x, y)` Floor (x, y, z, tri) next to (x, y) as seen on screen: about GAP pixels
-- `_talk(line)` 
-- `_hidden_unless(i)` 
-- `apply(ctx)` 
-
 ## `patches/625_gift_shops.py`
 Gift shops: the Gift Merchant sells the Honey Bee gifts (_honey_bee_gifts:
 

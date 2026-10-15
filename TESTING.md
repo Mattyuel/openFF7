@@ -432,6 +432,14 @@ Existing saves load, but they keep their own story progress; use a new game.
   finisher: Cloud thrusts (on his back), she rides his hips with her shins flat on the bed. Mission (every
   mission girl: Honey Bee, lounges, movie): legs in a V, knees up, feet flat on the bed. Pauses: each head /
   head reverse / 69 position (and each group turn) has a 50% chance of one pause, somewhere in its middle.
+- **Kids removed** (user): no kid NPC appears next to any girl any more (coloss's arena kid and nivl_3's
+  cloaked man are back as in the game). Seeing a girl's final scene still counts for the movie unlock.
+- **Candy and Elena moved** (user): Candy is in North Corel (town, right of centre); Elena is in Junon's
+  Shinra Member's Bar where Candy stood. Check both can be talked to, hired and (Elena) dated, and that
+  dates bring you back beside Elena in the bar.
+- **Date quests** (new; untested in-game, user): Tifa, Aerith, Scarlet and Elena each have a star where you
+  meet them; asking her on a date accepts "A Date with <name>" (heart), and the date's end completes it
+  (500 gil + Sources). Check the Quests screen lists them.
 - **Affection list on Square** (new; untested in-game, user): in any field where Triangle would open the
   menu, Square shows a two-page box: "Name (personality): N/20" for each Honey Bee girl, "????" for one
   you haven't hired or dated. Check: it doesn't open during scenes / conversations, the menu still opens on

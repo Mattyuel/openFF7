@@ -64,9 +64,9 @@ GIRLS = [
          hired="Peggy\n“Part of the act! I'm a natural!\n Ow. Stubbed my toe. See you there!”",
          idle="Peggy\n“I'm practising falling. Gracefully.”"),
     # ---- 2 stars -----------------------------------------------------------
-    dict(name="Candy", stars=2, tag="gossip", field="junpb_1", at=(256, 71), dir=20,
+    dict(name="Candy", stars=2, tag="gossip", field="ncorel", at=(258, -276), dir=253,   # (user) Corel; was junpb_1
          model=("jun_i2", 6),
-         stranger="Candy\n“Did you hear? The fishermen say\n there's a monster in the bay!”",
+         stranger="Candy\n“Did you hear? They say the Gold\n Saucer ropeway's haunted!”",
          intro="Candy\n“Ooh, a new face! What's the story?\n Everyone's got a story. Spill!”",
          reply="Candy\n“The Honey Bee Inn? The GOSSIP in\n that place! Okay, two questions.”",
          questions=[("Candy\n“A girl tells you a secret.\n What do you do?”",
@@ -113,9 +113,9 @@ GIRLS = [
          hired="Raven\n“I'll bring candles. Lots of candles.\n The ghosts approve.”",
          idle="Raven\n“The ghosts say hi. Probably.”"),
     # ---- 3 stars -----------------------------------------------------------
-    dict(name="Elena", stars=3, tag="rookie Turk", field="sinin1_1", at=(123, 867), dir=254,
-         model=("datiao_6", 10),
-         stranger="Elena\n“I'm on vacation! I am NOT searching\n this mansion. Totally not. Go away.”",
+    dict(name="Elena", stars=3, tag="rookie Turk", field="junpb_1", at=(256, 71), dir=20,   # (user) Junon's
+         model=("datiao_6", 10),                                                          # Shinra bar; was sinin1_1
+         stranger="Elena\n“I'm on vacation! I am NOT watching\n the Shinra brass drink. Go away.”",
          intro="Elena\n“You!? Er, I mean… Hi, citizen.\n I'm just a regular vacationing lady.”",
          reply="Elena\n“Undercover work at the Honey Bee\n Inn? Tseng would be SO impressed!\n Answer three questions first!”",
          questions=[("Elena\n“Who's the coolest Turk?”",
