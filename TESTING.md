@@ -489,7 +489,14 @@ Existing saves load, but they keep their own story progress; use a new game.
   "No funny stuff"). Check it can't be interrupted and the shoot carries on after.
 - **Prompt sounds** (new, untested): a refused hold / "there" / lesson plays the greyed-PHS buzz (assumed sound id 3:
   tell me if it's a different sound), a successful one the materia sound.
-- - **Blast-off lesson / Twin Jets** (new): the benches no longer draw over the three in Twin Jets (they now draw
+- - **Walk-offs and affection** (new): a girl (Elena, Scarlet, Tifa, Aerith) who walks off a shoot loses 1 affection.
+  In the cameraman's co-star list her name is then grey (so is any of them below 20, and "Everyone" while any
+  is below 20); picking a grey name gets "She won't work with you right now" and the list again. Check the
+  grey colour shows on the menu rows (it is poked into the text at runtime).
+- **Date revelation** (new): at affection 20, after a video with her has been paid out by the cameraman, her next
+  date (any place) opens with a scene about how it felt, with Tifa's Theme, one choice for Cloud, and then the
+  date ends (no intimacy). Once per girl.
+- **Blast-off lesson / Twin Jets** (new): the benches no longer draw over the three in Twin Jets (they now draw
   behind everyone in the set). Lesson swing: Cid swings in Rocketman; in Twin Jets whoever she is facing swings.
 - **Rocketman** (new): her torso 10 degrees more upright, Cid raised (floats ~4 units) and turned a little towards
   the camera, Cloud thrusts only his hips. The cameraman stands still through the Blast-off intro.

@@ -49,7 +49,12 @@ QUEST_AREAS = [(11, 192, 255), (11, 160, 183), (7, 181, 223), (3, 27, 63),
                (1, 136, 159), (1, 236, 244),
                # (user, since) bank 1 100-109 (the same scan: no field / world map script, no exe
                # absolute reference); 110-111 are Cid's (`_cid.AFFECTION`, `_cid.MET`)
-               (1, 100, 109)]
+               (1, 100, 108)]
+# (user) 660's date revelation (`_dates_reveal`): bank 1 109 (taken off the end of the quest areas,
+# unallocated): bits 0-3 = made a video with Elena / Scarlet / Tifa / Aerith (set when the cameraman
+# pays a shoot she was in), bits 4-7 = her revelation seen
+REVEAL = (1, 109)
+REVEAL_GIRLS = ["Elena", "Scarlet", "Tifa", "Aerith"]
 
 # Hunter points (630_bounties.py): u16 at bank 1 245-246 (taken off the end of
 # the last quest area, unused and zero at new game). Lifetime total, never

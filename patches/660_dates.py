@@ -24,7 +24,8 @@ import importlib
 import math
 
 import _cid as CID
-from _config import DATE_GIRL, HB_AFFECTION, HB_KID
+from _config import DATE_GIRL, HB_AFFECTION, HB_KID, REVEAL, REVEAL_GIRLS
+import _dates_reveal as RV
 from _dates_data import DATES
 import _movie_girls as MG
 from _honey_bee_data import GIRLS
@@ -244,6 +245,8 @@ def _date(sec, ctx, place, i, g, d, part2):
             asm.goto(tier_at[0])]
     for t, tier in enumerate(d["tiers"]):
         block = []
+        if t == 2 and name in RV.REVEAL:             # (user) her revelation, once, after a video with Cloud
+            block += _reveal(sec, name, her, out)
         block += hb._say(sec, her(tier["open"]))
         for st in tier["steps"]:
             if st[0] == "G":
@@ -288,6 +291,27 @@ def _date(sec, ctx, place, i, g, d, part2):
         [asm.setbyte(qstate, qx.DONE), skip]
     ops += [asm.setbyte(DATE_GIRL, 0), hb._uc(0), hb._menu(0),
             asm.mapjump(ctx.maplist.index(g["field"]), rx, ry, rt, rd), asm.ret()]
+    return ops
+
+
+def _reveal(sec, name, her, out):
+    """(user) Ops: her revelation (`_dates_reveal`) if she made a video with Cloud and hasn't told it
+    yet; then the date ends (no intimacy). Skipped otherwise."""
+    hb = _hb()
+    k = REVEAL_GIRLS.index(name)
+    r, skip = RV.REVEAL[name], asm.nop()
+    pages = lambda ps: hb._say(sec, "{NEW}".join(her(t) if w == "G" else "{CLOUD}\n" + t for w, t in ps))
+    ops = [asm.if_byte(REVEAL, "bit_off", 4 + k, skip), asm.if_byte(REVEAL, "bit_on", k, skip),
+           Op(bytes([0xF2, 0, 0, 0, 0x10, RV.MUSIC]) + bytes(8)), hb._w(30)] + pages(r["pages"])
+    q, choices = r["ask"]
+    ask, first = hb._ask(sec, her(q), [c for c, _ in choices])
+    ops += ask
+    done = asm.nop()
+    for n, (_, reply) in enumerate(choices):
+        nxt = asm.nop()
+        ops += [asm.if_byte(CHOICE, "==", first + n, nxt)] + pages(reply) + [asm.goto(done), nxt]
+    ops += [done] + pages(r["end"]) + [asm.biton(REVEAL, 4 + k), hb._w(20), Op(hb.FADE_OUT), Op(b"\x6C")] + \
+        hb._say(sec, RV.AFTER) + [asm.goto(out), skip]
     return ops
 
 

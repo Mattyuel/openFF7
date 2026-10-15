@@ -681,6 +681,25 @@ def _gil_ops(gil):
     return _take_gil(-gil) if gil < 0 else []
 
 
+# (user) a girl who walks off the set loses an affection point (DEC!: never below 0); the co-star
+# menu then greys her name until she's back at 20 (`_cast_grey`). Ruby and Skye have no affection.
+AFF_KEYS = {g["key"]: g["name"] for g in MG.GIRLS}
+
+
+def aff_var(key):
+    """Her HB_AFFECTION var (the dates' girls), or None (Ruby, Skye)."""
+    from _config import HB_AFFECTION
+    from _honey_bee_data import GIRLS as HBG
+    if key not in AFF_KEYS:
+        return None
+    return HB_AFFECTION[[g["name"] for g in HBG].index(AFF_KEYS[key])]
+
+
+def lose_affection(key):
+    v = aff_var(key)
+    return [] if v is None else [Op(bytes([0x7C, v[0], v[1]]))]        # DEC! (bank in the low nibble)
+
+
 def _annoy(k, leave_ops):
     """Girl k's annoyance +1; at `_movie_profiles.LEAVE_AT`, leave_ops (she walks off)."""
     stay = asm.nop()
@@ -2037,7 +2056,8 @@ def _shoot(ctx, back, cast=None):
         return cast["rate"] if cast else PAY_RATE * (SKYE_PAY if key == "skye" else 1)
     # (user) she's had enough (`_movie_profiles`): her line, then the shoot ends as a CUT
     walkout = asm.nop()
-    leave = lambda key: hb._say(sec, GR.NAMES[key] + "\n" + PF.PROFILES[key]["leave"]) + [asm.goto(walkout)]
+    leave = lambda key: lose_affection(key) + hb._say(sec, GR.NAMES[key] + "\n" + PF.PROFILES[key]["leave"]) + \
+        [asm.goto(walkout)]
     pause = _pause_ops(hb, sec, [ents["cloudb"]] + [ents[g[0]] for g in girls], ents["hush3"], pause_lines,
                        pause_cond, ents["icon"], rate_of, leave=leave)
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),
@@ -2566,7 +2586,7 @@ def _group(ctx, back):
 
     def leave(key, back=False, line=True):           # she walks off: hidden, her turns gone (LEFT, USED)
         k, stay = GR.ORDER.index(key), asm.nop()
-        return (say_once(GR.NAMES[key] + "\n" + PF.PROFILES[key]["leave"]) if line else []) + \
+        return lose_affection(key) + (say_once(GR.NAMES[key] + "\n" + PF.PROFILES[key]["leave"]) if line else []) + \
             [hb._req(ents[key], 7, wait=False), asm.biton(LEFT, k), asm.biton(USED, k),
              asm.if_byte(E, "==", k, stay), to_force(back), stay]
 
@@ -2854,6 +2874,14 @@ def _wall_market(ctx, focus):
             other = asm.nop()
             ops += [asm.if_byte(MOVIE_GIRL, "bit_on", bit, other)] + pay(rate) + [asm.goto(paid_), other]
         ops += pay(PAY_RATE) + [paid_]
+        # (user) a shoot she was in: 660's revelation can play on her next date at affection 20
+        from _config import REVEAL, REVEAL_GIRLS
+        for g in MG.GIRLS:
+            k_, solo_ = REVEAL_GIRLS.index(g["name"]), asm.nop()
+            ops += [asm.if_byte(MOVIE_GIRL, "bit_on", g["bit"], solo_), asm.biton(REVEAL, k_), solo_]
+        grp_ = asm.nop()                         # the group shoot (bits 3 + 4): all four
+        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], grp_), asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], grp_)] + \
+            [asm.biton(REVEAL, k_) for k_ in range(4)] + [grp_]
         ops += [Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), sound(0x168)]
         paid = say("“The film's flying off the shelves!\n Here's your cut, star: {VAR} gil.”")
         paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
@@ -2881,29 +2909,51 @@ def _wall_market(ctx, focus):
         # (rank 0: Ruby, no list). (The old list's Skye test was inverted: every other pick shot
         # with Skye, user.)
         assert [g["key"] for g in MG.GIRLS] == ["elena", "scarlet", "tifa", "aerith"]
-        cast_ = [("Ruby", None), ("Skye", 1)] + [(g["name"], g["bit"]) for g in MG.GIRLS]
-        lists = {}
-        for r in range(1, len(cast_)):
-            on = cast_[:r + 1][::-1]                 # newest first
-            ask_r, first_r = hb._ask(sec, "Cameraman\n“Who's your co-star today?”", [n for n, _ in on])
-            picked = asm.nop()
-            lists[r] = list(ask_r)
-            for k_, (_, bit) in enumerate(on):
+        cast_ = [("Ruby", None, None), ("Skye", 1, None)] + [(g["name"], g["bit"], g["key"]) for g in MG.GIRLS]
+        # (user, since) a girl below affection 20 (one who walked off loses a point) is greyed out and
+        # can't be picked; "Everyone" too until all four are back at 20 (Ruby / Skye have none). Every
+        # name starts with {WHITE}; TXPOKE turns its colour byte to grey (FE D2) at runtime.
+        not_ready = ["Cameraman\n“She won't work with you right now.\n Win her trust back first, star.”",
+                     "Cameraman\n“Not everybody's on board with you\n right now. Patch things up first.”"]
+        refuse_ops = lambda t: [hb._window(t, 0), asm.message(0, _text_id(sec, t))]
+        affs = [aff_var(g["key"]) for g in MG.GIRLS]
+
+        def menu(on):
+            """Ops: the co-star ASK for `on` (name, bit, key | "group"), greyed names, re-asked on a
+            greyed pick; ends with MOVIE_GIRL set."""
+            top, picked = asm.nop(), asm.nop()
+            names = ["{WHITE}" + n for n, _, _ in on]
+            ask_r, first_r = hb._ask(sec, "Cameraman\n“Who's your co-star today?”", names)
+            tid = ask_r[2].raw[3]                     # (ASK [0x48][bank][window][text]...: TXPOKE 0x1D, 620)
+            body = _encode("Cameraman\n“Who's your co-star today?”" + "".join("\n{CHOICE}" + c for c in names))
+            marks = [k for k in range(len(body) - 1) if body[k] == 0xFE and body[k + 1] == 0xD9]
+            assert len(marks) == len(on), (marks, on)
+            poke = lambda k, c: Op(bytes([0x1D, tid]) + struct.pack("<H", k + 1) + bytes([c]))
+            ops_ = [top]
+            for mk, (_, bit, key) in zip(marks, on):
+                vs = affs if key == "group" else ([aff_var(key)] if key else [])
+                if not vs:
+                    continue
+                grey, done_ = asm.nop(), asm.nop()
+                ops_ += [asm.if_byte(v, ">=", 20, grey) for v in vs] + [poke(mk, 0xD9), asm.goto(done_),
+                                                                         grey, poke(mk, 0xD2), done_]
+            ops_ += list(ask_r)
+            for k_, (_, bit, key) in enumerate(on):
                 nxt = asm.nop()
-                lists[r] += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + \
-                    ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else []) + [asm.goto(picked), nxt]
-            lists[r] += [picked]
+                vs = affs if key == "group" else ([aff_var(key)] if key else [])
+                ok = asm.nop()
+                check = []
+                if vs:
+                    bad = asm.nop()
+                    check = [asm.if_byte(v, ">=", 20, bad) for v in vs] + [asm.goto(ok), bad] + \
+                        refuse_ops(not_ready[1 if key == "group" else 0]) + [asm.goto_back(top), ok]
+                sets = [asm.biton(MOVIE_GIRL, b_) for b_ in GROUP_BITS] if key == "group" else \
+                    ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else [])
+                ops_ += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + check + sets + [asm.goto(picked), nxt]
+            return ops_ + [picked]
+        lists = {r: menu(cast_[:r + 1][::-1]) for r in range(1, len(cast_))}   # newest first
         # (user) rank 6 (Aerith's wrap): "Everyone" = the group shoot, first
-        on = [("Everyone", "group")] + cast_[::-1]
-        ask_r, first_r = hb._ask(sec, "Cameraman\n“Who's your co-star today?”", [n for n, _ in on])
-        picked = asm.nop()
-        lists[6] = list(ask_r)
-        for k_, (_, bit) in enumerate(on):
-            nxt = asm.nop()
-            sets = [asm.biton(MOVIE_GIRL, b_) for b_ in GROUP_BITS] if bit == "group" else \
-                ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else [])
-            lists[6] += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + sets + [asm.goto(picked), nxt]
-        lists[6] += [picked]
+        lists[6] = menu([("Everyone", None, "group")] + cast_[::-1])
         assert len(MOVIE_RANK) == 6
         ops += _by_rank(lists)
         # (user, since) for one co-star, always: "Normal scene." / "Special scene." (672, after a full group

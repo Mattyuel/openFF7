@@ -677,7 +677,7 @@ def _special(ctx, key, back):
         doit = asm.nop()
         return [asm.if_byte(P, "!=", 1, doit), asm.goto(no), doit]
     walkout = asm.nop()                          # (user, profiles) she's had enough: a CUT
-    leave = lambda key_: hb._say(sec, GR.NAMES[key_] + "\n" + mv.PF.PROFILES[key_]["leave"]) + [asm.goto(walkout)]
+    leave = lambda key_: mv.lose_affection(key_) + hb._say(sec, GR.NAMES[key_] + "\n" + mv.PF.PROFILES[key_]["leave"]) + [asm.goto(walkout)]
     pause = mv._pause_ops(hb, sec, list(actors), ents["hush3"], lambda block: block(key), pause_cond, ents["icon"],
                           lambda key_: rate, leave=leave)
     main = [hb._uc(1), hb._menu(1), asm.setbyte(RUN, 0), asm.setword(POS, 500), asm.setword(VEL, 1000),

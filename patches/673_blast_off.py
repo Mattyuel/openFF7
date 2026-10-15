@@ -404,7 +404,7 @@ def _blast(ctx, built, back):
     place_all = lambda: [hb._req(e, 2, wait=False) for e in [CL] + actors + [ents["camera"], ents["gauge"], ents["icon"]]] \
         + [hb._w(6)]
     lines = lambda block: by_g(block)
-    leave = lambda key_: hb._say(sec, GR.NAMES[key_] + "\n" + PF.PROFILES[key_]["leave"]) + [asm.goto(walkout)]
+    leave = lambda key_: mv.lose_affection(key_) + hb._say(sec, GR.NAMES[key_] + "\n" + PF.PROFILES[key_]["leave"]) + [asm.goto(walkout)]
     head_pos = lambda no: [asm.if_byte(P, "!=", 2, no)]       # (rocketman, twinjets: her mouth)
     # (one hold line a voice and one desperate line a girl: six girls' texts share this field)
     voices = [("{CLOUD}", GR.HOLD_CLOUD[:1], GR.HOLD_STERN), ("Cid", BD.CID_HOLD[:1], BD.CID_STERN)]

@@ -738,6 +738,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_return_spot(ctx, g)` (x, y, tri, dir) beside her in her world field, facing her.
 - `_who(gname)` (index, her world data (name, field, at), affection var, date data) for a date girl or a
 - `_date(sec, ctx, place, i, g, d, part2)` 
+- `_reveal(sec, name, her, out)` (user) Ops: her revelation (`_dates_reveal`) if she made a video with Cloud and hasn't told it
 - `_field(ctx, place, group, names)` 
 - `_offer(ctx, i, g, arrive, group)` Her world talk: "Just chat." / "Ask her on a date." first.
 - `_pose_anims(place, gname)` (user) The anims of the place's position (`POSITION`): [slow, fast] for girl gname (her
@@ -782,6 +783,8 @@ The movie minigame (user's design).
 - `_gil_note(gil)` 
 - `_take_gil(amount)` GOLDD amount, or all the gil the party has if that's less (CHGLD lo/hi).
 - `_gil_ops(gil)` +gil paid (GOLDU), -gil taken (`_take_gil`).
+- `aff_var(key)` Her HB_AFFECTION var (the dates' girls), or None (Ruby, Skye).
+- `lose_affection(key)` 
 - `_annoy(k, leave_ops)` Girl k's annoyance +1; at `_movie_profiles.LEAVE_AT`, leave_ops (she walks off).
 - `_hold_check(key, k, refuse)` (user) Does she take the hold? Her profile's `hold`: jump to refuse if not.
 - `_text_id(sec, t)` One text id per distinct string in a field (the per-girl chains repeat lines).
@@ -937,6 +940,10 @@ Shared openFF7 settings used by the patch modules.
 
 ## `patches/_dates_data.py`
 Dates with the Honey Bee girls (docs/dates_plan.md): data.
+
+
+## `patches/_dates_reveal.py`
+(user) The revelation: once a date girl is at affection 20 and has made a video with Cloud
 
 
 ## `patches/_female_body.py`
