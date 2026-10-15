@@ -1174,7 +1174,7 @@ def _turn_round(ctx, name, hrc):
     ctx.char_file(name, A.build())
 
 
-def _koala(ctx, name, hrc, stand):
+def _koala(ctx, name, hrc, stand, his_anim=None):
     """Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
     leaning KOALA_LEAN onto him (head upright); arms raised KOALA_ARMS forward; each thigh
     raised KOALA_THIGH forward, then spread KOALA_SPREAD outward (about the vertical), then
@@ -1236,7 +1236,7 @@ def _koala(ctx, name, hrc, stand):
     pelvis0 = F[I("hip")][1]
     tilt = 1 if fk([fa._mul(fa.axis_angle(side, 5), m) if names[i] in upper else m
                     for i, m in enumerate(W)])[I("head")][2][2] < head0[2] else -1   # + this: head forward (-z)
-    his = fa.Anim(ctx.char_file(_hb().CLOUD_BED["standk"].split(".")[0].lower() + ".a"))
+    his = fa.Anim(ctx.char_file(his_anim or _hb().CLOUD_BED["standk"].split(".")[0].lower() + ".a"))   # (673: a lower one)
     frames = []
     n = len(his.frames)
     r0 = None

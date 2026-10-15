@@ -775,7 +775,7 @@ def _there_refuse(hb, say, pr, kind, loss):
 
 
 def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None,
-               desperate=3):
+               desperate=3, speaker=None):
     """(user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
     argument unless the position is one of them): the rare pause (`_movie_group.PAUSES`), then the
     hold (Square pressed while the icon showed: SQ), then the icon (every ~15 s, `ICON_EVERY`; entity
@@ -794,10 +794,11 @@ def _pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda
     slap_ops = [asm.if_byte(SLP, "==", 1, no2), asm.setbyte(SLP, 0)] + \
         lines(lambda key: [Op(bytes([0x39, 0x00]) + struct.pack("<I", rate_of(key) * HOLD_BONUS))]) + [no2]
     args = (hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy)
-    return _stop_ops(*args, kind="pause") + _stop_ops(*args, kind="hold", desperate=desperate) + icon_ops + slap_ops
+    return _stop_ops(*args, kind="pause") + _stop_ops(*args, kind="hold", desperate=desperate, speaker=speaker) + \
+        icon_ops + slap_ops
 
 
-def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3):
+def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3, speaker=None):
     """pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
     (user): if she takes it (`_hold_check`), the bonus (GOLDU, her profile's `gain`), Cloud holds deep
     (slot 5) and says a HOLD_CLOUD line; his stern HOLD_STERN; she tries to pull back (her slot 6)
@@ -807,7 +808,8 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
     If she doesn't: she pulls straight off (slot 4) with her profile's `refuse` line, `loss` x her
     gil a press taken, +1 annoyance (`_annoy`: leave(key) at LEAVE_AT). The hold's windows are closed
     by hush3's slot 3 (HOLD_SAY). Slot 6 is REQ'd with the muffled line and waits
-    `hold_try_delay()` itself (the line's MESSAGE holds the director)."""
+    `hold_try_delay()` itself (the line's MESSAGE holds the director). speaker = None (Cloud holds) or
+    (var, [(name, hold lines, stern lines), ...]): who holds, by var's value (673: Cid)."""
     no = asm.nop()
     w0, w1, w2 = GR.PAUSE_FRAMES
     assert w0 == 0                               # (user) her line the moment it happens: no wait first
@@ -853,15 +855,21 @@ def _stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneas
         ops += [hb._req(e, 5, wait=False) for e in actors]
         ops += [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], len(GR.HOLD_CLOUD)]))]
 
+        voices = [("{CLOUD}", GR.HOLD_CLOUD, GR.HOLD_STERN)] if speaker is None else speaker[1]
+        by_voice = (lambda make_: make_(voices[0])) if speaker is None else \
+            (lambda make_: _chain(speaker[0], [make_(v) for v in voices]))
+        nr = len(GR.HOLD_CLOUD)                  # (RND2 mod this; a voice with fewer lines repeats them: one text)
+
         def make(gil):
             return [Op(bytes([0x39, 0x00]) + struct.pack("<I", gil))] + \
-                _chain(RND2, [say3("{CLOUD}\n“%s”\nHold bonus: %d gil" % (t, gil)) for t in GR.HOLD_CLOUD])
+                by_voice(lambda v: _chain(RND2, [say3("%s\n“%s”\nHold bonus: %d gil" % (v[0], v[1][r % len(v[1])], gil))
+                                                 for r in range(nr)]))
         rnd3 = [Op(bytes([0x99, RND2[0], RND2[1]])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 3]))]
         def pay(key):                            # (his lines are one text per distinct amount: `_text_id`)
             gil = rate_of(key) * PF.PROFILES[key].get("gain", 10)
             return make(gil)
         ops += lines(pay) + [hb._w(at["stern"] - GR.HOLD_SAY)] + rnd3 + \
-            _chain(RND2, [say3("{CLOUD}\n“%s”" % t) for t in GR.HOLD_STERN]) + \
+            by_voice(lambda v: _chain(RND2, [say3("%s\n“%s”" % (v[0], v[2][r % len(v[2])])) for r in range(nr)])) + \
             [hb._w(at["muffled"] - at["stern"] - GR.HOLD_SAY)] + [hb._req(e, 6, wait=False) for e in actors[1:]] + \
             rnd3 + lines(muffled) + gap(at["muffled2"] - at["muffled"] - GR.MUFFLED_SAY) + \
             [Op(bytes([0x85, RND2[0] << 4, RND2[1], 1])), Op(bytes([0x8D, RND2[0] << 4, RND2[1], 3]))] + \
@@ -2769,20 +2777,39 @@ def _wall_market(ctx, focus):
         lists[6] += [picked]
         assert len(MOVIE_RANK) == 6
         ops += _by_rank(lists)
-        # (user) after a full group shoot: "Normal scene" / "Special scene" (672) for one co-star
+        # (user, since) for one co-star, always: "Normal scene." / "Special scene." (672, after a full group
+        # shoot) / "Blast-off." (673, Cid's affection at max); a locked one reads "????" and asks again
         import _movie_special as SP_
-        spec_no, spec_ask = asm.nop(), asm.nop()
-        ops += [asm.setbyte(SPEC, 0), asm.if_byte(SPECIAL_ON[0], "bit_on", SPECIAL_ON[1], spec_no),
+        import _blast_data as BD_
+        import _cid as CID_
+        spec_no, spec_ask, top = asm.nop(), asm.nop(), asm.nop()
+        ops += [asm.setbyte(SPEC, 0),
                 asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], spec_ask),
-                asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], spec_ask), asm.goto(spec_no), spec_ask]
-        ask_s, first_s = hb._ask(sec, "Cameraman\n“The usual, or something special today?”",
-                                 ["Normal scene.", "Special scene."])
-        ops += ask_s + [asm.if_byte(CHOICE, "==", first_s + 1, spec_no), asm.setbyte(SPEC, 1), spec_no]
+                asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], spec_ask), asm.goto(spec_no), spec_ask, top]
+        for s_on in (0, 1):
+            for b_on in (0, 1):
+                nx = asm.nop()
+                ops += [asm.if_byte(SPECIAL_ON[0], "bit_on" if s_on else "bit_off", SPECIAL_ON[1], nx),
+                        asm.if_byte(CID_.AFFECTION, ">=" if b_on else "<", BD_.UNLOCK, nx)]
+                ask_s, first_s = hb._ask(sec, "Cameraman\n“The usual, or something special today?”",
+                                         ["Normal scene.", "Special scene." if s_on else "????",
+                                          "Blast-off." if b_on else "????"])
+                n1, n2 = asm.nop(), asm.nop()
+                ops += ask_s + [asm.if_byte(CHOICE, "==", first_s + 1, n1)] + \
+                    ([asm.setbyte(SPEC, 1), asm.goto(spec_no)] if s_on else [asm.goto_back(top)]) + \
+                    [n1, asm.if_byte(CHOICE, "==", first_s + 2, n2)] + \
+                    ([asm.setbyte(SPEC, 2), asm.goto(spec_no)] if b_on else [asm.goto_back(top)]) + \
+                    [n2, asm.goto(spec_no), nx]
+        ops += [spec_no]
         ops += say("“That's my man! To the set!”")
         x, y, z, t = focus
         ops += [Op(hb.FADE_OUT), Op(b"\x6C"), asm.setbyte(MOVIE_STATE, 0)]
         not_spec = asm.nop()
         sx_, sy_, sz_, st_ = _spot(Walkmesh(ctx.field(SPECIAL_BASE).section("walkmesh")), *SPECIAL_ARRIVE, 0, True)
+        not_blast = asm.nop()                    # (673) Blast-off: its one set, the co-star picked there
+        bx_, by_, bz_, bt_ = _spot(Walkmesh(ctx.field(BD_.SET).section("walkmesh")), *BD_.ARRIVE)
+        ops += [asm.if_byte(SPEC, "==", 2, not_blast), asm.biton(*BD_.BLAST_ON),
+                asm.mapjump(ctx.maplist.index(BD_.SET), bx_, by_, bt_, 0xC0), asm.ret(), not_blast]
         ops += [asm.if_byte(SPEC, "==", 1, not_spec)]
         for key_, bit_ in [("skye", 1)] + [(g["key"], g["bit"]) for g in MG.GIRLS]:
             nxt = asm.nop()

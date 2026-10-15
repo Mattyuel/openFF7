@@ -23,6 +23,8 @@ import csv
 import os
 import struct
 
+import _cid as CID
+
 from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL, MOVIE_RANK, MOVIE_STATE, SPECIAL_ON
 from _recruit import sound
 from _travel import CHOICE, window
@@ -146,7 +148,7 @@ def _menu(sec, dests):
     ops += [hire, asm.biton(*HB_JOB), asm.setbyte(hv, 0xFF), asm.setbyte((hv[0], hv[1] + 1), 0xFF),
             asm.setbyte((hv[0], hv[1] + 2), 0x0F), asm.goto(done)]
     for label, value in ((a0, 0), (a10, gifts.CLOSE), (a20, gifts.DEVOTED)):
-        ops += [label] + [asm.setbyte(v, value) for v in HB_AFFECTION] + [asm.goto(done)]
+        ops += [label] + [asm.setbyte(v, value) for v in HB_AFFECTION + [CID.AFFECTION]] + [asm.goto(done)]   # (+ Cid: 661)
     ops.append(allg)
     for j in range(len(gifts.GIFTS)):
         k = gifts.FIRST_KEY_ITEM + j

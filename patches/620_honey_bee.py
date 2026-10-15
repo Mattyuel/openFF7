@@ -1523,8 +1523,10 @@ def _bare_cloud_seat(ctx, hrc):
 # (ACFE frame 0, y down, facing -z): MEMBER_LEN forward from the pelvis's front-bottom
 # middle (sunk MEMBER_SINK into it), MEMBER_W wide and tall, MEMBER_UP above the pelvis's
 # lowest point; corners taken into the hip bone's own frame.
-MEMBER_LEN, MEMBER_W, MEMBER_UP, MEMBER_SINK = 2.31, 0.975, 0.45, 0.4  # (user, since) 50% bigger (was 2.2, 0.65);
-                                                                       # then 30% shorter, same girth (was 3.3)
+MEMBER_LEN, MEMBER_W, MEMBER_UP, MEMBER_SINK = 3.0, 0.68, 0.45, 0.4    # (user, since) 50% bigger (was 2.2, 0.65);
+                                                                       # then 30% shorter, same girth (was 3.3);
+                                                                       # then 30% longer (was 2.31), 30% thinner (was 0.975)
+MEMBER_ANGLE = 30                     # (user, since) tilted this many degrees up from level, about its base
 
 
 def _bare_cloud_member(ctx, hrc):
@@ -1547,6 +1549,12 @@ def _bare_cloud_member(ctx, hrc):
     h = MEMBER_W / 2
     corners = [[x, yc + y, z] for z in (front + MEMBER_SINK, front + MEMBER_SINK - MEMBER_LEN)
                for y in (-h, h) for x in (-h, h)]
+    import math
+    a_ = math.radians(MEMBER_ANGLE)                                # up about its base's middle (y down, forward -z)
+    zb = front + MEMBER_SINK
+    corners = [[p[0], yc + (p[1] - yc) * math.cos(a_) + (p[2] - zb) * math.sin(a_),
+                zb - (p[1] - yc) * math.sin(a_) + (p[2] - zb) * math.cos(a_)] for p in corners]
+    assert corners[4][1] < corners[0][1] or MEMBER_ANGLE == 0, "tip up"
     mt = [[m[r][c] for r in range(3)] for c in range(3)]           # inverse rotation
     local = [fa._vec(mt, [p[k] - start[k] for k in range(3)]) for p in corners]
     back = fa._vec(m, local[0])

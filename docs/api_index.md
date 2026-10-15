@@ -750,7 +750,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_elena_fours(ctx)` ZDEF (Elena on all fours) and ZCTP (Cloud on one knee beside her, spanking); see SPANK_*, KNEEL_*.
 - `_turn_round(ctx, name, hrc)` `name`.a turned 180 about the vertical: for a pose laid out facing Cloud (DIR + 128)
-- `_koala(ctx, name, hrc, stand)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
+- `_koala(ctx, name, hrc, stand, his_anim=None)` Her koala hug on standing Cloud (one frame per ZCTH frame), as the user laid it out:
 - `apply(ctx)` 
 
 ## `patches/661_cid.py`
@@ -785,8 +785,8 @@ The movie minigame (user's design).
 - `_there_arm(hb)` At a position's start: no "there" prompt shown yet, the first at FR + THERE_FIRST.
 - `_there_ops(hb, sec, key, rate, cond, icon, hush, leave)` (user) The special shoots' "there" prompt (672: parts one and three, two a part): the
 - `_there_refuse(hb, say, pr, kind, loss)` Her refusal line: Scarlet's third try on (`there_push`) vs her first (`there_no`).
-- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None, desperate=3)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
-- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
+- `_pause_ops(hb, sec, actors, hush, lines, cond, icon, rate_of, slot_of=lambda key: 0, leave=None, uneasy=None, desperate=3, speaker=None)` (user) The director's tick ops for head / head reverse / 69 (cond = ops jumping to their
+- `_stop_ops(hb, sec, actors, hush, lines, cond, rate_of, slot_of, leave, uneasy, kind, desperate=3, speaker=None)` pause: she pulls back (slot 4) and says a PAUSES line (an uneasy girl: uneasy(key)). hold
 - `_hold_entities(hb, model, sprite_dir, place)` (user) The hold's two helper entities' scripts: `icon` (the Square sprite, model `model`: slot 2
 - `_speeds(ctx)` Each position's two poses resampled to every SPEEDS frame count: girl ZM<p><s>,
 - `end_index(cloud, k)` Offset (from a model's first `_speeds` anim) of the group's "end" anim k: 0-3 the speeds,
@@ -850,6 +850,15 @@ The movie minigame (user's design).
 - `_dates()` 
 - `apply(ctx)` 
 
+## `patches/673_blast_off.py`
+(user) Blast-off: the movie's third scene type for a co-star (after Normal and Special), with Cid,
+
+- `_mods()` 
+- `_her_in_his()` Her origin in Cloud's frame in the movie's head layout (670 POSITIONS "head": she faces him).
+- `_poses(ctx)` Every pose; returns (girl names on Ruby's skeleton, Cloud names, Cid names, layout), each
+- `_blast(ctx, built, back)` 
+- `apply(ctx)` 
+
 ## `patches/675_standard_bodies.py`
 (user) The standard female body (`_female_body`, built by 670) on the undressed
 
@@ -877,6 +886,39 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_unlocks_phs(op)` 
 - `_hides_phs_show(op)` Story scenes (Kalm inn, cargo ship) add PHS to the menu (OR2 var[2][28]);
 - `apply(ctx)` 
+
+## `patches/_bare_cid.py`
+(user) Bare Cid for Blast-off (673): his field model ABDA.HRC (jacket and shirt kept) without his
+
+- `_hb()` 
+- `_rsd(ctx, old, new_rs, new_p)` 
+- `_tails(d)` 
+- `_ring_loft(rings, n, cap_top, tip)` Rings (z, ax, ay[, colour]) round the bone's axis; top capped (flat fan), bottom open or a
+- `_seat(ctx, hrc, d)` His pelvis as bare Cloud's seat, mapped onto his hips; returns the world vertices (for the member).
+- `_member(ctx, hrc, seat_world, frame, d)` Bare Cloud's box (620 `_bare_cloud_member`), MEMBER_SCALE x, on his new seat.
+- `build(ctx)` Writes ZCIA.HRC and its new parts (once).
+
+## `patches/_blast_data.py`
+(user) Blast-off (673): the movie's third scene for a co-star, with Cid, in the space capsule.
+
+
+## `patches/_blast_poses.py`
+(user) Blast-off's poses (673): three men-and-a-girl positions, every anim a 15-frame stroke
+
+- `_mods()` 
+- `_to_shared(p, O)` 
+- `_to_own(q, O)` 
+- `_member(ctx, ply)` (base, tip) of a bare man's member box (8 corners, z-major) in his hip bone's frame.
+- `_write(ctx, base, frames, name)` 
+- `_wrist(F, I, s, tip)` The wrist for fingertips at `tip`: along the shoulder -> tip line, a hand short of it, within
+- `_cid_stroke(ctx, name, tip_at, hands, lean=CID_LEAN, at='tip')` Cid's thrust (his skeleton), N frames: his upper body leant back `lean` and steady, his
+- `_cid_natural_tip(ctx, lean=CID_LEAN)` His member tip standing (his stand, leant back), his frame.
+- `rocketman(ctx, bench_drop)` ZNS (Cloud), ZMSA (her, Ruby's skeleton), ZGS (Cid). bench_drop = the floor below the bench
+- `_cloud_tip(ctx, anim, t, base=False)` Bare Cloud's member tip (base: its root) in his frame, frame t of `anim`.
+- `twinjets(ctx, her_in_his)` ZGTA (Cid, her head pose's partner): her_in_his = her origin in Cloud's frame in the movie's head
+- `exhaust_carry(ctx)` ZNUK (bare Cloud: 620's koala stand ZCTH with his knees bent to EX_LOW) and ZMUK (her koala hug
+- `exhaust(ctx)` ZGUA: Cid behind her in the lowered holding (`exhaust_carry`: ZNUK / ZMUK; she shares Cloud's spot,
+- `_stand0(ctx)` 
 
 ## `patches/_cid.py`
 (user) Cid as a friend: hang-outs (660's date places, no intimacy ending), gifts, affection (0-20,

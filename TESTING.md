@@ -479,6 +479,15 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Group shoot broke at its start** (fix; untested in-game, user): its models now carry only the
   animations the group plays (26-36 each instead of 63-71). Check the group shoot starts and every part
   (head, head reverse, end) shows the right poses.
+- **Blast-off** (new; untested in-game, user): the cameraman now always asks Normal / Special / Blast-off after
+  picking a single co-star (???? while locked; picking ???? asks again). Blast-off needs Cid at 20 affection
+  (debug: Honey Bee page "All affection 20" sets his too). It plays in the space capsule with Cid's Theme:
+  Rocketman (Cloud on the left bench, she in his lap bent forward to Cid; Cid's hold prompts), Twin Jets (she
+  kneels between them and turns to the other man every 10 s; one hold prompt per man, his own lines), Exhaust
+  (the carry, Cid behind her; "there" twice). A minute each, pay doubled. Check the placements, her turn,
+  the hold speakers, the meter and the cut afterwards.
+- **Members** (tweak; untested in-game, user): Cloud's angled up 30 degrees, 30% longer and 30% thinner; Cid's 70%
+  longer than Cloud's and half its first girth, straight.
 - **Cid as a friend** (new; untested in-game, user): on the launch pad north of Rocket Town, Cid stands by the
   fuel tank at the rocket's foot with a quest star. Talk: he introduces himself once, then Just chat (his
   affection shows) / Hang out (gondola, capsule, cannon or beach: he sits / lounges / stands like the girls and
