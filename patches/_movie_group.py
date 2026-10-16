@@ -339,6 +339,7 @@ STAGING = [
     dict(split=2,     # Scarlet directs; Elena objects | Aerith teases, Scarlet insists
          anchor={"cloud" : "elena" }, 
           bed=["scarlet", "elena", "cloud", "ruby"],  # (user) Cloud just right of her on screen
+          camera=(100, -30),
          set={"scarlet": (100, -40, "kneel", "elena"), "cloud": (30, 0, "stand", "elena"),
               "elena": (110, -40, "kneel", "cloud"), "aerith": (150, -20, "kneel", "elena"),
               "tifa": (140, -10, "kneel", "elena"),"ruby": (70, -20, "kneel", "tifa"),"skye": (120, 10, "kneel", "scarlet")},
