@@ -2613,12 +2613,8 @@ def _group(ctx, back):
     loop, idle, capped = asm.nop(), asm.nop(), asm.nop()
     CUR = [(6, 200), (6, 202), (6, 204)]
     cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50),
-<<<<<<< HEAD
-           asm.if_word(BKT, ">", 20, capped), asm.setword(BKT, 20), capped]
-=======
            asm.if_word(BKT, ">", 20, capped), asm.setword(BKT, 20), capped]   # (if_word jumps when false: was "<=",
            # which set every bucket to 20: the cursor stuck at the right end, user)
->>>>>>> c7f102b603f260779aec10cb0ff51bca076fb091
 
     def cur_at(q):
         pts, ops_ = cursor[q], []
