@@ -15,6 +15,7 @@ ACTS[i] = dict(
             finale (act 4: the bride, by key)
   react     one beat list per choice
   play      the minigame: kind "holding" / "cowgirl" (the movie's), "twinjets" / "exhaust" (Blast-off's),
+            frames (its length; default MINUTE),
             girl (key, or "bride" = act 4's choice), at (x, y), watch [bare actors standing behind]
   lines     4 lines while it plays ("C:" Cloud, "I:" Cid, "(...)" an action, else hers)
 )
@@ -26,7 +27,8 @@ UNLOCK_CID = 20                  # Cid's affection (and a full group shoot, SPEC
 FLOOR = 165                      # the stage floor's height (astage_b: one flat rectangle)
 ARRIVE = (0, 300)
 SCALE = 700 / 512                # astage_b's model scale over the movie's (pose offsets)
-MINUTE = 1800                    # frames a minigame
+MINUTE = 1800                    # frames a minigame (unless its play has "frames")
+SHORT = 450                      # (user) acts 1, 2 and 4: 15 s each
 SHOW_RATE = 60                   # gil a press (the house's cut of the tickets)
 FINISH_BONUS = 6000              # the finale's finisher, on the spot
 MUSIC = 49                       # DATE (Interrupted by Fireworks: the play's own music is the Gold Saucer's)
@@ -77,7 +79,7 @@ ACTS = [
         react=[[("tifa", "cloud"), ("elena", "camera")],
                [("tifa", "camera"), ("elena", "tifa")],
                [("king", "camera"), ("tifa", "elena"), ("elena", "tifa")]],
-        play=dict(kind="holding", girl="tifa", at=(0, 520), watch=[]),
+        play=dict(kind="holding", frames=SHORT, girl="tifa", at=(0, 520), watch=[]),
         lines=["“I chose you, hero. Don't make me\n regret it.”", "Mmh... hold me up. Don't you dare\n let go.",
                "C:...I've got you.", "(The crowd stamps its feet.)\n“Ahh... more!”"]),
     dict(   # Act 2: the Sorceress's lair. Scarlet (control, the audience) vs Elena ("yes, sir")
@@ -102,7 +104,7 @@ ACTS = [
         react=[[("elena", "cloud"), ("scarlet", "cloud")],
                [("elena", "scarlet"), ("scarlet", "camera")],
                [("elena", "scarlet"), ("scarlet", "elena")]],
-        play=dict(kind="cowgirl", girl="scarlet", at=(0, 560), watch=["elena"]),
+        play=dict(kind="cowgirl", frames=SHORT, girl="scarlet", at=(0, 560), watch=["elena"]),
         lines=["“Lie still, hero. The queen takes\n what she wants.”", "“Look at them watching. Look at\n ALL of them.”",
                "C:...You're shaking.", "“I'm NOT. ...Don't stop.”"]),
     dict(   # Act 3: the Dragon's cave. Aerith off script, Cid out of character, Tifa from the wings
@@ -155,7 +157,7 @@ ACTS = [
         react=[[("aerith", "cloud"), ("tifa", "camera")],
                [("tifa", "cloud"), ("aerith", "tifa")],
                [("elena", "cloud"), ("scarlet", "elena")]],
-        play=dict(kind="exhaust", girl="bride", at=(0, 520), watch=[]),
+        play=dict(kind="exhaust", frames=SHORT, girl="bride", at=(0, 520), watch=[]),
         lines=["“Hold me up. Both of you. Don't\n let go.”", "I:This is the finale, kid. Make it\n count!",
                "C:...Look at me. Not them. Me.", "“Ahh! The whole saucer's watching!”"]),
 ]

@@ -145,6 +145,9 @@ delete `build/cache` (~350 MB) any time.
   7/15 = bank 5, 5/6 = temp. 16-bit nibbles: 2,4,6,12,14,15. 16-bit vars use
   **byte** addressing (var[2][28] = savemap 0x0BC0). Bank 1 starts at savemap 0x0BA4;
   field vars can't reach past 0x10A4 (so not the config block / battle speed).
+  Temp banks 5 (byte) and 6 (word) are **one** area: (6, 184) is the bytes (5, 184)
+  and (5, 185). A temp byte in one patch can clash with another module's temp word
+  (674's act counter sat under 670's `_take_gil` GLO, and a gil loss blanked the stage).
 - **The engine runs each entity for at most 8 opcodes per turn** (0x60CD77,
   `[ebp-0x1c] = 8`), then moves to the next entity: scripts interleave mid
   computation. Never share a temp var between entities' *concurrent* scripts
