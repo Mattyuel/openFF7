@@ -37,6 +37,9 @@ NAMES = {"tifa": "Tifa", "aerith": "Aerith", "elena": "Elena", "scarlet": "Scarl
 BOOKER = dict(field="astage_a", entity="yufi", donor=("astage_b", 4), at=(750, -2800), back=(700, -2700))
 BOOKER_LINES = dict(
     locked=["“A troupe of my own? Come back when\n the whole of Midgar knows your\n faces. ...And bring that pilot.”"],
+    # (user) the first talk once the cameraman sent you ("Top of the Bill"): the booking
+    booked=["“Ah! The famous troupe! Your cameraman\n friend said you'd come. The whole\n Saucer's talking about you.”",
+            "“One night, a full house, my stage.\n Your fee for showing up, on account.\n The tickets are another matter.”"],
     offer="“The Gold Saucer's buzzing about your\n little films, star! One night only:\n a live show. Interested?”",
     choices=["Raise the curtain!", "Not tonight."],
     no="“Suit yourself. The stage is yours\n whenever you want it.”",

@@ -474,12 +474,20 @@ def _booker(ctx):
     at_ = smesh.find(ax, ay)
     cam = Camera(ctx.field(b["field"]).sections[1])
 
+    qx = importlib.import_module("600_quests")
+    bq, (bc, _) = qx.quest_state("film_booker"), qx.quest_counter("film_booker")
+
     def talk(sec):
         say = lambda t: hb._say(sec, "Booker\n" + t)
-        locked, no, end = asm.nop(), asm.nop(), asm.nop()
+        locked, no, end, booked = asm.nop(), asm.nop(), asm.nop(), asm.nop()
         ops = [Op(b"\x35\x00\x08\x02"), Op(b"\x24\x08\x00"),          # PTURA (face the player), WAIT
                asm.if_byte(SPECIAL_ON[0], "bit_on", SPECIAL_ON[1], locked),
-               asm.if_byte(CID.AFFECTION, ">=", SS.UNLOCK_CID, locked)]
+               asm.if_byte(CID.AFFECTION, ">=", SS.UNLOCK_CID, locked),
+               # (user) only a troupe the cameraman sent ("Top of the Bill", 670): handed in here
+               asm.if_byte(bq, ">=", qx.ACCEPTED, locked), asm.if_byte(bq, "==", qx.ACCEPTED, booked)]
+        for t_ in SS.BOOKER_LINES["booked"]:
+            ops += say(t_)
+        ops += qx.count_ops("film_booker") + qx.reward_ops(sec, "film_booker") + [asm.setbyte(bq, qx.DONE), booked]
         ask, first = hb._ask(sec, "Booker\n" + SS.BOOKER_LINES["offer"], SS.BOOKER_LINES["choices"])
         ops += ask + [asm.if_byte(CHOICE, "==", first, no), asm.biton(*SS.SHOW_ON),
                       asm.mapjump(ctx.maplist.index(SS.SET), ax, ay, at_, 0x80), asm.ret(),

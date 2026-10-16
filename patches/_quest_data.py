@@ -854,7 +854,16 @@ EXTERNAL_GIVERS = [
                             "yes and see the shoot through (a cut",
                             "counts too). Then collect your fee."],
                       gate=[("eq", (1, 214), 0xFF), ("eq", (1, 215), 0xFF), ("bits", (1, 216), [0, 1, 2, 3])],
-                      reward=dict(gil=1000))]),
+                      reward=dict(gil=1000)),
+                 # (user) the cameraman sends you to the Booker (674): offered once the group shoot
+                 # is done (SPECIAL_ON) and Cid is at affection 20; the Booker hands it in
+                 dict(id="film_booker", kind="count", late=True, label="Booker met", count=1,
+                      title="Top of the Bill",
+                      desc=["The Gold Saucer wants your troupe for a",
+                            "live show. See the Booker in Event",
+                            "Square and take the booking."],
+                      gate=[("bits", (1, 213), [7]), ("eq", (1, 110), 20)],
+                      reward=dict(gil=2000))]),
 ]
 # (user) a quest per date girl: her star where you meet her for dates; the first date (660) accepts it
 # when you ask her out and completes it when the date ends. External: 660 moves the state

@@ -921,8 +921,11 @@ python tools/ff7tool.py exe-test      # -> build/exe_test/ff7_en.exe (patches yo
      section; we'd need another place for the new code.
 3. Undo: delete the copied exe and rename `ff7_en.exe.original` back.
 
-- **Gold Saucer stage show** (new, untested): after a full group shoot and Cid at affection 20, the Booker (the play's King)
-  by the aisle in Event Square offers a live show. Four acts on the play's stage: a clothed scene in costume with a
+- **Gold Saucer stage show** (new, untested): after a full group shoot and Cid at affection 20, the cameraman (Sector 7
+  station) gives the quest **Top of the Bill**: the Gold Saucer wants the troupe live. Before that the Booker turns you
+  away. Then the Booker (the play's King) by the aisle in Event Square welcomes you, pays the quest (2,000 gil) and
+  offers a live show. Check: the cameraman's star appears once both conditions hold, his reminder line while it's
+  open, the heart goes once the Booker hands it in. Four acts on the play's stage: a clothed scene in costume with a
   conflict and Cloud's choice, then a fade into the undressed minigame (tavern: Tifa holding; lair: Scarlet cowgirl;
   cave: Aerith Twin Jets with Cid; castle: Exhaust with Cid and the bride you chose), a finisher in the finale, pay on
   the spot, back to the Booker. Check: everyone appears (clothed models, the Dragon costume, undressed), the meter

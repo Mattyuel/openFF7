@@ -2974,10 +2974,25 @@ def _wall_market(ctx, focus):
         ops += qx.reward_ops(sec, "film_first") + [asm.setbyte(first_q, qx.DONE), asm.goto(end), no_]
         return ops
 
+    booker_q, (booker_c, _) = qx.quest_state("film_booker"), qx.quest_counter("film_booker")
+
+    def booking(sec, say, end):
+        """(user) "Top of the Bill": once the group shoot is done and Cid is at affection 20, the Gold
+        Saucer wants the troupe live; the Booker in Event Square (674) hands it in."""
+        ops, not_yet, asked = [], asm.nop(), asm.nop()
+        ops += [asm.if_byte(booker_q, "==", qx.NEW, asked)] + qx.gate_ops(qx._quest("film_booker"), not_yet)
+        ops += say("“Star! Big news. Your little troupe has\n made waves, all the way to the Gold\n Saucer.”")
+        ops += say("“Their Booker called me himself. They\n want the whole gang, live, on the\n Event Square stage. Even the pilot.”")
+        ops += say("“Go see him in Event Square. This is\n the big time, star. Don't you dare\n be late.”")
+        ops += [asm.setbyte(booker_q, qx.ACCEPTED), asm.setbyte(booker_c, 0), asm.goto(end), asked,
+                asm.if_byte(booker_q, "==", qx.ACCEPTED, not_yet)]
+        ops += say("“The Gold Saucer's waiting, star! The\n Booker's in Event Square.”")
+        return ops + [not_yet]
+
     def talk(sec):
         say = lambda t: hb._say(sec, "Cameraman\n" + t)
         end, pitch, wait_ = asm.nop(), asm.nop(), asm.nop()
-        ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + first_video(sec, say, end) + \
+        ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + first_video(sec, say, end) + booking(sec, say, end) + \
             [asm.if_byte(MOVIE_STATE, "!=", 0, pitch),
                asm.setword(EL, HB_MINUTES), hb._arith(0x88, EL, MOVIE_AT), asm.if_word(EL, ">=", PAY_DELAY, wait_)]
         # (user) Skye's videos pay double (MOVIE_GIRL bit 1: she was this shoot's co-star; it
