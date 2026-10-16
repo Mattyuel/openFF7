@@ -28,7 +28,11 @@ from ff7.models import ModelLoader
 from ff7.script import Op, Script
 from ff7.walkmesh import Walkmesh
 
-A, RC, FG = (5, 184), (5, 185), (5, 186)          # act, Cloud's call in it, the finale's bride (girl index)
+# act, Cloud's call in it, the finale's bride (girl index). (Were 184-186: the same bytes as 670's
+# `_take_gil` words GLO / GHI (6, 184) / (6, 186) (banks 5 and 6 are one temp area), so Act One's
+# "Follow the script, Tifa." (the only choice that takes gil) overwrote A with the gil's low byte:
+# no act matched and the minigame was a blank stage, user)
+A, RC, FG = (5, 212), (5, 213), (5, 214)
 SIDE, SEG, SW = (5, 164), (5, 165), (6, 168)      # Twin Jets (as 673)
 GIL = (6, 210)
 SPRITES = {"QGHA": ("QGHB", "QGHC", "QGHD"), "QCHA": ("QCHB", "QCHC", "QCHD")}
@@ -387,8 +391,9 @@ def _show(ctx, built):
              asm.setword(POS, 500), asm.setword(VEL, 1000), asm.setword(RATE, 40)] + req(clothed_e, 2) + \
         [hb._req(CL, 2, wait=False)] + req(bare_e + [ents["gauge"]], 2) + \
         [hb._w(8), Op(mv.FAST_IN), Op(b"\x6C"), Op(bytes([0xF2, 0, 0, 0, 0x10, SS.PLAY_MUSIC]) + bytes(8)),
-         asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, mv.TICK), asm.setword(NEXT, SS.MINUTE),
-         asm.setword(SW, SWITCH), asm.setbyte(RUN, 1)]
+         asm.setword(FR, 0), asm.setword(PR, 0), asm.setword(NT, mv.TICK)] + \
+        by_a(lambda i, a: [asm.setword(NEXT, a["play"].get("frames", SS.MINUTE))]) + \
+        [asm.setword(SW, SWITCH), asm.setbyte(RUN, 1)]
     wait1, go = hb._w(1), asm.nop()
     A_, B, C, VMAX, DANGER = mv.A, mv.B, mv.C, mv.VMAX, mv.DANGER
     main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, mv.TICK),
