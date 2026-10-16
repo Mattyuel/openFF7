@@ -335,9 +335,10 @@ STAGE = (-100, 72)
 WATCH = [(-80, -40), (75, -45), (-95, -5), (95, -10), (-60, 35), (60, 40)]
 STAGING = [
     dict(split=2,     # Scarlet directs; Elena objects | Aerith teases, Scarlet insists
-         anchor={"cloud": "elena"},   # (user) Cloud just right of her on screen
-         set={"scarlet": (60, -30, "stand", "elena"), "cloud": (90, -40, "stand", "elena"),
-              "elena": (70, -30, "stand", "cloud"), "aerith": (180, 30, "stand", "elena"),
+         anchor={"cloud" : "elena" }, 
+          bed=["scarlet", "elena", "cloud"],  # (user) Cloud just right of her on screen
+         set={"scarlet": (110, -40, "kneel", "elena"), "cloud": (20, 0, "stand", "elena"),
+              "elena": (120, -40, "kneel", "cloud"), "aerith": (180, 30, "stand", "elena"),
               "tifa": (160, 40, "stand", "elena")},
          mid=[("aerith", None, "scarlet"), ("scarlet", None, "aerith"), ("tifa", None, "cloud")],
          react=[[("scarlet", None, "away:cloud"), ("tifa", None, "scarlet")],
