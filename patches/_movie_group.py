@@ -328,6 +328,8 @@ WALKOUT = "Cameraman\nâ€œ...They ALL walked?! CUT!\n We'll sell what we've got.â
 # ("cloud" too), "camera", "centre" or "away:<actor>" (her back to them).
 # `anchor` (user) = {actor: another actor in `set`}: that actor's (sx, sy) is measured from the other's
 # spot on screen (placed first), not from STAGE.
+# `bed` (user) = [actors in `set`]: they snap to the nearest bed-top point (the beds' walkmesh, z 54 / 100 /
+# 125: a stand or kneel there is drawn on the mattress) instead of the floor.
 STAGE = (-100, 72)
 # (y down = towards the camera: the arguing girls in front, Cloud to one side, the watchers behind)
 WATCH = [(-80, -40), (75, -45), (-95, -5), (95, -10), (-60, 35), (60, 40)]

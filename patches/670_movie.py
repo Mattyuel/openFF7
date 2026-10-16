@@ -2335,20 +2335,25 @@ def _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g):
     """(user) The group's arguments staged with the models (`_movie_group.STAGING`): every actor's slot 9
     (spot, facing, pose by SC), 10 (the beat) and 11 (the reaction by RC); the player entity's slot 9 (the
     camera on the stage) and the gauge's (hidden). Spots: screen offsets from STAGE_AT, the nearest floor."""
-    cand = []
+    cand, beds = [], []                               # floor points; (user) bed-top points (z 54 / 100 / 125)
     for x in range(-300, 301, 6):
         for y in range(-360, 41, 6):
-            t = mesh.find(x, y)
-            if t is not None and abs(mesh.height(t, x, y)) < 2:
-                cand.append((x, y, t) + tuple(cam.project(x, y, 0)))
+            for t in range(len(mesh.tris)):
+                if not mesh.contains(t, x, y):
+                    continue
+                z = round(mesh.height(t, x, y))
+                (cand if abs(z) < 2 else beds).append((x, y, t) + tuple(cam.project(x, y, z)) + (z,))
+    assert beds and all(c[5] in (54, 100, 125) for c in beds), sorted({c[5] for c in beds})
     ox, oy = GR.STAGE
 
-    def at_screen(dx, dy, taken=(), origin=None):     # the nearest floor point at least 14 px from those taken
-        bx, by = origin if origin else (ox, oy)       # (from STAGE, or (user) an anchor actor's screen spot)
-        free = [c for c in cand if all((c[3] - t[0]) ** 2 + (c[4] - t[1]) ** 2 >= 14 ** 2 for t in taken)]
+    def at_screen(dx, dy, taken=(), origin=None, bed=False):   # the nearest floor (or bed-top) point at least
+        bx, by = origin if origin else (ox, oy)       # 14 px from those taken (from STAGE, or (user) an anchor's spot)
+        free = [c for c in (beds if bed else cand) if all((c[3] - t[0]) ** 2 + (c[4] - t[1]) ** 2 >= 14 ** 2
+                                                          for t in taken)]
         c = min(free, key=lambda c: (c[3] - bx - dx) ** 2 + (c[4] - by - dy) ** 2)
-        assert (c[3] - bx - dx) ** 2 + (c[4] - by - dy) ** 2 < 30 ** 2, ("no floor there", dx, dy)
-        return c[0], c[1], 0, c[2]
+        assert (c[3] - bx - dx) ** 2 + (c[4] - by - dy) ** 2 < 30 ** 2, ("no bed there" if bed else "no floor there",
+                                                                          dx, dy)
+        return c[0], c[1], c[5], c[2]
     centre = at_screen(0, 0)
     who = ["cloud"] + GR.ORDER
     ent = {k: ents["cloudb"] if k == "cloud" else ents[k] for k in who}
@@ -2369,11 +2374,13 @@ def _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g):
         watchers, taken = iter(GR.WATCH), []
         anchor = st.get("anchor", {})                 # (user) {actor: the actor whose spot it's measured from}
         assert all(k in st["set"] and a in st["set"] and a not in anchor for k, a in anchor.items()), (i, anchor)
+        on_bed = st.get("bed", [])                    # (user) these stand / kneel on a bed top, not the floor
+        assert all(k in st["set"] for k in on_bed), (i, on_bed)
         # the scene's own first (anchored ones after them), then the watchers
         for k in sorted(who, key=lambda k: (k not in st["set"], k in anchor)):
             sx, sy, ps, face = st["set"][k] if k in st["set"] else next(watchers) + ("stand", "centre")
             origin = cam.project(*spot[anchor[k]][:3])[:2] if k in anchor else None
-            spot[k], pose[k] = at_screen(sx, sy, taken, origin), ps
+            spot[k], pose[k] = at_screen(sx, sy, taken, origin, k in on_bed), ps
             taken.append(cam.project(*spot[k][:3]))
         sp_ = {k: cam.project(*spot[k][:3]) for k in who}
         for a in who:
