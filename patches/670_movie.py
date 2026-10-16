@@ -2404,7 +2404,9 @@ def _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g):
                                             for r in st["react"]]))
     for k in who:
         e, gone = ent[k], asm.nop()
-        left = [] if k == "cloud" else [asm.if_byte(LEFT, "bit_off", GR.ORDER.index(k), gone),
+        # (user) a girl who walked off (LEFT bit set) stays hidden; the others are placed (was "bit_off",
+        # which hid every girl still on set: the staged scenes showed only Cloud)
+        left = [] if k == "cloud" else [asm.if_byte(LEFT, "bit_on", GR.ORDER.index(k), gone),
                                          hb._visi(0), asm.ret(), gone]
         scripts[e][9] = left + _chain(SC, slots[k][9]) + [asm.ret()]
         scripts[e][10] = _sparse(SC, slots[k][10]) + [asm.ret()]
