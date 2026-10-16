@@ -2418,7 +2418,16 @@ def _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g):
         scripts[e][9] = left + _chain(SC, slots[k][9]) + [asm.ret()]
         scripts[e][10] = _sparse(SC, slots[k][10]) + [asm.ret()]
         scripts[e][11] = _sparse(SC, [b if any(o.raw[0] != 0 for o in b) else [] for b in slots[k][11]]) + [asm.ret()]
-    scripts[CL][9] = [xyzi(*centre), asm.ret()]
+    # (user) the camera follows the hidden player entity: per scene `camera` (dx, dy) from STAGE puts it on the
+    # nearest walkmesh point (floor or bed top) on screen; default the stage point itself
+    def cam_spot(st):
+        if "camera" not in st:
+            return centre
+        dx, dy = st["camera"]
+        c = min(cand + beds, key=lambda c: (c[3] - ox - dx) ** 2 + (c[4] - oy - dy) ** 2)
+        assert (c[3] - ox - dx) ** 2 + (c[4] - oy - dy) ** 2 < 30 ** 2, ("no floor or bed for the camera", dx, dy)
+        return c[0], c[1], c[5], c[2]
+    scripts[CL][9] = _chain(SC, [[xyzi(*cam_spot(st))] for st in GR.STAGING]) + [asm.ret()]
     scripts[ents["gauge"]][9] = [hb._visi(0), asm.ret()]
 
 
