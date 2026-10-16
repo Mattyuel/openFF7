@@ -2613,7 +2613,8 @@ def _group(ctx, back):
     loop, idle, capped = asm.nop(), asm.nop(), asm.nop()
     CUR = [(6, 200), (6, 202), (6, 204)]
     cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50),
-           asm.if_word(BKT, "<=", 20, capped), asm.setword(BKT, 20), capped]
+           asm.if_word(BKT, ">", 20, capped), asm.setword(BKT, 20), capped]   # (if_word jumps when false: was "<=",
+           # which set every bucket to 20: the cursor stuck at the right end, user)
 
     def cur_at(q):
         pts, ops_ = cursor[q], []
@@ -2621,7 +2622,7 @@ def _group(ctx, back):
             step = round((pts[20][a] - pts[0][a]) * 16 / 20)
             assert all(abs(pts[0][a] + b * step / 16 - pts[b][a]) <= 2 for b in range(21)), ("cursor line", q, a)
             ops_ += [asm.setword(var, BKT), hb._arith(0x8A, var, abs(step)), hb._arith(0x8C, var, 16),
-                     asm.setword(CUR_T, pts[0][a] & 0xFFFF), hb._arith(0x86 if step >= 0 else 0x88, CUR_T, var),
+                     asm.setword(CUR_T, pts[0][a] & 0xFFFF), hb._arith(0x77 if step >= 0 else 0x79, CUR_T, var),
                      asm.setword(var, CUR_T)]
         return ops_ + [Op(bytes([0xA5, 0x66, 0x60]) + struct.pack("<HHHH", CUR[0][1], CUR[1][1], CUR[2][1],
                                                                   pts[10][3]))]
