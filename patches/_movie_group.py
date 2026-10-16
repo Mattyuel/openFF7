@@ -338,8 +338,8 @@ STAGING = [
          anchor={"cloud" : "elena" }, 
           bed=["scarlet", "elena", "cloud", "ruby"],  # (user) Cloud just right of her on screen
          set={"scarlet": (100, -40, "kneel", "elena"), "cloud": (30, 0, "stand", "elena"),
-              "elena": (110, -40, "kneel", "cloud"), "aerith": (180, 30, "kneel", "elena"),
-              "tifa": (160, 40, "kneel", "elena"),"ruby": (70, -20, "kneel", "tifa"),"skye": (80, -20, "kneel", "scarlet")},
+              "elena": (110, -40, "kneel", "cloud"), "aerith": (150, -20, "kneel", "elena"),
+              "tifa": (140, -10, "kneel", "elena"),"ruby": (70, -20, "kneel", "tifa"),"skye": (120, 10, "kneel", "scarlet")},
          mid=[],
          react=[[],      #choice 1
                 [],      #choice 2
