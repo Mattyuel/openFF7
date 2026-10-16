@@ -2343,10 +2343,11 @@ def _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g):
                 cand.append((x, y, t) + tuple(cam.project(x, y, 0)))
     ox, oy = GR.STAGE
 
-    def at_screen(dx, dy, taken=()):                  # the nearest floor point at least 14 px from those taken
+    def at_screen(dx, dy, taken=(), origin=None):     # the nearest floor point at least 14 px from those taken
+        bx, by = origin if origin else (ox, oy)       # (from STAGE, or (user) an anchor actor's screen spot)
         free = [c for c in cand if all((c[3] - t[0]) ** 2 + (c[4] - t[1]) ** 2 >= 14 ** 2 for t in taken)]
-        c = min(free, key=lambda c: (c[3] - ox - dx) ** 2 + (c[4] - oy - dy) ** 2)
-        assert (c[3] - ox - dx) ** 2 + (c[4] - oy - dy) ** 2 < 30 ** 2, ("no floor there", dx, dy)
+        c = min(free, key=lambda c: (c[3] - bx - dx) ** 2 + (c[4] - by - dy) ** 2)
+        assert (c[3] - bx - dx) ** 2 + (c[4] - by - dy) ** 2 < 30 ** 2, ("no floor there", dx, dy)
         return c[0], c[1], 0, c[2]
     centre = at_screen(0, 0)
     who = ["cloud"] + GR.ORDER
@@ -2366,9 +2367,13 @@ def _stage(hb, dt, cam, mesh, scripts, ents, CL, gfirst, n_used, loader, n_g):
     for i, st in enumerate(GR.STAGING):
         spot, pose = {}, {}
         watchers, taken = iter(GR.WATCH), []
-        for k in sorted(who, key=lambda k: k not in st["set"]):      # the scene's own first, then the watchers
+        anchor = st.get("anchor", {})                 # (user) {actor: the actor whose spot it's measured from}
+        assert all(k in st["set"] and a in st["set"] and a not in anchor for k, a in anchor.items()), (i, anchor)
+        # the scene's own first (anchored ones after them), then the watchers
+        for k in sorted(who, key=lambda k: (k not in st["set"], k in anchor)):
             sx, sy, ps, face = st["set"][k] if k in st["set"] else next(watchers) + ("stand", "centre")
-            spot[k], pose[k] = at_screen(sx, sy, taken), ps
+            origin = cam.project(*spot[anchor[k]][:3])[:2] if k in anchor else None
+            spot[k], pose[k] = at_screen(sx, sy, taken, origin), ps
             taken.append(cam.project(*spot[k][:3]))
         sp_ = {k: cam.project(*spot[k][:3]) for k in who}
         for a in who:
