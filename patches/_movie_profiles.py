@@ -105,7 +105,7 @@ PROFILES = {
         refuse=["(She pulls back and holds up a hand.)\n“Hey. Not like that, okay?”",
                 "(She eases off, firm.)\n“Cloud. Ask first. Seriously.”"],
         leave="(She gets up, quietly.)\n“I'm sitting the rest out. You know why.”",
-        lesson="dislikes", lesson_no="(She catches his wrist.)\n“Hey. No. We don't do that.”",
+        lesson="dislikes", lesson_no="“Hey! No. We don't do that.”",
         there="mood", there_odds=128, there_loss=5,         # (user) 50/50, her mood
         there_yes=["(She laughs, surprised.)\n“The back? ...You know what? Okay.\n Go slow.”",
                    "(She glances back, blushing.)\n“Round the back, huh? ...Alright. Gentle.”"],

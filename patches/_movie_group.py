@@ -201,7 +201,7 @@ INTRO_ASK = "Elena\n“Before we start... what are the rules?”"
 # choices: (label, reply, effects); effects: gil = x gil a press (+ paid / - taken), annoy = [girls]
 # (+1 each; LEAVE_AT and she leaves), rules = agreed, leave = [girls] (she leaves now, no penalty)
 INTRO_CHOICES = [
-    ("Let's agree to some ground rules.\n We do what the customers want.",
+    ("We do what the customers want.",
      "Elena\n“...Thank you. That helps.”{NEW}Scarlet\n“Rules. How dull, darling.”", dict(rules=True)),
     ("No rules. Let's just have fun.",
      "Scarlet\n“Now THAT'S a director.”{NEW}Elena\n“...Fine.”", dict(annoy=["elena"])),
