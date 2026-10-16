@@ -338,7 +338,7 @@ WATCH = [(-80, -40), (75, -45), (-95, -5), (95, -10), (-60, 35), (60, 40)]
 STAGING = [
     dict(split=2,     # Scarlet directs; Elena objects | Aerith teases, Scarlet insists
          anchor={"cloud" : "elena" }, 
-          bed=["scarlet", "elena", "cloud", "ruby"],  # (user) Cloud just right of her on screen
+          bed=["scarlet", "elena", "cloud", "ruby", "skye", "tifa", "aerith"],  # (user) Cloud just right of her on screen
           camera=(100, -30),
          set={"scarlet": (100, -40, "kneel", "elena"), "cloud": (30, 0, "stand", "elena"),
               "elena": (110, -40, "kneel", "cloud"), "aerith": (150, -20, "kneel", "elena"),
@@ -358,6 +358,7 @@ STAGING = [
                 [("tifa", None, "cloud"), ("ruby", None, "skye")]]),
     dict(split=2,     # Aerith notices Elena holding her breath, Elena insists | Scarlet mocks
          anchor={"cloud": "scarlet"},   # (user) Cloud just right of her on screen
+         camera=(100, -30),
          set={"elena": (0, 15, "kneel", "camera"), "aerith": (-40, -10, "stand", "elena"),
               "scarlet": (35, -20, "stand", "elena"), "tifa": (-40, 30, "stand", "elena"),
               "cloud": (30, 0, "stand", "elena")},
@@ -367,6 +368,7 @@ STAGING = [
                 [("tifa", "kneel", "elena"), ("elena", None, "tifa")]]),
     dict(split=1,     # Scarlet grabs Tifa's neck from behind | Tifa is up and facing her, Aerith steps in
          anchor={"cloud": "tifa"},   # (user) Cloud just right of her on screen
+         camera=(100, -30),
          set={"tifa": (5, 15, "kneel", "cloud"), "scarlet": (-15, 10, "stand", "tifa"),
               "cloud": (30, 0, "stand", "tifa"), "aerith": (-50, -20, "stand", "scarlet")},
          mid=[("tifa", "stand", "scarlet"), ("aerith", None, "scarlet"), ("scarlet", None, "tifa")],
@@ -375,6 +377,7 @@ STAGING = [
                 [("tifa", None, "away:scarlet"), ("scarlet", None, "tifa"), ("aerith", None, "tifa")]]),
     dict(split=2,     # Elena asks to stop, Scarlet needles her | she flinches, Ruby wants in, Skye defends
          anchor={"cloud": "elena"},   # (user) Cloud just right of her on screen
+         camera=(100, -30),
          set={"elena": (0, 15, "kneel", "cloud"), "scarlet": (-40, -5, "stand", "elena"),
               "ruby": (30, -30, "stand", "cloud"), "skye": (-45, 30, "stand", "elena"),
               "cloud": (30, 0, "stand", "elena")},
@@ -384,6 +387,7 @@ STAGING = [
                 [("scarlet", None, "camera"), ("skye", None, "elena")]]),
     dict(split=3,     # Aerith calls out Tifa's voice | Tifa hits back, Aerith's smile drops, Skye
          anchor={"cloud": "skye"},   # (user) Cloud just right of her on screen
+         camera=(100, -30),
          set={"aerith": (-30, 15, "stand", "tifa"), "tifa": (25, 15, "stand", "aerith"),
               "skye": (0, -25, "stand", "cloud"), "cloud": (30, 0, "stand", "tifa")},
          mid=[("tifa", None, "aerith"), ("aerith", None, "away:tifa"), ("skye", None, "tifa")],
