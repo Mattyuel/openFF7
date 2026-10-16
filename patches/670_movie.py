@@ -2613,7 +2613,7 @@ def _group(ctx, back):
     loop, idle, capped = asm.nop(), asm.nop(), asm.nop()
     CUR = [(6, 200), (6, 202), (6, 204)]
     cur = [loop, asm.if_byte(RUN, "==", 1, idle), asm.setword(BKT, POS), hb._arith(0x8C, BKT, 50),
-           asm.if_word(BKT, "<=", 20, capped), asm.setword(BKT, 20), capped]
+           asm.if_word(BKT, ">", 20, capped), asm.setword(BKT, 20), capped]
 
     def cur_at(q):
         pts, ops_ = cursor[q], []

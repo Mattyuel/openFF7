@@ -255,49 +255,49 @@ SCENE_AT_TURN = 2                  # the part's second turn (a scene's own `turn
 # at its fourth turn
 SCENES += [
     dict(part=0, turn=4, girls=["scarlet", "tifa", "aerith"],
-         talk="Scarlet\n(She steps behind Tifa and grabs the\n back of her neck to 'position' her.)\n“Head down, sweetie. Like this.”{NEW}"
-              "Tifa\n(She's on her feet before anyone sees\n her move.) “Don't. Touch. My neck.”{NEW}"
-              "Scarlet\n“Kyahaha... it's a movie, darling.\n Relax.”{NEW}"
-              "Aerith\n(She steps between them, smiling, and\n not smiling at all.) “She said don't.”",
+         talk="Scarlet\n“Head down, sweetie. Let me help you.”{NEW}"
+              "Tifa\n“Don't. Touch. Me!”{NEW}"
+              "Scarlet\n“It's a movie, darling. Relax.”{NEW}"
+              "Aerith\n“She said don't.”",
          ask="Scarlet\n“Well? Whose set is this, puppy?”",
          choices=[("Scarlet, hands off. Now.",
-                   "Scarlet\n(A long pause.) “...Fine.”{NEW}Tifa\n(She mouths 'thank you' and doesn't\n look at anyone else.)",
+                   "Scarlet\n(A long pause.) “...Fine.”{NEW}Tifa\n(She mouths 'thank you')",
                    dict(annoy=["scarlet"])),
                   ("Tifa, it's part of the scene.",
-                   "Tifa\n“...Right. Sorry.”{NEW}Tifa\n(She finishes the scene smiling. Her\n eyes are a long way away. She never\n once looks at you.)",
+                   "Tifa\n“...Right. Sorry.”{NEW}Tifa\n(Her eyes are a long way away)",
                    dict(gil=10, annoy=["tifa"])),
                   ("Everybody take five.",
-                   "Tifa\n(She breathes, slowly, in and out.){NEW}Scarlet\n(Quietly, so only Tifa hears.)\n“...I didn't know. Sorry.”{NEW}Aerith\n“Huh. She CAN say it.”",
+                   "Tifa\n(She breathes, slowly, in and out.){NEW}Scarlet\n“...I didn't know. Sorry.”{NEW}Aerith\n“Huh. She CAN say it.”",
                    dict(gil=-5))]),
     dict(part=1, turn=4, girls=["elena", "scarlet", "ruby", "skye"],
          talk="Elena\n“Stop. Can we... stop for a second?”{NEW}"
-              "Scarlet\n“Stop? A Turk doesn't say stop.\n Did Tseng teach you that, or did\n somebody else?”{NEW}"
-              "Elena\n(She flinches as if she'd been hit.){NEW}"
-              "Ruby\n“If she can't take it, swap her for\n me. I don't need breaks.”{NEW}"
+              "Scarlet\n“Stop? A Turk doesn't say stop.\n Did Tseng teach you that?”{NEW}"
+              "Elena\n(She flinches){NEW}"
+              "Ruby\n“If she can't take it, swap her.”{NEW}"
               "Skye\n“Hey! Leave her alone, both of you!”",
          ask="Ruby\n“Well? Am I in or not?”",
          choices=[("She said stop. We stop.",
-                   "Elena\n(She stares at you as if you'd spoken\n a foreign language.) “...Thank you.”{NEW}Scarlet\n“Tch.”",
+                   "Elena\n“...Thank ...you?”{NEW}Scarlet\n“Tch.”",
                    dict(rules=True, annoy=["scarlet"])),
                   ("Ruby, you're in.",
-                   "Ruby\n“Watch and learn, Turk.”{NEW}Elena\n(She sits on the edge of the bed,\n back straight, saying nothing at all.)",
+                   "Ruby\n“Watch and learn, Turk.”{NEW}Elena\n(She looks defeated)",
                    dict(gil=10, annoy=["elena"])),
                   ("Scarlet, that was out of line.",
-                   "Scarlet\n“...Kyahaha. Was it?” (For once, she\n looks away first.){NEW}Skye\n(She squeezes Elena's hand.)",
+                   "Scarlet\n“...Kyahaha. Was it?”{NEW}Skye\n(She squeezes Elena's hand.)",
                    dict(annoy=["scarlet"]))]),
     dict(part=2, turn=4, girls=["aerith", "tifa", "skye"],
          talk="Aerith\n“Tifa, you're doing the voice again.”{NEW}"
               "Tifa\n“...What voice?”{NEW}"
-              "Aerith\n“The 'everything's perfect' voice. You\n don't mean it. You never mean it.”{NEW}"
-              "Tifa\n“And you're doing the flower girl\n thing. Going all quiet. Don't pretend\n you're not using this, Aerith.”{NEW}"
+              "Aerith\n“The 'everything's perfect' voice.”{NEW}"
+              "Tifa\n“And you're doing the flower girl\n thing.”{NEW}"
               "Aerith\n(The smile drops off her face.){NEW}"
               "Skye\n“Um. Are we... still rolling?”",
          ask="Skye\n“Cloud? Help?”",
          choices=[("You two. Outside. Talk.",
-                   "Skye\n(They step off set. Two minutes later\n they're back, eyes red, holding\n hands.){NEW}Tifa\n“...We're okay.”{NEW}Aerith\n“We're okay.”",
+                   "(They step off set. Two minutes later\n they're back.){NEW}Tifa\n“...We're okay.”{NEW}Aerith\n“We're okay.”",
                    dict(gil=-10)),
                   ("Keep rolling.",
-                   "Skye\n(Nobody says a word. Tifa's smile is\n perfect. Aerith's eyes are somewhere\n very far away.)",
+                   "(Nobody says a word.)",
                    dict(gil=10, annoy=["tifa", "aerith"])),
                   ("Aerith, that wasn't fair.",
                    "Aerith\n(She opens her mouth, then shuts it.)\n“...No. It wasn't. I'm sorry, Tifa.”{NEW}Tifa\n“...It's fine.” (It isn't. Not quite.)",
