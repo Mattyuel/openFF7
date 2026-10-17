@@ -7,7 +7,9 @@ Editing the built char.lgp in a model tool:
 2. Copy `build/openFF7/data/field/char.lgp` somewhere (e.g. `my_char.lgp`; the next build overwrites the
    build folder) and edit it in your tool.
 3. `python3 tools/ff7tool.py char-overrides my_char.lgp` saves every file you changed here
-   (`--dry-run` lists them first).
+   (`--dry-run` lists them first). Files your tool only re-saved (same model data, other bytes: line
+   endings, re-encoded animations) are skipped. `--only zxtb.p 'zc*.p'` limits it to the names you
+   meant to edit.
 4. Build again: your edits are in it, and they stay in every later build.
 
 A file here wins over the patches: if a patch later changes that file (e.g. a pose or shape constant), the

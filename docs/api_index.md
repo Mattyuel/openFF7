@@ -44,7 +44,8 @@ openFF7 command-line tool.
 - `_with(base, bits)` 
 - `quiet_flags(args)` Search 'seen' flags that silence entry scenes in every field of the last
 - `reach(args)` For each given field of the last build: can each entrance reach each exit,
-- `char_overrides(args)` Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) that differs from
+- `_same_model_file(name, a, b)` True if two char.lgp files hold the same model data, even when a model tool re-saved them with
+- `char_overrides(args)` Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) whose model data
 - `main()` 
 
 ## `tools/ff7/__init__.py`

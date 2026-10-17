@@ -804,25 +804,89 @@ def reach(args):
               "all exits reachable" if not bad else "BLOCKED: " + "; ".join("%s -> %s" % b for b in bad[:6])))
 
 
+def _same_model_file(name, a, b):
+    """True if two char.lgp files hold the same model data, even when a model tool re-saved them with
+    other bytes: .hrc / .rsd text compared line by line (stripped, case-blind, blank and # lines
+    ignored), .a frames and .p vertices / colours / triangles compared with a small tolerance."""
+    import math
+    import struct
+    from ff7 import fieldanim as fa
+    if a == b:
+        return True
+    ext = name.lower().rsplit(".", 1)[-1]
+    try:
+        if ext in ("hrc", "rsd"):
+            norm = lambda d: [l.strip().lower() for l in d.decode("latin-1").splitlines()
+                              if l.strip() and not l.strip().startswith("#")]
+            return norm(a) == norm(b)
+        if ext == "a":
+            fa_, fb_ = fa.Anim(a), fa.Anim(b)
+            if (fa_.nframes, fa_.nbones) != (fb_.nframes, fb_.nbones):
+                return False
+            ang = lambda x, y: abs((x - y + 180) % 360 - 180) < 0.05
+            for (r1, p1, b1), (r2, p2, b2) in zip(fa_.frames, fb_.frames):
+                if not all(math.isclose(x, y, abs_tol=1e-3) for x, y in zip(p1, p2)):
+                    return False
+                if not all(ang(x, y) for u, v in zip([r1] + b1, [r2] + b2) for x, y in zip(u, v)):
+                    return False
+            return True
+        if ext == "p":
+            def parts(d):
+                h = struct.unpack_from("<16I", d, 0)
+                nv, nn, nu, nt, nc, ne, npoly = h[3], h[4], h[5], h[6], h[7], h[8], h[9]
+                V = struct.unpack_from("<%df" % (3 * nv), d, 128)
+                oc = 128 + 12 * nv + 12 * nn + 12 * nu + 8 * nt
+                C = d[oc:oc + 4 * nc]
+                op = oc + 4 * nc + 4 * npoly + 4 * ne
+                P = [struct.unpack_from("<12H", d, op + 24 * j)[1:4] for j in range(npoly)]
+                T = struct.unpack_from("<%df" % (2 * nt), d, 128 + 12 * nv + 12 * nn + 12 * nu)
+                return (nv, nt, nc, npoly), V, T, bytes(C[k] for k in range(len(C)) if k % 4 != 3), P
+            (ha, va, ta, ca, pa), (hb, vb, tb, cb, pb) = parts(a), parts(b)
+            return (ha == hb and ca == cb and pa == pb
+                    and all(math.isclose(x, y, abs_tol=1e-4) for x, y in zip(va + ta, vb + tb)))
+    except (struct.error, ValueError, IndexError, UnicodeDecodeError):
+        return False
+    return False
+
+
 def char_overrides(args):
-    """Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) that differs from
-    the last build's (or isn't in it) -> patches/char_overrides/, which 990_char_overrides writes into
-    char.lgp last on every build. Run `build` first so the comparison is with the current build."""
+    """Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) whose model data
+    differs from the last build's (or isn't in it) -> patches/char_overrides/, which 990_char_overrides
+    writes into char.lgp last on every build. Files a tool merely re-saved count as unchanged
+    (`_same_model_file`). --only limits it to names matching the given patterns. Run `build` first so the
+    comparison is with the current build."""
+    import fnmatch
     mine = LGP.read(args.lgp)
     built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "char.lgp"))
     have = {n.lower(): n for n in built.names()}
     out = os.path.join(ROOT, "patches", "char_overrides")
-    changed = []
+    changed, new, resaved = [], [], 0
     for n in mine.names():
-        data = mine[n]
-        if n.lower() in have and built[have[n.lower()]] == data:
+        low = n.lower()
+        if args.only and not any(fnmatch.fnmatch(low, p.lower()) for p in args.only):
             continue
-        changed.append(n.lower())
+        data = mine[n]
+        if low in have:
+            old = built[have[low]]
+            if old == data:
+                continue
+            if _same_model_file(low, old, data):
+                resaved += 1
+                continue
+            changed.append(low)
+        else:
+            new.append(low)
         if not args.dry_run:
-            with open(os.path.join(out, n.lower()), "wb") as fh:
+            with open(os.path.join(out, low), "wb") as fh:
                 fh.write(data)
-    print("%d changed file(s)%s: %s" % (len(changed), " (not written: --dry-run)" if args.dry_run else
-                                        " -> patches/char_overrides/", ", ".join(changed) or "none"))
+    by_ext = collections.Counter(n.rsplit(".", 1)[-1] for n in changed + new)
+    print("%d changed, %d new, %d only re-saved by the tool (skipped)%s" % (
+        len(changed), len(new), resaved, "; not written (--dry-run)" if args.dry_run else
+        "; written to patches/char_overrides/"))
+    if by_ext:
+        print("by type: " + ", ".join("%s %d" % kv for kv in sorted(by_ext.items())))
+    names = changed + new
+    print(", ".join(names[:200]) + (" ... (%d more)" % (len(names) - 200) if len(names) > 200 else ""))
 
 
 def main():
@@ -849,6 +913,7 @@ def main():
     co = sub.add_parser("char-overrides", help="save the files you changed in a char.lgp as overrides")
     co.add_argument("lgp", help="your edited char.lgp")
     co.add_argument("--dry-run", action="store_true", help="only list the changed files")
+    co.add_argument("--only", nargs="+", metavar="PATTERN", help="only these names, e.g. zxtb.p 'zc*.p'")
     co.set_defaults(func=char_overrides)
     b = sub.add_parser("build")
     b.add_argument("--out", help="default build/openFF7 (build/openFF7_debug with --debug)")
