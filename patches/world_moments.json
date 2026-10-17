@@ -1,0 +1,1357 @@
+{
+ "ancnt1": {
+  "location": "Forgotten City",
+  "moment": 668,
+  "why": "after its last disc 1 event (667)"
+ },
+ "ancnt2": {
+  "location": "Water Altar",
+  "moment": 672,
+  "why": "after its last disc 1 event (671)"
+ },
+ "ancnt4": {
+  "location": "Water Altar",
+  "moment": 674,
+  "why": "after its highest disc 1 check (673)"
+ },
+ "astage_a": {
+  "location": "Event square",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "bigwheel": {
+  "location": "Round Square",
+  "moment": 678,
+  "why": "after its highest disc 1 check (677)"
+ },
+ "blin66_6": {
+  "location": "Conference Room",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "blin70_4": {
+  "location": "Shinra Building 70f",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "blue_1": {
+  "location": "Forgotten City",
+  "moment": 665,
+  "why": "after its highest disc 1 check (664)"
+ },
+ "blue_2": {
+  "location": "Forgotten City",
+  "moment": 675,
+  "why": "after its last disc 1 event (674)"
+ },
+ "bonevil": {
+  "location": "Bone Village",
+  "moment": 642,
+  "why": "after its highest disc 1 check (641)"
+ },
+ "bugin1a": {
+  "location": "Observatory",
+  "moment": 524,
+  "why": "after its highest disc 1 check (523)"
+ },
+ "bugin2": {
+  "location": "Bugen Research Center",
+  "moment": 494,
+  "why": "after its highest disc 1 check (493)"
+ },
+ "bwhlin": {
+  "location": "Inside the Ferris Wheel",
+  "moment": 596,
+  "why": "after its last disc 1 event (595)"
+ },
+ "canon_2": {
+  "location": "Mako Cannon",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "cargoin": {
+  "location": "Last Train from Midgar",
+  "moment": 49,
+  "why": "after its last disc 1 event (48)"
+ },
+ "chorace": {
+  "location": "Chocobo Square",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "chorace2": {
+  "location": "Chocobo Square",
+  "moment": 602,
+  "why": "after its last disc 1 event (601)"
+ },
+ "clsin2_1": {
+  "location": "Arena",
+  "moment": 581,
+  "why": "after its highest disc 1 check (580)"
+ },
+ "clsin2_2": {
+  "location": "Dio's Museum",
+  "moment": 584,
+  "why": "after its last disc 1 event (583)"
+ },
+ "clsin2_3": {
+  "location": "",
+  "moment": 446,
+  "why": "after its last disc 1 event (445)"
+ },
+ "coloin1": {
+  "location": "Arena Lobby",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "coloin2": {
+  "location": "Arena Lobby",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "coloss": {
+  "location": "Battle Square",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "condor1": {
+  "location": "Base of Fort Condor",
+  "moment": 410,
+  "why": "after its highest disc 1 check (409)"
+ },
+ "convil_1": {
+  "location": "Fort Condor",
+  "moment": 524,
+  "why": "after its highest disc 1 check (523)"
+ },
+ "convil_2": {
+  "location": "Watch Room",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "cos_btm": {
+  "location": "Cosmo Canyon",
+  "moment": 524,
+  "why": "after its last disc 1 event (523)"
+ },
+ "cos_btm2": {
+  "location": "Cosmo Candle",
+  "moment": 503,
+  "why": "after its last disc 1 event (502)"
+ },
+ "cosin1": {
+  "location": "Cosmo Canyon",
+  "moment": 524,
+  "why": "after its highest disc 1 check (523)"
+ },
+ "cosin1_1": {
+  "location": "Elder's Room",
+  "moment": 494,
+  "why": "after its highest disc 1 check (493)"
+ },
+ "cosin2": {
+  "location": "Gate of Naught",
+  "moment": 515,
+  "why": "after its highest disc 1 check (514)"
+ },
+ "cosin3": {
+  "location": "Pub \"Starlet\"",
+  "moment": 524,
+  "why": "after its highest disc 1 check (523)"
+ },
+ "cosin5": {
+  "location": "Sealed Cave",
+  "moment": 515,
+  "why": "after its highest disc 1 check (514)"
+ },
+ "cosmin2": {
+  "location": "Materia Shop",
+  "moment": 494,
+  "why": "after its highest disc 1 check (493)"
+ },
+ "cosmin3": {
+  "location": "Cosmo Canyon",
+  "moment": 494,
+  "why": "after its highest disc 1 check (493)"
+ },
+ "cosmin4": {
+  "location": "Nanaki's Room",
+  "moment": 494,
+  "why": "after its highest disc 1 check (493)"
+ },
+ "cosmin7": {
+  "location": "Item Store",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "crcin_1": {
+  "location": "Ticket Office",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "crcin_2": {
+  "location": "Waiting Room",
+  "moment": 470,
+  "why": "after its last disc 1 event (469)"
+ },
+ "del1": {
+  "location": "Costa del Sol Harbor",
+  "moment": 470,
+  "why": "after its highest disc 1 check (469)"
+ },
+ "del2": {
+  "location": "Costa del Sol",
+  "moment": 581,
+  "why": "after its highest disc 1 check (580)"
+ },
+ "del3": {
+  "location": "Costa del Sol",
+  "moment": 423,
+  "why": "after its highest disc 1 check (422)"
+ },
+ "delinn": {
+  "location": "Costa del Sol Inn",
+  "moment": 423,
+  "why": "after its highest disc 1 check (422)"
+ },
+ "delmin1": {
+  "location": "{CLOUD}'s Villa",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "delmin2": {
+  "location": "Johnny's New Home",
+  "moment": 476,
+  "why": "after its highest disc 1 check (475)"
+ },
+ "delpb": {
+  "location": "Bar",
+  "moment": 678,
+  "why": "after its highest disc 1 check (677)"
+ },
+ "desert1": {
+  "location": "",
+  "moment": 464,
+  "why": "after its highest disc 1 check (463)"
+ },
+ "desert2": {
+  "location": "Corel Desert",
+  "moment": 464,
+  "why": "after its highest disc 1 check (463)"
+ },
+ "dyne": {
+  "location": "",
+  "moment": 464,
+  "why": "after its last disc 1 event (463)"
+ },
+ "farm": {
+  "location": "Chocobo farm",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fr_e": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "frcyo": {
+  "location": "Chocobo Ranch",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "frmin": {
+  "location": "Chocobo farm",
+  "moment": 567,
+  "why": "after its highest disc 1 check (566)"
+ },
+ "fship_1": {
+  "location": "Highwind",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fship_12": {
+  "location": "deck",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fship_2": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fship_23": {
+  "location": "Highwind",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fship_24": {
+  "location": "Bridge",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fship_25": {
+  "location": "Highwind",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fship_3": {
+  "location": "Highwind",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "fship_4": {
+  "location": "Highwind",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "gaiafoot": {
+  "location": "Base of Gaea's Cliff",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "games": {
+  "location": "Wonder Square",
+  "moment": 443,
+  "why": "after its last disc 1 event (442)"
+ },
+ "games_1": {
+  "location": "Building 1f.",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "games_2": {
+  "location": "Building 2f.",
+  "moment": 791,
+  "why": "after its highest disc 1 check (790)"
+ },
+ "ghotel": {
+  "location": "Ghost Hotel",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "ghotin_1": {
+  "location": "Hotel Lobby",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "ghotin_2": {
+  "location": "Hotel",
+  "moment": 593,
+  "why": "after its last disc 1 event (592)"
+ },
+ "ghotin_3": {
+  "location": "Hotel Shop",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "ghotin_4": {
+  "location": "Hotel Lobby",
+  "moment": 605,
+  "why": "after its last disc 1 event (604)"
+ },
+ "gldgate": {
+  "location": "Terminal Floor",
+  "moment": 599,
+  "why": "after its last disc 1 event (598)"
+ },
+ "gldst": {
+  "location": "Ropeway Station",
+  "moment": 587,
+  "why": "after its last disc 1 event (586)"
+ },
+ "gninn": {
+  "location": "Inn",
+  "moment": 639,
+  "why": "after its highest disc 1 check (638)"
+ },
+ "gnmk": {
+  "location": "Meltdown Reactor",
+  "moment": 605,
+  "why": "after its highest disc 1 check (604)"
+ },
+ "gnmkf": {
+  "location": "Meltdown Reactor",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "gomin": {
+  "location": "Inn",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "gongaga": {
+  "location": "Gongaga Village",
+  "moment": 642,
+  "why": "after its last disc 1 event (641)"
+ },
+ "gonjun1": {
+  "location": "Jungle",
+  "moment": 639,
+  "why": "after its highest disc 1 check (638)"
+ },
+ "gonjun2": {
+  "location": "Jungle",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "holu_2": {
+  "location": "Base of Gaea's Cliff",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "ithos": {
+  "location": "Mideel,Clinic",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "itown12": {
+  "location": "Mideel",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "itown1a": {
+  "location": "Mideel",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "jail1": {
+  "location": "Corel Prison",
+  "moment": 447,
+  "why": "after its last disc 1 event (446)"
+ },
+ "jail2": {
+  "location": "Corel Prison",
+  "moment": 464,
+  "why": "after its highest disc 1 check (463)"
+ },
+ "jailin2": {
+  "location": "Mayor's Old House",
+  "moment": 458,
+  "why": "after its last disc 1 event (457)"
+ },
+ "jailin4": {
+  "location": "Container",
+  "moment": 467,
+  "why": "after its last disc 1 event (466)"
+ },
+ "jet": {
+  "location": "Speed square",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "jetin1": {
+  "location": "Platform",
+  "moment": 599,
+  "why": "after its highest disc 1 check (598)"
+ },
+ "jtempl": {
+  "location": "Temple of the Ancients",
+  "moment": 639,
+  "why": "after its highest disc 1 check (638)"
+ },
+ "jtemplb": {
+  "location": "Temple of the Ancients",
+  "moment": 639,
+  "why": "after its highest disc 1 check (638)"
+ },
+ "jtemplc": {
+  "location": "Temple of the Ancients",
+  "moment": 639,
+  "why": "after its highest disc 1 check (638)"
+ },
+ "jtmpin1": {
+  "location": "Temple of the Ancients",
+  "moment": 605,
+  "why": "after its last disc 1 event (604)"
+ },
+ "jumin": {
+  "location": "Under Junon",
+  "moment": 395,
+  "why": "after its last disc 1 event (394)"
+ },
+ "jun_a": {
+  "location": "Item Store",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "jun_i1": {
+  "location": "Item Store",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "jun_i2": {
+  "location": "Materia Store",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "jun_m": {
+  "location": "Materia Store",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "jun_w": {
+  "location": "Weapon Store",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "jun_wa": {
+  "location": "Weapon Store",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junair": {
+  "location": "Airport",
+  "moment": 404,
+  "why": "after its last disc 1 event (403)"
+ },
+ "junair2": {
+  "location": "Airport",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junbin1": {
+  "location": "Junon Branch, 1f.",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junbin12": {
+  "location": "Junon Branch, 2f.",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junbin21": {
+  "location": "Office",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junbin22": {
+  "location": "Office",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junbin3": {
+  "location": "Dr.'s Office",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junbin4": {
+  "location": "Press Room",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junbin5": {
+  "location": "Gas Room",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "jundoc1a": {
+  "location": "Junon Dock",
+  "moment": 410,
+  "why": "after its last disc 1 event (409)"
+ },
+ "junele1": {
+  "location": "Elevator",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junele2": {
+  "location": "Elevator",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junin1": {
+  "location": "Junon Airport Path",
+  "moment": 410,
+  "why": "after its highest disc 1 check (409)"
+ },
+ "junin1a": {
+  "location": "Locker Room",
+  "moment": 407,
+  "why": "after its last disc 1 event (406)"
+ },
+ "junin2": {
+  "location": "Path 2",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junin3": {
+  "location": "Junon Path",
+  "moment": 410,
+  "why": "after its highest disc 1 check (409)"
+ },
+ "junin4": {
+  "location": "Junon Path",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junin7": {
+  "location": "Elevator",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "juninn": {
+  "location": "Junon Inn",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junmin1": {
+  "location": "Barracks",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junmin2": {
+  "location": "Barracks",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junmin3": {
+  "location": "Barracks",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junmin4": {
+  "location": "Barracks",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junmin5": {
+  "location": "Barracks",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junone2": {
+  "location": "Aljunon",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junone3": {
+  "location": "Aljunon",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junone6": {
+  "location": "Canon",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junone7": {
+  "location": "Canon",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junonl1": {
+  "location": "Lower Junon",
+  "moment": 410,
+  "why": "after its highest disc 1 check (409)"
+ },
+ "junonl2": {
+  "location": "Lower Junon",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junonl3": {
+  "location": "Lower Junon",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junonr1": {
+  "location": "Upper Junon",
+  "moment": 410,
+  "why": "after its highest disc 1 check (409)"
+ },
+ "junonr2": {
+  "location": "Upper Junon",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junonr3": {
+  "location": "Upper Junon",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "junpb_1": {
+  "location": "Shinra Member's Bar",
+  "moment": 410,
+  "why": "after its highest disc 1 check (409)"
+ },
+ "junpb_2": {
+  "location": "Respectable Inn",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "junpb_3": {
+  "location": "Bar",
+  "moment": 407,
+  "why": "after its highest disc 1 check (406)"
+ },
+ "kuro_12": {
+  "location": "Temple of the Ancients",
+  "moment": 631,
+  "why": "after its last disc 1 event (630)"
+ },
+ "kuro_3": {
+  "location": "Temple of the Ancients",
+  "moment": 619,
+  "why": "after its last disc 1 event (618)"
+ },
+ "kuro_4": {
+  "location": "Temple of the Ancients",
+  "moment": 628,
+  "why": "after its highest disc 1 check (627)"
+ },
+ "kuro_7": {
+  "location": "Temple of the Ancients",
+  "moment": 628,
+  "why": "after its highest disc 1 check (627)"
+ },
+ "kuro_8": {
+  "location": "Temple of the Ancients",
+  "moment": 616,
+  "why": "after its last disc 1 event (615)"
+ },
+ "kuro_82": {
+  "location": "Temple of the Ancients",
+  "moment": 625,
+  "why": "after its last disc 1 event (624)"
+ },
+ "kuro_9": {
+  "location": "",
+  "moment": 628,
+  "why": "after its last disc 1 event (627)"
+ },
+ "las0_1": {
+  "location": "Highwind, on deck",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "las0_8": {
+  "location": "Inside Northern Cave",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "las2_1": {
+  "location": "Inside Northern Cave",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "las3_3": {
+  "location": "Inside Northern Cave",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "las4_0": {
+  "location": "Bottom of Northern Cave",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "las4_1": {
+  "location": "Bottom of Northern Cave",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "losin2": {
+  "location": "Forgotten Capital",
+  "moment": 678,
+  "why": "after its last disc 1 event (677)"
+ },
+ "losinn": {
+  "location": "Forgotten Capital",
+  "moment": 665,
+  "why": "after its last disc 1 event (664)"
+ },
+ "loslake1": {
+  "location": "Forgotten City",
+  "moment": 665,
+  "why": "after its highest disc 1 check (664)"
+ },
+ "loslake2": {
+  "location": "Forgotten City",
+  "moment": 665,
+  "why": "after its highest disc 1 check (664)"
+ },
+ "loslake3": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "lost2": {
+  "location": "Forgotten Capital",
+  "moment": 665,
+  "why": "after its highest disc 1 check (664)"
+ },
+ "md8_5": {
+  "location": "8th Street",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "mtcrl_0": {
+  "location": "Mt. Corel",
+  "moment": 423,
+  "why": "after its last disc 1 event (422)"
+ },
+ "mtcrl_2": {
+  "location": "Corel Reactor",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "mtcrl_3": {
+  "location": "Mt. Corel",
+  "moment": 455,
+  "why": "after its last disc 1 event (454)"
+ },
+ "mtcrl_4": {
+  "location": "Mt. Corel",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "mtcrl_6": {
+  "location": "Mt. Corel",
+  "moment": 428,
+  "why": "after its highest disc 1 check (427)"
+ },
+ "mtcrl_8": {
+  "location": "{AERIS}\n\u201cHow cute!!\u201d",
+  "moment": 428,
+  "why": "after its highest disc 1 check (427)"
+ },
+ "mtcrl_9": {
+  "location": "Mt. Corel",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "mtnvl2": {
+  "location": "Mt. Nibel",
+  "moment": 358,
+  "why": "after its last disc 1 event (357)"
+ },
+ "mtnvl3": {
+  "location": "Mt. Nibel",
+  "moment": 360,
+  "why": "after its last disc 1 event (359)"
+ },
+ "mtnvl4": {
+  "location": "Mt. Nibel",
+  "moment": 362,
+  "why": "after its last disc 1 event (361)"
+ },
+ "mtnvl5": {
+  "location": "Mt. Nibel",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "mtnvl6": {
+  "location": "Nibel Reactor",
+  "moment": 365,
+  "why": "after its last disc 1 event (364)"
+ },
+ "mtnvl6b": {
+  "location": "Nibel Reactor",
+  "moment": 381,
+  "why": "after its last disc 1 event (380)"
+ },
+ "ncoin1": {
+  "location": "North Corel",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "ncorel": {
+  "location": "North Corel",
+  "moment": 428,
+  "why": "after its last disc 1 event (427)"
+ },
+ "ncorel2": {
+  "location": "North Corel",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "niv_cl": {
+  "location": "{CLOUD}'s House",
+  "moment": 171,
+  "why": "after its last disc 1 event (170)"
+ },
+ "niv_ti1": {
+  "location": "{TIFA}'s House",
+  "moment": 678,
+  "why": "after its highest disc 1 check (677)"
+ },
+ "niv_ti2": {
+  "location": "{TIFA}'s House",
+  "moment": 797,
+  "why": "after its highest disc 1 check (796)"
+ },
+ "niv_ti3": {
+  "location": "{TIFA}'s House",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "niv_ti4": {
+  "location": "{TIFA}'s House",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "niv_w": {
+  "location": "Nibelheim Item Store",
+  "moment": 678,
+  "why": "after its highest disc 1 check (677)"
+ },
+ "nivgate": {
+  "location": "",
+  "moment": 354,
+  "why": "after its last disc 1 event (353)"
+ },
+ "nivgate2": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "nivinn_1": {
+  "location": "Nibelheim Inn",
+  "moment": 795,
+  "why": "after its highest disc 1 check (794)"
+ },
+ "nivinn_2": {
+  "location": "Nibelheim Inn",
+  "moment": 385,
+  "why": "after its highest disc 1 check (384)"
+ },
+ "nivl": {
+  "location": "Nibelheim",
+  "moment": 371,
+  "why": "after its highest disc 1 check (370)"
+ },
+ "nivl_2": {
+  "location": "",
+  "moment": 348,
+  "why": "after its highest disc 1 check (347)"
+ },
+ "nivl_3": {
+  "location": "Nibelheim",
+  "moment": 678,
+  "why": "after its highest disc 1 check (677)"
+ },
+ "nivl_b1": {
+  "location": "Nibelheim",
+  "moment": 385,
+  "why": "after its highest disc 1 check (384)"
+ },
+ "nivl_b12": {
+  "location": "Nibelheim",
+  "moment": 385,
+  "why": "after its highest disc 1 check (384)"
+ },
+ "nivl_b2": {
+  "location": "Nibelheim",
+  "moment": 385,
+  "why": "after its highest disc 1 check (384)"
+ },
+ "nivl_b22": {
+  "location": "Nibelheim",
+  "moment": 771,
+  "why": "after its last disc 1 event (770)"
+ },
+ "nvdun1": {
+  "location": "Mt. Nibel",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "nvdun2": {
+  "location": "Mt. Nibel Cave",
+  "moment": 363,
+  "why": "after its last disc 1 event (362)"
+ },
+ "nvdun3": {
+  "location": "Mt. Nibel Cave",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "nvdun31": {
+  "location": "Mt. Nibel Cave",
+  "moment": 364,
+  "why": "after its last disc 1 event (363)"
+ },
+ "nvdun4": {
+  "location": "Mt. Nibel Cave",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "nvmin1_1": {
+  "location": "Nibelheim House",
+  "moment": 385,
+  "why": "after its highest disc 1 check (384)"
+ },
+ "nvmin1_2": {
+  "location": "",
+  "moment": 678,
+  "why": "after its highest disc 1 check (677)"
+ },
+ "nvmkin1": {
+  "location": "Nibel Reactor(Int.)",
+  "moment": 382,
+  "why": "after its last disc 1 event (381)"
+ },
+ "nvmkin21": {
+  "location": "Nibel Reactor(Int.)",
+  "moment": 384,
+  "why": "after its last disc 1 event (383)"
+ },
+ "nvmkin22": {
+  "location": "Nibel Reactor(Int.)",
+  "moment": 369,
+  "why": "after its last disc 1 event (368)"
+ },
+ "nvmkin31": {
+  "location": "Nibel Reactor(Int.)",
+  "moment": 385,
+  "why": "after its highest disc 1 check (384)"
+ },
+ "nvmkin32": {
+  "location": "Nibel Reactor(Int.)",
+  "moment": 385,
+  "why": "after its last disc 1 event (384)"
+ },
+ "prisila": {
+  "location": "Priscilla's House",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "psdun_1": {
+  "location": "Mythril Mine",
+  "moment": 388,
+  "why": "after its last disc 1 event (387)"
+ },
+ "psdun_2": {
+  "location": "Mythril Mine",
+  "moment": 388,
+  "why": "after its highest disc 1 check (387)"
+ },
+ "rckt": {
+  "location": "Rocket Town",
+  "moment": 554,
+  "why": "after its last disc 1 event (553)"
+ },
+ "rckt2": {
+  "location": "Rocket Town",
+  "moment": 551,
+  "why": "after its highest disc 1 check (550)"
+ },
+ "rckt3": {
+  "location": "",
+  "moment": 536,
+  "why": "after its last disc 1 event (535)"
+ },
+ "rckt32": {
+  "location": "",
+  "moment": 558,
+  "why": "after its highest disc 1 check (557)"
+ },
+ "rcktbas1": {
+  "location": "Rocket Launching Pad",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rcktbas2": {
+  "location": "Rocket Launching Pad",
+  "moment": 536,
+  "why": "after its highest disc 1 check (535)"
+ },
+ "rcktin2": {
+  "location": "Ship Hallway",
+  "moment": 539,
+  "why": "after its last disc 1 event (538)"
+ },
+ "rcktin5": {
+  "location": "Cockpit",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rcktin6": {
+  "location": "Engine Room",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rkt_i": {
+  "location": "Item Store",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rkt_w": {
+  "location": "Weapons Store",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rktinn1": {
+  "location": "Shanghai Inn",
+  "moment": 561,
+  "why": "after its highest disc 1 check (560)"
+ },
+ "rktinn2": {
+  "location": "Shanghai Inn",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rktmin1": {
+  "location": "House",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rktmin2": {
+  "location": "House",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "rktsid": {
+  "location": "{CID}'s House",
+  "moment": 558,
+  "why": "after its last disc 1 event (557)"
+ },
+ "ropest": {
+  "location": "Ropeway Station",
+  "moment": 434,
+  "why": "after its last disc 1 event (433)"
+ },
+ "seto1": {
+  "location": "Cet Wall",
+  "moment": 515,
+  "why": "after its last disc 1 event (514)"
+ },
+ "ship_1": {
+  "location": "Cargo Ship",
+  "moment": 416,
+  "why": "after its highest disc 1 check (415)"
+ },
+ "ship_2": {
+  "location": "Cargo Ship",
+  "moment": 416,
+  "why": "after its last disc 1 event (415)"
+ },
+ "shpin_2": {
+  "location": "Cargo Ship",
+  "moment": 416,
+  "why": "after its highest disc 1 check (415)"
+ },
+ "sinin1_1": {
+  "location": "Mansion, 1f.",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "sinin1_2": {
+  "location": "Mansion, 1f.",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "sinin2_1": {
+  "location": "Mansion, 2f.",
+  "moment": 374,
+  "why": "after its last disc 1 event (373)"
+ },
+ "sinin2_2": {
+  "location": "Mansion, 2f.",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "sinin3": {
+  "location": "Mansion, Hidden Steps",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "sininb1": {
+  "location": "Mansion, Basement",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "sininb2": {
+  "location": "Mansion, Basement",
+  "moment": 386,
+  "why": "after its highest disc 1 check (385)"
+ },
+ "sininb31": {
+  "location": "Mansion, Basement",
+  "moment": 375,
+  "why": "after its last disc 1 event (374)"
+ },
+ "sininb32": {
+  "location": "Mansion, Basement",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "sininb41": {
+  "location": "Mansion, Basement",
+  "moment": 377,
+  "why": "after its last disc 1 event (376)"
+ },
+ "sininb51": {
+  "location": "Mansion, Basement",
+  "moment": 376,
+  "why": "after its last disc 1 event (375)"
+ },
+ "slfrst_1": {
+  "location": "Sleeping Forest",
+  "moment": 639,
+  "why": "after its last disc 1 event (638)"
+ },
+ "slfrst_2": {
+  "location": "Sleeping Forest",
+  "moment": 653,
+  "why": "after its last disc 1 event (652)"
+ },
+ "sninn_b1": {
+  "location": "Icicle Inn Bar",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "snmin1": {
+  "location": "Icicle Inn",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "snmin2": {
+  "location": "Icicle Inn",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "snow": {
+  "location": "Icicle Inn",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "spipe_2": {
+  "location": "Underwater Reactor",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "subin_1b": {
+  "location": "Submarine Bridge",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "subin_2b": {
+  "location": "Inside Submarine",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "tin_1": {
+  "location": "Inside Train",
+  "moment": 52,
+  "why": "after its last disc 1 event (51)"
+ },
+ "trackin": {
+  "location": "",
+  "moment": 351,
+  "why": "after its last disc 1 event (350)"
+ },
+ "trackin2": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "trnad_4": {
+  "location": "Whirlwind Maze",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "trnad_51": {
+  "location": "Inside Northern Cave",
+  "moment": 795,
+  "why": "after its last disc 1 event (794)"
+ },
+ "ujunon1": {
+  "location": "Under Junon",
+  "moment": 470,
+  "why": "after its highest disc 1 check (469)"
+ },
+ "ujunon2": {
+  "location": "Dolphin Offing",
+  "moment": 401,
+  "why": "after its last disc 1 event (400)"
+ },
+ "uta_im": {
+  "location": "Item Store",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "uta_wa": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "utapb": {
+  "location": "Bar [Turtle Paradise]",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "utmin2": {
+  "location": "Wutai, Old Man's House",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "uttmpin3": {
+  "location": "Wutai, Main Mtn.",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "uutai1": {
+  "location": "Wutai",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "uutai2": {
+  "location": "Wutai, Pagoda",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "white1": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "white2": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "whitebg3": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "whitein": {
+  "location": "Forgotten City",
+  "moment": 665,
+  "why": "after its highest disc 1 check (664)"
+ },
+ "yougan2": {
+  "location": "Plains",
+  "moment": 503,
+  "why": "after its highest disc 1 check (502)"
+ },
+ "zmind1": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "zmind2": {
+  "location": "",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "zmind3": {
+  "location": "\u201cA promise under a starry sky\u2026\n   But what if that was just a\n   memory {TIFA} imagined?\u201d",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "zz1": {
+  "location": "Old man's house",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ },
+ "zz2": {
+  "location": "Weapon seller",
+  "moment": 610,
+  "why": "after its highest disc 1 check (609)"
+ },
+ "zz4": {
+  "location": "???",
+  "moment": 998,
+  "why": "disc 1 state (all its checks are disc 2+)"
+ }
+}

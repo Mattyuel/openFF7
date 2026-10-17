@@ -109,3 +109,43 @@ def field_table(data):
                           "dir": data[i * 24 + k * 12 + 8]})
         out.append(dests)
     return out
+
+
+class EvPatcher:
+    """In-place edits of a .ev script: the file is a fixed size (0x7000 for
+    wm0/wm2/wm3) with zero padding after the code, so new code is appended
+    into the padding and reached by repointing an existing goto; nothing moves."""
+
+    def __init__(self, data):
+        self.data = bytearray(data)
+        self.script = EvScript(self.data)
+        self.end = self.script.code_end + 1          # leave one zero word
+
+    def code(self):
+        return EvScript(self.data).disassemble()
+
+    def set_word(self, pos, value):
+        struct.pack_into("<H", self.data, HEADER_WORDS * 2 + pos * 2, value)
+
+    def append(self, words):
+        pos = self.end
+        if HEADER_WORDS * 2 + (pos + len(words)) * 2 > len(self.data):
+            raise ValueError(".ev script has no room for %d more words" % len(words))
+        for i, w in enumerate(words):
+            self.set_word(pos + i, w)
+        self.end += len(words)
+        return pos
+
+    def branch_for(self, special, value):
+        """The instructions of `if (push_special <special> == <value>) { ... }`:
+        returns (body instructions, else-target)."""
+        code = self.code()
+        for i in range(len(code) - 4):
+            a, b, c, d = code[i:i + 4]
+            if (a.op, a.arg, b.op, b.arg, c.op, d.op) == (0x11B, special, 0x110, value, 0x070, 0x201):
+                body = [x for x in code[i + 4:] if x.pos < d.arg]
+                return body, d.arg
+        raise ValueError("no branch for special 0x%X == 0x%X" % (special, value))
+
+    def build(self):
+        return bytes(self.data)

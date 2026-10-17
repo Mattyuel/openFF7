@@ -7,6 +7,9 @@
   ff7tool.py wmdump             Write world map script dumps to work/worldmap/
   ff7tool.py inventory          Write the field/boss inventory to docs/inventory/
   ff7tool.py build [--out DIR]  Apply patches/*.py and write a standalone game folder
+  ff7tool.py scenes FIELD...    Simulate entering patched fields; list likely cutscenes
+  ff7tool.py plan-world         Propose a story moment for every unhandled field
+  ff7tool.py quiet-flags        Search new-game flags that silence entry scenes (after build)
 """
 import argparse
 import collections
@@ -76,16 +79,28 @@ def field_scripts(sec):
 
 
 def dump(args):
-    if not os.path.isdir(FIELD_DIR):
+    """Readable script dumps -> work/scripts/ (original game), or with --built
+    from the last build's flevel.lgp -> work/scripts_built/."""
+    built = None
+    if getattr(args, "built", False):
+        built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    elif not os.path.isdir(FIELD_DIR):
         extract()
     names = maplist()[1:] if args.all else args.fields
-    out_dir = os.path.join(WORK, "scripts")
+    out_dir = os.path.join(WORK, "scripts_built" if built else "scripts")
     os.makedirs(out_dir, exist_ok=True)
     ids = {n: i for i, n in enumerate(maplist())}
     for name in names:
-        if not name or not os.path.exists(os.path.join(FIELD_DIR, name + ".dec")):
-            continue
-        _, sec = load_field(name)
+        if built is not None:
+            if not name or name not in built:
+                continue
+            sec = ScriptSection(FieldFile(lzss.decompress(built[name])).sections[0])
+            if sec.broken:
+                continue
+        else:
+            if not name or not os.path.exists(os.path.join(FIELD_DIR, name + ".dec")):
+                continue
+            _, sec = load_field(name)
         lines = ["# field %s (id %s)" % (name, ids.get(name)), ""]
         for e, si, code in field_scripts(sec):
             lines.append("## entity %d '%s' script %d" % (e, sec.entity_names[e], si))
@@ -243,11 +258,23 @@ class BuildContext:
         self.flevel = LGP.read(os.path.join(GAME, "field", "flevel.lgp"))
         self.maplist = maplist()
         self._fields = {}
+        self._orig_raw = {}
+        self._kernel = None
 
     def field(self, name):
         """Return a mutable FieldFile for `name` (cached; saved at the end of the build)."""
         if name not in self._fields:
-            self._fields[name] = FieldFile(lzss.decompress(self.flevel[name]))
+            raw = cached_decompress(self.flevel[name])
+            self._orig_raw[name] = raw          # to tell changed fields apart at save time
+            self._fields[name] = FieldFile(raw)
+        return self._fields[name]
+
+    def new_field(self, name, raw):
+        """Add a field under `name` (a maplist name with no file in
+        flevel.lgp, e.g. onna_1): it is written to flevel.lgp at save."""
+        assert name in self.maplist and name not in self.flevel, name
+        self._orig_raw[name] = None
+        self._fields[name] = FieldFile(raw)
         return self._fields[name]
 
     def script(self, name):
@@ -256,34 +283,283 @@ class BuildContext:
     def set_script(self, name, data):
         self.field(name).sections[0] = bytes(data)
 
+    def kernel_init(self):
+        """Editable new-game data (KERNEL.BIN section 3); written by the build."""
+        if self._kernel is None:
+            from ff7.kernel import InitData, read_sections
+            path = os.path.join(GAME, "lang-en", "kernel", "KERNEL.BIN")
+            self._kernel_sections, self._kernel_tail = read_sections(open(path, "rb").read())
+            self._kernel = InitData(self._kernel_sections[3]["data"])
+        return self._kernel
+
+    def kernel_growth(self):
+        """KERNEL.BIN section 2 (battle and growth data), read-only."""
+        self.kernel_init()
+        return self._kernel_sections[2]["data"]
+
+    def kernel_section(self, index):
+        """Mutable bytearray of KERNEL.BIN section `index` (0 commands,
+        1 attacks, 4 items, 8 materia, ...); written by the build."""
+        self.kernel_init()
+        if index == 3:
+            return self._kernel.data
+        self._kernel_edits = getattr(self, "_kernel_edits", {})
+        if index not in self._kernel_edits:
+            self._kernel_edits[index] = bytearray(self._kernel_sections[index]["data"])
+        return self._kernel_edits[index]
+
+    def kernel2(self):
+        """Editable kernel2.bin (the text the game shows); written by the build."""
+        if getattr(self, "_kernel2", None) is None:
+            from ff7.kernel2 import Kernel2
+            path = os.path.join(GAME, "lang-en", "kernel", "kernel2.bin")
+            self._kernel2 = Kernel2(open(path, "rb").read())
+        return self._kernel2
+
+    def wm_file(self, name):
+        """Mutable bytearray of a file in data/wm/world_us.lgp (e.g. "wm0.ev");
+        the build writes world_us.lgp when any is touched."""
+        if getattr(self, "_wm", None) is None:
+            self._wm_lgp = LGP.read(os.path.join(GAME, "wm", "world_us.lgp"))
+            self._wm = {}
+        if name not in self._wm:
+            self._wm[name] = bytearray(self._wm_lgp[name])
+        return self._wm[name]
+
+    def char_file(self, name, data=None):
+        """data/field/char.lgp (field models): returns the file `name`; with
+        `data`, adds or replaces it. The build writes char.lgp when any is set."""
+        if getattr(self, "_char", None) is None:
+            self._char_lgp = LGP.read(os.path.join(GAME, "field", "char.lgp"))
+            self._char = {}
+        if data is not None:
+            self._char[name] = bytes(data)
+        return self._char.get(name) or self._char_lgp[name]
+
+    def exe(self):
+        """ExeBuilder for ff7_en.exe (byte patches + the .openff7 section)."""
+        if getattr(self, "_exe", None) is None:
+            from ff7.exebuild import ExeBuilder
+            self._exe = ExeBuilder(open(os.path.join(os.path.dirname(GAME), "ff7_en.exe"), "rb").read())
+        return self._exe
+
+    def save_extra(self, out_dir):
+        """Write kernel2.bin and ff7_en.exe if patches touched them; returns paths."""
+        out = []
+        if getattr(self, "_kernel2", None) is not None:
+            rel = "data/lang-en/kernel/kernel2.bin"
+            with open(os.path.join(out_dir, rel), "wb") as fh:
+                fh.write(self._kernel2.build())
+            out.append(rel)
+        if getattr(self, "_wm", None):
+            for name, data in self._wm.items():
+                self._wm_lgp[name] = bytes(data)
+            rel = "data/wm/world_us.lgp"
+            self._wm_lgp.write(os.path.join(out_dir, rel))
+            out.append(rel)
+        if getattr(self, "_char", None):
+            for name, data in self._char.items():
+                if name not in self._char_lgp and name.endswith(".hrc"):
+                    self._char_lgp.check[name] = 11      # every .hrc in char.lgp has TOC check 11 (others 14)
+                self._char_lgp[name] = data
+            rel = "data/field/char.lgp"
+            self._char_lgp.write(os.path.join(out_dir, rel))
+            out.append(rel)
+        if getattr(self, "_exe", None) is not None:
+            rel = "ff7_en.exe"
+            with open(os.path.join(out_dir, rel), "wb") as fh:
+                fh.write(self._exe.build())
+            out.append(rel)
+        return out
+
+    def save_kernel(self, out_dir):
+        k2 = getattr(self, "_kernel2", None)
+        if k2 is not None and k2.edits:
+            # KERNEL.BIN keeps its own copy of the text (sections 9-26); mirror
+            # every kernel2 edit there too, whichever copy the game shows.
+            from ff7.kernel2 import Kernel2
+            self.kernel_init()
+            mirror = Kernel2.from_sections([self._kernel_sections[9 + i]["data"] for i in range(18)])
+            for section, index, text in k2.edits:
+                mirror.set(section, index, text)
+            for i in range(18):
+                self._kernel_edits = getattr(self, "_kernel_edits", {})
+                self._kernel_edits[9 + i] = mirror.sections[i]
+        if self._kernel is None:
+            return False
+        from ff7.kernel import build_sections
+        self._kernel_sections[3]["data"] = bytes(self._kernel.data)
+        for index, data in getattr(self, "_kernel_edits", {}).items():
+            self._kernel_sections[index]["data"] = bytes(data)
+        path = os.path.join(out_dir, "data", "lang-en", "kernel", "KERNEL.BIN")
+        with open(path, "wb") as fh:
+            fh.write(build_sections(self._kernel_sections, self._kernel_tail))
+        return True
+
     def save(self):
+        from ff7.models import ModelLoader
+        changed = {}
         for name, ff in self._fields.items():
+            # The script header's model count (byte 3) must match the model
+            # loader, or added NPCs get no proper actor (can't be talked to).
+            n = len(ModelLoader(ff.section("models")).models)
+            if n > 16:   # the engine's field model table (0xCC1670) holds 16
+                raise SystemExit("BUILD CHECK FAILED: %s has %d models (max 16)" % (name, n))
+            if ff.sections[0][3] != n:
+                head = bytearray(ff.sections[0])
+                head[3] = n
+                ff.sections[0] = bytes(head)
             raw = ff.build()
-            if raw != lzss.decompress(self.flevel[name]):
-                self.flevel[name] = lzss.compress(raw)
+            if raw != self._orig_raw[name]:
+                changed[name] = raw
+                _check_chars(name, ff.sections[0], n)
+        for name, packed in compress_all(changed).items():
+            self.flevel[name] = packed
         return [n for n in self._fields]
 
 
+def _check_chars(name, script, models):
+    """Every model is used by exactly one CHAR (true for all original fields):
+    two entities sharing one (md8brdg's quest markers, 18 CHARs for 16
+    models) crashed the game on arrival."""
+    from ff7.script import Script
+    try:
+        sec = Script.parse(script)
+    except ValueError:
+        return
+    chars = sorted(o.raw[1] for o in sec.ops if o.op == 0xA1)
+    if chars != list(range(models)):
+        raise SystemExit("BUILD CHECK FAILED: %s: CHAR models %s, %d models" % (name, chars, models))
+
+
+LZSS_CACHE = os.path.join(ROOT, "build", "cache", "lzss")
+RAW_CACHE = os.path.join(ROOT, "build", "cache", "raw")
+
+
+def cached_decompress(packed):
+    """lzss.decompress of an original game file, cached on disk by content
+    (the originals never change: every build after the first reads them back)."""
+    import hashlib
+    path = os.path.join(RAW_CACHE, hashlib.sha1(packed).hexdigest())
+    try:
+        with open(path, "rb") as fh:
+            return fh.read()
+    except OSError:
+        raw = lzss.decompress(packed)
+        os.makedirs(RAW_CACHE, exist_ok=True)
+        with open(path + ".tmp", "wb") as fh:
+            fh.write(raw)
+        os.replace(path + ".tmp", path)
+        return raw
+
+
+def compress_all(raws):
+    """{name: raw} -> {name: LZSS bytes}. Compression is the slow part of a
+    build (pure Python), so results are cached by content in build/cache/lzss
+    (a field that didn't change since the last build costs nothing) and the
+    rest are compressed on all CPU cores. Output is identical either way."""
+    import hashlib
+    os.makedirs(LZSS_CACHE, exist_ok=True)
+    out, todo = {}, {}
+    for name, raw in raws.items():
+        path = os.path.join(LZSS_CACHE, hashlib.sha1(raw).hexdigest())
+        if os.path.exists(path):
+            with open(path, "rb") as fh:
+                out[name] = fh.read()
+        else:
+            todo[name] = (raw, path)
+    if todo:
+        names = list(todo)
+        jobs = [todo[n][0] for n in names]
+        workers = min(len(jobs), os.cpu_count() or 1)
+        if workers > 1:
+            import multiprocessing
+            with multiprocessing.Pool(workers) as pool:
+                packed = pool.map(lzss.compress, jobs, chunksize=1)
+        else:
+            packed = [lzss.compress(j) for j in jobs]
+        for name, data in zip(names, packed):
+            with open(todo[name][1] + ".tmp", "wb") as fh:
+                fh.write(data)
+            os.replace(todo[name][1] + ".tmp", todo[name][1])
+            out[name] = data
+        print("compressed %d fields (%d from cache)" % (len(todo), len(raws) - len(todo)))
+    return out
+
+
+def exe_test(args):
+    """Write build/exe_test/ff7_en.exe: the Steam exe with a new code section
+    (exepatch.section_test) to test whether Steam accepts an added section."""
+    from ff7 import exepatch
+    src = os.path.join(os.path.dirname(GAME), "ff7_en.exe")
+    out_dir = os.path.join(ROOT, "build", "exe_test")
+    os.makedirs(out_dir, exist_ok=True)
+    data = exepatch.section_test(open(src, "rb").read())
+    out = os.path.join(out_dir, "ff7_en.exe")
+    with open(out, "wb") as fh:
+        fh.write(data)
+    print("  Quit -> QUIT (static); new section .openff7 whose code turns Item into CAVE")
+    print("wrote", out)
+
+
+def api_index(args):
+    """Regenerate docs/api_index.md (signatures + docstring summaries)."""
+    from ff7 import apiindex
+    with open(apiindex.path(), "w", encoding="utf-8") as fh:
+        fh.write(apiindex.generate())
+    print("wrote", apiindex.path())
+
+
+def _verify_build(flevel_path):
+    """Re-read the written flevel.lgp and check the new game is patched."""
+    built = LGP.read(flevel_path)
+    script = FieldFile(lzss.decompress(built["md1stin"])).sections[0]
+    jump = bytes([0x60]) + maplist().index("mds7st3").to_bytes(2, "little")
+    if jump not in script or b"\x0f\xfd" not in script:
+        raise SystemExit("BUILD CHECK FAILED: md1stin has no openFF7 new-game block")
+    print("check: md1stin new-game block present (SPCNM + jump to mds7st3)")
+
+
 def build(args):
+    """Apply patches/ and write the game folder to build/openFF7. All or nothing:
+    patches run first, the folder is only replaced once everything succeeded
+    (a failed build used to leave the original game files there)."""
     if not os.path.isdir(FIELD_DIR):
         extract()
-    out = os.path.abspath(args.out)
+    out = os.path.abspath(args.out or os.path.join(ROOT, "build", "openFF7_debug" if args.debug else "openFF7"))
     src = os.path.dirname(GAME)
-    if os.path.exists(out):
-        shutil.rmtree(out)
-    shutil.copytree(src, out)
     ctx = BuildContext()
     patch_dir = os.path.join(ROOT, "patches")
     sys.path.insert(0, patch_dir)  # lets patches `import _config`
-    for path in sorted(glob.glob(os.path.join(patch_dir, "[0-9]*.py"))):
+    paths = sorted(glob.glob(os.path.join(patch_dir, "[0-9]*.py")))
+    if args.debug:   # patches/debug/: test tools, never in a normal build
+        paths += sorted(glob.glob(os.path.join(patch_dir, "debug", "[0-9]*.py")))
+    for path in paths:
         spec = importlib.util.spec_from_file_location(os.path.basename(path)[:-3], path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         print("applying", os.path.basename(path))
         mod.apply(ctx)
     touched = ctx.save()
-    ctx.flevel.write(os.path.join(out, "data", "field", "flevel.lgp"))
+    tmp = out + ".partial"
+    if os.path.exists(tmp):
+        shutil.rmtree(tmp)
+    shutil.copytree(src, tmp)
+    flevel = os.path.join(tmp, "data", "field", "flevel.lgp")
+    ctx.flevel.write(flevel)
+    changed = ["data/field/flevel.lgp"]
+    if ctx.save_kernel(tmp):
+        changed.append("data/lang-en/kernel/KERNEL.BIN")
+    changed += ctx.save_extra(tmp)
+    _verify_build(flevel)
+    if os.path.exists(out):
+        shutil.rmtree(out)
+    os.rename(tmp, out)
     print("built %s (%d field files touched)" % (out, len(touched)))
+    print("changed game files (copy these into the game folder):")
+    for path in changed:
+        full = os.path.join(out, path)
+        print("    %-35s %d bytes" % (path, os.path.getsize(full)))
 
 
 WM_MODELS = {  # world map model ids (function id 0x4000 | model << 8 | n). UNVERIFIED: from community docs, some look wrong
@@ -345,18 +621,304 @@ def write_worldmap(names):
         fh.write("\n".join(lines) + "\n")
 
 
+def scenes(args):
+    """Simulate entering each field of the last build (new-game state) and list
+    signs of a cutscene. Approximate: see tools/ff7/simulate.py."""
+    from ff7.simulate import State, simulate
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    state = State()
+    for nibble, addr, bit in getattr(_config, "INITIAL_EVENT_FLAGS", []):
+        state.bit(nibble, addr, bit, True)
+    names = args.fields or [n for n in maplist()[1:] if n in built]
+    for name in names:
+        sec = FieldFile(lzss.decompress(built[name])).sections[0]
+        if ScriptSection(sec).broken:
+            continue
+        rep = simulate(sec, state.copy())
+        found = sorted(set(x for x in rep.summary() if "control locked" not in x))
+        if found:
+            print("%-10s %s" % (name, "; ".join(found[:5])))
+
+
+DISC2 = 999  # story values from here on are disc 2/3; the open world uses disc 1 states
+
+
+def plan_world(args):
+    """Write patches/world_moments.json: a story moment for every field that has
+    story checks and is not handled by a specific patch. Rule: just after the
+    field's last disc 1 story event (or its highest disc 1 check), never equal
+    to a value the field tests with ==. Overrides: patches/world_overrides.json."""
+    import importlib.util
+    rows = {r["field"]: r for r in csv.DictReader(open(os.path.join(INV_DIR, "fields.csv")))}
+    handled = set()
+    for path in sorted(glob.glob(os.path.join(ROOT, "patches", "[0-9]*.py"))):
+        spec = importlib.util.spec_from_file_location("p", path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, os.path.join(ROOT, "patches"))
+        spec.loader.exec_module(mod)
+        for moment_fields in getattr(mod, "PINNED", {}).values():
+            handled.update(moment_fields)
+        handled.update(getattr(mod, "FIELDS", []))
+    handled.update(["md1stin", "startmap"])
+    plan = {}
+    for name, r in rows.items():
+        if name in handled or r["progress_checks"] == "0" or name.startswith("blackbg"):
+            continue
+        _, sec = load_field(name)
+        checks, eq = set(), set()
+        for _e, _si, code in field_scripts(sec):
+            for ins in code:
+                a = ins.args
+                if ins.op in (0x16, 0x17, 0x18, 0x19) and (a["bank_a"], a["a"]) == PROGRESS_VAR \
+                        and a["bank_b"] == 0:
+                    checks.add(a["b"])
+                    if a["cmp"] == 0:
+                        eq.add(a["b"])
+        sets = [int(v) for v in r["progress_sets"].split()]
+        early_sets = [v for v in sets if v < DISC2]
+        early_checks = [v for v in checks if v < DISC2]
+        if early_sets:
+            moment, why = max(early_sets) + 1, "after its last disc 1 event (%d)" % max(early_sets)
+        elif early_checks:
+            moment, why = max(early_checks) + 1, "after its highest disc 1 check (%d)" % max(early_checks)
+        else:
+            moment, why = DISC2 - 1, "disc 1 state (all its checks are disc 2+)"
+        while moment in eq:
+            moment += 1
+        plan[name] = {"moment": moment, "location": r["location"].split(" / ")[0], "why": why}
+    out = os.path.join(ROOT, "patches", "world_moments.json")
+    with open(out, "w", encoding="utf-8") as fh:
+        json.dump(plan, fh, indent=1, sort_keys=True)
+    print("planned %d fields -> %s" % (len(plan), out))
+
+
+def _with(base, bits):
+    st = base.copy()
+    for b in bits:
+        st.bit(*b, True)
+    return st
+
+
+def quiet_flags(args):
+    """Search 'seen' flags that silence entry scenes in every field of the last
+    build, keep those that make no field worse, write patches/world_flags.json."""
+    from ff7.simulate import State, find_quiet_flags, simulate
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    base = State()
+    for n, a, b in _config.INITIAL_EVENT_FLAGS:
+        base.bit(n, a, b, True)
+    names = [n for n in maplist()[1:] if n in built and not n.startswith("blackbg")]
+    secs = {n: FieldFile(lzss.decompress(built[n])).sections[0] for n in names}
+    secs = {n: d for n, d in secs.items() if not ScriptSection(d).broken}
+    names = [n for n in names if n in secs]
+
+    def real(rep):
+        return [x for x in rep.summary() if "control locked" not in x]
+
+    # Characters with a recruitment talk script (MMBUD 01 in script 1) must stay visible.
+    from ff7.script import Script as _Script
+    recruits = {}
+    for n in names:
+        sc = _Script.parse(secs[n])
+        for e, raw_name in enumerate(sc.entity_names):
+            if any(o.op == 0xCD and o.raw[1] == 1 for o in sc.script_ops(e, 1)):
+                recruits.setdefault(n, []).append(raw_name.split(b"\0")[0].decode("latin-1"))
+
+    def hides_recruit(n, state):
+        if n not in recruits:
+            return False
+        vis = simulate(secs[n], state.copy()).final_visible
+        return any(not vis.get(r, True) for r in recruits[n])
+
+    before = {n: len(real(simulate(secs[n], base.copy()))) for n in names}
+    found = []
+    for n in names:
+        if not before[n]:
+            continue
+        bits, _b, after = find_quiet_flags(secs[n], base.copy())
+        if bits and len(real(after)) < before[n]:
+            found.extend(b for b in bits if b not in found)
+    # Keep only flags that, all together, make no field worse.
+    while True:
+        st = base.copy()
+        for b in found:
+            st.bit(*b, True)
+        worse = [n for n in names if len(real(simulate(secs[n], st.copy()))) > before[n]]
+        hidden = [n for n in recruits if hides_recruit(n, st)]
+        if hidden:
+            # drop the flags that hide a recruit, one field at a time
+            n = hidden[0]
+            culprits = [b for b in found if hides_recruit(n, _with(base, [b]))]
+            found = [b for b in found if b not in culprits] if culprits else found[:-1]
+            continue
+        if not worse:
+            break
+        # drop flags tested by the first worsened field and retry
+        rep = simulate(secs[worse[0]], st.copy())
+        tested = {(t[0], t[1], t[2]) for t in rep.tested_flags if t[2] >= 0}
+        drop = [b for b in found if b in tested] or found[-1:]
+        found = [b for b in found if b not in drop]
+    after = sum(len(real(simulate(secs[n], st.copy()))) for n in names)
+    out = os.path.join(ROOT, "patches", "world_flags.json")
+    with open(out, "w") as fh:
+        json.dump(sorted(found), fh, indent=0)
+    print("%d flags; scene signals %d -> %d; wrote %s" % (len(found), sum(before.values()), after, out))
+
+
+def reach(args):
+    """For each given field of the last build: can each entrance reach each exit,
+    with the triangles that are locked after entering (new-game state)?"""
+    from ff7 import reach as rc, triggers as tg
+    from ff7.simulate import State, simulate
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    import importlib
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "flevel.lgp"))
+    names = maplist()
+    state = State()
+    flags = list(_config.INITIAL_EVENT_FLAGS)
+    wf = os.path.join(ROOT, "patches", "world_flags.json")
+    if os.path.exists(wf):
+        flags += [tuple(b) for b in json.load(open(wf))]
+    for n, a, b in flags:
+        state.bit(n, a, b, True)
+    # entrances: gateway destinations and map jumps from every field into the target
+    into = collections.defaultdict(list)
+    for src in names[1:]:
+        if src not in built:
+            continue
+        ff = FieldFile(lzss.decompress(built[src]))
+        for g in tg.gateways(ff.section("triggers")):
+            if g["field"] < len(names):
+                into[names[g["field"]]].append(("from " + src, g["dest_triangle"]))
+    for field in args.fields:
+        raw = lzss.decompress(built[field])
+        rep = simulate(FieldFile(raw).sections[0], state.copy())
+        res = rc.check(raw, rep.locked, into.get(field, []), names)
+        bad = sorted({(e, x) for (e, x), ok in res.items() if not ok})
+        print("%-9s locked %-28s %s" % (field, sorted(rep.locked)[:8],
+              "all exits reachable" if not bad else "BLOCKED: " + "; ".join("%s -> %s" % b for b in bad[:6])))
+
+
+def _same_model_file(name, a, b):
+    """True if two char.lgp files hold the same model data, even when a model tool re-saved them with
+    other bytes: .hrc / .rsd text compared line by line (stripped, case-blind, blank and # lines
+    ignored), .a frames and .p vertices / colours / triangles compared with a small tolerance."""
+    import math
+    import struct
+    from ff7 import fieldanim as fa
+    if a == b:
+        return True
+    ext = name.lower().rsplit(".", 1)[-1]
+    try:
+        if ext in ("hrc", "rsd"):
+            norm = lambda d: [l.strip().lower() for l in d.decode("latin-1").splitlines()
+                              if l.strip() and not l.strip().startswith("#")]
+            return norm(a) == norm(b)
+        if ext == "a":
+            fa_, fb_ = fa.Anim(a), fa.Anim(b)
+            if (fa_.nframes, fa_.nbones) != (fb_.nframes, fb_.nbones):
+                return False
+            ang = lambda x, y: abs((x - y + 180) % 360 - 180) < 0.05
+            for (r1, p1, b1), (r2, p2, b2) in zip(fa_.frames, fb_.frames):
+                if not all(math.isclose(x, y, abs_tol=1e-3) for x, y in zip(p1, p2)):
+                    return False
+                if not all(ang(x, y) for u, v in zip([r1] + b1, [r2] + b2) for x, y in zip(u, v)):
+                    return False
+            return True
+        if ext == "p":
+            def parts(d):
+                h = struct.unpack_from("<16I", d, 0)
+                nv, nn, nu, nt, nc, ne, npoly = h[3], h[4], h[5], h[6], h[7], h[8], h[9]
+                V = struct.unpack_from("<%df" % (3 * nv), d, 128)
+                oc = 128 + 12 * nv + 12 * nn + 12 * nu + 8 * nt
+                C = d[oc:oc + 4 * nc]
+                op = oc + 4 * nc + 4 * npoly + 4 * ne
+                P = [struct.unpack_from("<12H", d, op + 24 * j)[1:4] for j in range(npoly)]
+                T = struct.unpack_from("<%df" % (2 * nt), d, 128 + 12 * nv + 12 * nn + 12 * nu)
+                return (nv, nt, nc, npoly), V, T, bytes(C[k] for k in range(len(C)) if k % 4 != 3), P
+            (ha, va, ta, ca, pa), (hb, vb, tb, cb, pb) = parts(a), parts(b)
+            return (ha == hb and ca == cb and pa == pb
+                    and all(math.isclose(x, y, abs_tol=1e-4) for x, y in zip(va + ta, vb + tb)))
+    except (struct.error, ValueError, IndexError, UnicodeDecodeError):
+        return False
+    return False
+
+
+def char_overrides(args):
+    """Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) whose model data
+    differs from the last build's (or isn't in it) -> patches/char_overrides/, which 990_char_overrides
+    writes into char.lgp last on every build. Files a tool merely re-saved count as unchanged
+    (`_same_model_file`). --only limits it to names matching the given patterns. Run `build` first so the
+    comparison is with the current build."""
+    import fnmatch
+    mine = LGP.read(args.lgp)
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "char.lgp"))
+    have = {n.lower(): n for n in built.names()}
+    out = os.path.join(ROOT, "patches", "char_overrides")
+    changed, new, resaved = [], [], 0
+    for n in mine.names():
+        low = n.lower()
+        if args.only and not any(fnmatch.fnmatch(low, p.lower()) for p in args.only):
+            continue
+        data = mine[n]
+        if low in have:
+            old = built[have[low]]
+            if old == data:
+                continue
+            if _same_model_file(low, old, data):
+                resaved += 1
+                continue
+            changed.append(low)
+        else:
+            new.append(low)
+        if not args.dry_run:
+            with open(os.path.join(out, low), "wb") as fh:
+                fh.write(data)
+    by_ext = collections.Counter(n.rsplit(".", 1)[-1] for n in changed + new)
+    print("%d changed, %d new, %d only re-saved by the tool (skipped)%s" % (
+        len(changed), len(new), resaved, "; not written (--dry-run)" if args.dry_run else
+        "; written to patches/char_overrides/"))
+    if by_ext:
+        print("by type: " + ", ".join("%s %d" % kv for kv in sorted(by_ext.items())))
+    names = changed + new
+    print(", ".join(names[:200]) + (" ... (%d more)" % (len(names) - 200) if len(names) > 200 else ""))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("extract").set_defaults(func=extract)
+    sub.add_parser("api-index").set_defaults(func=api_index)
+    sub.add_parser("exe-test").set_defaults(func=exe_test)
     d = sub.add_parser("dump")
     d.add_argument("fields", nargs="*")
     d.add_argument("--all", action="store_true")
+    d.add_argument("--built", action="store_true", help="dump the last build instead of the original")
     d.set_defaults(func=dump)
     sub.add_parser("inventory").set_defaults(func=inventory)
     sub.add_parser("wmdump").set_defaults(func=wmdump)
+    rp = sub.add_parser("reach")
+    rp.add_argument("fields", nargs="+")
+    rp.set_defaults(func=reach)
+    sub.add_parser("plan-world").set_defaults(func=plan_world)
+    sub.add_parser("quiet-flags").set_defaults(func=quiet_flags)
+    sc = sub.add_parser("scenes")
+    sc.add_argument("fields", nargs="*")
+    sc.set_defaults(func=scenes)
+    co = sub.add_parser("char-overrides", help="save the files you changed in a char.lgp as overrides")
+    co.add_argument("lgp", help="your edited char.lgp")
+    co.add_argument("--dry-run", action="store_true", help="only list the changed files")
+    co.add_argument("--only", nargs="+", metavar="PATTERN", help="only these names, e.g. zxtb.p 'zc*.p'")
+    co.set_defaults(func=char_overrides)
     b = sub.add_parser("build")
-    b.add_argument("--out", default=os.path.join(ROOT, "build", "openFF7"))
+    b.add_argument("--out", help="default build/openFF7 (build/openFF7_debug with --debug)")
+    b.add_argument("--debug", action="store_true",
+                   help="also apply patches/debug/ (L1+R1 debug menu in every field); writes build/openFF7_debug")
     b.set_defaults(func=build)
     args = ap.parse_args()
     args.func(args)
