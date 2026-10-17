@@ -1939,7 +1939,7 @@ def _orient(V, tris, c):
     return out
 
 
-def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False):
+def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False, normals=None, wound=False):
     """A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
     any winding), every vertex colour bgr; laid out as the games' own untextured parts
     (zcmb.p / Skye's zslb.p: header 1,1,1; one group; one normal per vertex, the vertex's
@@ -1947,12 +1947,15 @@ def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False):
     pointing inwards, i.e. towards the mesh's centre; bgr may be a list, one per vertex: each
     triangle takes its first vertex's); `tail` = the 128-byte header's second
     half and `poly_tail` each poly's last two words, copied from such a part. orient: wind each
-    closed piece by `_orient` (the smoothed arms) instead of by the whole part's centre."""
+    closed piece by `_orient` (the smoothed arms) instead of by the whole part's centre. wound: the
+    triangles are already wound as the game's (kept); normals: one per vertex, used as given."""
     import math
     c = [sum(v[k] for v in V) / len(V) for k in range(3)]
     sub = lambda a, b: [a[k] - b[k] for k in range(3)]
     cross = lambda u, w: [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]]
-    if orient:
+    if wound:
+        wound = [tuple(t) for t in tris]
+    elif orient:
         wound = _orient(V, tris, c)
     else:
         wound = []
@@ -1968,19 +1971,22 @@ def _p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False):
         n = cross(sub(b, a), sub(d_, a))
         for i in t:                                   # n points inwards: the outward normal is -n
             acc[i] = [acc[i][k] - n[k] for k in range(3)]
-    normals = []
+    given, normals = normals, []
     for i, n in enumerate(acc):
+        if given is not None:
+            n = given[i]
         L = math.sqrt(sum(x * x for x in n))
         if L < 1e-12:
             n, L = sub(V[i], c), max(1e-12, math.sqrt(sum(x * x for x in sub(V[i], c))))
         normals.append([x / L for x in n])
-    edges = []
+    edges, eidx = [], {}                              # (first-seen order; a dict to find them: big parts)
 
     def edge(a, b):
         e = (min(a, b), max(a, b))
-        if e not in edges:
+        if e not in eidx:
+            eidx[e] = len(edges)
             edges.append(e)
-        return edges.index(e)
+        return eidx[e]
     polys = [(0, *t, *t, edge(t[0], t[1]), edge(t[1], t[2]), edge(t[2], t[0]), *poly_tail) for t in wound]
     nv = len(V)
     vcol = [bytes(c) + b"\xff" for c in (bgr if isinstance(bgr[0], (tuple, list)) else [bgr] * nv)]

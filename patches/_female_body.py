@@ -87,6 +87,126 @@ def _banded(d, bands, length):
     return _hb()._p_file(V, P, [bands[k][1] for k in tag], d[64:128], struct.unpack_from("<12H", d, op)[10:12])
 
 
+
+def _tidy(V, P, rounds):
+    """A light, shape-keeping smoothing (Taubin: a shrinking step then an inflating one, `rounds` times)
+    that evens out creases and lumps without shrinking the part (user: Tifa's body "tidied a bit, no
+    huge changes"). Open-edge vertices (where the part meets the next one) stay put. Indices kept."""
+    nbr, opp = {}, {}
+    for t in P:
+        for j in range(3):
+            a, b = t[j], t[(j + 1) % 3]
+            nbr.setdefault(a, set()).update((b, t[(j + 2) % 3]))
+            opp[(min(a, b), max(a, b))] = opp.get((min(a, b), max(a, b)), 0) + 1
+    rim = {i for e, n in opp.items() if n != 2 for i in e}
+    V = [list(v) for v in V]
+    for _ in range(rounds):
+        for f in (TIDY_SHRINK, TIDY_INFLATE):
+            V = [list(v) if i in rim or i not in nbr else
+                 [v[k] + f * (sum(V[j][k] for j in nbr[i]) / len(nbr[i]) - v[k]) for k in range(3)]
+                 for i, v in enumerate(V)]
+    return V
+
+
+TIDY_SHRINK, TIDY_INFLATE = 0.33, -0.34     # Taubin's lambda / mu
+
+
+def _cut(V, P, n, c):
+    """The mesh (V, P) cut along the plane n . v = c: each triangle crossing it split in three, the
+    crossing points shared by both sides (one vertex each: the colours are split later)."""
+    V, out, made = [list(v) for v in V], [], {}
+    f = [sum(n[k] * v[k] for k in range(3)) - c for v in V]
+
+    def cross(a, b):
+        key = (min(a, b), max(a, b))
+        if key not in made:
+            t = f[a] / (f[a] - f[b])
+            V.append([V[a][k] + t * (V[b][k] - V[a][k]) for k in range(3)])
+            f.append(0.0)
+            made[key] = len(V) - 1
+        return made[key]
+    for t in P:
+        s = [f[i] > 0 for i in t]
+        on = [abs(f[i]) < 1e-9 for i in t]
+        if all(s) or not any(s) or any(on):
+            out.append(t)
+            continue
+        poly = {True: [], False: []}
+        for j in range(3):
+            a, b = t[j], t[(j + 1) % 3]
+            poly[s[j]].append(a)
+            if s[j] != s[(j + 1) % 3]:
+                x = cross(a, b)
+                poly[True].append(x)
+                poly[False].append(x)
+        for side in (True, False):
+            q = poly[side]
+            out += [(q[0], q[k], q[k + 1]) for k in range(1, len(q) - 1)]
+    return V, out
+
+
+def mirrored(V, P, keep):
+    """The mesh (V, P) made symmetric about x = 0 (user: Tifa's uneven breasts): cut there, the half on
+    the side of sign `keep` (+1 / -1) kept and mirrored onto the other, sharing the cut's vertices."""
+    V, P = _cut([[0.0 if abs(v[0]) < 1e-4 else v[0]] + list(v[1:]) for v in V], P, [1.0, 0.0, 0.0], 0.0)
+    P = [t for t in P if sum(V[i][0] for i in t) * keep > 0]
+    used = sorted({i for t in P for i in t})
+    NV, half, other = [], {}, {}
+    for i in used:
+        half[i] = len(NV)
+        NV.append([0.0 if abs(V[i][0]) < 1e-6 else V[i][0]] + list(V[i][1:]))
+    for i in used:
+        if NV[half[i]][0] == 0.0:
+            other[i] = half[i]
+        else:
+            other[i] = len(NV)
+            NV.append([-NV[half[i]][0]] + NV[half[i]][1:])
+    return NV, [tuple(half[i] for i in t) for t in P] + [(other[t[0]], other[t[2]], other[t[1]]) for t in P]
+
+
+def coloured(d, cuts, colour_of, tidy=0, mirror=0):
+    """.p bytes d remade (user: Tifa's lingerie, as Scarlet's stockings: sharp colour edges): tidied
+    (`_tidy`, `tidy` rounds), cut along each plane of `cuts` [(normal, c)] in the part's own frame, each
+    triangle coloured colour_of(centroid) (the part's frame), and each vertex where colours meet doubled,
+    one copy per colour, both copies keeping the surface's normal (the lighting runs on across the
+    edge). mirror (+1 / -1): first made symmetric, that side kept (`mirrored`). Returns (bytes,
+    (vertices before tidying, the same vertices after))."""
+    import math
+    V, P, _ = _part(d)
+    if mirror:
+        V, P = mirrored(V, P, mirror)
+    before = [list(v) for v in V]
+    V = _tidy(V, P, tidy) if tidy else [list(v) for v in V]
+    moved = (before, list(V))
+    for n, c in cuts:
+        V, P = _cut(V, P, n, c)
+    cols = [colour_of([sum(V[i][k] for i in t) / 3 for k in range(3)]) for t in P]
+    copy, NV, NC, NP = {}, [], [], []
+    for t, col in zip(P, cols):
+        tt = []
+        for i in t:
+            if (i, col) not in copy:
+                copy[(i, col)] = len(NV)
+                NV.append(V[i])
+                NC.append(col)
+            tt.append(copy[(i, col)])
+        NP.append(tuple(tt))
+    h = struct.unpack_from("<16I", d, 0)
+    op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
+    out = bytearray(_hb()._p_file(NV, NP, NC, d[64:128], struct.unpack_from("<12H", d, op)[10:12]))
+    nv = len(NV)                                          # copies of one point: one normal (their sum)
+    group = {}
+    for k, v in enumerate(NV):
+        group.setdefault(tuple(round(x, 6) for x in v), []).append(k)
+    for ks in group.values():
+        if len(ks) < 2:
+            continue
+        s = [sum(struct.unpack_from("<3f", out, 128 + 12 * nv + 12 * k)[j] for k in ks) for j in range(3)]
+        L = math.sqrt(sum(x * x for x in s)) or 1.0
+        for k in ks:
+            struct.pack_into("<3f", out, 128 + 12 * nv + 12 * k, *(x / L for x in s))
+    return bytes(out), moved
+
 def bones(hrc):
     """{bone name: (length, [rsd names], parent)} in an .hrc text."""
     lines = [l.strip() for l in hrc.splitlines()]

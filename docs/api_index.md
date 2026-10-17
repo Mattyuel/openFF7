@@ -667,7 +667,7 @@ Honey Bee Girl recruitment.
 - `_smooth_arm(old, n=6, cylinder=None)` (user) an arm part subdivided once and smoothed: each connected piece of the old .p that
 - `_smooth_arms(ctx, hrc, rsd_prefix, ply_prefix, letter, straight_forearm=0)` Every uparm / foarm part of `hrc` replaced by a `_smooth_arm` copy under new names
 - `_orient(V, tris, c)` The triangles wound so each one's cross product points into its piece. (User: "open geometry
-- `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False)` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
+- `_p_file(V, tris, bgr, tail, poly_tail=(55932, 375), orient=False, normals=None, wound=False)` A .p of one untextured closed mesh (vertices V, triangles as vertex index triples in
 - `_dim(ctx, field)` 
 - `_cloud_buck(ctx, name=CLOUD_BUCK, resist=False)` zctd.a (CLOUD_BUCK) on Cloud's skeleton: see CLOUD_BUCK. resist: `_stroke`'s resisted push.
 - `_cloud_stand(ctx, name=CLOUD_STAND, arms=STAND_ARMS, lift=None, nframes=STAND_FRAMES, elbow_in=0, lean=STAND_LEAN, arms_out=0, step=0, thrust=STAND_THRUST, knee=STAND_KNEE, low=None, hold=None, elbows_out=1.0, legs_out=0, still_upper=False, resist=False, spread=0, reach=None)` zcte.a (CLOUD_STAND) on Cloud's skeleton: see CLOUD_STAND. lift = (hip, out):
@@ -883,6 +883,7 @@ The movie minigame (user's design).
 ## `patches/675_standard_bodies.py`
 (user) The standard female body (`_female_body`, built by 670) on the undressed
 
+- `_tifa(ctx, skin)` 
 - `apply(ctx)` 
 
 ## `patches/676_date_poses.py`
@@ -906,6 +907,13 @@ PHS usable from the start: the save points in early Midgar (and a few story
 
 - `_unlocks_phs(op)` 
 - `_hides_phs_show(op)` Story scenes (Kalm inn, cargo ship) add PHS to the menu (OR2 var[2][28]);
+- `apply(ctx)` 
+
+## `patches/985_merge_parts.py`
+(user) Cloud's / Cid's member and the girls' nipples merged into the part they sit on (the pelvis /
+
+- `_read(d)` (vertices, triangles as stored, per-vertex normals, per-vertex colours) of a one-group untextured .p.
+- `_ply(ctx, rsd)` 
 - `apply(ctx)` 
 
 ## `patches/990_char_overrides.py`
@@ -975,6 +983,10 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_hb()` 
 - `_part(d)` (vertices, triangles, vertex colours) of a one-group untextured .p.
 - `_banded(d, bands, length)` .p bytes d recoloured in bands down the bone (Scarlet's stockings): bands = [(t, colour)]
+- `_tidy(V, P, rounds)` A light, shape-keeping smoothing (Taubin: a shrinking step then an inflating one, `rounds` times)
+- `_cut(V, P, n, c)` The mesh (V, P) cut along the plane n . v = c: each triangle crossing it split in three, the
+- `mirrored(V, P, keep)` The mesh (V, P) made symmetric about x = 0 (user: Tifa's uneven breasts): cut there, the half on
+- `coloured(d, cuts, colour_of, tidy=0, mirror=0)` .p bytes d remade (user: Tifa's lingerie, as Scarlet's stockings: sharp colour edges): tidied
 - `bones(hrc)` {bone name: (length, [rsd names], parent)} in an .hrc text.
 - `_scaled(d, sxy, sz, skin, sole=None)` A copy of .p bytes d: vertices (x, y) x sxy, z (along the bone) x sz, normals kept;
 - `_bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail)` A rounded bar along a bone (local -z): rings of radius r at z0 and z1, pointed to tip0 /
