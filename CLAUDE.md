@@ -38,6 +38,7 @@ python3 tools/ff7tool.py dump --built FIELD # built script -> work/scripts_built
 python3 tools/ff7tool.py scenes FIELD...    # simulate entering built fields, flag likely cutscenes
 python3 tools/ff7tool.py reach FIELD...     # walkmesh entrance->exit reachability
 python3 tools/ff7tool.py quiet-flags        # search 'seen' flags (slow, >10 min; background)
+python3 tools/ff7tool.py char-overrides MY.lgp  # files changed in an edited char.lgp -> patches/char_overrides/
 ```
 
 Shipped files: `data/field/flevel.lgp`, `data/lang-en/kernel/KERNEL.BIN`,
