@@ -908,6 +908,11 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_hides_phs_show(op)` Story scenes (Kalm inn, cargo ship) add PHS to the menu (OR2 var[2][28]);
 - `apply(ctx)` 
 
+## `patches/990_char_overrides.py`
+(user) Hand-edited char.lgp files: every file in patches/char_overrides/ (e.g. a .p part edited in a
+
+- `apply(ctx)` 
+
 ## `patches/_backstories.py`
 (user) The four date girls' hidden histories: their traumas, what they want, and what doesn't
 
