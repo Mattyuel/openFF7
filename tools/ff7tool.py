@@ -804,6 +804,27 @@ def reach(args):
               "all exits reachable" if not bad else "BLOCKED: " + "; ".join("%s -> %s" % b for b in bad[:6])))
 
 
+def char_overrides(args):
+    """Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) that differs from
+    the last build's (or isn't in it) -> patches/char_overrides/, which 990_char_overrides writes into
+    char.lgp last on every build. Run `build` first so the comparison is with the current build."""
+    mine = LGP.read(args.lgp)
+    built = LGP.read(os.path.join(ROOT, "build", "openFF7", "data", "field", "char.lgp"))
+    have = {n.lower(): n for n in built.names()}
+    out = os.path.join(ROOT, "patches", "char_overrides")
+    changed = []
+    for n in mine.names():
+        data = mine[n]
+        if n.lower() in have and built[have[n.lower()]] == data:
+            continue
+        changed.append(n.lower())
+        if not args.dry_run:
+            with open(os.path.join(out, n.lower()), "wb") as fh:
+                fh.write(data)
+    print("%d changed file(s)%s: %s" % (len(changed), " (not written: --dry-run)" if args.dry_run else
+                                        " -> patches/char_overrides/", ", ".join(changed) or "none"))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -825,6 +846,10 @@ def main():
     sc = sub.add_parser("scenes")
     sc.add_argument("fields", nargs="*")
     sc.set_defaults(func=scenes)
+    co = sub.add_parser("char-overrides", help="save the files you changed in a char.lgp as overrides")
+    co.add_argument("lgp", help="your edited char.lgp")
+    co.add_argument("--dry-run", action="store_true", help="only list the changed files")
+    co.set_defaults(func=char_overrides)
     b = sub.add_parser("build")
     b.add_argument("--out", help="default build/openFF7 (build/openFF7_debug with --debug)")
     b.add_argument("--debug", action="store_true",
