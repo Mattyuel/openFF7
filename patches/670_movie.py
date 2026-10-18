@@ -3096,7 +3096,7 @@ def _wall_market(ctx, focus):
             poke = lambda k, c: Op(bytes([0x1D, tid]) + struct.pack("<H", k + 1) + bytes([c]))
             ops_ = [top]
             for mk, (_, bit, key) in zip(marks, on):
-                vs = affs if key == "group" else ([aff_var(key)] if key else [])
+                vs = affs if key in ("group", "beach") else ([aff_var(key)] if key else [])
                 if not vs:
                     continue
                 grey, done_ = asm.nop(), asm.nop()
@@ -3105,30 +3105,31 @@ def _wall_market(ctx, focus):
             ops_ += list(ask_r)
             for k_, (_, bit, key) in enumerate(on):
                 nxt = asm.nop()
-                vs = affs if key == "group" else ([aff_var(key)] if key else [])
+                vs = affs if key in ("group", "beach") else ([aff_var(key)] if key else [])
                 ok = asm.nop()
                 check = []
                 if vs:
                     bad = asm.nop()
                     check = [asm.if_byte(v, ">=", 20, bad) for v in vs] + [asm.goto(ok), bad] + \
-                        refuse_ops(not_ready[1 if key == "group" else 0]) + [asm.goto_back(top), ok]
-                sets = [asm.biton(MOVIE_GIRL, b_) for b_ in GROUP_BITS] if key == "group" else \
+                        refuse_ops(not_ready[1 if key in ("group", "beach") else 0]) + [asm.goto_back(top), ok]
+                sets = [asm.biton(MOVIE_GIRL, b_) for b_ in GROUP_BITS] + \
+                    ([asm.setbyte(SPEC, 3)] if key == "beach" else []) if key in ("group", "beach") else \
                     ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else [])
                 ops_ += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + check + sets + [asm.goto(picked), nxt]
             return ops_ + [picked]
         lists = {r: menu(cast_[:r + 1][::-1]) for r in range(1, len(cast_))}   # newest first
-        # (user) rank 6 (Aerith's wrap): "Everyone" = the group shoot, first
-        lists[6] = menu([("Everyone", None, "group")] + cast_[::-1])
+        # (user) rank 6 (Aerith's wrap): "Everyone" = the group shoot, first; (user, since) "Beach party" (679)
+        # unlocked with it: the group on the beach (SPEC 3)
+        lists[6] = menu([("Everyone", None, "group"), ("Beach party", None, "beach")] + cast_[::-1])
         assert len(MOVIE_RANK) == 6
-        ops += _by_rank(lists)
+        ops += [asm.setbyte(SPEC, 0)] + _by_rank(lists)
         # (user, since) for one co-star, always: "Normal scene." / "Special scene." (672, after a full group
         # shoot) / "Blast-off." (673, Cid's affection at max); a locked one reads "????" and asks again
         import _movie_special as SP_
         import _blast_data as BD_
         import _cid as CID_
         spec_no, spec_ask, top = asm.nop(), asm.nop(), asm.nop()
-        ops += [asm.setbyte(SPEC, 0),
-                asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], spec_ask),
+        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], spec_ask),
                 asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], spec_ask), asm.goto(spec_no), spec_ask, top]
         for s_on in (0, 1):
             for b_on in (0, 1):
@@ -3160,8 +3161,15 @@ def _wall_market(ctx, focus):
             ops += [asm.if_byte(MOVIE_GIRL, "bit_on", bit_, nxt),
                     asm.mapjump(ctx.maplist.index(SP_.FIELDS[key_]), sx_, sy_, st_, 0xC0), asm.ret(), nxt]
         ops += [asm.mapjump(ctx.maplist.index(SP_.FIELDS["ruby"]), sx_, sy_, st_, 0xC0), asm.ret(), not_spec]
-        solo = asm.nop()                         # (user) the group's set: bits 3 + 4 together
+        solo, studio = asm.nop(), asm.nop()      # (user) the group's set: bits 3 + 4 together
+        import _beach_party as BPD_
+        bmesh = Walkmesh(ctx.field(BPD_.BASE).section("walkmesh"))
+        bx_, by_ = BPD_.STAGE_AT[:2]
+        bt_ = bmesh.find(bx_, by_)
+        assert bt_ is not None
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], solo), asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], solo),
+                asm.if_byte(SPEC, "==", 3, studio),
+                asm.mapjump(ctx.maplist.index(BPD_.FIELD), bx_, by_, bt_, 0), asm.ret(), studio,
                 asm.mapjump(ctx.maplist.index(LZ.FIELD if LZ.ENABLED else GROUP_FIELD), x, y, t, 0), asm.ret(), solo]   # (678: loose)
         for g in MG.GIRLS:                       # her own set
             nxt = asm.nop()

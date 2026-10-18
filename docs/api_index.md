@@ -927,6 +927,30 @@ The movie minigame (user's design).
 - `_sprites(S, ctx, loader, mesh, cam, near)` 
 - `apply(ctx)` 
 
+## `patches/679_beach_party.py`
+(user) The beach party: the loose group shoot (`_loose_engine`) on Costa del Sol's beach (data
+
+- `_mods()` 
+- class `Ground` Walkable triangles (not a lounger, not raised, not locked) with bounding boxes for fast lookups.
+  - `__init__(mesh)` 
+  - `at(x, y)` (walkable triangle, height) under (x, y), or None.
+  - `grid(step)` 
+- `_ground(mesh)` 
+- `_lounge_spots(mesh)` Cloud's lounging spot (x, y, z, tri) on each lounger.
+- `_supports(S, mesh)` 
+- `_on(S, mesh, p, top, margin=4)` 
+- `_walkable(S, mesh, p, margin)` 
+- `_bed_id(S, c)` 
+- `_rel(ctx, girl, cloud)` The studio's pair: (dx, dy) Cloud from her, her lift and his above the ground under her, DIRs.
+- `_pair(S, ctx, mesh, cam, pos, gx, gy)` The pair at her spot (gx, gy), turned to the DIR showing it most side-on with everyone on the ground;
+- `_stations(S, ctx, mesh, cam)` 
+- `_bed_watch(S, ctx, mesh, c, k, free, face, queue=False)` 
+- `_floor_watch(S, ctx, mesh, c, k, free, face)` On the dry sand: sunbathing (lying along the shore if she fits) / kneeling / (None) standing about.
+- `_make_field(S, ctx)` del3 copied: entities produce / direct (the waves' scripts) / ad / cloud / child, models Cloud + one.
+- `_sprites(S, ctx, loader, mesh, cam, near)` 
+- `_poses(ctx)` The beach's own poses (Ruby's skeleton / bare Cloud) and the girls' copies (670 `_retarget`).
+- `apply(ctx)` 
+
 ## `patches/680_affection.py`
 (user) The affection list: Square in a field shows every Honey Bee girl's name, personality and
 
@@ -988,8 +1012,14 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_save(ctx, name, sk, frames, base)` 
 - `_arms_to(ctx, sk, frames, targets, pole_out)` Each frame's arms re-aimed (two-bone IK, elbows `pole_out` sideways and back) so the forearm's end
 - `girl_recline(ctx)` ZMX0-3 (Ruby's skeleton) from ZMA0-3.
-- `cloud_kneel_up(ctx, her_knee=None)` ZNX0-3 from ZNA0-3: upper body turned KNEEL_UP back; hands on her thighs (her_knee(k, t) -> {"l", "r"}
-- `cloud_sunbed(ctx, her_hips=None)` ZNW0-3: Cloud lounging (CLOUD_BACK), his root moving as ZNB<k>'s (the cowgirl's beat, same frame
+- `to_field(m, at, d)` 
+- `to_model(p, at, d)` 
+- `ends(ctx, hrc, anim, t)` {bone: end} (and bone + '@' = its start, 'root') in model space, frame t.
+- `sunbed_offset(ctx, her_dir=0)` Her XYZI offset (dx, dy, dz) from his in the sunbed (his DIR 0, hers her_dir): her root W_RIDE above his.
+- `lounge_at(ctx, name, hrc, stand, off)` `lounge` with the root moved by -off (field units, DIR 0): played at a rider's spot (his + off) she
+- `cloud_kneel_up(ctx)` ZNX0-3 from ZNA0-3: upper body turned KNEEL_UP back, head HEAD_FWD down again; hands on her thighs
+- `cloud_sunbed(ctx, name='ZNW', her_dir=0)` ZNW0-3 (`name`): Cloud lounging (CLOUD_BACK), his root moving as ZNB<k>'s (the cowgirl's beat, same
+- `build(ctx)` Every beach pose on Ruby's skeleton / bare Cloud's (the girls' retargeted by 679).
 - `girl_knees(ctx)` ZMY0-3 from ZMD0-3: hands on her knees (KNEE_HANDS up the thigh, a little out to the side).
 
 ## `patches/_blast_data.py`
