@@ -916,23 +916,15 @@ The movie minigame (user's design).
 - `apply(ctx)` 
 
 ## `patches/678_group_loose.py`
-(user) The loose group shoot: see `_movie_loose` (data). A new set (LZ.FIELD, never entered otherwise,
+(user) The loose group shoot on the studio set (data `_movie_loose`, engine `_loose_engine`): a new set
 
-- `_mods()` 
-- `_cast()` [(key, donor (field, model), bare hrc, prefix, own stand/walk/run or None, head_down)] in GR.ORDER.
-- `_anims(ctx)` The new waiting poses (frame 0 of mission / dog / prone held: ZM<letter>5, retargeted per girl) and
-- `_world(ctx, hrc, anim, frame, x, y, z, d)` Field positions of a posed model's joints (bone ends; 'root'; 'entry' (hip frame ENTRY); for bare
-- `_supports(mesh)` Floor points and bed-top points (x, y, z, tri) on a 6-unit grid.
-- `_on(mesh, p, top, margin=4)` p (x, y) lies on the support of height top (a bed top or the floor), `margin` inside its edge.
-- `_solve(ctx, mesh, pos, gx, gys, top)` A station for a solved position: her at (gx, gy) on the support `top`, Cloud placed so his member's
-- `_tri(mesh, x, y, top)` 
-- `_stations(ctx, mesh)` Per position: [(girl (x, y, z, tri), her DIR, Cloud (x, y, z, tri), his DIR)].
-- `_path_clear(mesh, a, b, step=4)` Every point on the straight line a -> b (and 6 either side) is floor.
-- `_slots(ctx, mesh, cam, stations, floor, beds)` Per position, six slots: (x, y, z, tri, dir, anim, kind, waypoint (x, y)). Stations first (rows:
-- `_gauge_spots(ctx, mesh, cam, focus, near)` (gauge, icon, cursor line (first, step x16)) for a view centred on `focus` (as 670's group).
-- `_build(ctx, back)` 
-- `_stage(ctx, B)` Every cutaway's staging (LZ.CUTS, then the intro): each actor's slot 9 (spot, facing, pose by CI), the
-- `_director(ctx, B, back)` 
+- `_mv()` 
+- `_make_field(S, ctx)` 
+- `_supports(S, mesh)` Floor points and bed-top points (x, y, z, tri) on a 6-unit grid.
+- `_on(S, mesh, p, top, margin=4)` p (x, y) lies on the support of height top (a bed top or the floor), `margin` inside its edge.
+- `_stations(S, ctx, mesh, cam)` Per position: [(girl (x, y, z, tri), her DIR, Cloud (x, y, z, tri), his DIR)].
+- `_bed_watch(S, ctx, mesh, c, k, free, face, queue=False)` On a bed: every other one lies along it (her head to its far end) if she fits, else kneels (waiting her
+- `_sprites(S, ctx, loader, mesh, cam, near)` 
 - `apply(ctx)` 
 
 ## `patches/680_affection.py`
@@ -980,6 +972,25 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_seat(ctx, hrc, d)` His pelvis as bare Cloud's seat, mapped onto his hips; returns the world vertices (for the member).
 - `_member(ctx, hrc, seat_world, frame, d)` Bare Cloud's box (620 `_bare_cloud_member`), MEMBER_SCALE x, on his new seat.
 - `build(ctx)` Writes ZCIA.HRC and its new parts (once).
+
+## `patches/_beach_party.py`
+(user) The beach party (679): the loose group shoot (`_loose_engine`) on Costa del Sol's beach - the six
+
+
+## `patches/_beach_poses.py`
+(user) The beach party's own poses (679), built from the movie's on Ruby's skeleton (girls, retargeted per
+
+- `_fa()` 
+- `_mods()` 
+- `lounge(ctx, name, hrc, stand)` Lounging (`name`, no extension): 660's lounger pose with the upper body LOUNGE_BACK back.
+- `_below(sk, top)` The bone `top` and every bone hanging from it.
+- `_turned_frames(ctx, hrc, src, bones, angle, test)` src's frames with `bones` (world) turned about the model's side axis at the root by +-angle, the sense
+- `_save(ctx, name, sk, frames, base)` 
+- `_arms_to(ctx, sk, frames, targets, pole_out)` Each frame's arms re-aimed (two-bone IK, elbows `pole_out` sideways and back) so the forearm's end
+- `girl_recline(ctx)` ZMX0-3 (Ruby's skeleton) from ZMA0-3.
+- `cloud_kneel_up(ctx, her_knee=None)` ZNX0-3 from ZNA0-3: upper body turned KNEEL_UP back; hands on her thighs (her_knee(k, t) -> {"l", "r"}
+- `cloud_sunbed(ctx, her_hips=None)` ZNW0-3: Cloud lounging (CLOUD_BACK), his root moving as ZNB<k>'s (the cowgirl's beat, same frame
+- `girl_knees(ctx)` ZMY0-3 from ZMD0-3: hands on her knees (KNEE_HANDS up the thigh, a little out to the side).
 
 ## `patches/_blast_data.py`
 (user) Blast-off (673): the movie's third scene for a co-star, with Cid, in the space capsule.
@@ -1053,6 +1064,26 @@ Honey Bee Inn visit scenes, one per girl (see _honey_bee_data.py for the
 ## `patches/_honey_bee_scenes_more.py`
 Honey Bee visit scenes at higher affection (_honey_bee_gifts: 10-19 =
 
+
+## `patches/_loose_engine.py`
+(user) The loose group shoot engine: a set (`Set`: a data module, a field, pose letters and hooks; 678 the
+
+- class `Set` A loose shoot's set: D = its data module (POSITIONS, CUTS, TALK, COMMENTS, INTRO, ...), FIELD, the
+  - `__init__(D, FIELD, LET, HOLD_L, WAIT_L, extra=(), CLET=None, **hooks)` 
+- `_mods()` 
+- `_cast()` [(key, donor (field, model), bare hrc, prefix, own stand/walk/run or None, head_down)] in GR.ORDER.
+- `_anims(S, ctx)` The new waiting poses (frame 0 of mission / dog / prone held: ZM<letter>5, retargeted per girl), the
+- `_world(ctx, hrc, anim, frame, x, y, z, d)` Field positions of a posed model's joints (bone ends; 'root'; 'entry' (hip frame ENTRY); for bare
+- `_solve(S, ctx, mesh, cam, pos, gx, gys, top, dirs=range(0, 256, 16))` A station for a solved position: her at (gx, gy) on the support `top`, Cloud placed so his member's
+- `_tri(mesh, x, y, top, tol=3)` 
+- `_path_clear(S, mesh, a, b, step=4)` Every point on the straight line a -> b (and 10 either side) can be walked (S.walkable).
+- `_wait_anim(S, name, i)` A waiting / watching pose by name: kneel / lie (two timings by i), stand, or an extra still letter.
+- `_slots(S, ctx, mesh, cam, stations, floor, beds)` Per position, six slots: (x, y, z, tri, dir, anim, kind, waypoint (x, y)). Stations first (rows:
+- `_gauge_spots(S, ctx, mesh, cam, focus, near)` (gauge, icon, cursor line (first, step x16)) for a view centred on `focus` (as 670's group).
+- `_build(S, ctx, back)` 
+- `_stage(S, ctx, B)` Every cutaway's staging (S.D.CUTS, then the intro): each actor's slot 9 (spot, facing, pose by CI), the
+- `_director(S, ctx, B, back)` 
+- `run(S, ctx, label, layout)` Builds the set S (its field replaced in ctx); `layout` = the work/ file for offline renders.
 
 ## `patches/_marker_models.py`
 Quest marker models: battle-effect sprites shown in the field.

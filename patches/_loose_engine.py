@@ -45,8 +45,9 @@ class Set:
     -> (FieldFile, {entity: scripts} kept), supports(S, mesh), on(S, mesh, p, top, margin),
     walkable(S, mesh, p, margin), stations(S, ctx, mesh, cam), bed_watch(S, ctx, mesh, c, k) -> (dir, anim)
     or None, sprites(S, ctx, loader, mesh, cam) -> [gauge, cursor, icon] loader entries."""
-    def __init__(self, D, FIELD, LET, HOLD_L, WAIT_L, extra=(), **hooks):
+    def __init__(self, D, FIELD, LET, HOLD_L, WAIT_L, extra=(), CLET=None, **hooks):
         self.D, self.FIELD, self.LET, self.HOLD_L, self.WAIT_L = D, FIELD, LET, HOLD_L, WAIT_L
+        self.CLET = CLET or LET              # Cloud's pose letters (LET: the girls'); HOLD_L in both
         self.extra = list(extra)
         self.__dict__.update(hooks)
         # a girl's anims (the same for all six): stand / walk / run, the still poses (lie A, kneel A, lie B,
@@ -60,7 +61,7 @@ class Set:
         self.G_COUNT = self.G_HOLD + 3 * len(HOLD_L)
         # Cloud's: stand / walk / run, the speeds, per stop letter pulled back / deepest, the lessons
         self.C_SPEED = 3
-        self.C_HOLD = self.C_SPEED + 2 * len(LET)
+        self.C_HOLD = self.C_SPEED + 2 * len(self.CLET)
         self.C_LESSON = self.C_HOLD + 2 * len(HOLD_L)
         self.C_COUNT = self.C_LESSON + len(HOLD_L)
 
@@ -78,6 +79,9 @@ CA = (5, 239)
 USEDC = [(5, 247), (5, 248), (5, 249)]               # cutaways played (bits)
 RND3, USEDG, PRES, TS, STN, PICK = ((5, a) for a in range(250, 256))
 NMIN, NSPAN = (5, 193), (5, 194)
+WALKING, WRND, WAITED = (5, 166), (5, 167), (5, 168)  # girls mid-stroll (bits), their own random, a timeout
+PLACE_WAIT = 30                                      # frames black while everyone is placed (a girl's slot 2
+                                                     # runs ~95 ops: 12 frames at 8 a frame; user saw moves)
 CHOICE = (5, 241)
 
 
@@ -128,7 +132,7 @@ def _anims(S, ctx):
         for n in names[3:]:
             ctx.char_file(n.split(".")[0].lower() + ".a")            # (exists: asserted by the lookup)
         lists[key] = names
-    cloud = ["ACFE.aki", "AAFF.aki", "AAGA.aki"] + ["ZN%s%s.tor" % (L, s) for L in S.LET for s in "13"] + \
+    cloud = ["ACFE.aki", "AAFF.aki", "AAGA.aki"] + ["ZN%s%s.tor" % (L, s) for L in S.CLET for s in "13"] + \
         ["ZN%s%s.tor" % (L, d) for L in S.HOLD_L for d in "98"] + ["ZN%sL.tor" % L for L in S.HOLD_L]
     assert len(cloud) == S.C_COUNT
     for n in cloud[3:]:
@@ -194,11 +198,11 @@ def _tri(mesh, x, y, top, tol=3):
 
 
 def _path_clear(S, mesh, a, b, step=4):
-    """Every point on the straight line a -> b (and 6 either side) can be walked (S.walkable)."""
+    """Every point on the straight line a -> b (and 10 either side) can be walked (S.walkable)."""
     n = max(1, int(math.dist(a, b) / step))
     for i in range(n + 1):
         x, y = a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n
-        if not S.walkable(S, mesh, (x, y), 6):
+        if not S.walkable(S, mesh, (x, y), 10):
             return False
     return True
 
@@ -358,7 +362,9 @@ def _build(S, ctx, back):
             lists[key])
     cm = loader.add_from(ModelLoader(ctx.field(mv.CAMERA_DONOR[0]).section("models")), mv.CAMERA_DONOR[1])
     film = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_FILM)
-    idle_cam = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_IDLE)
+    # (user) still in the cutaways (670's one-frame camera pose); he only moves while filming
+    loader.models[cm] = ModelLoader.with_anims(loader.models[cm], [mv.CAMERA_STILL])
+    idle_cam = ModelLoader.anims(loader.models[cm]).index(mv.CAMERA_STILL)
     near = min(mv._view_depth(cam, v) for t in mesh.tris for v in t) * 0.8
     loader.models += S.sprites(S, ctx, loader, mesh, cam, near)     # gauge, cursor, icon
     assert len(loader.models) == 13 and cm == 9, len(loader.models)
@@ -450,18 +456,22 @@ def _build(S, ctx, back):
             ch(HLI, [[mv._animb(), Op(bytes([0xA2, S.G_HOLD + 3 * h + 1, 1])), Op(bytes([0xAE, S.G_HOLD + 3 * h + 2, 1]))]
                      for h in range(len(S.HOLD_L))]) + [gone6, asm.ret()]
         # the stroll (main): now and then, while WANDER, to her slot's waypoint and back, facing Cloud after
-        # each leg; only from a strolling slot (SK 2: its waypoint's line checked to be all floor)
+        # each leg; only from a strolling slot (SK 2: its waypoint's line checked to be all floor). WALKING bit
+        # k is on while a MOVE runs: the director waits for none before re-placing anyone (user: a MOVE still
+        # running when she was re-placed went on to that slot's next waypoint - another position's, on a bed -
+        # and she walked into the bed for good, her new anims never showing)
         top = hb._w(45)
         again = asm.goto_back(top)
         walk = [top, asm.if_byte(WANDER, "==", 1, again), asm.if_byte(mv.LEFT, "bit_off", k, again),
-                Op(bytes([0x99, RND3[0], RND3[1]])), asm.if_byte(RND3, "<", 90, again)]
+                Op(bytes([0x99, WRND[0], WRND[1]])), asm.if_byte(WRND, "<", 90, again)]
         for s in range(6):
             nx = asm.nop()
-            walk += [asm.if_byte(GS(k), "==", s, nx), asm.if_byte(SK(s), "==", 2, nx),
-                     Op(bytes([0xA8, 0x66]) + struct.pack("<HH", WX(s)[1], WY(s)[1])), hb._tura(ents["cloudb"]),
-                     hb._w(90), asm.if_byte(WANDER, "==", 1, nx),        # (stopped meanwhile: placed anyway)
+            walk += [asm.if_byte(GS(k), "==", s, nx), asm.if_byte(SK(s), "==", 2, nx), asm.biton(WALKING, k),
+                     Op(bytes([0xA8, 0x66]) + struct.pack("<HH", WX(s)[1], WY(s)[1])), asm.bitoff(WALKING, k),
+                     hb._tura(ents["cloudb"]),
+                     hb._w(90), asm.if_byte(WANDER, "==", 1, nx), asm.biton(WALKING, k),   # (stopped meanwhile: placed anyway)
                      Op(bytes([0xA8, 0x66]) + struct.pack("<HH", SLOT(s, 0)[1], SLOT(s, 2)[1])),
-                     hb._tura(ents["cloudb"]), nx]
+                     asm.bitoff(WALKING, k), hb._tura(ents["cloudb"]), nx]
         walk += [again]
         scripts[e] = {0: [Op(bytes([0xA1, 3 + k])), hb._visi(0)] + hide() + [asm.ret()] + walk + [asm.ret()],
                       2: place, 3: speed, 4: stop(0), 5: stop(1), 6: s6, 7: [hb._visi(0), asm.ret()]}
@@ -688,10 +698,15 @@ def _director(S, ctx, B, back):
                 hb._say(sec, reply + mv._gil_note(eff.get("gil", 0) * GR.RATE)) + effects(eff) + [asm.goto(done), nx]
         return ops + [done]
 
+    def walkers_done():
+        """Waits (up to 8 s) until no girl is mid-stroll (WALKING), so nobody is re-placed while a MOVE runs."""
+        top, go = hb._w(1), asm.nop()
+        return [asm.setbyte(WAITED, 0), top, asm.if_byte(WALKING, "!=", 0, go), Op(bytes([0x95, WAITED[0], WAITED[1]])),
+                asm.if_byte(WAITED, "<", 240, go), asm.goto_back(top), go, hb._w(10)]
     place_all = lambda: [hb._req(e, 2, wait=False) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"],
-                                                             ents["gauge"], ents["icon"])] + [hb._w(6)]
+                                                             ents["gauge"], ents["icon"])] + [hb._w(PLACE_WAIT)]
     stage_all = lambda: [hb._req(e, 9, wait=False) for e in (CL, ents["cloudb"], *girl_ents, ents["camera"],
-                                                             ents["gauge"])] + [hb._w(S.D.CUT_FADE)]
+                                                             ents["gauge"])] + [hb._w(max(S.D.CUT_FADE, PLACE_WAIT))]
     pause = mv._pause_ops(hb, sec, actors, ents["hush3"], lambda block: ch(E, [block(key) for key in GR.ORDER]),
                           lambda no: [asm.if_byte(HOLDP, "==", 1, no)], ents["icon"], lambda key: GR.RATE,
                           slot_of=GR.ORDER.index, leave=leave, uneasy=None, desperate=1,
@@ -705,7 +720,8 @@ def _director(S, ctx, B, back):
             asm.setbyte(K, 0), asm.setword(NEXT, 300), asm.setbyte(FIN, 0), asm.setbyte(E, 255), asm.setbyte(VV, 0),
             asm.setbyte(LEFT, 0), asm.setbyte(mv.RULES, 0), asm.setbyte(mv.CTRL, 0), asm.setbyte(mv.TP, 0),
             asm.setbyte(LASTP, 255), asm.setbyte(LAST, 0), asm.setbyte(WANDER, 0), asm.setbyte(SEGPLACE, 0),
-            asm.setbyte(SPD, 0), asm.setbyte(HOLDP, 0), asm.setbyte(ORALP, 0), asm.setbyte(HLI, 0)] + \
+            asm.setbyte(SPD, 0), asm.setbyte(HOLDP, 0), asm.setbyte(ORALP, 0), asm.setbyte(HLI, 0),
+            asm.setbyte(WALKING, 0)] + \
         [asm.setbyte(v, 0) for v in USEDC] + [asm.setbyte(mv._ann(k), 0) for k in range(n_g)]
     # the intro: everyone standing round the cameraman (the intro staging is the last CI)
     main += [asm.setbyte(CI, NC)] + stage_all() + [hb._w(12), Op(hb.FADE_IN), Op(b"\x6C")]
@@ -753,7 +769,7 @@ def _director(S, ctx, B, back):
     def pos_ops(p):
         pos, sl = S.D.POSITIONS[p], B["slots"][p]
         h = S.HOLD_L.index(pos["girl"]) if pos.get("hold") else 0
-        ops = [asm.setbyte(GLI, S.LET.index(pos["girl"])), asm.setbyte(CLI, S.LET.index(pos["cloud"])),
+        ops = [asm.setbyte(GLI, S.LET.index(pos["girl"])), asm.setbyte(CLI, S.CLET.index(pos["cloud"])),
                asm.setbyte(HOLDP, 1 if pos.get("hold") else 0), asm.setbyte(ORALP, 1 if pos.get("oral") else 0),
                asm.setbyte(HLI, h), asm.setbyte(QUEUE, 1 if len(B["stations"][p]) == 1 else 0)]
         for s, (x, y, z, t, d, a, kind, wp) in enumerate(sl):
@@ -839,7 +855,7 @@ def _director(S, ctx, B, back):
              asm.goto_back(turn_top)]
     # the segment's end: the last one = the wrap; else a cutaway, then the next segment
     nocut = asm.nop()
-    main += [seg_end, Op(b"\x54\x01"), asm.if_byte(LAST, "==", 0, wrap), asm.setbyte(WANDER, 0), hb._w(60),
+    main += [seg_end, Op(b"\x54\x01"), asm.if_byte(LAST, "==", 0, wrap), asm.setbyte(WANDER, 0)] + walkers_done() + [
              hb._req(ents["util"], 3), asm.if_byte(CI, "!=", 255, nocut),
              Op(mv.FAST_OUT), Op(b"\x6C")] + stage_all() + [Op(mv.FAST_IN), Op(b"\x6C")]
 
