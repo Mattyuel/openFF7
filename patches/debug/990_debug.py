@@ -40,6 +40,7 @@ FLAGS_VA = 0xDC08DC + DEBUG_FLAGS[1]    # field var bank 1 base in memory
 WM_ROLL_CALL, WM_ROLL = 0x76760B, 0x767641
 L1, R1 = 0x0004, 0x0008
 TEXTS_NEEDED, MAX_ENTITIES = 5, 48
+SKIP = {"blackbge"}                  # 677's scene lab: L1 / R1 turn its actors
 
 PAGES = [
     ("Midgar", [("Sector 7 Station", "mds7st3"), ("7th Heaven", "mds7pb_1"), ("Sector 6 Park", "mds6_1"),
@@ -203,6 +204,9 @@ def apply(ctx):
     added, skipped = 0, []
     names = [n for n in ctx.maplist if n in ctx.flevel or n in ctx._fields]
     for name in names:
+        if name in SKIP:
+            skipped.append(name)
+            continue
         f = ctx.field(name)
         try:
             sec = Script.parse(f.sections[0])

@@ -895,6 +895,23 @@ The movie minigame (user's design).
 - `_check(ctx)` Every anim named by a date field's models exists in char.lgp (the poses come from later patches).
 - `apply(ctx)` 
 
+## `patches/677_scene_lab.py`
+(user) The scene lab: a placement tool, not a scene. The Director (Sector 7 station, mds7st3: takes over
+
+- `_v(e, off, word=True)` 
+- `_hb()` 
+- `_byte(v)` 
+- `_ifkey(mask, else_)` 
+- `_xyzi_var(x, y, z, tri)` 
+- `_poke(tid, off, char)` 
+- `_models(ctx)` [(label, model loader entry)] of the group room's actors: bare Cloud, the girls, the cameraman.
+- `_beds(mesh)` [(x0, x1, y0, y1, top)] of the walkmesh pieces above the floor (z 0).
+- `_screen_steps(cam)` Field (dx, dy) a step for each arrow: the floor direction that moves on screen that way.
+- `_lab(ctx)` 
+- `dt_chain(var, blocks)` 
+- `_director(ctx, arrive)` 
+- `apply(ctx)` 
+
 ## `patches/680_affection.py`
 (user) The affection list: Square in a field shows every Honey Bee girl's name, personality and
 
