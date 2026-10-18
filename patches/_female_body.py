@@ -13,7 +13,7 @@ no change is shared, the others are written as new parts "ZW<tag><letter>" (.rsd
 colour (B, G, R) for the body's skin (Skye's SKIN) if given. Use it only from patches that
 run after 670 (the standard body is built there).
 
-Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675), K Skye (ZSKA: only `nipples`)
+Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675), K Skye (ZSKA: only `nipples`), N the island nurse (ZIUA, from BTEC, 679_nurse)
 
 `nipples(ctx, hrc, tag)` adds pink nipples (NIPPLE_*) to a girl with the standard torso (675 adds
 them to every one, Skye included, after all `apply` calls: `apply` wants one part per body bone).
@@ -320,7 +320,8 @@ def apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0, head_drop=0.0):
         return r_, p_
     for b in BODY:
         assert b in her, (b, "not in her skeleton")
-        assert len(std[b][1]) == 1 and len(her[b][1]) == 1, (b, std[b][1], her[b][1])
+        # (the standard's chest also carries Skye's nipples once 675 ran: its first part is the body)
+        assert len(std[b][1]) == (3 if b == "chest" and len(std[b][1]) == 3 else 1) and len(her[b][1]) == 1, (b, std[b][1], her[b][1])
         sz = lengths[b] / std[b][0]
         r = ctx.char_file(std[b][1][0].lower() + ".rsd").decode("latin-1")
         ply = r.split("PLY=")[1][:4]

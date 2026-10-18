@@ -970,6 +970,15 @@ The movie minigame (user's design).
 - `_poses(ctx)` 
 - `apply(ctx)` 
 
+## `patches/679_nurse.py`
+(user) Hello nurse: a scene in Mideel's clinic (data `_nurse.py`, poses `_nurse_poses.py`), and the island
+
+- `_mods()` 
+- `_nurse_models(ctx)` 
+- `_walk(hb, xyzi, d_, loop_, start, stop, t, z=0)` XYZI stepped WALK_STEP a frame from start to stop (x, y) with the walk anim (1), then stand (0) facing d.
+- `_scene(ctx, place)` 
+- `apply(ctx)` 
+
 ## `patches/680_affection.py`
 (user) The affection list: Square in a field shows every Honey Bee girl's name, personality and
 
@@ -1187,6 +1196,30 @@ Quest marker models: battle-effect sprites shown in the field.
 ## `patches/_movie_special.py`
 (user) The movie minigame's "Special" scenes (672_movie_special), data only: unlocked by a full
 
+
+## `patches/_nurse.py`
+(user) Hello nurse (679_nurse): a scene in Mideel's clinic (ithos, copied). Cloud is the patient in the
+
+
+## `patches/_nurse_poses.py`
+(user) Hello nurse's own positions (679_nurse), all new (user: "make her positions unique"): built on Ruby's
+
+- `_mods()` 
+- `_frames(ctx, hrc, anim)` [(rr, root (model, y down), world matrices)] of an anim.
+- `_turn(fa, sk, W, bones, axis, angle, test)` W with `bones` turned about `axis` by +-angle (the sense test(new W) accepts).
+- `_mouth(e)` 
+- `_save(ctx, name, base, frames)` 
+- `patient(ctx)` ZNY0-3: ZNB with his legs SPREAD apart (each leg turned about the bed's normal at its hip).
+- `_lying(ctx, fa, sk, znb)` ZNY9 (one frame): the patient lying still between visits: his stand pose (ACFE frame 0) laid flat on
+- `_bent(ctx, base, target_y, hands, t, n, sk, rr, root, W)` Her upper body pitched forward until her mouth's height (model y) is target_y, plus BOB at the
+- `_base(ctx, root, W, sk, rr)` Cloud's member base (620 zcmp.p on the hip bone) in model space.
+- `checkup(ctx)` (user's idea) face down on his pelvis, backside up: her mouth at his member's base, FACE_UP above.
+- `arched(ctx)` ZOB0-3: the rider (ZMB) turned to face him (DIR + 128), her upper body leant ARCH back, hands on his
+- `_upper(sk)` 
+- `spoon(ctx)` 
+- `stacked(ctx)` 
+- `saddle(ctx)` 
+- `build(ctx)` 
 
 ## `patches/_quest_data.py`
 Quest data for 600_quests.py: who gives which quests, where, and what they say.
