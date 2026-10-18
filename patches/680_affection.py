@@ -34,7 +34,7 @@ HEADER = "Girls (personality): affection"
 UNKNOWN, OF = "????", "/20"
 SKIP = {"whitebg1", "whitebg2", "blin69_2", "trap", "junmon", "subin_4",       # the movie sets (670 / 672)
         "qe", "pass", "hyou14", "xmvtes", "fallp", "m_endo", "rcktin7",       # (rcktin7: 673's Blast-off set)
-        "blackbge"}                                                       # (677's scene lab: Square is its key)
+        "blackbge", "shpin_22"}                                           # (677's scene lab, 678's loose group shoot)
 MAX_TEXTS, MAX_ENTITIES = 254, 48
 
 

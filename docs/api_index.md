@@ -249,6 +249,7 @@ Field model loader section (section 2): which character models a field
   - `with_hrc(entry, hrc, name=None)` The entry using skeleton file `hrc` (e.g. "ZCLA.HRC", 8 chars), renamed to `name`.
   - `anims(entry)` Animation file names of a model entry.
   - `with_anims(entry, names)` The entry with animations `names` appended (each with the unknown
+  - `only_anims(entry, names)` The entry with exactly animations `names` (each with the unknown u16 of its first one).
   - `add_from(donor, index)` Copy model `index` from loader `donor`, rescaled from the donor
   - `add(entry)` 
   - `build()` 
@@ -914,6 +915,26 @@ The movie minigame (user's design).
 - `_director(ctx, arrive)` 
 - `apply(ctx)` 
 
+## `patches/678_group_loose.py`
+(user) The loose group shoot: see `_movie_loose` (data). A new set (LZ.FIELD, never entered otherwise,
+
+- `_mods()` 
+- `_cast()` [(key, donor (field, model), bare hrc, prefix, own stand/walk/run or None, head_down)] in GR.ORDER.
+- `_anims(ctx)` The new waiting poses (frame 0 of mission / dog / prone held: ZM<letter>5, retargeted per girl) and
+- `_world(ctx, hrc, anim, frame, x, y, z, d)` Field positions of a posed model's joints (bone ends; 'root'; 'entry' (hip frame ENTRY); for bare
+- `_supports(mesh)` Floor points and bed-top points (x, y, z, tri) on a 6-unit grid.
+- `_on(mesh, p, top, margin=4)` p (x, y) lies on the support of height top (a bed top or the floor), `margin` inside its edge.
+- `_solve(ctx, mesh, pos, gx, gys, top)` A station for a solved position: her at (gx, gy) on the support `top`, Cloud placed so his member's
+- `_tri(mesh, x, y, top)` 
+- `_stations(ctx, mesh)` Per position: [(girl (x, y, z, tri), her DIR, Cloud (x, y, z, tri), his DIR)].
+- `_path_clear(mesh, a, b, step=4)` Every point on the straight line a -> b (and 6 either side) is floor.
+- `_slots(ctx, mesh, cam, stations, floor, beds)` Per position, six slots: (x, y, z, tri, dir, anim, kind, waypoint (x, y)). Stations first (rows:
+- `_gauge_spots(ctx, mesh, cam, focus, near)` (gauge, icon, cursor line (first, step x16)) for a view centred on `focus` (as 670's group).
+- `_build(ctx, back)` 
+- `_stage(ctx, B)` Every cutaway's staging (LZ.CUTS, then the intro): each actor's slot 9 (spot, facing, pose by CI), the
+- `_director(ctx, B, back)` 
+- `apply(ctx)` 
+
 ## `patches/680_affection.py`
 (user) The affection list: Square in a field shows every Honey Bee girl's name, personality and
 
@@ -1047,6 +1068,10 @@ Quest marker models: battle-effect sprites shown in the field.
 
 ## `patches/_movie_group.py`
 (user) The movie minigame's "group" shoot, unlocked by a wrap with Aerith (star rank 6): Ruby,
+
+
+## `patches/_movie_loose.py`
+(user) The loose group shoot (678): the six co-stars and Cloud on the inn room set for about 20 minutes,
 
 
 ## `patches/_movie_profiles.py`

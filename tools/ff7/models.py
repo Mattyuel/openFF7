@@ -86,6 +86,17 @@ class ModelLoader:
         extra = b"".join(struct.pack("<H", len(n)) + n.encode("latin-1") + tail for n in names)
         return entry[:o] + struct.pack("<H", na + len(names)) + entry[o + 2:] + extra
 
+    @staticmethod
+    def only_anims(entry, names):
+        """The entry with exactly animations `names` (each with the unknown u16 of its first one)."""
+        nl, = struct.unpack_from("<H", entry, 0)
+        o = 2 + nl + 2 + 8 + 4
+        first = o + 2 + 30
+        al, = struct.unpack_from("<H", entry, first)
+        tail = entry[first + 2 + al:first + 4 + al]
+        return entry[:o] + struct.pack("<H", len(names)) + entry[o + 2:first] + \
+            b"".join(struct.pack("<H", len(n)) + n.encode("latin-1") + tail for n in names)
+
     def add_from(self, donor, index):
         """Copy model `index` from loader `donor`, rescaled from the donor
         field's scale to this one's (e.g. 650 -> 512), so it is the same size

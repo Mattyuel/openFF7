@@ -45,6 +45,7 @@ import _marker_models as mm
 from _config import HB_KID, HB_MINUTES, MOVIE_AT, MOVIE_GIRL, MOVIE_PRESSES, MOVIE_RANK, MOVIE_STATE, SPECIAL_ON
 import _movie_girls as MG
 import _movie_group as GR
+import _movie_loose as LZ
 import _movie_profiles as PF
 from _recruit import sound
 from _travel import CHOICE, beside, reuse_npc, screen_step
@@ -1801,6 +1802,8 @@ def _shoot(ctx, back, cast=None):
         if camdir is None:                                   # the cameraman faces her
             camdir = _dates()._dir_to(g[0] - cm[0], g[1] - cm[1])
         places.append(dict(girl=g, gdir=gdir, cloud=c, cdir=cdir, cam=cm, camdir=camdir, focus=focus))
+    if not cast:
+        ctx.movie_places = places                            # (678's loose group shoot: the same room's spots)
     # gauge per position: the camera centres on the (hidden) player at `focus`, clamped
     # to the scroll range; the bar sits near the top of the view, nearer the camera
     # than any floor point (drawn over everything), the cursor above it
@@ -2482,6 +2485,7 @@ def _group(ctx, back):
         cam_at[2 * n_g + k] = _spot(mesh, *GROUP_CAM[1 + b])
     for q in range(GR.PHASES * n_g):
         cam_at[q] = cam_at[q] + (_dates()._dir_to(cloud_at[q][0] - cam_at[q][0], cloud_at[q][1] - cam_at[q][1]),)
+    ctx.group_spots = dict(girl=girl_at, cloud=cloud_at, gdir=gdirs, cdir=cdirs, cam=cam_at)   # (678)
     focus = {q: (cloud_at[q][0], cloud_at[q][1], cloud_at[q][2], cloud_at[q][3]) for q in range(GR.PHASES * n_g)}
     # gauge / cursor per q (as `_shoot`)
     left, top_, right, bottom = screen_range(f.section("triggers"))
@@ -3158,7 +3162,7 @@ def _wall_market(ctx, focus):
         ops += [asm.mapjump(ctx.maplist.index(SP_.FIELDS["ruby"]), sx_, sy_, st_, 0xC0), asm.ret(), not_spec]
         solo = asm.nop()                         # (user) the group's set: bits 3 + 4 together
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], solo), asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], solo),
-                asm.mapjump(ctx.maplist.index(GROUP_FIELD), x, y, t, 0), asm.ret(), solo]
+                asm.mapjump(ctx.maplist.index(LZ.FIELD if LZ.ENABLED else GROUP_FIELD), x, y, t, 0), asm.ret(), solo]   # (678: loose)
         for g in MG.GIRLS:                       # her own set
             nxt = asm.nop()
             ops += [asm.if_byte(MOVIE_GIRL, "bit_on", g["bit"], nxt),
