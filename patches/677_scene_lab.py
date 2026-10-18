@@ -40,7 +40,7 @@ DIRECTOR = "emother"       # mds7st3 story copy (only her train-arrival scenes s
 DIRECTOR_DONOR = ("astage_b", 4)                     # the play's King (674's Booker): a showman
 DIRECTOR_AT = (-3250, 2400)                          # lower platform, left of the cameraman (screen ~(-50, 32))
 START = [(-100, -220), (100, -220)]                   # A, B on the floor
-STEP, FAST = 2, 4                                    # screen pixels a step (R2: x FAST)
+STEP, FAST = 2, 3                                    # screen pixels a frame (R2: x FAST)
 TURN = 3                                             # DIR units a step
 SETTLE = 8                                           # frames still before the readout refreshes
 SQUARE, TRIANGLE, CANCEL, OK = 0x80, 0x210, 0x240, 0x220   # IFKEY masks as the original scripts use them
@@ -54,11 +54,14 @@ def _v(e, off, word=True):
 
 X, Y, Z, D, AN = (lambda e: _v(e, 0)), (lambda e: _v(e, 2)), (lambda e: _v(e, 4)), (lambda e: _v(e, 6)), \
     (lambda e: _v(e, 8))
-M, BED, DIRTY, IDLE = (lambda e: _v(e, 10, False)), (lambda e: _v(e, 11, False)), (lambda e: _v(e, 12, False)), \
-    (lambda e: _v(e, 13, False))
+M, BED, IDLE = (lambda e: _v(e, 10, False)), (lambda e: _v(e, 11, False)), (lambda e: _v(e, 13, False))
 AX, AY, AZ, TX, TY, ZN = (lambda e: _v(e, 14)), (lambda e: _v(e, 16)), (lambda e: _v(e, 18)), \
     (lambda e: _v(e, 20)), (lambda e: _v(e, 22)), (lambda e: _v(e, 24))
-SEL, PREV, LEAVING = (5, 170), (5, 171), (5, 172)
+SEL, LEAVING = (5, 170), (5, 172)
+PRV = lambda j: (5, 190 + j)                         # press button j held last frame
+# (exe: 0x85-0x88 PLUS / PLUS2 / MINUS / MINUS2 wrap; 0x76 / 0x77 stop at 255 / 32767 and 0x79 MINUS2!
+# turns any result under +32768 into -32768: the actors jumped to -32768, user)
+ADD, SUB = 0x86, 0x88
 APPLIED = lambda k: (5, 180 + k)                     # per model: the anim it plays (255 = none)
 WIN = lambda e: 1 + e
 
@@ -140,9 +143,11 @@ def _lab(ctx):
         loader.models.append(entry)                   # (the same room: same field scale)
     nm = len(models)
     ents = {}
-    for name in ["lab%d" % k for k in range(nm)] + ["move0", "move1", "spin0", "spin1", "zfix0", "zfix1", "btn",
-                                                   "disp0", "disp1", "shut0", "shut1"]:
+    for name in ["lab%d" % k for k in range(nm)] + ["ar_" + a for a in ARROWS] + \
+            ["turn_l", "turn_r", "zfix0", "zfix1", "press0", "press1", "press2", "press3", "leave",
+             "disp0", "disp1", "shut0", "shut1"]:
         ents[name] = len(sec.entity_names)
+        assert len(name) <= 8, name
         sec.entity_names.append(name.encode("latin-1").ljust(8, b"\0"))
         sec.entry.append([None] * 32)
     CL = 3
@@ -154,22 +159,28 @@ def _lab(ctx):
     wait = lambda: hb._w(1)
     scripts = {}
 
+    # (exe 0x60CD77: an entity runs at most 8 ops a frame, NOP labels included: every loop below keeps
+    # its idle pass to a few ops, jumps aim at real ops, and each button has its own entity, so every
+    # button is read every frame; user: presses were missed when one entity polled them all)
+    again = lambda top: asm.goto_back(top)
+
     # setup (entity 0's init runs before every main)
-    init = [hb._uc(1), hb._menu(1), asm.setbyte(SEL, 0), asm.setbyte(PREV, 0), asm.setbyte(LEAVING, 0)]
+    init = [hb._uc(1), hb._menu(1), asm.setbyte(SEL, 0), asm.setbyte(LEAVING, 0)]
+    init += [asm.setbyte(PRV(j), 0) for j in range(4)]
     for e in (0, 1):
         init += [asm.setword(X(e), START[e][0] & 0xFFFF), asm.setword(Y(e), START[e][1] & 0xFFFF),
                  asm.setword(Z(e), 0), asm.setword(D(e), face), asm.setword(AN(e), 0), asm.setbyte(M(e), e),
-                 asm.setbyte(BED(e), 0), asm.setbyte(DIRTY(e), 0), asm.setbyte(IDLE(e), 0)]
+                 asm.setbyte(BED(e), 0), asm.setbyte(IDLE(e), 0)]
     init += [asm.setbyte(APPLIED(k), 255) for k in range(nm)]
     scripts[0] = {0: init + [asm.ret(), asm.ret()]}
 
     # the hidden player: the camera follows the selected actor
     top = wait()
-    follow = [top] + dt_chain(SEL, [[_xyzi_var(X(e), Y(e), Z(e), floor_tri[e])] for e in (0, 1)]) + \
-        [asm.goto_back(top)]
+    xb = _xyzi_var(X(1), Y(1), Z(1), floor_tri[1])
     sx, sy = START[0]
     scripts[CL] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), hb._xyzi(sx, sy, 0, floor_tri[0]), hb._visi(0),
-                       asm.ret()] + follow + [asm.ret()]}
+                       asm.ret(), top, asm.if_byte(SEL, "==", 0, xb), _xyzi_var(X(0), Y(0), Z(0), floor_tri[0]),
+                       again(top), xb, again(top), asm.ret()]}
     scripts[4] = {0: [Op(bytes([0xA1, 1])), hb._visi(0), asm.ret(), asm.ret()]}
 
     # the models: shown where their actor is, playing its anim
@@ -179,66 +190,77 @@ def _lab(ctx):
         n_anim = len(ModelLoader.anims(entry))
         assert n_anim <= 47, (label, n_anim)
         anim_counts.append(n_anim)
-        top, try_b, hidden, tick = wait(), asm.nop(), asm.nop(), asm.nop()
+        top = wait()
 
-        def place(e, k=k, n_anim=n_anim, tick=tick):
-            same = asm.nop()
+        def place(e, k=k, n_anim=n_anim, top=top):
+            back = again(top)
             return [_xyzi_var(X(e), Y(e), Z(e), floor_tri[e]), Op(bytes([0xB3, 5, D(e)[1]])), hb._visi(1),
-                    asm.if_byte(APPLIED(k), "==", _byte(AN(e)), same), asm.goto(tick), same,   # (same anim: done)
+                    asm.if_byte(APPLIED(k), "!=", _byte(AN(e)), back),             # (the same anim: done)
                     asm.setbyte(APPLIED(k), _byte(AN(e)))] + \
-                dt_chain(_byte(AN(e)), [loop_(i) for i in range(n_anim)]) + [asm.goto(tick)]
-        body = [top, asm.if_byte(M(0), "==", k, try_b)] + place(0) + [try_b, asm.if_byte(M(1), "==", k, hidden)] + \
-            place(1) + [hidden, hb._visi(0), asm.setbyte(APPLIED(k), 255), tick, asm.goto_back(top)]
+                dt_chain(_byte(AN(e)), [loop_(i) for i in range(n_anim)]) + [back]
+        hide = hb._visi(0)
+        on_b = place(1)
+        chk_b = asm.if_byte(M(1), "==", k, hide)
+        body = [top, asm.if_byte(M(0), "==", k, chk_b)] + place(0) + [chk_b] + on_b + \
+            [hide, asm.setbyte(APPLIED(k), 255), again(top)]
         scripts[ents["lab%d" % k]] = {0: [Op(bytes([0xA1, 2 + k])), hb._visi(0), asm.ret()] + body + [asm.ret()]}
 
-    # movement: the selected actor, a step a pass while an arrow is held
+    # arrows: one entity each; a step a frame while held (R2: faster)
+    def step(e, name, speed):
+        dx, dy = steps[name, speed]
+        ops = [hb._arith(ADD if v >= 0 else SUB, var, abs(v)) for v, var in ((dx, X(e)), (dy, Y(e))) if v]
+        return ops + [asm.setbyte(IDLE(e), 0)]
+    for name, mask in ARROWS.items():
+        top = wait()
+        idle = again(top)
+        side = {}
+        for e in (0, 1):
+            slow = step(e, name, STEP) + [again(top)]
+            side[e] = [_ifkey(R2, slow[0])] + step(e, name, STEP * FAST) + [again(top)] + slow
+        scripts[ents["ar_" + name]] = {0: [asm.ret(), top, _ifkey(mask, idle), asm.if_byte(LEAVING, "==", 0, idle),
+                                               asm.if_byte(SEL, "==", 0, side[1][0])] + side[0] + side[1] +
+                                          [idle, asm.ret()]}
+    # L1 / R1: turn (the DIR byte wraps: PLUS / MINUS, 0x85 / 0x87)
+    for nm_, mask, op in (("turn_l", L1, 0x87), ("turn_r", R1, 0x85)):
+        top = wait()
+        idle = again(top)
+        side = {e: [Op(bytes([op, 0x50, D(e)[1], TURN])), asm.setbyte(IDLE(e), 0), again(top)] for e in (0, 1)}
+        scripts[ents[nm_]] = {0: [asm.ret(), top, _ifkey(mask, idle), asm.if_byte(LEAVING, "==", 0, idle),
+                                  asm.if_byte(SEL, "==", 0, side[1][0])] + side[0] + side[1] + [idle, asm.ret()]}
+    # height: the floor, or (bed on) the top of the bed under it
     for e in (0, 1):
-        top, back, fast, moved = wait(), asm.nop(), asm.nop(), asm.nop()
-
-        def arrows(speed, e=e, moved=moved):
-            ops = []
-            for name, mask in ARROWS.items():
-                dx, dy = steps[name, speed]
-                skip = asm.nop()
-                ops += [_ifkey(mask, skip), hb._arith(0x77 if dx >= 0 else 0x79, X(e), abs(dx)),
-                        hb._arith(0x77 if dy >= 0 else 0x79, Y(e), abs(dy)), asm.setbyte(IDLE(e), 0),
-                        asm.setbyte(DIRTY(e), 1), skip]
-            return ops
-        normal = asm.nop()
-        scripts[ents["move%d" % e]] = {0: [asm.ret(), top, asm.if_byte(SEL, "==", e, back),
-                                           asm.if_byte(LEAVING, "==", 0, back), _ifkey(R2, normal)] +
-                                       arrows(STEP * FAST) + [asm.goto(back), normal] + arrows(STEP) +
-                                       [back, asm.goto_back(top), asm.ret()]}
-        top, back = wait(), asm.nop()
-        spin = []
-        for mask, op in ((L1, 0x78), (R1, 0x76)):        # MINUS! / PLUS!: the DIR byte wraps
-            skip = asm.nop()
-            spin += [_ifkey(mask, skip), Op(bytes([op, 0x50, D(e)[1], TURN])), asm.setbyte(IDLE(e), 0),
-                     asm.setbyte(DIRTY(e), 1), skip]
-        scripts[ents["spin%d" % e]] = {0: [asm.ret(), top, asm.if_byte(SEL, "==", e, back),
-                                           asm.if_byte(LEAVING, "==", 0, back)] + spin + [back, asm.goto_back(top),
-                                                                                         asm.ret()]}
-        # height: the floor, or (bed on) the top of the bed under it
-        top, floor = wait(), asm.nop()
-        zf = [asm.ret(), top, asm.if_byte(BED(e), "==", 1, floor), asm.setword(TX(e), X(e)),
-              hb._arith(0x77, TX(e), 0x8000), asm.setword(TY(e), Y(e)), hb._arith(0x77, TY(e), 0x8000),
-              asm.setword(ZN(e), 0)]
+        top = wait()
+        floor = asm.setword(Z(e), 0)
+        done = asm.setword(Z(e), ZN(e))
+        rects = []
         for x0, x1, y0, y1, h in beds:
-            off = asm.nop()
-            zf += [asm.if_word(TX(e), ">=", x0 + 0x8000, off), asm.if_word(TX(e), "<=", x1 + 0x8000, off),
-                   asm.if_word(TY(e), ">=", y0 + 0x8000, off), asm.if_word(TY(e), "<=", y1 + 0x8000, off),
-                   asm.setword(ZN(e), h), off]
-        zf += [asm.setword(Z(e), ZN(e)), asm.goto_back(top), floor, asm.setword(Z(e), 0), asm.goto_back(top), asm.ret()]
+            rects.append([(TX(e), ">=", x0), (TX(e), "<=", x1), (TY(e), ">=", y0), (TY(e), "<=", y1), h])
+        blocks = []
+        for i, r in enumerate(rects):
+            blocks.append([None] * 4 + [asm.setword(ZN(e), r[4])])
+        for i, r in enumerate(rects):
+            nxt = blocks[i + 1][0] if i + 1 < len(rects) else done
+            for c in range(4):
+                v, cmp, lim = r[c]
+                blocks[i][c] = asm.if_word(v, cmp, (lim + 0x8000) & 0xFFFF, None)
+        for i in range(len(blocks)):
+            nxt = blocks[i + 1][0] if i + 1 < len(blocks) else done
+            for c in range(4):
+                blocks[i][c].target = nxt
+        zf = [asm.ret(), top, asm.if_byte(BED(e), "==", 1, floor), asm.setword(TX(e), X(e)),
+              hb._arith(ADD, TX(e), 0x8000), asm.setword(TY(e), Y(e)), hb._arith(ADD, TY(e), 0x8000),
+              asm.setword(ZN(e), 0)] + [o for b in blocks for o in b] + [done, again(top), floor, again(top), asm.ret()]
         scripts[ents["zfix%d" % e]] = {0: zf}
 
-    # buttons (pressed: up -> down, bit j of PREV = held last pass)
+    # presses: one entity each (PRV(j) = held last frame)
     def act(e, what):
         o = 1 - e
         if what == "model":
-            ok1, ok2, ok3 = asm.nop(), asm.nop(), asm.nop()
-            return [Op(bytes([0x85, 0x50, M(e)[1], 1])), asm.if_byte(M(e), ">=", nm, ok1), asm.setbyte(M(e), 0), ok1,
-                    asm.if_byte(M(e), "==", M(o), ok3), Op(bytes([0x85, 0x50, M(e)[1], 1])),
-                    asm.if_byte(M(e), ">=", nm, ok2), asm.setbyte(M(e), 0), ok2, ok3, asm.setword(AN(e), 0)]
+            chk, same = asm.if_byte(M(e), "==", M(o), None), asm.setword(AN(e), 0)
+            chk.target = same
+            return [Op(bytes([0x85, 0x50, M(e)[1], 1])), asm.if_byte(M(e), ">=", nm, chk), asm.setbyte(M(e), 0), chk,
+                    Op(bytes([0x85, 0x50, M(e)[1], 1])),                   # (the other actor's: the next one)
+                    asm.if_byte(M(e), ">=", nm, same), asm.setbyte(M(e), 0), same]
         if what == "anim":
             wraps = []
             for k in range(nm):
@@ -246,38 +268,39 @@ def _lab(ctx):
                 wraps.append([asm.if_byte(_byte(AN(e)), ">=", anim_counts[k], keep), asm.setword(AN(e), 0), keep])
             return [Op(bytes([0x85, 0x50, AN(e)[1], 1]))] + dt_chain(M(e), wraps)
         if what == "bed":
-            on = asm.nop()
+            off = asm.setbyte(BED(e), 0)
             done = asm.nop()
-            return [asm.if_byte(BED(e), "==", 0, on), asm.setbyte(BED(e), 1), asm.goto(done), on,
-                    asm.setbyte(BED(e), 0), done]
-    dirty = lambda e: [asm.setbyte(DIRTY(e), 1), asm.setbyte(IDLE(e), 0)]
-    top = wait()
-    btn = [asm.ret(), top, asm.bitoff((1, 213), 2)]   # (680's Square flag: no affection list here or later)
+            return [asm.if_byte(BED(e), "==", 0, off), asm.setbyte(BED(e), 1), asm.goto(done), off, done]
     for j, (mask, what) in enumerate(((SQUARE, "model"), (TRIANGLE, "anim"), (CANCEL, "bed"), (OK, "select"))):
-        up, held, nxt = asm.nop(), asm.nop(), asm.nop()
+        top = wait()
+        back = again(top)
         if what == "select":
-            one, done = asm.nop(), asm.nop()
-            body = [asm.if_byte(SEL, "==", 0, one), asm.setbyte(SEL, 1), asm.goto(done), one, asm.setbyte(SEL, 0),
-                    done] + dirty(0) + dirty(1)
+            one, marks = asm.setbyte(SEL, 0), asm.setbyte(IDLE(0), 0)
+            body = [asm.if_byte(SEL, "==", 0, one), asm.setbyte(SEL, 1), asm.goto(marks), one, marks,
+                    asm.setbyte(IDLE(1), 0)]
         else:
-            body = dt_chain(SEL, [act(e, what) + dirty(e) for e in (0, 1)])
-        # (IFKEY's jump is one byte: it hops to the release path, the body is reached by a goto)
-        btn += [_ifkey(mask, up), asm.goto(held), up, asm.bitoff(PREV, j), asm.goto(nxt),
-                held, asm.if_byte(PREV, "bit_off", j, nxt), asm.biton(PREV, j)] + body + [nxt]
+            body = dt_chain(SEL, [act(e, what) + [asm.setbyte(IDLE(e), 0)] for e in (0, 1)])
+        flag = lambda: [asm.bitoff((1, 213), 2)] if mask == SQUARE else []   # (680's Square flag: no affection list later)
+        rel = asm.setbyte(PRV(j), 0)
+        held = asm.if_byte(PRV(j), "==", 0, back)
+        ops = [asm.ret(), top, _ifkey(mask, rel), asm.goto(held), rel] + flag() + [again(top), held,
+               asm.if_byte(LEAVING, "==", 0, back), asm.setbyte(PRV(j), 1)] + flag() + body + [back]
+        scripts[ents["press%d" % j]] = {0: ops + [asm.ret()]}
     # L2 + R2: leave (asks first)
-    stay, both = asm.nop(), asm.nop()
+    top = wait()
+    idle = again(top)
     rx, ry, rz, rt = ctx.lab_back
     text = "Director\n“That's a wrap?”"
     ask, first = hb._ask(sec, text, ["Back to the station.", "Keep going."])
     ask[0] = hb._window(text + "\n{CHOICE}Back to the station.\n{CHOICE}Keep going.", 0, 90, 120)
-    gone = asm.nop()
-    l2 = asm.nop()
-    btn += [_ifkey(L2, stay), _ifkey(R2, stay), asm.goto(both), stay, asm.goto_back(top), both,
-            asm.setbyte(LEAVING, 1)] + ask + \
-        [asm.if_byte((5, 241), "!=", first, gone), asm.setbyte(LEAVING, 0), asm.goto_back(top), gone,   # (first = leave)
-         asm.bitoff((1, 213), 2), Op(b"\x54\x01"), Op(b"\x54\x02"), hb._uc(0), hb._menu(0),
-         mapjump(ctx, STATION, rx, ry, rt, 0), l2, hb._w(30), asm.goto_back(l2), asm.ret()]
-    scripts[ents["btn"]] = {0: btn}
+    gone = asm.bitoff((1, 213), 2)
+    stay = asm.setbyte(LEAVING, 0)
+    wait30 = hb._w(30)
+    go = asm.setbyte(LEAVING, 1)
+    scripts[ents["leave"]] = {0: [asm.ret(), top, _ifkey(L2, idle), _ifkey(R2, idle), asm.goto(go), idle, go] + ask +
+                              [asm.if_byte((5, 241), "!=", first, gone), stay, again(top),       # (first = leave)
+                               gone, Op(b"\x54\x01"), Op(b"\x54\x02"), hb._uc(0), hb._menu(0),
+                               mapjump(ctx, STATION, rx, ry, rt, 0), wait30, asm.goto_back(wait30), asm.ret()]}
 
     # the readouts
     texts = {}
@@ -297,7 +320,7 @@ def _lab(ctx):
         for c, a in ((X(e), AX(e)), (Y(e), AY(e)), (Z(e), AZ(e))):
             neg, done = asm.nop(), asm.nop()
             ops += [asm.if_word(c, "<", 0x8000, neg), asm.setword(a, c), asm.goto(done), neg, asm.setword(a, 0),
-                    hb._arith(0x79, a, c), done]
+                    hb._arith(SUB, a, c), done]
 
         def show(k, e=e):
             tid, marks = texts[e, k]
@@ -319,11 +342,11 @@ def _lab(ctx):
             return o + [asm.message(WIN(e), tid)]
         ops += dt_chain(M(e), [show(k) for k in range(nm)]) + [hb._w(1), asm.goto_back(top), asm.ret()]
         scripts[ents["disp%d" % e]] = {0: ops}
-        top, back = wait(), asm.nop()
-        scripts[ents["shut%d" % e]] = {0: [asm.ret(), top, Op(bytes([0x85, 0x50, IDLE(e)[1], 1])),
-                                           asm.if_byte(DIRTY(e), "==", 1, back),
-                                           asm.if_byte(IDLE(e), ">=", SETTLE, back), asm.setbyte(DIRTY(e), 0),
-                                           Op(bytes([0x54, WIN(e)])), back, asm.goto_back(top), asm.ret()]}
+        top = wait()
+        back = again(top)
+        scripts[ents["shut%d" % e]] = {0: [asm.ret(), top, Op(bytes([0x76, 0x50, IDLE(e)[1], 1])),   # (PLUS!: stops at 255)
+                                           asm.if_byte(IDLE(e), "==", SETTLE, back), Op(bytes([0x54, WIN(e)])), back,
+                                           asm.ret()]}
 
     dt._blank(sec, scripts)
     f.set_section("models", loader.build())
