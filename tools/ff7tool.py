@@ -560,6 +560,60 @@ def build(args):
     for path in changed:
         full = os.path.join(out, path)
         print("    %-35s %d bytes" % (path, os.path.getsize(full)))
+    if not args.no_install:
+        install(out, changed)
+
+
+GUARD = "FINAL FANTASY VII-openff7"     # (user) a folder of this name beside the game folder = don't install
+
+
+def _steam_game_dirs():
+    """Candidate Steam installs of the game: OPENFF7_GAME, install_path.txt (repo root), Steam's
+    default libraries and the ones its libraryfolders.vdf lists."""
+    out = []
+    if os.environ.get("OPENFF7_GAME"):
+        out.append(os.environ["OPENFF7_GAME"])
+    cfg = os.path.join(ROOT, "install_path.txt")
+    if os.path.exists(cfg):
+        out += [l.strip() for l in open(cfg, encoding="utf-8") if l.strip() and not l.startswith("#")]
+    steams = [os.path.expandvars(r"%ProgramFiles(x86)%\Steam"), os.path.expandvars(r"%ProgramFiles%\Steam"),
+              r"C:\Program Files (x86)\Steam", os.path.expanduser("~/.steam/steam"),
+              os.path.expanduser("~/.local/share/Steam")]
+    libs = []
+    for st in steams:
+        libs.append(st)
+        vdf = os.path.join(st, "steamapps", "libraryfolders.vdf")
+        if os.path.exists(vdf):
+            for line in open(vdf, encoding="utf-8", errors="replace"):
+                w = line.strip().split('"')
+                if len(w) >= 4 and w[1] == "path":
+                    libs.append(w[3].replace("\\\\", "\\"))
+    out += [os.path.join(lib, "steamapps", "common", "FINAL FANTASY VII") for lib in libs]
+    return out
+
+
+def install(out, changed):
+    """(user) Copy the changed game files into the Steam game folder, unless a folder named GUARD sits
+    beside it. Never into this repo's own game data (the build's read-only input)."""
+    own = os.path.realpath(os.path.dirname(GAME))
+    target = None
+    for d in _steam_game_dirs():
+        if os.path.isfile(os.path.join(d, "ff7_en.exe")) and os.path.realpath(d) != own:
+            target = d
+            break
+    if target is None:
+        print("install: no Steam game folder found (set OPENFF7_GAME or write its path in install_path.txt); "
+              "not installed")
+        return
+    guard = os.path.join(os.path.dirname(os.path.abspath(target)), GUARD)
+    if os.path.exists(guard):
+        print("install: %s exists; not installed" % guard)
+        return
+    for path in changed:
+        dst = os.path.join(target, *path.split("/"))
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy2(os.path.join(out, path), dst)
+    print("installed %d file(s) into %s" % (len(changed), target))
 
 
 WM_MODELS = {  # world map model ids (function id 0x4000 | model << 8 | n). UNVERIFIED: from community docs, some look wrong
@@ -917,6 +971,7 @@ def main():
     co.set_defaults(func=char_overrides)
     b = sub.add_parser("build")
     b.add_argument("--out", help="default build/openFF7 (build/openFF7_debug with --debug)")
+    b.add_argument("--no-install", action="store_true", help="don't copy the changed files into the Steam game folder")
     b.add_argument("--debug", action="store_true",
                    help="also apply patches/debug/ (L1+R1 debug menu in every field); writes build/openFF7_debug")
     b.set_defaults(func=build)

@@ -37,6 +37,8 @@ openFF7 command-line tool.
 - `api_index(args)` Regenerate docs/api_index.md (signatures + docstring summaries).
 - `_verify_build(flevel_path)` Re-read the written flevel.lgp and check the new game is patched.
 - `build(args)` Apply patches/ and write the game folder to build/openFF7. All or nothing:
+- `_steam_game_dirs()` Candidate Steam installs of the game: OPENFF7_GAME, install_path.txt (repo root), Steam's
+- `install(out, changed)` (user) Copy the changed game files into the Steam game folder, unless a folder named GUARD sits
 - `_wm_function_name(fid)` 
 - `write_worldmap(names)` 
 - `scenes(args)` Simulate entering each field of the last build (new-game state) and list
