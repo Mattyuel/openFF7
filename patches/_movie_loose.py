@@ -279,6 +279,12 @@ CUTS = [
               "Scarlet\n“...Kyahaha. Touché.”"),
 ]
 CUT_FADE = 8                  # frames: the cutaway's fade (as the group's staged scenes)
+# the intro: everyone standing round the cameraman (screen offsets from STAGE, as a cutaway's `set`)
+INTRO_SET = {"camera": (-45, -20, "stand", "centre"), "cloud": (15, 5, "stand", "camera"),
+             "ruby": (-15, 12, "stand", "camera"), "skye": (40, 12, "stand", "camera"),
+             "elena": (-40, 15, "stand", "camera"), "scarlet": (60, -5, "stand", "camera"),
+             "tifa": (20, 25, "stand", "camera"), "aerith": (-5, 30, "stand", "camera")}
+MUSIC = None                  # (None: the movie's, 670 MUSIC)
 
 END_TALK = ("Tifa\n“Well. That was... a LOT.”{NEW}"
             "Ruby\n“Same time next week?”{NEW}"
