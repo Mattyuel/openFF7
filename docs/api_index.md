@@ -951,6 +951,25 @@ The movie minigame (user's design).
 - `_poses(ctx)` The beach's own poses (Ruby's skeleton / bare Cloud) and the girls' copies (670 `_retarget`).
 - `apply(ctx)` 
 
+## `patches/679_chamber.py`
+(user) The chamber: the loose group shoot's engine (`_loose_engine`, chamber mode) in the Ghost Hotel's
+
+- `_mods()` 
+- `_floor_tri(mesh, x, y)` 
+- `_bed_tri(mesh, b)` 
+- `_in_bed(p, b, margin=3)` 
+- `_home(k)` 
+- `_supports(S, mesh)` 
+- `_on(S, mesh, p, top, margin=4)` 
+- `_rel(ctx, pos)` (dx, dy, Cloud's z above hers, rel DIR, her lift above the bed): Cloud's spot from hers (her DIR 0).
+- `_stations(S, ctx, mesh, cam)` 
+- `_slots_fn(S, ctx, mesh, cam, stations, floor, beds)` Every position: the six homes (standing / kneeling, facing down the room: DIR 0); the cameraman fixed.
+- `_walks(mesh)` 
+- `_make_field(S, ctx)` ghotin_2 copied: entities produce / direct (the candles) / ad (the lightning) / cloud / child.
+- `_sprites(S, ctx, loader, mesh, cam, near)` 
+- `_poses(ctx)` 
+- `apply(ctx)` 
+
 ## `patches/680_affection.py`
 (user) The affection list: Square in a field shows every Honey Bee girl's name, personality and
 
@@ -1011,13 +1030,11 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_turned_frames(ctx, hrc, src, bones, angle, test)` src's frames with `bones` (world) turned about the model's side axis at the root by +-angle, the sense
 - `_save(ctx, name, sk, frames, base)` 
 - `_arms_to(ctx, sk, frames, targets, pole_out)` Each frame's arms re-aimed (two-bone IK, elbows `pole_out` sideways and back) so the forearm's end
-- `girl_recline(ctx)` ZMX0-3 (Ruby's skeleton) from ZMA0-3.
 - `to_field(m, at, d)` 
 - `to_model(p, at, d)` 
 - `ends(ctx, hrc, anim, t)` {bone: end} (and bone + '@' = its start, 'root') in model space, frame t.
 - `sunbed_offset(ctx, her_dir=0)` Her XYZI offset (dx, dy, dz) from his in the sunbed (his DIR 0, hers her_dir): her root W_RIDE above his.
 - `lounge_at(ctx, name, hrc, stand, off)` `lounge` with the root moved by -off (field units, DIR 0): played at a rider's spot (his + off) she
-- `cloud_kneel_up(ctx)` ZNX0-3 from ZNA0-3: upper body turned KNEEL_UP back, head HEAD_FWD down again; hands on her thighs
 - `cloud_sunbed(ctx, name='ZNW', her_dir=0)` ZNW0-3 (`name`): Cloud lounging (CLOUD_BACK), his root moving as ZNB<k>'s (the cowgirl's beat, same
 - `build(ctx)` Every beach pose on Ruby's skeleton / bare Cloud's (the girls' retargeted by 679).
 - `girl_knees(ctx)` ZMY0-3 from ZMD0-3: hands on her knees (KNEE_HANDS up the thigh, a little out to the side).
@@ -1043,6 +1060,34 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `exhaust_carry(ctx)` ZNUK (bare Cloud: 620's koala stand ZCTH with his knees bent to EX_LOW) and ZMUK (her koala hug
 - `exhaust(ctx)` ZGUA: Cid behind her in the lowered holding (`exhaust_carry`: ZNUK / ZMUK; she shares Cloud's spot,
 - `_stand0(ctx)` 
+
+## `patches/_chamber.py`
+(user) The chamber (679_chamber): the loose group shoot's engine in its chamber mode in the Gold Saucer Ghost
+
+
+## `patches/_chamber_poses.py`
+(user) The chamber's poses (679_chamber), built from scratch or from the movie's (girls on Ruby's skeleton,
+
+- `_fa()` 
+- `_mods()` 
+- `e_of(t, n)` 0 at frame 0 (pulled back) .. 1 at n/2 (deepest), eased.
+- `_ik_arms(fa, sk, rr, root, W, targets, pole)` Both arms re-aimed so each wrist (forearm's end) reaches targets[s] (pulled in to 0.97 of the arm when
+- `_ends(fa, sk, rr, root, W)` 
+- `_kneel(ctx, hrc, stand, tilt=0.0, spread=0.0)` Kneeling up from the stand pose's frame 0: thighs `tilt` forward of straight down and `spread` out to
+- `_swing(fa, sk, rr, root, W, angle, bones_legs=True)` The thighs (and the pelvis' hip bones) swung `angle` about the knee line, the upper body only moved
+- `_save(ctx, name, base, frames)` 
+- `_frame(fa, sk, rr, root, W)` 
+- `stand_bound(ctx, name, hrc, stand)` <name>: standing (her stand's frame 0), wrists together OVERHEAD above her head (one frame).
+- `kneel_behind(ctx, name, hrc, stand)` <name>: kneeling up, wrists together BEHIND her pelvis (one frame).
+- `to_field(m, at, d)` 
+- `_tip(ctx, root, W, sk, rr)` Cloud's member tip (620 zcmp.p on the hip bone) in model space.
+- `_entry(fa, sk, rr, root, W)` 
+- `chained(ctx)` ZMW0-3 / ZNK0-3.
+- `offering(ctx)` ZMX0-3 / ZNN0-3 (not K / L: ZMK0 / ZML0 are the movie's still poses).
+- `_to_model(p, at, d)` 
+- `mating_press(ctx)` ZMZ0-3 from ZMA0-3 (Cloud: ZNA, the mission's placement).
+- `throne(ctx)` ZNM0-3: ZNB's frame 0 held (one frame); PLACE["throne"]: Cloud's XYZI from hers (she DIR = his).
+- `build(ctx)` 
 
 ## `patches/_cid.py`
 (user) Cid as a friend: hang-outs (660's date places, no intimacy ending), gifts, affection (0-20,

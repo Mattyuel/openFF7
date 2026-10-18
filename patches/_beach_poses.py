@@ -6,11 +6,8 @@ girl by 670 `_retarget`) and bare Cloud's:
   ZNV0-3   as ZNW, she facing him (DIR + 128): the reverse sunbed
   ZNW0-3   "sunbed": Cloud lounging (CLOUD_BACK), hips rising and falling with the cowgirl's beat (ZNB's root
            motion), hands on her hips (two-bone IK) - she rides him in ZMB (the movie's cowgirl)
-  (not built: from the beach's camera Cloud's back hid her)
-  ZMX0-3   "lounger mission": the mission girl (ZMA) with her upper body turned RECLINE up about her pelvis,
-           lying back against the lounger's backrest
-  ZNX0-3   Cloud kneeling up for it: the mission Cloud (ZNA) with his upper body turned KNEEL_UP back, hands
-           on her knees (two-bone IK)
+  (a lounger mission - her reclined on the backrest, Cloud kneeling up - was tried and dropped: from the
+  beach's camera Cloud's back hid her; ZMX / ZNX are the chamber's now)
   ZMY0-3   "waves": the edge girl (ZMD, bent forward standing) with her hands on her knees (two-bone IK)
            instead of on a bed - in the shallows with the edge Cloud (ZND) behind her
 Checked on offline renders only."""
@@ -18,9 +15,6 @@ import math
 
 LOUNGE_BACK = 42        # degrees the upper body leans back from upright (the loungers' backrests: ~50 from level)
 CLOUD_BACK = 42
-RECLINE = 48            # degrees her upper body turns up from lying flat (the backrest)
-KNEEL_UP = 58           # degrees Cloud's upper body turns back from the mission lean (about upright)
-HOLD_UP = 0.6           # Cloud's hands this far up her thigh from the knee (0 knee .. 1 hip)
 KNEE_HANDS = 0.25       # (waves) her hands this far up her thigh from the knee
 
 
@@ -125,22 +119,8 @@ def _arms_to(ctx, sk, frames, targets, pole_out):
     return out
 
 
-def girl_recline(ctx):
-    """ZMX0-3 (Ruby's skeleton) from ZMA0-3."""
-    mv, _, _, _ = _mods()
-    fa = _fa()
-    sk = fa.skeleton(ctx.char_file(mv.RUBY_HRC.lower()).decode("latin-1"))
-    upper = _below(sk, "hip")
-    for k in range(4):
-        sk_, frames, _ = _turned_frames(ctx, mv.RUBY_HRC, "zma%d.a" % k, upper, RECLINE,
-                                        lambda e0, e1: e1["head"][1] < e0["head"][1] - 1)       # (y down) head up
-        _save(ctx, "ZMX%d" % k, sk_, frames, "zma%d.a" % k)
-
-
 UNIT = 3.41
-X_CLOUD = (0, 34, -4, 128)      # lounger mission: Cloud's XYZI / DIR from hers (DIR 0): the mission's (670)
 W_RIDE = 10                     # sunbed: her root this far above his (the cowgirl's on a bed)
-HEAD_FWD = 35                   # (lounger mission) his head turned back down this much to look at her
 
 
 def to_field(m, at, d):
@@ -190,45 +170,6 @@ def lounge_at(ctx, name, hrc, stand, off):
     A.frames = [(rr, [rp[0] - off[0] / UNIT, rp[1] - off[2] / UNIT, rp[2] + off[1] / UNIT], rots)
                 for rr, rp, rots in A.frames]
     ctx.char_file(name.lower() + ".a", A.build())
-
-
-def cloud_kneel_up(ctx):
-    """ZNX0-3 from ZNA0-3: upper body turned KNEEL_UP back, head HEAD_FWD down again; hands on her thighs
-    (ZMX's, HOLD_UP from the knee; his left on her right), X_CLOUD from her."""
-    mv, hb, _, _ = _mods()
-    fa = _fa()
-    sk = fa.skeleton(ctx.char_file(hb.CLOUD_BARE_HRC.lower()).decode("latin-1"))
-    names = [b[0] for b in sk]
-    upper = _below(sk, "hip")
-    head = _below(sk, "head")
-    at, d = X_CLOUD[:3], X_CLOUD[3]
-
-    def thighs(k, t):
-        e = ends(ctx, mv.RUBY_HRC, "zmx%d.a" % k, t)
-        out = {}
-        for mine, hers in (("l", "r"), ("r", "l")):
-            knee, hip = e[hers + "_femur"], e[hers + "_femur@"]
-            p = [knee[i] + (hip[i] - knee[i]) * HOLD_UP for i in range(3)]
-            out[mine] = to_model(to_field(p, (0, 0, 0), 0), at, d)
-        return out
-    for k in range(4):
-        sk_, frames, _ = _turned_frames(ctx, hb.CLOUD_BARE_HRC, "zna%d.a" % k, upper, KNEEL_UP,
-                                        lambda e0, e1: e1["head"][1] < e0["head"][1] - 1)
-        looked = []
-        for rr, rp, W in frames:                  # the head back down towards her
-            root = [rp[0], -rp[1], rp[2]]
-            side = fa._vec(W[names.index("head")], [1.0, 0.0, 0.0])
-            best = None
-            for sg in (1, -1):
-                R = fa.axis_angle(side, sg * HEAD_FWD)
-                M = [fa._mul(R, m) if names[i] in head else m for i, m in enumerate(W)]
-                e = fa.forward(sk, rr, root, fa.local_rotations(sk, rr, M))
-                z = e[names.index("head")][2][2]            # (model -z = forward: towards her)
-                if best is None or z < best[0]:
-                    best = (z, M)
-            looked.append((rr, rp, best[1]))
-        frames = _arms_to(ctx, sk_, looked, lambda t, e: thighs(k, t), 0.8)
-        _save(ctx, "ZNX%d" % k, sk_, frames, "zna%d.a" % k)
 
 
 def cloud_sunbed(ctx, name="ZNW", her_dir=0):

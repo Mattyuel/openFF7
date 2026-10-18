@@ -49,6 +49,11 @@ class Set:
         self.D, self.FIELD, self.LET, self.HOLD_L, self.WAIT_L = D, FIELD, LET, HOLD_L, WAIT_L
         self.CLET = CLET or LET              # Cloud's pose letters (LET: the girls'); HOLD_L in both
         self.extra = list(extra)
+        # (the chamber, 679_chamber) chamber=True: each girl has her home (slots_fn) and her bed (bed_of);
+        # one girl a segment, each once (the shoot ends when all are chosen); before her turn Cloud walks up
+        # to her (walks[k]: start, stop spots (x, y, z, tri), his DIR; look[k]: the camera's focus) and
+        # chooses her (D.CHOOSE, her D.REPLIES); she then goes to her bed's station
+        self.chamber, self.slots_fn = False, None
         self.__dict__.update(hooks)
         # a girl's anims (the same for all six): stand / walk / run, the still poses (lie A, kneel A, lie B,
         # kneel B), the extra still poses, per pose letter its slow and fast speed, the waiting poses, per
@@ -79,6 +84,8 @@ CA = (5, 239)
 USEDC = [(5, 247), (5, 248), (5, 249)]               # cutaways played (bits)
 RND3, USEDG, PRES, TS, STN, PICK = ((5, a) for a in range(250, 256))
 NMIN, NSPAN = (5, 193), (5, 194)
+CH = (5, 169)                                        # (the chamber) the girl Cloud is choosing
+WALK_STEP = 2.2                                      # (the chamber) field units Cloud walks a frame
 WALKING, WRND, WAITED = (5, 166), (5, 167), (5, 168)  # girls mid-stroll (bits), their own random, a timeout
 PLACE_WAIT = 30                                      # frames black while everyone is placed (a girl's slot 2
                                                      # runs ~95 ops: 12 frames at 8 a frame; user saw moves)
@@ -373,7 +380,7 @@ def _build(S, ctx, back):
     # spots
     floor, beds = S.supports(S, mesh)
     stations = S.stations(S, ctx, mesh, cam)
-    slots, cams, views = _slots(S, ctx, mesh, cam, stations, floor, beds)
+    slots, cams, views = (S.slots_fn or _slots)(S, ctx, mesh, cam, stations, floor, beds)
     combos, qbase = [], []                               # QI = qbase[position] + the engaged girl's station
     for p, st in enumerate(stations):
         qbase.append(len(combos))
@@ -428,6 +435,26 @@ def _build(S, ctx, back):
         5: ch(HLI, [loop_(S.C_HOLD + 2 * h + 1) for h in range(len(S.HOLD_L))]) + [asm.ret()],
         7: ch(HLI, [mv.lesson_slot(S.C_LESSON + h, S.C_HOLD + 2 * h) for h in range(len(S.HOLD_L))]) + [asm.ret()]}
 
+    if S.chamber:
+        # Cloud: slot 10 stands at the walk's start (by CH), slot 8 walks to the stop: XYZI stepped a frame at a
+        # time (the floor between the beds isn't walkmesh: no MOVE), the walk anim, then stands facing her
+        CX, CY, CN = (6, 208), (6, 210), (5, 212)
+        pre, walk = [], []
+        for k in range(len(GR.ORDER)):
+            (sx, sy, sz, st), (tx, ty, tz, tt), d = S.walks[k]
+            n = max(1, round(math.dist((sx, sy), (tx, ty)) / WALK_STEP))
+            stx, sty = round((tx - sx) / n), round((ty - sy) / n)
+            top, done_ = hb._w(1), asm.nop()
+            pre.append([xyzi(sx, sy, sz, st), d_(d), hb._visi(1)] + loop_(0))
+            walk.append([asm.setword(CX, sx & 0xFFFF), asm.setword(CY, sy & 0xFFFF), asm.setbyte(CN, 0)] + loop_(1) +
+                        [top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
+                         Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], round(sz), st)),
+                         Op(bytes([0x95, CN[0], CN[1]])), asm.if_byte(CN, "<", n, done_), asm.goto_back(top),
+                         done_, xyzi(tx, ty, tz, tt), d_(d)] + loop_(0))
+        scripts[ents["cloudb"]][10] = ch(CH, pre) + [asm.ret()]
+        scripts[ents["cloudb"]][8] = ch(CH, walk) + [asm.ret()]
+        scripts[CL][8] = ch(CH, [[xyzi(*S.look[k])] for k in range(len(GR.ORDER))]) + [asm.ret()]
+
     # the girls: slot 2 placed by her slot (GS) + her anim (engaged: the pose's speed, else the slot's
     # waiting anim); a strolling watcher keeps strolling (placed only at a segment's start, SEGPLACE); 3 her
     # anim if engaged (the speed); 4 / 5 / 6 the stop poses / her try (engaged); 7 walked off; main: the stroll
@@ -444,7 +471,12 @@ def _build(S, ctx, back):
         place += ch(GS(k), [[xyzi_var(s), Op(bytes([0xB3, 5, SLOT(s, 6)[1]])), hb._visi(1),
                              asm.setbyte(GA(k), (5, SLOT(s, 8)[1]))] for s in range(6)])
         play_at = asm.nop()
-        place += [asm.if_byte(mv.E, "==", k, not_eng)] + eng + [not_eng, play_at] + play(GA(k), S.G_COUNT) + [asm.ret()]
+        station = []
+        if S.chamber:                                     # (the chamber: she goes to her bed's station)
+            b_ = S.bed_of[k]
+            station = by_p(lambda p: [xyzi(*stations[p][b_][0]), d_(stations[p][b_][1])])
+        place += [asm.if_byte(mv.E, "==", k, not_eng)] + station + eng + [not_eng, play_at] + \
+            play(GA(k), S.G_COUNT) + [asm.ret()]
         speed = [asm.if_byte(mv.E, "==", k, anim)] + eng + [asm.goto_back(play_at), anim, asm.ret()]   # (slot 2's switch)
 
         def stop(kind, k=k):
@@ -723,6 +755,8 @@ def _director(S, ctx, B, back):
             asm.setbyte(SPD, 0), asm.setbyte(HOLDP, 0), asm.setbyte(ORALP, 0), asm.setbyte(HLI, 0),
             asm.setbyte(WALKING, 0)] + \
         [asm.setbyte(v, 0) for v in USEDC] + [asm.setbyte(mv._ann(k), 0) for k in range(n_g)]
+    if S.chamber:                                    # (each girl her own home slot; nobody chosen yet)
+        main += [asm.setbyte(GS(k), k) for k in range(n_g)] + [asm.setbyte(USEDG, 0)]
     # the intro: everyone standing round the cameraman (the intro staging is the last CI)
     main += [asm.setbyte(CI, NC)] + stage_all() + [hb._w(12), Op(hb.FADE_IN), Op(b"\x6C")]
     main += hb._say(sec, GR.INTRO_TALK) + choose(GR.INTRO_ASK, GR.INTRO_CHOICES)
@@ -749,6 +783,8 @@ def _director(S, ctx, B, back):
         main += [asm.if_byte(NSPAN, "==", sp, nx), Op(bytes([0x8D, RND3[0] << 4, RND3[1], sp])),
                  Op(bytes([0x85, 0x55, NPART[1], RND3[1]])), nx]
     main += [chosen, asm.setbyte(LASTP, PI)]
+    if S.chamber:
+        main += [asm.setbyte(NPART, 1)]
     # girls still here (PRES); none = everyone walked
     walkout = asm.nop()
     main += [asm.setbyte(PRES, 0)]
@@ -756,10 +792,19 @@ def _director(S, ctx, B, back):
         nx = asm.nop()
         main += [asm.if_byte(LEFT, "bit_off", k, nx), Op(bytes([0x95, PRES[0], PRES[1]])), nx]
     fits = asm.nop()
-    main += [asm.if_byte(PRES, "!=", 0, walkout), asm.if_byte(NPART, ">", PRES, fits), asm.setbyte(NPART, PRES), fits,
-             asm.setbyte(USEDG, LEFT)]
-    for i in range(n_g):
-        main += [hb._req(ents["util"], 2), asm.setbyte(ORD(i), PICK)]
+    main += [asm.if_byte(PRES, "!=", 0, walkout), asm.if_byte(NPART, ">", PRES, fits), asm.setbyte(NPART, PRES), fits]
+    wrap = asm.nop()
+    if S.chamber:                                    # one girl not chosen yet (walked off = chosen); the last
+        for k in range(n_g):                         # one chosen: this is the last segment
+            nx = asm.nop()
+            main += [asm.if_byte(LEFT, "bit_on", k, nx), asm.biton(USEDG, k), nx]
+        last_no = asm.nop()
+        main += [hb._req(ents["util"], 2), asm.setbyte(ORD(0), PICK), asm.if_byte(PICK, "!=", 255, wrap),
+                 asm.if_byte(USEDG, "==", (1 << n_g) - 1, last_no), asm.setbyte(LAST, 1), last_no]
+    else:
+        main += [asm.setbyte(USEDG, LEFT)]
+        for i in range(n_g):
+            main += [hb._req(ents["util"], 2), asm.setbyte(ORD(i), PICK)]
     # the position's vars and slots
     def cutaway(c):
         ops = hb._say(sec, c["talk"])
@@ -782,7 +827,9 @@ def _director(S, ctx, B, back):
     main += ch(PI, [pos_ops(p) for p in range(NP)])
     end_at = S.D.MINUTES * 1800
     not_last = asm.nop()
-    main += [asm.if_word(FR, ">=", end_at, not_last), asm.setbyte(LAST, 1), not_last,
+    if not S.chamber:                                # (the chamber ends when all are chosen)
+        main += [asm.if_word(FR, ">=", end_at, not_last), asm.setbyte(LAST, 1)]
+    main += [not_last,
              asm.setbyte(LASTT, NPART), Op(bytes([0x97, LASTT[0], LASTT[1]])), asm.setbyte(TURNI, 0),
              asm.setbyte(SEGPLACE, 1)]
 
@@ -793,7 +840,7 @@ def _director(S, ctx, B, back):
     for k in range(n_g):
         nx = asm.nop()
         main += [asm.if_byte(E, "==", k, nx), asm.if_byte(LEFT, "bit_off", k, skip_turn), nx]
-    for i in range(n_g):
+    for i in range(0 if S.chamber else n_g):         # (the chamber: GS(k) = k throughout)
         q1, q2, done = asm.nop(), asm.nop(), asm.nop()
         main += [asm.setbyte(TS, i), asm.if_byte(QUEUE, "==", 1, done),
                  asm.if_byte(TURNI, "==", i, q1), asm.setbyte(TS, 0), asm.goto(done), q1]
@@ -801,12 +848,26 @@ def _director(S, ctx, B, back):
             main += [asm.setbyte(TS, TURNI)]
         main += [done]
         main += ch(ORD(i), [[asm.setbyte(GS(k), TS)] for k in range(n_g)])
-    main += [asm.setbyte(STN, 0)] + ch(E, [[asm.setbyte(STN, GS(k))] for k in range(n_g)])
+    main += [asm.setbyte(STN, 0)] + ch(E, [[asm.setbyte(STN, S.bed_of[k] if S.chamber else GS(k))] for k in range(n_g)])
     rowq = asm.nop()
     main += [asm.if_byte(QUEUE, "==", 1, rowq), asm.setbyte(STN, 0), rowq]
     main += ch(PI, [[asm.setbyte(QI, B["qbase"][p])] for p in range(NP)]) + [Op(bytes([0x85, 0x55, QI[1], STN[1]]))]
     spd0 = asm.nop()
     main += [asm.setbyte(SPD, 0), asm.if_byte(STEP, ">=", 2, spd0), asm.setbyte(SPD, 1), spd0]
+    if S.chamber:
+        # (user) the choice: fade in on Cloud walking up to her, "I choose you.", her answer; then the bed
+        reply = []
+        for key in GR.ORDER:
+            rs = S.D.REPLIES[key]
+            reply.append([Op(bytes([0x99, RND3[0], RND3[1]])), Op(bytes([0x8D, RND3[0] << 4, RND3[1], len(rs)]))] +
+                         ch(RND3, [hb._say(sec, t_) for t_ in rs]))
+        main += [asm.setbyte(CH, E), asm.setbyte(E, 255), asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(mv.FAST_OUT),
+                 Op(b"\x6C")] + \
+            [hb._req(e, 2, wait=False) for e in girl_ents] + \
+            [hb._req(CL, 8, wait=False), hb._req(ents["cloudb"], 10, wait=False), hb._req(ents["gauge"], 9, wait=False),
+             hb._req(ents["camera"], 2, wait=False), hb._w(PLACE_WAIT), Op(mv.FAST_IN), Op(b"\x6C"),
+             hb._req(ents["cloudb"], 8), hb._w(8)] + hb._say(sec, S.D.CHOOSE) + ch(CH, reply) + [hb._w(8),
+                                                                                                 asm.setbyte(E, CH)]
     main += [asm.setbyte(RUN, 0), Op(b"\x54\x01"), Op(mv.FAST_OUT), Op(b"\x6C")] + place_all() + \
         [Op(mv.FAST_IN), Op(b"\x6C"), asm.setbyte(SEGPLACE, 0), asm.setbyte(WANDER, 1)]
     turn_len = [Op(bytes([0x99, RND3[0], RND3[1]])), Op(bytes([0x8D, RND3[0] << 4, RND3[1], 8])),
@@ -816,7 +877,7 @@ def _director(S, ctx, B, back):
     main += [asm.setword(POS_, 500), asm.setword(VEL, 1000), asm.setword(PR, 0), asm.setword(NT, FR),
              hb._arith(0x86, NT, mv.TICK)] + turn_len + mv._pause_arm(hb, S.D.TURN_MIN) + [asm.setbyte(RUN, 1)]
     # the tick (as the group's physics)
-    lost, hi_red, wrap, ending = asm.nop(), asm.nop(), asm.nop(), asm.nop()
+    lost, hi_red, ending = asm.nop(), asm.nop(), asm.nop()
     tick, wait1, go = asm.nop(), hb._w(1), asm.nop()
     A_, B_, C_, VMAX, DANGER = mv.A, mv.B, mv.C, mv.VMAX, mv.DANGER
     main += [tick, wait1, asm.if_word(FR, "<", NT, go), asm.goto_back(wait1), go, hb._arith(0x86, NT, mv.TICK),
@@ -855,8 +916,10 @@ def _director(S, ctx, B, back):
              asm.goto_back(turn_top)]
     # the segment's end: the last one = the wrap; else a cutaway, then the next segment
     nocut = asm.nop()
-    main += [seg_end, Op(b"\x54\x01"), asm.if_byte(LAST, "==", 0, wrap), asm.setbyte(WANDER, 0)] + walkers_done() + [
-             hb._req(ents["util"], 3), asm.if_byte(CI, "!=", 255, nocut),
+    main += [seg_end, Op(b"\x54\x01"), asm.if_byte(LAST, "==", 0, wrap), asm.setbyte(WANDER, 0)] + walkers_done()
+    if S.chamber:                                    # (user) breaks now and then
+        main += [Op(bytes([0x99, RND3[0], RND3[1]])), asm.if_byte(RND3, "<", S.D.CUT_CHANCE, nocut)]
+    main += [hb._req(ents["util"], 3), asm.if_byte(CI, "!=", 255, nocut),
              Op(mv.FAST_OUT), Op(b"\x6C")] + stage_all() + [Op(mv.FAST_IN), Op(b"\x6C")]
 
     main += ch(CI, [cutaway(c) for c in S.D.CUTS]) + [nocut, asm.goto_back(seg_top)]
