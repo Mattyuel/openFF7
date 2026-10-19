@@ -67,6 +67,8 @@ def _nurse_models(ctx):
     tips = fb._bust_tips(ctx)
     ctx.char_file(NURSE_HRC.lower(), fb.nipples(ctx, ctx.char_file(NURSE_HRC.lower()).decode("latin-1"), "N", tips)
                   .encode("latin-1"))
+    # (user) Tifa's body (the user's) as every girl's: in her skin, the standard bust
+    fb.tifa_body(ctx, ctx.char_file(NURSE_HRC.lower()).decode("latin-1"), skin, 1.0)
     # her suite: every anim Tifa has (ZV..), from Ruby's ZM.. (the same names after the prefix)
     built = ctx._char                                      # (every movie anim is built by the patches)
     tifa = sorted({n.split(".")[0][2:] for n in built if n.startswith("zv") and n.endswith(".a")})

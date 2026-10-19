@@ -988,6 +988,11 @@ The movie minigame (user's design).
 - `_entity(sec, hb, placeholder)` 
 - `apply(ctx)` 
 
+## `patches/681_skye_body.py`
+(user) Skye's undressed model (ZSKA, the standard body's own model) gets Tifa's body too
+
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1132,6 +1137,8 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_bust_tips(ctx)` The standard torso's tip vertex indices (left, right) (see NIPPLE_*).
 - `_chest_p(ctx, hrc)` 
 - `nipples(ctx, hrc, tag, tips=None)` `hrc` (an undressed girl's .hrc text, the standard torso on her chest bone) with a pink
+- `tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust)` (675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
+- `tifa_body(ctx, hrc, skin, bust=1.0, legs=None)` (user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).

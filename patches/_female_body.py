@@ -471,3 +471,77 @@ def nipples(ctx, hrc, tag, tips=None):
     part = lines[k + 3].split()
     lines[k + 3] = lines[k + 3].replace(lines[k + 3].strip(), " ".join([str(int(part[0]) + 2)] + part[1:] + names))
     return "".join(lines)
+
+
+# ---- (user) Tifa's body as the standard ----------------------------------------------------------
+TIFA_BONES = ("hip", "chest", "l_femur", "r_femur")      # the parts the user made (patches/models/tifa)
+
+
+def tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust):
+    """(675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
+    {bone: (V, P, tail, (sxy, sz) in Tifa's frame)}, "delta": the chest's bust offset per vertex (Tifa's
+    frame; her bust is `bust` x the standard's), "fig"}. raws = {bone: .p bytes as the user made them};
+    gen_chest = Tifa's generated (standard) chest .p, whose vertices carry `ctx.bust_delta`."""
+    import math
+    her, std = bones(hrc), bones(ctx.char_file(STANDARD.lower()).decode("latin-1"))
+    fig = sum(her[b][0] for b in LIMBS) / sum(std[b][0] for b in LIMBS)
+    parts = {}
+    for bone in TIFA_BONES:
+        d = raws[bone]
+        V, P, _ = _part(d)
+        if mirror.get(bone):
+            V, P = mirrored(V, P, mirror[bone])
+        V = _tidy(V, P, tidy) if tidy else [list(v) for v in V]
+        h = struct.unpack_from("<16I", d, 0)
+        op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
+        parts[bone] = (V, P, (d[64:128], struct.unpack_from("<12H", d, op)[10:12]),
+                       (fig, her[bone][0] / std[bone][0]))
+    G, _, _ = _part(gen_chest)
+    assert len(G) == len(ctx.bust_delta), "Tifa's generated chest isn't the standard torso"
+    sz = parts["chest"][3][1]
+    D = [(dv[0] * fig, dv[1] * fig, dv[2] * sz) for dv in ctx.bust_delta]
+
+    def delta(v):                                         # the bust offset at v: the 4 nearest, by 1/distance
+        near = sorted(range(len(G)), key=lambda i: sum((G[i][k] - v[k]) ** 2 for k in range(3)))[:4]
+        w = [1.0 / (math.dist(G[i], v) + 1e-3) for i in near]
+        return [sum(w[j] * D[near[j]][k] for j in range(4)) / sum(w) for k in range(3)]
+    ctx.tifa_std = {"parts": parts, "delta": [delta(v) for v in parts["chest"][0]], "delta_at": delta,
+                    "bust": bust, "fig": fig}
+
+
+def tifa_body(ctx, hrc, skin, bust=1.0, legs=None):
+    """(user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
+    replaced by the user's Tifa body (`tifa_parts`): scaled from Tifa's figure to hers, the bust moved to
+    `bust` x the standard's along the standard's bust offsets, in her skin colour (Scarlet's stockings by
+    `legs`, as `apply`). Writes over her part files."""
+    T = ctx.tifa_std
+    her, std = bones(hrc), bones(ctx.char_file(STANDARD.lower()).decode("latin-1"))
+    fig = sum(her[b][0] for b in LIMBS) / sum(std[b][0] for b in LIMBS)
+    k_ = bust - T["bust"]
+    ply = lambda rsd: ctx.char_file(rsd.lower() + ".rsd").decode("latin-1").split("PLY=")[1][:4].lower() + ".p"
+
+    def placed(V, sz_t, sz, deltas=None):
+        out = []
+        for i, v in enumerate(V):
+            if deltas is not None:
+                v = [v[k] + k_ * deltas[i][k] for k in range(3)]
+            out.append([v[0] * fig / T["fig"], v[1] * fig / T["fig"], v[2] * sz / sz_t])
+        return out
+    for bone in TIFA_BONES:
+        V, P, tail, (_, sz_t) = T["parts"][bone]
+        sz = her[bone][0] / std[bone][0]
+        d = _hb()._p_file(placed(V, sz_t, sz, T["delta"] if bone == "chest" else None), P, [skin] * len(V), *tail)
+        if legs and bone[2:] in legs:
+            d = _banded(d, legs[bone[2:]], her[bone][0])
+        ctx.char_file(ply(her[bone][1][0]), d)
+    sz_t, sz = T["parts"]["chest"][3][1], her["chest"][0] / std["chest"][0]
+    nips = [r for r in her["chest"][1] if r.upper().startswith("ZK")]
+    assert len(nips) == 2, ("her nipples", her["chest"][1])
+    for r in nips:
+        V, P, C, tail = T["nipple"]
+        sx = 1 if r.upper().endswith("L") else -1
+        V = [[v[0] * sx] + list(v[1:]) for v in V]
+        mid = [sum(v[k] for v in V) / len(V) for k in range(3)]
+        dv = T["delta_at"]([mid[0] * sx, mid[1], mid[2]])
+        dv = [dv[0] * sx, dv[1], dv[2]]
+        ctx.char_file(ply(r), _hb()._p_file(placed(V, sz_t, sz, [dv] * len(V)), P, C, *tail))

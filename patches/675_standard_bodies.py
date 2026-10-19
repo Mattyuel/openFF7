@@ -101,6 +101,11 @@ def apply(ctx):
     # (user) Tifa's own body (the user's), tidied, with her lingerie; her nipples (the user's) moved
     # with the tidied bust under them
     hrc = ctx.char_file(TIFA.lower()).decode("latin-1")
+    raws = {}
+    for bone, ply in TIFA_BODY.items():
+        with open(os.path.join(TIFA_PARTS, ply), "rb") as fh:
+            raws[bone] = fh.read()
+    fb.tifa_parts(ctx, hrc, raws, TIFA_TIDY, TIFA_MIRROR, ctx.char_file(TIFA_BODY["chest"]), BUST[TIFA])
     _tifa(ctx, fb.face_skin(ctx, hrc))
     before, after = ctx.tifa_chest
     with open(os.path.join(TIFA_PARTS, TIFA_NIPPLE), "rb") as fh:
@@ -115,3 +120,10 @@ def apply(ctx):
     tail = d[64:128], struct.unpack_from("<12H", d, op)[10:12]
     for name, sx in ((TIFA_NIPPLE, 1), (TIFA_NIPPLE.replace("l.", "r."), -1)):
         ctx.char_file(name, fb._hb()._p_file([[v[0] * sx] + v[1:] for v in V], P, C, *tail))
+    ctx.tifa_std["nipple"] = (V, P, C, tail)
+    # (user) Tifa's body (the user's, without her lingerie) as every other girl's: her skin, her bust size
+    for out, src, tag, legs in GIRLS:
+        if out != TIFA:
+            skin = fb.face_skin(ctx, ctx.char_file(src.lower()).decode("latin-1"))
+            fb.tifa_body(ctx, ctx.char_file(out.lower()).decode("latin-1"), skin, BUST.get(out, 1.0), legs)
+    # (Skye's own model gets it in 681, after 679_nurse has built from the standard's parts)
