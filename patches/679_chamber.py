@@ -60,13 +60,19 @@ def _home(k):
 
 
 # ---- hooks ----------------------------------------------------------------------------------------------
+# (user: the bedroom's background is drawn under everyone, so a girl staged behind the table or a bed looked to
+# stand on it) the cutaways' floor spots keep only those where a figure CLEAR = (height, px either side, draw id
+# margin) has no object in front of her on screen (`_loose_engine.clear_of_objects`)
+CLEAR = (88, 9, None)          # (None: no furniture at all overlapping her, user: not on the beds)
+
+
 def _supports(S, mesh):
     floor = []
     for x in range(-400, 501, 8):
         for y in range(-320, 300, 8):
             t = mesh.find(x, y)
-            if t is not None and abs(mesh.height(t, x, y)) < 2:
-                floor.append((x, y, 0, t))
+            if t is not None and abs(mesh.height(t, x, y)) < 2 and not any(_in_bed((x, y), b, 12) for b in range(3)):
+                floor.append((x, y, 0, t))                # (user: nobody on, or under, a bed)
     return floor, []
 
 
@@ -250,7 +256,8 @@ def apply(ctx):
                make_field=_make_field, supports=_supports, on=_on, walkable=lambda S, mesh, p, m: False,
                stations=_stations, bed_watch=None, floor_watch=lambda *a: None, bed_id=lambda S, c: None,
                one_per_bed=False, cam_ok=lambda S, c: True, sprites=_sprites, slots_fn=_slots_fn, chamber=True,
-               bed_of=[b for _, b in HOMES], walks=walks, look=look)
+               bed_of=[b for _, b in HOMES], walks=walks, look=look,
+               clear=CLEAR)                                  # (user) cutaway spots clear of the furniture
     sx, sy = Camera(ctx.field(CD.BASE).sections[1]).project(*CD.STAGE_AT)
     CD.STAGE = (round(sx), round(sy))
     LE.run(S, ctx, "679: the chamber", "chamber_layout.json")

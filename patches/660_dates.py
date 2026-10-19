@@ -1038,6 +1038,34 @@ def tiles_back(f):
     f.set_section("background", bg.build())
 
 
+# a tile's PC depth (+38) by its draw id near the far end (fitted on del3's / ghotin_2's far tiles: 3856 ->
+# 9983172, ~8.33 more per id)
+FAR_REF, FAR_V, FAR_SLOPE = 3856, 9983172, 8.33
+
+
+def tiles_behind(f, pick, lo, hi):
+    """(user: background objects drew over the characters) Layer 2 tiles whose draw id passes pick(id) moved
+    behind every character, their order kept: their distinct ids spread over lo..hi (in front of the base
+    layer, 4095), the PC depth (+38) to match. Returns how many tiles moved."""
+    from ff7.background import Background
+    bg = Background(f.section("background"))
+    layer2 = [t for k, _, ts, _ in bg.layers if k == 2 and ts for t in ts]
+    ids = sorted({t._get("<H", 24) for t in layer2 if pick(t._get("<H", 24))})
+    assert ids and len(ids) <= hi - lo + 1 and hi < 4095, (len(ids), lo, hi)
+    step = (hi - lo) / max(1, len(ids) - 1)
+    new = {i: round(lo + k * step) if len(ids) > 1 else hi for k, i in enumerate(ids)}
+    assert len(set(new.values())) == len(ids)
+    moved = 0
+    for t in layer2:
+        i = t._get("<H", 24)
+        if i in new:
+            t._set("<H", 24, new[i])
+            t._set("<I", 38, round(FAR_V + (new[i] - FAR_REF) * FAR_SLOPE))
+            moved += 1
+    f.set_section("background", bg.build())
+    return moved
+
+
 def _find_near(mesh, x, y, what):
     """The triangle under (x, y), else the nearest one within NEAR_FLOOR (its plane gives the height)."""
     t = mesh.find(x, y)

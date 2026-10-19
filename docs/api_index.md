@@ -756,6 +756,7 @@ Dates with the Honey Bee girls (docs/dates_plan.md; data `_dates_data.py`).
 - `_wall(ctx, name, hrc, stand, cloud='stand')` 
 - `_bare_elena(ctx)` 
 - `tiles_back(f)` The capsule's near background tiles (benches, rails: draw depth < 4093) pushed back just in
+- `tiles_behind(f, pick, lo, hi)` (user: background objects drew over the characters) Layer 2 tiles whose draw id passes pick(id) moved
 - `_find_near(mesh, x, y, what)` The triangle under (x, y), else the nearest one within NEAR_FLOOR (its plane gives the height).
 - `_align(fa, a, b)` The smallest rotation turning direction a into b.
 - `_elena_fours(ctx)` ZDEF (Elena on all fours) and ZCTP (Cloud on one knee beside her, spanking); see SPANK_*, KNEEL_*.
@@ -1215,6 +1216,8 @@ Honey Bee visit scenes at higher affection (_honey_bee_gifts: 10-19 =
 - `_wait_anim(S, name, i)` A waiting / watching pose by name: kneel / lie (two timings by i), stand, or an extra still letter.
 - `_slots(S, ctx, mesh, cam, stations, floor, beds)` Per position, six slots: (x, y, z, tri, dir, anim, kind, waypoint (x, y)). Stations first (rows:
 - `_gauge_spots(S, ctx, mesh, cam, focus, near)` (gauge, icon, cursor line (first, step x16)) for a view centred on `focus` (as 670's group).
+- `object_depths(f)` {(screen x, y): the nearest draw id of a background object (layer 2 tile, no BG state) opaque there}.
+- `clear_of_objects(f, cam, pts, height, half, margin)` (user: in the chamber the background is drawn under everyone, so a girl standing behind the table
 - `_build(S, ctx, back)` 
 - `_stage(S, ctx, B)` Every cutaway's staging (S.D.CUTS, then the intro): each actor's slot 9 (spot, facing, pose by CI), the
 - `_director(S, ctx, B, back)` 

@@ -317,3 +317,9 @@ def apply(ctx):
     sx, sy = Camera(ctx.field(BPD.BASE).sections[1]).project(*BPD.STAGE_AT)
     BPD.STAGE = (round(sx), round(sy))
     LE.run(S, ctx, "679: the beach party", "beach_layout.json")
+    # (user) the loungers, tables, poles and boat (draw ids 300-500) drew over the girls, most of all the
+    # ones up the screen: moved behind everyone, in front of the far scenery (3856..); the umbrellas and
+    # the palm overhead (16 / 32) stay in front
+    n = importlib.import_module("660_dates").tiles_behind(ctx.field(BPD.FIELD), lambda i: 300 <= i <= 500,
+                                                          3800, 3850)
+    assert n > 50, n

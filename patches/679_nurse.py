@@ -49,7 +49,7 @@ ARRIVE = (-40, 60)              # (670's MAPJUMP: on the floor; the init moves t
 HUDDLE_AT = (80, 0)             # a break: the huddle's middle, on the open floor before the beds
 HUDDLE = {2: [(80, -30), (80, 30)], 3: [(80, -35), (80, 35), (45, 0)],
           4: [(80, -40), (80, 40), (45, -15), (45, 15)]}
-WALK_STEP = 2.2
+WALK_STEP = 4.4                 # (user: the nurses walked too slowly; was 2.2)
 LINE_Y = 168                    # her lines' window (lower half: the bed is up on the right)
 
 
@@ -299,6 +299,9 @@ def _scene(ctx, place):
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main}
     dt._blank(sec, scripts)
+    # (user) the clinic's objects (beds, rails, partition, post, stool...) drew over the characters: every
+    # layer-2 tile moved behind them, order kept
+    assert dt.tiles_behind(f, lambda i: i < 4095, 3980, 4094) > 100
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()
     n_text = struct.unpack_from("<H", sec.tail, 0)[0]

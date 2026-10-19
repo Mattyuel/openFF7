@@ -340,6 +340,76 @@ def _gauge_spots(S, ctx, mesh, cam, focus, near):
     return gauge, icon, pts
 
 
+def object_depths(f):
+    """{(screen x, y): the nearest draw id of a background object (layer 2 tile, no BG state) opaque there}."""
+    import struct as st
+    from ff7.background import Background
+    bg = Background(f.section("background"))
+    pal = f.section("palette")
+    npal = st.unpack_from("<H", pal, 10)[0]
+    pals = [[st.unpack_from("<H", pal, 12 + 512 * p + 2 * i)[0] for i in range(256)] for p in range(npal)]
+    ignore = bg.head[12:36]
+    out = {}
+    for k, _, ts, _ in bg.layers:
+        if k != 2 or not ts:
+            continue
+        for t in ts:
+            tid = t._get("<H", 24)
+            if t.raw[26] or tid >= 4095:
+                continue
+            pg = bg.pages[t.page]
+            if pg is None:
+                continue
+            _, bpp, data = pg
+            p = t.raw[22]
+            for yy in range(t.height):
+                for xx in range(t.width):
+                    o = ((t.src_y + yy) * 256 + t.src_x + xx) * bpp
+                    if bpp == 1:
+                        i = data[o]
+                        if i == 0 and p < len(ignore) and ignore[p]:
+                            continue
+                        if pals[min(p, npal - 1)][i] == 0:
+                            continue
+                    elif not (data[o] | data[o + 1] << 8):
+                        continue
+                    key = (t.dst_x + xx, t.dst_y + yy)
+                    if tid < out.get(key, 1 << 16):
+                        out[key] = tid
+    return out
+
+
+FURNITURE = 3000             # (draw ids above this are the room's far walls, windows...)
+
+
+def clear_of_objects(f, cam, pts, height, half, margin):
+    """(user: in the chamber the background is drawn under everyone, so a girl standing behind the table
+    looked to stand on it) the points (x, y, z, tri) where a figure `height` tall and `half` px either side
+    has no background object in front of it on screen (an object drawn there with a draw id more than
+    `margin` nearer than the figure's feet: draw id = view depth / 4; margin None = any furniture there,
+    nearer or not: a figure in a gap between beds still looked to stand on them, user)."""
+    mv = _mods()[0]
+    depth = object_depths(f)
+    out = []
+    for p in pts:
+        x, y, z = p[:3]
+        fx, fy = cam.project(x, y, z)
+        _, hy = cam.project(x, y, z + height)
+        me = mv._view_depth(cam, (x, y, z)) / 4
+        bad = False
+        for py in range(int(hy), int(fy) + 1, 2):
+            for px in range(int(fx - half), int(fx + half) + 1, 2):
+                d = depth.get((px, py))
+                if d is not None and (d < me - margin if margin is not None else d < FURNITURE):
+                    bad = True
+                    break
+            if bad:
+                break
+        if not bad:
+            out.append(p)
+    return out
+
+
 # ---- the set ------------------------------------------------------------------------------------
 def _build(S, ctx, back):
     mv, hb, dt = _mods()
@@ -379,6 +449,10 @@ def _build(S, ctx, back):
 
     # spots
     floor, beds = S.supports(S, mesh)
+    if getattr(S, "clear", None):                        # (user, the chamber: nobody behind the furniture)
+        n0 = len(floor)
+        floor = clear_of_objects(f, cam, floor, *S.clear)
+        print("    floor spots clear of the furniture: %d of %d" % (len(floor), n0))
     stations = S.stations(S, ctx, mesh, cam)
     slots, cams, views = (S.slots_fn or _slots)(S, ctx, mesh, cam, stations, floor, beds)
     combos, qbase = [], []                               # QI = qbase[position] + the engaged girl's station

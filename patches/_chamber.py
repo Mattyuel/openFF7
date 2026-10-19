@@ -89,7 +89,9 @@ INTRO = ["“The Ghost Hotel's... special suite.\n One at a time, star: walk up,
 LAST_CALL = "Cameraman\n“Last one, people!\n Give me a FINISHER!”"
 
 # ---- breaks (as `_movie_loose`'s cutaways: `set` = screen offsets from STAGE on the floor) ----
-STAGE_AT = (120, -60, 0)      # the cutaways' centre: the floor in front of the beds (679_chamber sets STAGE)
+STAGE_AT = (-244, -104, 0)    # the cutaways' centre: (user: nobody on the beds or the table) the open floor at
+                              # the front of the room, clear of all furniture (679_chamber sets STAGE)
+WATCH = [(-70, -35), (70, -35), (-85, 0), (85, 0), (-50, 30), (50, 30)]   # the others, round the scene
 STAGE = (0, 0)
 CUTS = [
     dict(key="thunder", need=["elena", "skye", "tifa"],
