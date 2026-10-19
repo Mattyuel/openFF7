@@ -993,6 +993,18 @@ The movie minigame (user's design).
 
 - `apply(ctx)` 
 
+## `patches/682_school_dance.py`
+(user) The school dance: Tifa, Aerith, Yuffie, Elena and Scarlet in Japanese school uniforms dancing a
+
+- `_mods()` 
+- `_chest_colour(c)` 
+- `_recolour(d, bgr)` .p bytes d with every vertex and polygon colour bgr.
+- `_ply(ctx, rsd)` 
+- `_skirt(ctx, g, hrc, stand)` The pleated skirt on her hip bone (a new part "ZK<tag>S"), built in her stand pose. Returns the .hrc.
+- `_uniform(ctx, g)` Her school uniform .hrc (g["hrc"]). Returns (donor entry, stand anim file).
+- `_set(ctx, cast, moves)` 
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1111,6 +1123,36 @@ PHS usable from the start: the save points in early Midgar (and a few story
 Shared openFF7 settings used by the patch modules.
 
 
+## `patches/_dance_poses.py`
+(user) The school dance's moves (682_school_dance), choreographed in the spirit of ATARASHII GAKKO!'s
+
+- `_mods()` 
+- `ease(t)` 
+- `mix(a, b, t)` 
+- `pulse(t, at, width)` 1 at `at`, falling to 0 `width` either side (cosine bump).
+- `bow(b)` 
+- `wake(b)` 
+- `march(b)` 
+- `squat_sway(b)` 
+- `shrug(b)` 
+- `punch(b)` 
+- `headbang(b)` 
+- `side_step(b)` 
+- `arm_wave(b)` 
+- `kick(b)` 
+- `spin(b)` 
+- `jump(b)` 
+- `backbend(b)` 
+- `run(b)` 
+- `crouch_stare(b)` 
+- `point(b)` 
+- `_t(m)` 
+- class `_Body` 
+  - `__init__(ctx)` 
+  - `rot(pitch, roll, yaw)` 
+  - `frame(P)` 
+- `build(ctx)` Every move as XZ<letter>0 on Ruby. Returns [(letter, frames, loop)].
+
 ## `patches/_dates_data.py`
 Dates with the Honey Bee girls (docs/dates_plan.md): data.
 
@@ -1139,7 +1181,8 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_chest_p(ctx, hrc)` 
 - `nipples(ctx, hrc, tag, tips=None)` `hrc` (an undressed girl's .hrc text, the standard torso on her chest bone) with a pink
 - `tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust, shape=None)` (675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
-- `tifa_body(ctx, hrc, skin, bust=1.0, legs=None)` (user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
+- `paint(V, P, cuts, colour_of)` The mesh (V, P) cut along each plane of `cuts` [(normal, c)] and each triangle coloured
+- `tifa_body(ctx, hrc, skin, bust=1.0, legs=None, paints=None)` (user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
@@ -1252,6 +1295,10 @@ Shared helpers for character recruitment scenes.
 - `count_recruit()` Ops: one more character recruited; show the PHS once there are enough
 - `xyzi(x, y, z, tri)` 
 - `add_recruit_npc(ctx, field, donor_field, donor_model, name, char, pos, direction, lines, main=())` Add a new NPC for `char` to `field`, with the model copied from
+
+## `patches/_school_dance.py`
+(user) The school dance (682_school_dance): Tifa, Aerith, Yuffie, Elena and Scarlet in Japanese school
+
 
 ## `patches/_stage_show.py`
 (user) The Gold Saucer stage show (674): the troupe, famous from the videos, performs a live erotic

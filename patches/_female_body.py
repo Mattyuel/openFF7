@@ -343,7 +343,8 @@ def apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0, head_drop=0.0):
     for b in BODY:
         assert b in her, (b, "not in her skeleton")
         # (the standard's chest also carries Skye's nipples once 675 ran: its first part is the body)
-        assert len(std[b][1]) == (3 if b == "chest" and len(std[b][1]) == 3 else 1) and len(her[b][1]) == 1, (b, std[b][1], her[b][1])
+        assert len(std[b][1]) == (3 if b == "chest" and len(std[b][1]) == 3 else 1) and \
+            (len(her[b][1]) == 1 or (b.endswith("hand") and not her[b][1])), (b, std[b][1], her[b][1])
         sz = lengths[b] / std[b][0]
         r = ctx.char_file(std[b][1][0].lower() + ".rsd").decode("latin-1")
         ply = r.split("PLY=")[1][:4]
@@ -362,7 +363,10 @@ def apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0, head_drop=0.0):
             part = bytes(part)
         ctx.char_file(new_p.lower() + ".p", part)
         i = at(b)
-        lines[i + 3] = lines[i + 3].replace(her[b][1][0], new_r)
+        if her[b][1]:
+            lines[i + 3] = lines[i + 3].replace(her[b][1][0], new_r)
+        else:                                              # (Yuffie's left hand is part of her forearm)
+            lines[i + 3] = lines[i + 3].replace(lines[i + 3].strip(), "1 %s" % new_r)
     for b in her:                                          # her torso bones' lengths
         if abs(lengths[b] - her[b][0]) > 1e-6:
             i = at(b)
@@ -533,11 +537,32 @@ def tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust, shape=None):
                     "bust": bust, "fig": fig}
 
 
-def tifa_body(ctx, hrc, skin, bust=1.0, legs=None):
+def paint(V, P, cuts, colour_of):
+    """The mesh (V, P) cut along each plane of `cuts` [(normal, c)] and each triangle coloured
+    colour_of(centroid), the vertices where colours meet doubled (as `coloured`). Returns (V, P, colours)."""
+    for n, c in cuts:
+        V, P = _cut(V, P, n, c)
+    cols = [colour_of([sum(V[i][k] for i in t) / 3 for k in range(3)]) for t in P]
+    copy, NV, NC, NP = {}, [], [], []
+    for t, col in zip(P, cols):
+        tt = []
+        for i in t:
+            if (i, col) not in copy:
+                copy[(i, col)] = len(NV)
+                NV.append(V[i])
+                NC.append(col)
+            tt.append(copy[(i, col)])
+        NP.append(tuple(tt))
+    return NV, NP, NC
+
+
+def tifa_body(ctx, hrc, skin, bust=1.0, legs=None, paints=None):
     """(user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
     replaced by the user's Tifa body (`tifa_parts`): scaled from Tifa's figure to hers, the bust moved to
     `bust` x the standard's along the standard's bust offsets, in her skin colour (Scarlet's stockings by
-    `legs`, as `apply`). Writes over her part files."""
+    `legs`, as `apply`). Writes over her part files. paints = {bone: (cuts, colour_of)} in Tifa's frame
+    (682's school uniforms): that part cut and coloured by `paint` instead of the skin; without nipple
+    parts on her chest (clothed) the nipples are skipped."""
     T = ctx.tifa_std
     her, std = bones(hrc), bones(ctx.char_file(STANDARD.lower()).decode("latin-1"))
     fig = sum(her[b][0] for b in LIMBS) / sum(std[b][0] for b in LIMBS)
@@ -554,13 +579,21 @@ def tifa_body(ctx, hrc, skin, bust=1.0, legs=None):
     for bone in TIFA_BONES:
         V, P, tail, (_, sz_t) = T["parts"][bone]
         sz = her[bone][0] / std[bone][0]
-        d = _hb()._p_file(placed(V, sz_t, sz, T["delta"] if bone == "chest" else None), P, [skin] * len(V), *tail)
+        VG = placed(V, sz_t, sz, T["delta"] if bone == "chest" else None)
+        if paints and bone in paints:
+            cuts, colour_of = paints[bone]
+            sc = [fig / T["fig"], fig / T["fig"], sz / sz_t]        # Tifa's frame -> hers
+            VG, PG, CG = paint(VG, P, [([n[k] / sc[k] for k in range(3)], c) for n, c in cuts],
+                               lambda m: colour_of([m[k] / sc[k] for k in range(3)]))
+            d = _hb()._p_file(VG, PG, CG, *tail)
+        else:
+            d = _hb()._p_file(VG, P, [skin] * len(V), *tail)
         if legs and bone[2:] in legs:
             d = _banded(d, legs[bone[2:]], her[bone][0])
         ctx.char_file(ply(her[bone][1][0]), d)
     sz_t, sz = T["parts"]["chest"][3][1], her["chest"][0] / std["chest"][0]
     nips = [r for r in her["chest"][1] if r.upper().startswith("ZK")]
-    assert len(nips) == 2, ("her nipples", her["chest"][1])
+    assert len(nips) in (0, 2), ("her nipples", her["chest"][1])
     for r in nips:
         V, P, C, tail = T["nipple"]
         sx = 1 if r.upper().endswith("L") else -1

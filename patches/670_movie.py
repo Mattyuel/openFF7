@@ -3096,7 +3096,7 @@ def _wall_market(ctx, focus):
             poke = lambda k, c: Op(bytes([0x1D, tid]) + struct.pack("<H", k + 1) + bytes([c]))
             ops_ = [top]
             for mk, (_, bit, key) in zip(marks, on):
-                vs = affs if key in ("group", "beach", "chamber") else ([aff_var(key)] if key and key != "nurse" else [])
+                vs = affs if key in ("group", "beach", "chamber") else ([aff_var(key)] if key and key not in ("nurse", "dance") else [])
                 if not vs:
                     continue
                 grey, done_ = asm.nop(), asm.nop()
@@ -3105,7 +3105,7 @@ def _wall_market(ctx, focus):
             ops_ += list(ask_r)
             for k_, (_, bit, key) in enumerate(on):
                 nxt = asm.nop()
-                vs = affs if key in ("group", "beach", "chamber") else ([aff_var(key)] if key and key != "nurse" else [])
+                vs = affs if key in ("group", "beach", "chamber") else ([aff_var(key)] if key and key not in ("nurse", "dance") else [])
                 ok = asm.nop()
                 check = []
                 if vs:
@@ -3116,6 +3116,7 @@ def _wall_market(ctx, focus):
                     ([asm.setbyte(SPEC, {"beach": 3, "chamber": 4}[key])] if key != "group" else []) \
                     if key in ("group", "beach", "chamber") else \
                     [asm.setbyte(SPEC, 5)] if key == "nurse" else \
+                    [asm.setbyte(SPEC, 6)] if key == "dance" else \
                     ([asm.biton(MOVIE_GIRL, bit)] if bit is not None else [])
                 ops_ += [asm.if_byte(CHOICE, "==", first_r + k_, nxt)] + check + sets + [asm.goto(picked), nxt]
             return ops_ + [picked]
@@ -3123,7 +3124,8 @@ def _wall_market(ctx, focus):
         # (user) rank 6 (Aerith's wrap): "Everyone" = the group shoot, first; (user, since) "Beach party" (679)
         # and "Chamber" (679_chamber) unlocked with it: the group on the beach (SPEC 3) / in the chamber (4)
         lists[6] = menu([("Everyone", None, "group"), ("Beach party", None, "beach"), ("Chamber", None, "chamber"),
-                         ("Hello nurse", None, "nurse")] + cast_[::-1])   # (679_nurse: SPEC 5, no affection gate)
+                         ("Hello nurse", None, "nurse"), ("School dance", None, "dance")] +
+                        cast_[::-1])   # (679_nurse: SPEC 5; 682_school_dance: SPEC 6; no affection gate)
         assert len(MOVIE_RANK) == 6
         ops += [asm.setbyte(SPEC, 0)] + _by_rank(lists)
         # (user, since) for one co-star, always: "Normal scene." / "Special scene." (672, after a full group
@@ -3169,6 +3171,13 @@ def _wall_market(ctx, focus):
         nx_, ny_ = il_.import_module("679_nurse").ARRIVE
         nt_ = Walkmesh(ctx.field(NUD_.BASE).section("walkmesh")).find(nx_, ny_)
         assert nt_ is not None
+        import _school_dance as SDD_                 # (682) the school dance: SPEC 6
+        dx_, dy_ = SDD_.ARRIVE
+        dt__ = Walkmesh(ctx.field(SDD_.BASE).section("walkmesh")).find(dx_, dy_)
+        assert dt__ is not None
+        not_dance = asm.nop()
+        ops += [asm.if_byte(SPEC, "==", 6, not_dance),
+                asm.mapjump(ctx.maplist.index(SDD_.FIELD), dx_, dy_, dt__, 0), asm.ret(), not_dance]
         not_nurse = asm.nop()
         ops += [asm.if_byte(SPEC, "==", 5, not_nurse),
                 asm.mapjump(ctx.maplist.index(NUD_.FIELD), nx_, ny_, nt_, 0), asm.ret(), not_nurse]
