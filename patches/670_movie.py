@@ -3134,7 +3134,9 @@ def _wall_market(ctx, focus):
         import _blast_data as BD_
         import _cid as CID_
         spec_no, spec_ask, top = asm.nop(), asm.nop(), asm.nop()
-        ops += [asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], spec_ask),
+        # (the set picks from the rank-6 list, beach 3 / chamber 4 / nurse 5 / dance 6, set SPEC: no submenu)
+        ops += [asm.if_byte(SPEC, "==", 0, spec_no),
+                asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[0], spec_ask),
                 asm.if_byte(MOVIE_GIRL, "bit_on", GROUP_BITS[1], spec_ask), asm.goto(spec_no), spec_ask, top]
         for s_on in (0, 1):
             for b_on in (0, 1):
