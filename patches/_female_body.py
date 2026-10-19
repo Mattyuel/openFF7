@@ -164,7 +164,27 @@ def mirrored(V, P, keep):
     return NV, [tuple(half[i] for i in t) for t in P] + [(other[t[0]], other[t[2]], other[t[1]]) for t in P]
 
 
-def coloured(d, cuts, colour_of, tidy=0, mirror=0):
+# (user) the user's Tifa chest juts forward between the breasts (midline y 3.55 at the bust's height, the tips
+# 3.32): pulled back to a valley. In the chest part's frame (x across, y forward, z up the bone = -z):
+CLEAVAGE_Y = 2.3               # the sternum's front between the breasts (above / below the bust it is ~2.3-2.4)
+CLEAVAGE_X = (0.4, 1.2)        # full pull back within |x| < 0.4, none from 1.2 (the tips are at 1.7)
+CLEAVAGE_Z = (-2.6, -2.2, -0.8, -0.5)   # z range: fading in, full, full, fading out
+
+
+def cleavage(V):
+    """Tifa's chest vertices with the front between the breasts pulled back to CLEAVAGE_Y (see above)."""
+    def ramp(t, a, b):
+        t = min(1.0, max(0.0, (t - a) / (b - a)))
+        return t * t * (3 - 2 * t)
+    z0, z1, z2, z3 = CLEAVAGE_Z
+    out = []
+    for x, y, z in V:
+        w = (1 - ramp(abs(x), *CLEAVAGE_X)) * ramp(z, z0, z1) * (1 - ramp(z, z2, z3))
+        out.append([x, y - w * max(0.0, y - CLEAVAGE_Y), z])
+    return out
+
+
+def coloured(d, cuts, colour_of, tidy=0, mirror=0, shape=None):
     """.p bytes d remade (user: Tifa's lingerie, as Scarlet's stockings: sharp colour edges): tidied
     (`_tidy`, `tidy` rounds), cut along each plane of `cuts` [(normal, c)] in the part's own frame, each
     triangle coloured colour_of(centroid) (the part's frame), and each vertex where colours meet doubled,
@@ -177,6 +197,8 @@ def coloured(d, cuts, colour_of, tidy=0, mirror=0):
         V, P = mirrored(V, P, mirror)
     before = [list(v) for v in V]
     V = _tidy(V, P, tidy) if tidy else [list(v) for v in V]
+    if shape:
+        V = shape(V)
     moved = (before, list(V))
     for n, c in cuts:
         V, P = _cut(V, P, n, c)
@@ -477,7 +499,7 @@ def nipples(ctx, hrc, tag, tips=None):
 TIFA_BONES = ("hip", "chest", "l_femur", "r_femur")      # the parts the user made (patches/models/tifa)
 
 
-def tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust):
+def tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust, shape=None):
     """(675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
     {bone: (V, P, tail, (sxy, sz) in Tifa's frame)}, "delta": the chest's bust offset per vertex (Tifa's
     frame; her bust is `bust` x the standard's), "fig"}. raws = {bone: .p bytes as the user made them};
@@ -492,6 +514,8 @@ def tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust):
         if mirror.get(bone):
             V, P = mirrored(V, P, mirror[bone])
         V = _tidy(V, P, tidy) if tidy else [list(v) for v in V]
+        if shape and bone in shape:
+            V = shape[bone](V)
         h = struct.unpack_from("<16I", d, 0)
         op = 128 + 12 * h[3] + 12 * h[4] + 12 * h[5] + 8 * h[6] + 4 * h[7] + 4 * h[9] + 4 * h[8]
         parts[bone] = (V, P, (d[64:128], struct.unpack_from("<12H", d, op)[10:12]),

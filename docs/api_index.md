@@ -1128,7 +1128,8 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_tidy(V, P, rounds)` A light, shape-keeping smoothing (Taubin: a shrinking step then an inflating one, `rounds` times)
 - `_cut(V, P, n, c)` The mesh (V, P) cut along the plane n . v = c: each triangle crossing it split in three, the
 - `mirrored(V, P, keep)` The mesh (V, P) made symmetric about x = 0 (user: Tifa's uneven breasts): cut there, the half on
-- `coloured(d, cuts, colour_of, tidy=0, mirror=0)` .p bytes d remade (user: Tifa's lingerie, as Scarlet's stockings: sharp colour edges): tidied
+- `cleavage(V)` Tifa's chest vertices with the front between the breasts pulled back to CLEAVAGE_Y (see above).
+- `coloured(d, cuts, colour_of, tidy=0, mirror=0, shape=None)` .p bytes d remade (user: Tifa's lingerie, as Scarlet's stockings: sharp colour edges): tidied
 - `bones(hrc)` {bone name: (length, [rsd names], parent)} in an .hrc text.
 - `_scaled(d, sxy, sz, skin, sole=None)` A copy of .p bytes d: vertices (x, y) x sxy, z (along the bone) x sz, normals kept;
 - `_bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail)` A rounded bar along a bone (local -z): rings of radius r at z0 and z1, pointed to tip0 /
@@ -1137,7 +1138,7 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_bust_tips(ctx)` The standard torso's tip vertex indices (left, right) (see NIPPLE_*).
 - `_chest_p(ctx, hrc)` 
 - `nipples(ctx, hrc, tag, tips=None)` `hrc` (an undressed girl's .hrc text, the standard torso on her chest bone) with a pink
-- `tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust)` (675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
+- `tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust, shape=None)` (675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
 - `tifa_body(ctx, hrc, skin, bust=1.0, legs=None)` (user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
 
 ## `patches/_honey_bee_data.py`

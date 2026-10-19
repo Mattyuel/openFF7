@@ -80,7 +80,8 @@ def _tifa(ctx, skin):
         rsd = ctx.char_file(parts[bone][1][0].lower() + ".rsd").decode("latin-1")
         assert rsd.split("PLY=")[1][:4].lower() + ".p" == ply, (bone, rsd)
         with open(os.path.join(TIFA_PARTS, ply), "rb") as fh:
-            d, moved = fb.coloured(fh.read(), cuts, colour, TIFA_TIDY, TIFA_MIRROR.get(bone, 0))
+            d, moved = fb.coloured(fh.read(), cuts, colour, TIFA_TIDY, TIFA_MIRROR.get(bone, 0),
+                                     fb.cleavage if bone == "chest" else None)
         assert LINGERIE in fb._part(d)[2], (bone, "no lingerie in this part")
         ctx.char_file(ply, d)
         if bone == "chest":
@@ -105,7 +106,8 @@ def apply(ctx):
     for bone, ply in TIFA_BODY.items():
         with open(os.path.join(TIFA_PARTS, ply), "rb") as fh:
             raws[bone] = fh.read()
-    fb.tifa_parts(ctx, hrc, raws, TIFA_TIDY, TIFA_MIRROR, ctx.char_file(TIFA_BODY["chest"]), BUST[TIFA])
+    fb.tifa_parts(ctx, hrc, raws, TIFA_TIDY, TIFA_MIRROR, ctx.char_file(TIFA_BODY["chest"]), BUST[TIFA],
+                  {"chest": fb.cleavage})
     _tifa(ctx, fb.face_skin(ctx, hrc))
     before, after = ctx.tifa_chest
     with open(os.path.join(TIFA_PARTS, TIFA_NIPPLE), "rb") as fh:
