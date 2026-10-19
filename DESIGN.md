@@ -38,12 +38,17 @@ against it. openFF7 replaces that with **per-location state**:
 2. **Regions with their own story line** (tool support, not used yet). Where a
    side quest is built on the story value, a region's fields can read and write
    a private variable instead, so the quest plays out on its own.
-3. **Remove remaining story barriers** (guards, locked doors, lines) per field,
+3. **Mark scenes as already seen.** Many entry scenes are guarded by "seen"
+   flags as well as story progress; the original story sets those as you play.
+   The new game sets the flags that keep each room quiet
+   (`INITIAL_EVENT_FLAGS` in `patches/_config.py`, found with
+   `tools/ff7/simulate.py`).
+4. **Remove remaining story barriers** (guards, locked doors, lines) per field,
    found by testing.
-4. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
+5. **New per-feature flags** (recruitment, transport unlocks, boss defeats,
    Corneo's move, region progress) use save variables bank 4, offsets 224–255,
    which no original script uses.
-5. **Build.** Patches live in `patches/*.py` and are applied by
+6. **Build.** Patches live in `patches/*.py` and are applied by
    `tools/ff7tool.py build`, which writes a separate game folder
    (`build/openFF7/`) and leaves the original data untouched.
 
@@ -52,7 +57,8 @@ The `.exe` itself only compares story progress against 1000/1200/1580/1620 (worl
 map setup), and the world map script has ~25 checks, so 100 keeps the world map
 in its disc 1 state until it is opened up. See `docs/exe_notes.md`.
 
-Midgar per-field choices: `docs/midgar_plan.md`.
+Midgar per-field choices: `docs/midgar_plan.md`. Kalm: `patches/300_kalm.py`.
+Everything else: `docs/world_plan.md` (automatic first pass, with overrides).
 
 ## 3. Decisions so far
 
@@ -70,12 +76,17 @@ Midgar per-field choices: `docs/midgar_plan.md`.
 |---|---|---|
 | Aerith | Sector 5 church | New recruitment dialogue |
 | Tifa | Seventh Heaven bar, Sector 7 | New recruitment dialogue |
-| Barret | Sector 7 weapon shop | New recruitment dialogue |
-| Red XIII | Shinra HQ lab (specimen area) | New recruitment dialogue |
-| Cait Sith | Gold Saucer, Wonder Square arcade (fortune reading) | Adapted from the original recruitment |
-| Cid | Rocket Town, near the rocket | New recruitment dialogue |
-| Vincent | Shinra Mansion basement | As in the original (Basement Key from the safe) |
-| Yuffie | Random forest encounters | As in the original |
+| Barret | No.1 Reactor train platform | New recruitment dialogue |
+| Red XIII | Shinra HQ 67F research lab, by the stairs from 66F | New recruitment dialogue |
+| Cait Sith | Costa del Sol beach, far right | New recruitment dialogue |
+| Cid | Junon airstrip | New recruitment dialogue |
+| Vincent | Honey Bee Inn, the dancers' room (far left) | New (embarrassed) dialogue; the original coffin route also works |
+| Yuffie | Chocobo Ranch, by the left pen's fence | New dialogue; random ninja fights off |
+
+#### Buggy
+Sold for 1000 gil by a salesman at Costa del Sol's town exit; buying it
+puts you on the world map outside Costa del Sol, driving it, and it stays
+yours (instead of the original Gold Saucer gift).
 
 #### Party leader
 - **Any recruited character can be party leader.**
@@ -100,22 +111,92 @@ Midgar per-field choices: `docs/midgar_plan.md`.
 ### Wall Market and Shinra HQ
 - **The dress-up sequence is removed.** Wall Market (including the Honey Bee Inn
   and Corneo's mansion) is a fully walkable area with no cutscenes.
+- **Bounties.** A recurring reporter, Scoop, sits in one bar per region (7th
+  Heaven: all of Midgar except the disc 2 areas; Kalm: Midgar plains to the
+  Zolom marsh; Junon: Junon area, Mythril Mine, the ship; Costa del Sol: the
+  Corel area and Mt. Corel; Cosmo Canyon: its region and the Cave of the Gi;
+  Nibelheim: its region and Mt. Nibel; Wutai; Icicle Inn: the Icicle area,
+  Great Glacier, snowfield maze, Gaea's Cliff and the Forgotten Capital). Same spiel, a
+  different bounty: hunt N of one of the region's rarer enemies. One active
+  bounty per region, started by accepting, with a time limit to kill them
+  and report back. Active bounties are listed first in the Quests screen as
+  "(Bounty) Title" with a description; once completed or timed out they are
+  dropped (not remembered) and a new one can be taken straight away.
+  Bounties are not saved.
+  **Hunter rank**: each claimed bounty adds Hunter points that grow faster
+  than the region's level (Midgar 1, Kalm 2, Junon 3, Costa 4, Cosmo 6,
+  Nibelheim 8, Wutai 11, Icicle 15), and each region can only raise you to
+  its own ceiling (Midgar: Tracker, Kalm: Hunter, Junon/Costa: Veteran,
+  Cosmo/Nibelheim: Elite, Wutai: Master, Icicle: Legend) - no grinding early
+  areas to a high rank. Points are saved and never decrease; the rank follows
+  them (Rookie 0, Tracker 10, Hunter 30, Veteran 60, Elite 100, Master 160,
+  Legend 250) and shows in the Quests screen. Rank unlocks tiers of the Hunt
+  Quartermaster's stock: Reeve's model, secretive about where the goods come
+  from; Sector 7 station (lower platform, right), Upper Junon's first street
+  by the shops, the North Corel ropeway by the gondola, Rocket Town by Cid's
+  house. Tracker: common gear; Hunter: common gear + the cheaper steal-only
+  items; Veteran/Elite/Master/Legend: the rest of the steal-only equipment.
+  Prices from 4,000 to 200,000 gil.
+- **Honey Bee Inn lounges.** All four side rooms off the lobby can be walked
+  into freely; the two right ones are mirror images of the left bedroom (a new
+  field). 5 girls per room in list order: upper-left = girls 1-5, lower-left
+  6-10, upper-right 11-15, lower-right 16-20; each only once hired, lying or
+  sitting on the bed, sitting, dancing or standing, with her own line.
+- **Honey Bee Girl recruitment.** The Honey Bee Inn's manager (lobby) offers
+  a job: recruit girls for the Inn. Then 20 women around the world (Tifa,
+  Aerith, Elena, Scarlet and 16 new ones; all adults) can be recruited by
+  answering their questions: 1 question per star (1-5), all must be right.
+  Every question is asked even after a wrong answer; the girl only says at
+  the end whether you got any wrong.
+  The star rating reflects the girl's quality/personality and will drive
+  later mechanics. Hired girls are listed by the manager, best first; visiting
+  one plays a comic scene in the "&" room (Cloud + the Honey Bee dancer model
+  under her name) ending in a fade and "You spent the rest of the night
+  together and had a good time...".
+- **Honey Bee affection and gifts.** Each girl has an affection rating 0-20,
+  raised only by gifts given in the lounges. Gifts are 12 key items (usable
+  only as gifts, one of each held at a time) sold by the Gift Merchant in
+  Wall Market, Costa del Sol, Cosmo Canyon and Wutai (3 each, one of each
+  type, pricier further out). Hidden gift types: beautiful, practical, sweet
+  (the description hints at it); each girl likes (+2), is indifferent to
+  (+1) or hates (+0) each type. Visit scenes: affection 0-9 the basic scene,
+  10-19 a more intimate one, 20 the most intimate (borderline explicit,
+  fading out). Reaction lines are shared by all girls (text budget).
+- **Honey Bee kids** (a little joke, never spelled out): after a girl's
+  affection-20 scene, a child stands next to her where she is found in the
+  world, a kid model that suits the place (the snorkel boy at Costa del Sol,
+  the red-cap boy in Rocket Town...), with one line about "Mom" and a
+  spiky-haired dad. Rhonda's inn has no model room: her kid waits outside the
+  Nibelheim inn door.
+- **Honey Bee Inn income.** The manager pays out the girls' earnings: total
+  stars of the hired girls x 2 gil x minutes of play since the last
+  collection (at most 4.5 hours' worth).
 - **The Shinra HQ infiltration is removed.** The building can be explored freely,
   with the infiltration random encounters. A new game holds all keycards.
 
 ### NPCs that move
-- **Don Corneo** lies on the bed in his bedroom (Corneo's mansion, 2f). Talk
-  to him: he says his original line "A man!? What's goin' on?", runs for the
-  door and is gone for good (flag `FLAG_CORNEO_FLED`). He then appears in
-  Wutai, where Yuffie's Wutai quest picks him up (Wutai side not built yet).
+- **Don Corneo** is not in Wall Market at all: his mansion is an empty,
+  walkable building. He appears only in Wutai, in Yuffie's Wutai quest.
 
 ### Midgar
 - Midgar is in its **early disc 1 state**: the Sector 7 plate is intact and the
   bombing story events are gone.
 - **No invisible walls** or story barriers. Every area that is reachable at any
   point in the story is reachable.
+- **Sector 7 and Sector 6 are joined by the gate** in the Sector 6 playground:
+  the gate stays open, the Sector 7 guards no longer block the passage, and it
+  works in both directions (no Aerith / chocobo carriage scene).
 - Midgar connects to the world map **the way it does on disc 3: past the church
   in Sector 5, using the key**.
+
+### Sector 7 train
+- Walking into the train at the Sector 7 station offers **Upper Midgar**
+  (Sector 8 bridge), **No. 1 Reactor** (Sector 1 platform) and **No. 5
+  Reactor** (the tunnel after the train). A Train Attendant at each
+  destination takes you back.
+- Reactor doors are open (no cutscenes, no button puzzle). Guard Scorpion and
+  Air Buster are touchable NPCs (stand-in robot model) that start their
+  battle; once beaten they are gone.
 
 ### Travel
 - **On foot / chocobo:** as in the original.

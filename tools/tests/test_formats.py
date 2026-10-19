@@ -82,17 +82,24 @@ def test_scene():
 
 
 def test_open_vars_unused():
-    """openFF7's own save variables (bank 4, 224-255) are unused by the original scripts."""
+    """openFF7's own save variables (bank 3 96-105, quest areas) are unused by
+    the original field and world map scripts."""
     from ff7 import varscan
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    bank_of = {1: 1, 3: 2, 11: 3, 13: 4, 7: 5}          # 8-bit nibble -> bank
+    areas = [(3, 96, 105)] + [(bank_of[n], a, b) for n, a, b in _config.QUEST_AREAS]
     archive = LGP.read(os.path.join(DATA, "field", "flevel.lgp"))
     secs = [ScriptSection(FieldFile(lzss.decompress(archive[n])).sections[0])
             for n in archive.names() if "." not in n and n != "maplist"]
     used = varscan.field_usage(secs)
-    assert not used[4] & set(range(224, 256))
     wm = LGP.read(os.path.join(DATA, "wm", "world_us.lgp"))
-    for ev in ("wm0.ev", "wm2.ev", "wm3.ev"):
-        offsets = varscan.worldmap_usage(wm[ev])
-        assert not offsets & set(range(0x300 + 224, 0x300 + 256)), ev
+    wm_used = [varscan.worldmap_usage(wm[ev]) for ev in ("wm0.ev", "wm2.ev", "wm3.ev")]
+    for bank, first, last in areas:
+        rng = set(range(first, last + 1))
+        assert not used[bank] & rng, (bank, sorted(used[bank] & rng))
+        for offsets in wm_used:
+            assert not offsets & {(bank - 1) * 256 + o for o in rng}, (bank, first, last)
 
 
 def test_patches():
@@ -125,7 +132,64 @@ def test_patches():
                 assert (ins.args["bank_d"], ins.args["dst"]) != PROGRESS_VAR, f
 
 
+def test_api_index_current():
+    """docs/api_index.md matches the source (run `ff7tool.py api-index` after code changes)."""
+    from ff7 import apiindex
+    have = open(apiindex.path(), encoding="utf-8").read() if os.path.exists(apiindex.path()) else ""
+    assert have == apiindex.generate(), "docs/api_index.md is stale: run python3 tools/ff7tool.py api-index"
+
+
+def test_asm_bins_current():
+    """patches/asm/*.bin must match their .asm (skipped without nasm)."""
+    import shutil
+    import subprocess
+    import tempfile
+    if not shutil.which("nasm"):
+        print("  (nasm not installed: skipped)")
+        return
+    folder = os.path.join(ROOT, "patches", "asm")
+    for name in sorted(os.listdir(folder)):
+        if not name.endswith(".asm"):
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "out.bin")
+            subprocess.run(["nasm", "-f", "bin", os.path.join(folder, name), "-o", out], check=True)
+            built = open(out, "rb").read()
+        assert built == open(os.path.join(folder, name[:-4] + ".bin"), "rb").read(), \
+            name + ": .bin is stale, reassemble it"
+
+
+def test_mirror():
+    """Background parse/build is byte-exact and a double flip is the identity;
+    a mirrored camera projects (-x, y, z) to (-sx, sy); a mirrored walkmesh
+    keeps every triangle's height and neighbour edges (620's flipped room)."""
+    import ff7tool
+    from ff7 import camera, walkmesh
+    from ff7.background import Background
+    for name in ("onna_52", "md1stin", "elm"):
+        f = ff7tool.load_field(name)[0]
+        sec = f.section("background")
+        bg = Background(sec)
+        assert bg.build() == sec, name
+        bg.flip_horizontal()
+        bg.flip_horizontal()
+        assert bg.build() == sec, name + ": double flip"
+        cam, cam2 = camera.Camera(f.sections[1]), camera.Camera(camera.flip_x(f.sections[1]))
+        m = walkmesh.Walkmesh(f.section("walkmesh"))
+        m2 = walkmesh.Walkmesh(walkmesh.flip_x(f.section("walkmesh")))
+        for i, tri in enumerate(m.tris):
+            for x, y, z in tri:
+                (a, b), (c, d) = cam.project(x, y, z), cam2.project(-x, y, z)
+                assert abs(a + c) < 1e-6 and abs(b - d) < 1e-6, name
+            cx, cy, _ = m.center(i)
+            assert m2.contains(i, -cx, cy) and m2.height(i, -cx, cy) == m.height(i, cx, cy), (name, i)   # (find: overlapping levels)
+            for k, n in enumerate(m2.access[i]):
+                if n >= 0:
+                    edge = {m2.tris[i][k][:2], m2.tris[i][(k + 1) % 3][:2]}
+                    assert edge <= {v[:2] for v in m2.tris[n]}, (name, i, k)
+
+
 if __name__ == "__main__":
-    for fn in [test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches]:
+    for fn in [test_api_index_current, test_asm_bins_current, test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches, test_mirror]:
         fn()
         print("ok", fn.__name__)

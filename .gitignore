@@ -22,3 +22,4 @@
 work/
 build/
 __pycache__/
+install_path.txt
