@@ -943,6 +943,39 @@ def char_overrides(args):
     print(", ".join(names[:200]) + (" ... (%d more)" % (len(names) - 200) if len(names) > 200 else ""))
 
 
+def lgp_pack(args):
+    """(user) Pack loose model files (e.g. a 7th Heaven mod's unpacked `char` folder) over a base .lgp
+    (default the original char.lgp) into a new .lgp, so a model tool that opens .lgp files sees them.
+    Names are lower-cased as the game's; files with a base name replace it, others are added."""
+    base = LGP.read(args.base or os.path.join(GAME, "field", "char.lgp"))
+    have = {n.lower(): n for n in base.names()}
+    files = sorted(f for f in os.listdir(args.folder) if os.path.isfile(os.path.join(args.folder, f)))
+    if not files:
+        subs = [d for d in os.listdir(args.folder) if os.path.isdir(os.path.join(args.folder, d))]
+        sys.exit("no files in %s; point it at the folder holding the .hrc/.p/.tex files%s" % (
+            args.folder, " (subfolders: %s)" % ", ".join(subs) if subs else ""))
+    replaced, added = [], []
+    for f in files:
+        low = f.lower()
+        if len(low.encode("ascii", "replace")) > 20:
+            print("skipped (name over 20 characters): %s" % f)
+            continue
+        with open(os.path.join(args.folder, f), "rb") as fh:
+            data = fh.read()
+        if low in have:
+            base[have[low]] = data
+            replaced.append(low)
+        else:
+            if low.endswith(".hrc"):
+                base.check[low] = 11      # every .hrc in char.lgp has TOC check 11 (others 14)
+            base[low] = data
+            added.append(low)
+    base.write(args.out)
+    print("%s: %d replaced, %d added" % (args.out, len(replaced), len(added)))
+    if added:
+        print("added: " + ", ".join(added[:100]) + (" ..." if len(added) > 100 else ""))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -969,6 +1002,11 @@ def main():
     co.add_argument("--dry-run", action="store_true", help="only list the changed files")
     co.add_argument("--only", nargs="+", metavar="PATTERN", help="only these names, e.g. zxtb.p 'zc*.p'")
     co.set_defaults(func=char_overrides)
+    lp = sub.add_parser("lgp-pack", help="pack loose model files (a mod's char folder) over char.lgp")
+    lp.add_argument("folder", help="the folder holding the files, e.g. an unpacked mod's char folder")
+    lp.add_argument("out", help="the .lgp to write")
+    lp.add_argument("--base", help="the .lgp to start from (default the original char.lgp)")
+    lp.set_defaults(func=lgp_pack)
     b = sub.add_parser("build")
     b.add_argument("--out", help="default build/openFF7 (build/openFF7_debug with --debug)")
     b.add_argument("--no-install", action="store_true", help="don't copy the changed files into the Steam game folder")

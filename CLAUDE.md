@@ -40,6 +40,7 @@ python3 tools/ff7tool.py scenes FIELD...    # simulate entering built fields, fl
 python3 tools/ff7tool.py reach FIELD...     # walkmesh entrance->exit reachability
 python3 tools/ff7tool.py quiet-flags        # search 'seen' flags (slow, >10 min; background)
 python3 tools/ff7tool.py char-overrides MY.lgp  # files changed in an edited char.lgp -> patches/char_overrides/
+python3 tools/ff7tool.py lgp-pack FOLDER OUT.lgp   # loose model files (a 7th Heaven mod's unpacked char folder) over the original char.lgp -> OUT.lgp (--base other.lgp)
 ```
 
 Shipped files: `data/field/flevel.lgp`, `data/lang-en/kernel/KERNEL.BIN`,

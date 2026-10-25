@@ -48,6 +48,7 @@ openFF7 command-line tool.
 - `reach(args)` For each given field of the last build: can each entrance reach each exit,
 - `_same_model_file(name, a, b)` True if two char.lgp files hold the same model data, even when a model tool re-saved them with
 - `char_overrides(args)` Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) whose model data
+- `lgp_pack(args)` (user) Pack loose model files (e.g. a 7th Heaven mod's unpacked `char` folder) over a base .lgp
 - `main()` 
 
 ## `tools/ff7/__init__.py`

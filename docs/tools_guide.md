@@ -129,6 +129,14 @@ You rarely need either now. They were used to set up the open world.
 class in `tools/ff7/` and `patches/`. **Search this first** when you want to do something: there
 is usually a helper already. The tests fail if it's out of date, so run it after changing code.
 
+### `lgp-pack`: loose model files into a .lgp
+
+`python3 tools/ff7tool.py lgp-pack FOLDER OUT.lgp` writes every file in FOLDER (e.g. a 7th Heaven
+mod's `char` folder, unpacked from its `.iro` with 7th Heaven's Unpack IRO) over the original
+`char.lgp` and saves the result as OUT.lgp, for model tools that open `.lgp` files. Names are
+lower-cased; a file with an existing name replaces it, others are added. `--base` starts from
+another `.lgp` (e.g. `build/openFF7/data/field/char.lgp`).
+
 ### `exe-test`
 
 Writes a harmless test copy of `ff7_en.exe` to `build/exe_test/`. It was used once to prove that a
