@@ -3060,12 +3060,20 @@ def _wall_market(ctx, focus):
         wx_, wy_ = WO_.ARRIVE
         wt_ = Walkmesh(ctx.field(WO_.BASE).section("walkmesh")).find(wx_, wy_)
         assert wt_ is not None
-        ask_w, first_w = hb._ask(sec, "Director\n“Got a film for you and Tifa:\n Sector 7 Workout. Interested?”",
-                                 ["Shoot Sector 7 Workout.", "Talk about other work."])
-        other_w = asm.nop()
-        ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, other_w)] + \
+        # (user) and the second, Going up (684), in Shinra HQ's glass elevator
+        import _going_up as GU_
+        gx_, gy_ = GU_.ARRIVE
+        gt_ = Walkmesh(ctx.field(GU_.BASE).section("walkmesh")).find(gx_, gy_)
+        assert gt_ is not None
+        ask_w, first_w = hb._ask(sec, "Director\n“I've got films lined up. Which one\n are we shooting?”",
+                                 ["Sector 7 Workout.", "Going up.", "Talk about other work."])
+        film2_, other_w = asm.nop(), asm.nop()
+        ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, film2_)] + \
             hb._say(sec, "Director\n“That's what I like to hear! To the gym!”") + \
-            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(WO_.FIELD), wx_, wy_, wt_, 0), asm.ret(), other_w]
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(WO_.FIELD), wx_, wy_, wt_, 0), asm.ret(), film2_,
+             asm.if_byte(CHOICE, "==", first_w + 1, other_w)] + \
+            hb._say(sec, "Director\n“Shinra Tower, the glass elevator.\n Elena's waiting. Don't be late!”") + \
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(GU_.FIELD), gx_, gy_, gt_, 0), asm.ret(), other_w]
         ops += tape(sec, say, end) + _unlocked_or(scout)
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
         for t_ in NEWS[1]:                       # (user) once (if the arrival didn't tell it)

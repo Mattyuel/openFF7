@@ -1035,6 +1035,13 @@ The movie minigame (user's design).
 - `_set(ctx, donor, stand, poses)` 
 - `apply(ctx)` 
 
+## `patches/684_going_up.py`
+(user) Going up: the second parody film (data `_going_up.py`, poses `_going_up_poses.py`), in Shinra HQ's
+
+- `_mods()` 
+- `_rot(v, d)` 
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1218,6 +1225,15 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust, shape=None)` (675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
 - `paint(V, P, cuts, colour_of)` The mesh (V, P) cut along each plane of `cuts` [(normal, c)] and each triangle coloured
 - `tifa_body(ctx, hrc, skin, bust=1.0, legs=None, paints=None)` (user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
+
+## `patches/_going_up.py`
+(user) Going up: the second parody film (684_going_up), in Shinra HQ's glass elevator (eleout, where the
+
+
+## `patches/_going_up_poses.py`
+(user) Going up's own poses (684_going_up): Elena covering up (standing, head down and turned aside, one
+
+- `build(ctx, hrc, stand)` Writes QEA0 / QEB0 for Elena's bare `hrc`. Returns their names (.tor).
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).

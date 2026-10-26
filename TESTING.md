@@ -36,6 +36,13 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Going up** (684): the Director's film menu, "Going up.". The glass
+  elevator: the intro (Elena walks in, Cloud tries the console, the stuck
+  door, Elena undresses, covers up, crawls over; Cloud walks behind her),
+  then the prompts. Besides the button prompts: HOLD prompts (keep the
+  button held until the window closes) and Tifa's "Switch!" ([MENU] in
+  time). Check the car and its glass look right (the background's layers),
+  the switching between Elena and Tifa, the car moving at the end, the pay.
 - **Sector 7 Workout** (683): talk to the Director (the cameraman) at the
   Sector 7 station: his first question offers "Shoot Sector 7 Workout.".
   In the gym: the intro talk, then squats. A button name pops up each rep

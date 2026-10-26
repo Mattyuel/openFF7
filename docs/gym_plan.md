@@ -408,6 +408,7 @@ one position after another into films.
   | Film | Parody of | Set | Cast |
   |---|---|---|---|
   | *Hostile Takeover* | the Shinra board meeting: executives fight over the budget | the boardroom (blin66 floors) | Scarlet as the cruel exec, Elena as the new hire (proposal) |
+  | *Going up* (**built: 684_going_up, untested in-game**) | the Turks' elevator capture, turned round: the stuck glass elevator, Tifa's 'special training' for Elena | Shinra HQ's glass elevator (eleout) | Cloud, Tifa, Elena (user) |
   | *Mako Fever* | a reactor inspection with a stuck elevator | No.1 / No.5 reactor rooms | Cloud, Tifa, Jessie (user) |
   | *Escape Pod* | Shinra's space programme, sealed in with too little air | the rocket's capsule (rcktin7) | Cid, Aerith (user) |
 
