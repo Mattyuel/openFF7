@@ -27,8 +27,10 @@ marked **(decided)**; everything else is a proposal.
 
 ## 2. Story arc
 
-1. **The Deed.** Big Bro owes Corneo, and Tifa buys the gym before Corneo
-   takes it. First members come through the squat contest. First rent is due.
+1. **The Deed.** Cloud works shifts at 7th Heaven. A customer there is selling
+   the gym (who: Big Bro fits; he owes Corneo); Cloud meets him at the gym and
+   buys it before Corneo takes it. First members come through the squat
+   contest. First rent is due. (Order of unlocks: section 4.2.)
 2. **The Roster.** Recruiting across Midgar, then the world. Each recruit has a
    personal goal; helping them reach it is the relationship.
 3. **The Exhibition.** Shinra's buyout, then a public competition at the Gold
@@ -154,7 +156,7 @@ other expenses. Running short is the pressure that drives every week.
   - **7th Heaven bar-tending:** Cloud works shifts at Tifa's bar. A bartending
     minigame (mixing orders against the clock / customers' moods), tips by
     score, and regulars who become gym recruits.
-- **Income, unconventional:** the cameraman and the Honey Bee Inn (section
+- **Income, unconventional:** the Director and the Honey Bee Inn (section
   4.1). They start as work done out of desperation and become businesses you
   own.
 - **Tracking:**
@@ -186,7 +188,7 @@ Each asset has:
 | **Profits** | build up while you're away; collected in person, as the Honey Bee manager's "Collect" does now (gil x rate x minutes, capped) |
 | **Upgrades** | later: more staff slots, better equipment, higher rates |
 
-**The cameraman and the Honey Bee Inn: desperation, then ownership.** In the
+**The Director and the Honey Bee Inn: desperation, then ownership.** In the
 gym's story these scenes are about making money out of desperation, and they
 add flavour to life in the slums.
 
@@ -196,11 +198,11 @@ add flavour to life in the slums.
   - **After you buy it:** you hire the others. 620's recruiting (finding the
     girls around the world, the star questions) becomes hiring staff. The inn
     then pays profits, less their wages.
-- **The cameraman:**
+- **The Director:**
   - **Before you own the company:** shoots with only Tifa and Cloud, paid per
-    shoot (670's pay-per-press). The cameraman is the boss.
+    shoot (670's pay-per-press). The Director is the boss.
   - **Buy the production company:** you hire the stars (the co-stars: Ruby,
-    Skye, Elena, Scarlet, Aerith, ...) and the cameraman himself, as paid
+    Skye, Elena, Scarlet, Aerith, ...) and the Director himself, as paid
     staff.
   - **Sell the videos:** a deal with the Materia Store salesman in Wall
     Market (`mkt_m`) to sell them from his shop. The deal is a scene; then he
@@ -208,9 +210,57 @@ add flavour to life in the slums.
   - **The shift:** from being paid for a shoot to collecting profits. Each
     shoot makes a video; videos sell over time, by its quality (the meter's
     score, finishers) and its stars.
-- **7th Heaven** is bought too (from whom: open; Tifa runs it today). The bar
+- **7th Heaven** (user): Tifa only rents it; the building belongs to
+  **Marle**, the elderly Sector 7 landlady, and is bought from her. The bar
   shifts are its minigame; owning it adds staff, stock and profits.
-- **The gym** is the first purchase (chapter 1, from Big Bro).
+- **The gym** is the first purchase (section 4.2).
+
+### 4.2 Unlock chain (user)
+
+Each business is found through the one before it:
+
+```mermaid
+flowchart TD
+    BAR["Work shifts at 7th Heaven<br/>(Tifa rents it from Marle)"] --> SELLER["A customer is selling the gym"]
+    SELLER --> MEETGYM["Meet him at the gym"] --> GYM(["Buy the gym"])
+    BAR -.-> MARLE(["Buy 7th Heaven from Marle<br/>(when: open)"])
+    GYM --> HBGIRL["A Honey Bee girl works out at the gym<br/>(in gym clothes, not her outfit)<br/>and recommends the gig"]
+    HBGIRL --> GIGS["Casual Honey Bee gigs<br/>(Tifa only)"]
+    GIGS -->|enough gigs| OWNER["Scene: the owner wants to sell"]
+    OWNER --> MEETINN["Meet him outside the inn"] --> INN(["Buy the Honey Bee Inn<br/>hire the other girls"])
+    GIGS --> DIRMEET["Scene at the inn: the Director,<br/>a customer looking for talent"]
+    DIRMEET --> STATION["The Director at the Sector 7 station<br/>offers work"]
+    STATION --> SHOOTS["Shoots for him<br/>(Tifa + Cloud, paid per shoot)"]
+    MATERIA["Materia Store owner mentions<br/>he wants to branch into home videos"] -.-> DEAL
+    SHOOTS -->|enough work| DEAL(["Partner with the Materia Store owner:<br/>sell the videos"])
+    DEAL --> COMPANY(["The production company<br/>hire stars, profits from sales"])
+```
+
+- **Gym:**
+  - Cloud meets the seller as a customer at 7th Heaven.
+  - The purchase happens at the gym.
+- **Honey Bee Inn:**
+  - The casual employment unlocks when a Honey Bee girl, working out at the
+    gym in ordinary clothes, recommends the gig.
+  - After enough gigs, there's a scene where the owner shares that he wants
+    to sell.
+  - You meet him outside the inn to buy it.
+- **The Director** (renamed from "the cameraman"):
+  - First met in a scene at the inn, as a customer looking for talent.
+  - From then on he is at the Sector 7 train station (where 670 already puts
+    him) and offers work.
+- **Video sales:**
+  - The Materia Store owner (`mkt_m`) mentions earlier, in ordinary talk,
+    that he wants to branch into home videos.
+  - After enough work for the Director, you can partner with him to sell the
+    videos.
+  - The plan's "production company" is this step: owning the shoots, hiring
+    stars, profits from sales. Whether it's a separate purchase or the deal
+    itself: open.
+- **7th Heaven:** when you buy it from Marle is open (some gil goal along the
+  way).
+- **Name clash:** 677's scene lab NPC is also called "the Director": rename
+  one of them.
 
 **Save data per asset** (estimate, from the free bytes `save-usage` found):
 an owned bit, staff bits, a supply level, unpaid profit or its last-collected
@@ -334,7 +384,7 @@ An aerobics class in the gym, done 80s style.
 | 626 Honey Bee rescue | random street event | **Remove?** (or reshape as a slum incident that brings a self-defence student) |
 | 630 bounties / 640 Hunt Quartermaster | combat bounties, hunter ranks, gear shop | **Replace**: the rank ladder becomes gym Reputation, the shop becomes the equipment supplier. Bounty logic goes if combat goes. |
 | 660 dates / 661 Cid friend | dates, hang-outs, affection tiers | **Consolidate** into member hang-outs (661 is the template). Intimate part twos: **remove?** |
-| 670-674, 678, 679_* movie shoots, special scenes, Blast-off, stage show, group/beach/chamber/nurse sets | adult minigame suite | **Restructure (user, section 4.1)**: Tifa + Cloud paid per shoot, then buy the production company: hire the stars and the cameraman, sell the videos at the Materia Store. The star ranks / co-star unlocks become hiring; which sets / scenes stay: open. Its engine parts are worth keeping: the meter, Square prompts, holds/pauses as pacing, the loose engine's staged cutaways, new-field copying, sprite gauges. |
+| 670-674, 678, 679_* movie shoots, special scenes, Blast-off, stage show, group/beach/chamber/nurse sets | adult minigame suite | **Restructure (user, section 4.1)**: Tifa + Cloud paid per shoot, then buy the production company: hire the stars and the Director, sell the videos at the Materia Store. The star ranks / co-star unlocks become hiring; which sets / scenes stay: open. Its engine parts are worth keeping: the meter, Square prompts, holds/pauses as pacing, the loose engine's staged cutaways, new-field copying, sprite gauges. |
 | 682 school dance | passive dance routine, uniforms | **Consolidate** into the 80s spandex class (section 6.1) |
 | 675 / 681 / `_female_body`, 985, 990 | bodies, model merging, hand edits | **Keep** (needed for outfits). The undressed variants go with whatever is removed. |
 | 677 scene lab | placement tool | **Keep** |
@@ -345,7 +395,8 @@ An aerobics class in the gym, done 80s style.
 
 ### Combat
 
-**Decided (user, 2026-10): combat goes, for now.**
+**Decided (user, 2026-10): combat goes, for now.** It may come back later; it
+isn't a priority.
 
 - **Done:** `950_no_combat.py` turns random battles off while
   `_config.COMBAT` is False.
