@@ -415,30 +415,50 @@ one position after another into films.
   body on her story model, as 675 does for the others) and a profile.
 
   **Tifa and Cloud only** (user: many are needed, shot before anyone else
-  is hired). Proposals, all Midgar sets reachable early:
+  is hired). Midgar sets reachable early. Approved (user):
 
   | Film | Parody of | Set |
   |---|---|---|
   | *Last Train Out* | the opening train ride: the ID scan, nervous passengers, a carriage to themselves | the Sector 7 train |
   | *Happy Hour* | 7th Heaven after closing; the pinball-machine lift down to the hideout | 7th Heaven (mds7pb_1 / mds7pb_2) |
+  | *Avalanche Boot Camp* | the bombing mission briefing; Tifa as the drill instructor | the hideout (mds7pb_2) |
+  | *Sector 7 Workout* | a gym training montage (ties the shoots to the gym) | the gym (mkt_mens) |
+  | *Parade Rehearsal* | the Junon parade drill (user: Cloud and Tifa; a drill instructor shouts positions and a short button prompt asks for the right one: a wrong or late press loses the take) | Junon |
+
+  Still proposals:
+
+  | Film | Parody of | Set |
+  |---|---|---|
   | *Under the Stars* | the water tower promise: "if you're ever in trouble, I'll come" | the Nibelheim water tower (or a Midgar rooftop) |
   | *Ex-SOLDIER for Hire* | Cloud's "anything for a price" mercenary act, Tifa as the client | the Sector 7 slums |
   | *Dress to Impress* | the Wall Market dress-up: Tifa coaches Cloud for his audition | the Boutique (mkt_s1) |
   | *The Don's Bride* | Corneo choosing a bride; Tifa picked, Cloud sneaks in to save her | Corneo's bedroom (colne_6) |
-  | *Avalanche Boot Camp* | the bombing mission briefing; Tifa as the drill instructor | the hideout (mds7pb_2) |
-  | *Sector 7 Workout* | a gym training montage (ties the shoots to the gym) | the gym (mkt_mens) |
+
+  **The main cast (user): Aerith, Tifa, Jessie, Scarlet, Elena, Esther
+  (potentially) and a custom nurse; Ruby and Skye are written out.**
+
+  - **Jessie** needs an undressed model (the standard body on her story
+    model, as 675 does for the others) and a profile.
+  - **Esther** isn't in the original game: she needs a model built or
+    borrowed, and a profile.
+  - **The nurse** is 679_nurse's island nurse (ZIUA, with her anim suite).
+  - **Ruby and Skye leave the story**, but Skye's undressed body stays as
+    an asset: `_female_body`'s standard body (every girl's undressed model)
+    is built from 670's `_bare_skye`. Removing her from the shoots must keep
+    that build.
+  - Their lines, profiles and star ranks in 670 / 678 / 679 go with the
+    restructure.
 
   **Later casts** (proposals):
 
   | Film | Parody of | Set | Cast idea |
   |---|---|---|---|
   | *Flower Girl* | "one gil for a flower" | the Sector 5 church | Aerith |
-  | *Parade Rehearsal* | the Junon parade drill, a sergeant who never stops shouting | Junon | Elena, Scarlet |
-  | *Specimen* | Hojo's lab and its 'experiments' | the Shinra Mansion basement | Skye, Scarlet |
-  | *Prison Break* | Corel Prison's desert jail | Corel Prison | Ruby, Skye |
-  | *Battle Square Champions* | the Gold Saucer arena and its announcer | Battle Square | Ruby, Elena |
+  | *Specimen* | Hojo's lab and its 'experiments' | the Shinra Mansion basement | Scarlet, the nurse |
+  | *Battle Square Champions* | the Gold Saucer arena and its announcer | Battle Square | Elena, Esther |
   | *Mile High* | the Highwind's first flight | the Highwind | Cid, Scarlet |
   | *Costa del Sol Holiday* | the Shinra president's beach getaway | Costa del Sol | everyone |
+  | *Night Shift* | Mideel's clinic: a patient who won't stay in bed | the clinic (ithos, 679_nurse's set) | the nurse, Jessie |
 
   Each film: an opening scene that sets up the parody, two or three scenes
   with gameplay between them, a finale. 672's scenarios and 674's acts are
