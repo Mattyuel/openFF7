@@ -401,20 +401,44 @@ one position after another into films.
   staged intro lines, actions per line, then positions. The press-rate meter
   (670), the Square prompts and the holds can be the gameplay between scenes;
   other kinds of play can be added.
-- **Parody targets (user): FF7's own world.** The Shinra boardroom is the
-  model. Film ideas (proposals; sets are existing fields that already look
-  the part):
+- **Parody targets (user): FF7's own world.**
 
-  | Film | Parody of | Set (field) | Cast idea |
+  **Approved (user):**
+
+  | Film | Parody of | Set | Cast |
   |---|---|---|---|
-  | *Hostile Takeover* | the Shinra board meeting: executives fight over the budget | the boardroom (blin66 floors) | Scarlet as the cruel exec, Elena as the new hire |
-  | *Turks After Hours* | the Turks on a stakeout that goes sideways | a Midgar street / Wall Market | Elena, Ruby |
-  | *Loveless: The Director's Cut* | the play Midgar keeps advertising | the Gold Saucer stage (astage_b) | the cast of 674's stage show |
-  | *Mako Fever* | a reactor inspection with a stuck elevator | No.1 / No.5 reactor rooms | Skye, Tifa |
-  | *The Wall Market Mystery* | a detective story about who stole Corneo's wig | Corneo's mansion (colne_6) | Aerith as the detective |
-  | *Cosmo Candle Confessions* | Cosmo Canyon's elders and their 'ancient wisdom' | Cosmo Canyon | Aerith, Skye |
-  | *Escape Pod* | Shinra's space programme, sealed in with too little air | the rocket's capsule (rcktin7) | Cid's Blast-off cast |
-  | *Gold Saucer Nights* | the date ride gone wrong | the gondola (bwhlin) | Scarlet, Tifa |
+  | *Hostile Takeover* | the Shinra board meeting: executives fight over the budget | the boardroom (blin66 floors) | Scarlet as the cruel exec, Elena as the new hire (proposal) |
+  | *Mako Fever* | a reactor inspection with a stuck elevator | No.1 / No.5 reactor rooms | Cloud, Tifa, Jessie (user) |
+  | *Escape Pod* | Shinra's space programme, sealed in with too little air | the rocket's capsule (rcktin7) | Cid, Aerith (user) |
+
+  Jessie is new to the shoots: she needs an undressed model (the standard
+  body on her story model, as 675 does for the others) and a profile.
+
+  **Tifa and Cloud only** (user: many are needed, shot before anyone else
+  is hired). Proposals, all Midgar sets reachable early:
+
+  | Film | Parody of | Set |
+  |---|---|---|
+  | *Last Train Out* | the opening train ride: the ID scan, nervous passengers, a carriage to themselves | the Sector 7 train |
+  | *Happy Hour* | 7th Heaven after closing; the pinball-machine lift down to the hideout | 7th Heaven (mds7pb_1 / mds7pb_2) |
+  | *Under the Stars* | the water tower promise: "if you're ever in trouble, I'll come" | the Nibelheim water tower (or a Midgar rooftop) |
+  | *Ex-SOLDIER for Hire* | Cloud's "anything for a price" mercenary act, Tifa as the client | the Sector 7 slums |
+  | *Dress to Impress* | the Wall Market dress-up: Tifa coaches Cloud for his audition | the Boutique (mkt_s1) |
+  | *The Don's Bride* | Corneo choosing a bride; Tifa picked, Cloud sneaks in to save her | Corneo's bedroom (colne_6) |
+  | *Avalanche Boot Camp* | the bombing mission briefing; Tifa as the drill instructor | the hideout (mds7pb_2) |
+  | *Sector 7 Workout* | a gym training montage (ties the shoots to the gym) | the gym (mkt_mens) |
+
+  **Later casts** (proposals):
+
+  | Film | Parody of | Set | Cast idea |
+  |---|---|---|---|
+  | *Flower Girl* | "one gil for a flower" | the Sector 5 church | Aerith |
+  | *Parade Rehearsal* | the Junon parade drill, a sergeant who never stops shouting | Junon | Elena, Scarlet |
+  | *Specimen* | Hojo's lab and its 'experiments' | the Shinra Mansion basement | Skye, Scarlet |
+  | *Prison Break* | Corel Prison's desert jail | Corel Prison | Ruby, Skye |
+  | *Battle Square Champions* | the Gold Saucer arena and its announcer | Battle Square | Ruby, Elena |
+  | *Mile High* | the Highwind's first flight | the Highwind | Cid, Scarlet |
+  | *Costa del Sol Holiday* | the Shinra president's beach getaway | Costa del Sol | everyone |
 
   Each film: an opening scene that sets up the parody, two or three scenes
   with gameplay between them, a finale. 672's scenarios and 674's acts are
