@@ -49,6 +49,7 @@ openFF7 command-line tool.
 - `_same_model_file(name, a, b)` True if two char.lgp files hold the same model data, even when a model tool re-saved them with
 - `char_overrides(args)` Every file of an edited char.lgp (e.g. build/openFF7's, changed in a model tool) whose model data
 - `lgp_pack(args)` (user) Pack loose model files (e.g. a 7th Heaven mod's unpacked `char` folder) over a base .lgp
+- `save_usage(args)` Savemap banks 1-4: what the original game and the build use, what is free
 - `main()` 
 
 ## `tools/ff7/__init__.py`
@@ -273,6 +274,24 @@ Can the player walk from a field's entrances to its exits?
 - `_components(mesh, locked)` 
 - `exit_triangles(mesh, gw)` Triangles touching a gateway line (sampled along the line).
 - `check(field_bytes, locked, entrances, names)` entrances: [(label, triangle)]. Returns {(entrance label, exit field): reachable}.
+
+## `tools/ff7/saveuse.py`
+Which savemap bytes (field var banks 1-4) the game uses, and which are free.
+
+- `known(bank, off)` 
+- `_nibble(raw, sel)` 
+- class `Usage` bank (1-4) -> offset -> {'r': set(fields), 'w': set(fields), 'bits': set or None}.
+  - `__init__()` 
+  - `mark(bank, off, kind, where, bits=None, size=1)` 
+  - `used(bank, off)` 
+  - `free_bits(bank, off)` Bits nothing touches (0-8 of them); 8 when the byte is unused.
+- `_bits_of_if(ins)` Bits an IF tests when it compares a var with a literal bit / mask, else None.
+- `_literal_if(ins)` True / False for an IF comparing two literals (a pinned progress test), else None.
+- `reachable(sec, code)` The instructions that can run: from every entity script slot (and script 0's
+- `scan_field(usage, name, sec)` 
+- `scan_worldmap(usage, name, ev)` 
+- `scan_exe(usage, data)` Every 4-byte value in the exe that points into field banks 1-4 (code and data;
+- `usage(flevel, world_lgp=None, exe=None, decompress=None)` flevel / world_lgp: ff7.lgp.LGP; exe: bytes; decompress: LZSS function (default lzss.decompress).
 
 ## `tools/ff7/scene.py`
 scene.bin: 32 blocks of 0x2000 bytes, each holding up to 16 gzip'd scenes.

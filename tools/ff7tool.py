@@ -976,6 +976,115 @@ def lgp_pack(args):
         print("added: " + ", ".join(added[:100]) + (" ..." if len(added) > 100 else ""))
 
 
+def save_usage(args):
+    """Savemap banks 1-4: what the original game and the build use, what is free
+    (whole bytes and spare bits), what the open world freed. -> work/save_usage.txt"""
+    import hashlib
+    from ff7 import saveuse
+    sys.path.insert(0, os.path.join(ROOT, "patches"))
+    import _config
+    built_dir = os.path.join(ROOT, "build", "openFF7")
+    paths = [os.path.join(built_dir, "data", "field", "flevel.lgp"),
+             os.path.join(built_dir, "data", "wm", "world_us.lgp"), os.path.join(built_dir, "ff7_en.exe")]
+    if not all(os.path.exists(p) for p in paths):
+        sys.exit("no build in build/openFF7: run 'ff7tool.py build --no-install' first")
+
+    def built_decompress(packed):          # unchanged fields come from the originals' cache
+        path = os.path.join(RAW_CACHE, hashlib.sha1(packed).hexdigest())
+        if os.path.exists(path):
+            return open(path, "rb").read()
+        return lzss.decompress(packed)
+
+    print("scanning the original game ...")
+    orig = saveuse.usage(LGP.read(os.path.join(GAME, "field", "flevel.lgp")),
+                         LGP.read(os.path.join(GAME, "wm", "world_us.lgp")),
+                         open(os.path.join(os.path.dirname(GAME), "ff7_en.exe"), "rb").read(),
+                         cached_decompress)
+    print("scanning the build ...")
+    built = saveuse.usage(LGP.read(paths[0]), LGP.read(paths[1]), open(paths[2], "rb").read(),
+                          built_decompress)
+    nib = {1: 1, 3: 2, 11: 3, 13: 4}
+    reserved = {(nib[n], o) for n, a, b in _config.QUEST_AREAS if n in nib for o in range(a, b + 1)}
+    nibbles = {1: "1/2", 2: "3/4", 3: "11/12", 4: "13/14"}
+
+    def who(e):
+        parts = []
+        for k, label in (("r", "read"), ("w", "write")):
+            if e[k]:
+                names = sorted(e[k])
+                parts.append("%s %d (%s%s)" % (label, len(names), " ".join(names[:4]),
+                                                " ..." if len(names) > 4 else ""))
+        if e["wm"]:
+            parts.append("world map %d" % e["wm"])
+        if e["exe"]:
+            parts.append("exe %s" % " ".join("%X" % v for v in e["exe"][:3]))
+        if not e["whole"] and not e["wm"] and not e["exe"] and e["bits"]:
+            parts.append("bits %s" % "".join(str(b) for b in sorted(e["bits"])))
+        return "; ".join(parts)
+
+    lines, summary = [], []
+    for bank in (1, 2, 3, 4):
+        lines.append("== savemap bank %d (field var nibbles %s; savemap 0x%04X) ==" % (
+            bank, nibbles[bank], saveuse.BANK1 + 256 * (bank - 1)))
+        counts = collections.Counter()
+        free_runs, run = [], None
+        for off in range(256):
+            e = built.bytes[bank].get(off)
+            used = built.used(bank, off)
+            was = orig.used(bank, off)
+            near = [o for o in range(max(0, off - saveuse.NEAR_EXE), off)
+                    if (built.bytes[bank].get(o) or {}).get("exe")]
+            if saveuse.known(bank, off):
+                status = "used (known): " + saveuse.known(bank, off)
+                counts["used"] += 1
+                used = True
+            elif (bank, off) in reserved:
+                status = "reserved (_config.QUEST_AREAS)" + ("" if used else ", unused yet")
+                counts["reserved"] += 1
+            elif not used and near:
+                status = "check: free in the scripts, %d bytes after an exe reference (a table?)" % (
+                    off - near[-1])
+                counts["check"] += 1
+                used = True
+            elif not used:
+                status = "FREED (the original used it)" if was else "free"
+                counts["freed" if was else "free"] += 1
+            elif not e["r"] and not e["wm"] and not e["exe"]:
+                status = "write-only: " + who(e)
+                counts["write-only"] += 1
+            else:
+                spare = built.free_bits(bank, off)
+                status = ("bits %s free: " % "".join(map(str, sorted(spare))) if spare else "used: ") + who(e)
+                counts["part" if spare else "used"] += 1
+            if not used and (bank, off) not in reserved:
+                run = run or [off, off]
+                run[1] = off
+            elif run:
+                free_runs.append(run)
+                run = None
+            lines.append("%3d  %s" % (off, status))
+        if run:
+            free_runs.append(run)
+        lines.append("")
+        summary.append("bank %d (nibbles %s): %d free (%d freed by the open world), %d write-only, "
+                       "%d with spare bits, %d used, %d reserved, %d to check (after an exe reference)" % (
+                           bank, nibbles[bank], counts["free"] + counts["freed"], counts["freed"],
+                           counts["write-only"], counts["part"], counts["used"], counts["reserved"],
+                           counts["check"]))
+        summary.append("   free runs: " + ", ".join(
+            "%d" % a if a == b else "%d-%d" % (a, b) for a, b in free_runs))
+    if built.indirect:
+        ind = collections.Counter(built.indirect)
+        summary.append("indirect (SETX/GETX/SEARCHX index a bank at run time; check by hand): " + ", ".join(
+            "%s %s bank %d x%d" % (f, o, b, n) for (f, o, b), n in sorted(ind.items())))
+    os.makedirs(WORK, exist_ok=True)
+    out = os.path.join(WORK, "save_usage.txt")
+    with open(out, "w") as fh:
+        fh.write("\n".join(summary) + "\n\n" + "\n".join(lines))
+    print("\n".join(summary))
+    print("wrote", out)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1007,6 +1116,8 @@ def main():
     lp.add_argument("out", help="the .lgp to write")
     lp.add_argument("--base", help="the .lgp to start from (default the original char.lgp)")
     lp.set_defaults(func=lgp_pack)
+    sub.add_parser("save-usage", help="savemap bytes used / free in the original and the build").set_defaults(
+        func=save_usage)
     b = sub.add_parser("build")
     b.add_argument("--out", help="default build/openFF7 (build/openFF7_debug with --debug)")
     b.add_argument("--no-install", action="store_true", help="don't copy the changed files into the Steam game folder")

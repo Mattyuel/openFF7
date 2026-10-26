@@ -41,6 +41,7 @@ python3 tools/ff7tool.py scenes FIELD...    # simulate entering built fields, fl
 python3 tools/ff7tool.py reach FIELD...     # walkmesh entrance->exit reachability
 python3 tools/ff7tool.py quiet-flags        # search 'seen' flags (slow, >10 min; background)
 python3 tools/ff7tool.py char-overrides MY.lgp  # files changed in an edited char.lgp -> patches/char_overrides/
+python3 tools/ff7tool.py save-usage          # savemap banks 1-4: free / freed / write-only / spare bits, original vs build -> work/save_usage.txt (~40 s; needs a build)
 python3 tools/ff7tool.py lgp-pack FOLDER OUT.lgp   # loose model files (a 7th Heaven mod's unpacked char folder) over the original char.lgp -> OUT.lgp (--base other.lgp)
 ```
 
@@ -291,6 +292,14 @@ delete `build/cache` (~350 MB) any time.
 - Numbers in dialogue: `MPRA2 [src bank][window][slot][u16 var]` after the
   WINDOW op, text `{VAR}` (FE E1, no operand) shows it. GOLDU/GOLDD
   `[bank<<4][u32]`: bank 6 + offset = add/remove a temp word var of gil.
+- **Which savemap bytes are free**: `ff7tool.py save-usage` (`ff7/saveuse.py`). Field operands come from the exe:
+  every handler's calls to the operand getters 0x60F750 (8-bit literal) / 0x60FD6C (16-bit literal) and setters
+  0x60FA7D / 0x61031E as (nibble selector, offset); selector 2k-1 = byte k's high nibble, 2k its low; a var's
+  address is always **one byte** at that offset (only a literal is u16). Only code that can run counts (IFs between
+  two literals decided: pinned progress tests). Result 2026-10: ~155 free bytes in banks 1-4 (bank 1 31, bank 2 53,
+  bank 3 10, bank 4 59), the open world itself frees ~1 (pinned fields still test their flags in live code). The exe
+  scan sees only absolute addresses (a table shows its base: free bytes within 8 after one are "check");
+  `saveuse.KNOWN` lists the tables found by hand (bank 4 184-243). Battle AI isn't scanned.
 - **Arithmetic ops (exe handlers, read 2026-10):** 0x85 PLUS / 0x86 PLUS2 / 0x87 MINUS / 0x88 MINUS2 wrap (no
   clamp). 0x76 PLUS! stops at 255, 0x77 PLUS2! at +32767 (signed); **0x79 MINUS2! (0x619A28) compares the result
   with +0x8000 and stores -32768 for anything smaller**: never use it (the scene lab's actors jumped to -32768,

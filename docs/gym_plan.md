@@ -61,12 +61,21 @@ flowchart TD
         FREE --> CLASS["80s spandex class<br/>(class nights)<br/>rhythm minigame, whole roster"]
         FREE --> INCIDENT["Incident<br/>Corneo's lackeys, a member's trouble,<br/>broken equipment"]
         FREE --> HANG["Hang out / gift<br/>a member's affection tier"]
+        FREE --> BAR["7th Heaven shift<br/>bartending minigame, tips"]
+        FREE --> SIDE["Unconventional work<br/>cameraman, Honey Bee Inn<br/>big pay, costs trust / reputation"]
+
+        BAR --> GIL[("Gil<br/>the hard limit")]
+        SIDE --> GIL
+        SIDE -.->|cost| AFF
+        BAR -->|regulars| ROSTER
+        TRAIN -->|personal training fee| GIL
+        CLASS -->|class tickets| GIL
 
         RECRUIT --> ROSTER[("Roster<br/>new member joins")]
         TRAIN --> MSTATS[("Member stats<br/>Strength, Stamina,<br/>Technique, Morale")]
         TRAIN --> RECORDS[("Records board<br/>personal bests")]
         CLASS --> MSTATS
-        CLASS --> REP[("Gym<br/>Reputation, Money,<br/>Equipment, Cleanliness")]
+        CLASS --> REP[("Gym<br/>Reputation, Equipment,<br/>Cleanliness")]
         INCIDENT --> REP
         INCIDENT --> MSTATS
         HANG --> AFF[("Member affection 0-20")]
@@ -82,11 +91,12 @@ flowchart TD
         WEEKEND --> REVIEW["Tifa's review<br/>targets met? who's thriving?"]
     end
 
-    REP -->|walk-in members,<br/>monthly fees| REP
+    REP -->|walk-ins, monthly fees| GIL
+    GIL -->|rent, debt, wages,<br/>supplies, equipment| RENT
     REP --> REVIEW
     MSTATS --> WEEKEND
     REVIEW --> TRUST[("Tifa's trust in Cloud 0-20")]
-    REVIEW --> RENT{"Rent / debt due?"}
+    REVIEW --> RENT{"Rent / debt / expenses<br/>covered?"}
     RENT -->|paid| NEXT
     RENT -->|short| CRISIS["Corneo crisis<br/>story fork, Tifa decides"]
     CRISIS --> TRUST
@@ -96,6 +106,8 @@ flowchart TD
     NEXT -->|no| MON
     NEXT -->|yes| CHAPTER["Next chapter<br/>1 The Deed, 2 The Roster,<br/>3 The Exhibition"]
     CHAPTER --> MON
+    CHAPTER -.->|later| INN["Buy the Honey Bee Inn<br/>second business: income + upkeep"]
+    INN --> GIL
 
     CHAPTER -->|after chapter 3| EXHIBIT["Gold Saucer Exhibition<br/>members' stats compete"]
     EXHIBIT --> ENDING{"Ending<br/>gym stats x Tifa's trust"}
@@ -118,7 +130,43 @@ flowchart TD
    Shinra beat), then Tifa's review, where the gym stats and her trust change.
    - Time comes from the play clock (`q_clock`, var[2][247] = minutes).
 
-## 4. Tracking
+## 4. Money: gil is the hard limit (user)
+
+You start with some gil and must keep an income that covers rent and the
+other expenses. Running short is the pressure that drives every week.
+
+- **Expenses:**
+  - rent (to Corneo, rising)
+  - Big Bro's debt instalments in chapter 1
+  - equipment (bought and repaired)
+  - wages (instructors, the bar)
+  - supplies (towels, protein, cleaning: Cleanliness falls without them)
+  - fines and "inspections"
+- **Income, conventional:**
+  - **Gym:** monthly member fees (members x tier, more with Reputation),
+    drop-in class tickets (the spandex class), personal training sessions
+    (a minigame score sets the fee), competition prize money.
+  - **7th Heaven bar-tending:** Cloud works shifts at Tifa's bar. A bartending
+    minigame (mixing orders against the clock / customers' moods), tips by
+    score, and regulars who become gym recruits.
+- **Income, unconventional** (user: the cameraman and the Honey Bee Inn stay,
+  restructured to fit the gym's story):
+  - **the cameraman:** shoots that pay well, with costs to Reputation,
+    Tifa's trust or a member's affection
+  - **the Honey Bee Inn:** work there / a partnership
+  - These are what to adapt from 620 / 670-679 rather than remove; how
+    they're reframed is still to decide.
+- **Buying the Honey Bee Inn (user):** later in the game you can buy the inn
+  itself: a second business with its own income and upkeep, owned like the
+  gym.
+- **Tracking:**
+  - Gil is the real wallet (GOLDU / GOLDD / CHGLD, as now).
+  - The week's ledger (income by source, expenses) is shown at Tifa's
+    review; it needs a few save bytes for this week's totals.
+- **Failure:** rent short = the Corneo crisis (section 3), not a game over;
+  repeated misses lead to the buyout ending.
+
+## 5. Tracking
 
 - **Per member:**
   - Strength / Stamina / Technique / Morale, raised by minigame scores.
@@ -137,7 +185,7 @@ flowchart TD
 - **Screens:** the Quests screen for goals, and the affection list (680) for
   members and Tifa.
 
-## 5. Minigames
+## 6. Minigames
 
 - **The original minigames, reframed** (launched with the `MINIGAME` opcode, as
   180 does):
@@ -154,7 +202,7 @@ flowchart TD
   - pacing: runs and spin classes
   - Square prompts for a perfect rep
 
-### 5.1 Group fitness: 80s spandex classes (user)
+### 6.1 Group fitness: 80s spandex classes (user)
 
 An aerobics class in the gym, done 80s style.
 
@@ -183,7 +231,7 @@ An aerobics class in the gym, done 80s style.
   - Members out of step (low Technique) are shown with offset moves.
 - **Class nights on the calendar;** a full class is a Reputation event.
 
-## 6. Relationships
+## 7. Relationships
 
 - **Cloud and members:** affection 0-20.
   - **Earned by:** training with them, gifts (625's shops, re-stocked: protein
@@ -215,7 +263,7 @@ An aerobics class in the gym, done 80s style.
 | Andrea Rhodea | rival turned dance instructor | rhythm classes |
 | Big Bro | the old owner, sore about selling | rival turned assistant coach |
 
-## 7. Audit of the existing project
+## 8. Audit of the existing project
 
 | Kind | Meaning |
 |---|---|
@@ -230,13 +278,13 @@ An aerobics class in the gym, done 80s style.
 | 200-230 recruits | party joins in the world | **Consolidate**: join the party *and* the gym roster; the recruit talk becomes the gym pitch. |
 | 250 / 280 trains, chocobo rides | travel | **Keep** |
 | 600 quests (framework, Quests screen, markers) | 90 quests, mostly kill quests | **Keep the framework, replace the content.** Kill quests don't fit with no combat: new kinds `score` (a minigame result) and `attend` (an event). Givers become Tifa's briefings plus members' goals. |
-| 620 Honey Bee recruitment (stars, questions, hire, Collect income) | recruit + income loop | **Consolidate** the recruiting questions and the income Collect into gym recruiting / membership fees. Its explicit rooms and scenes: **remove?** |
+| 620 Honey Bee recruitment (stars, questions, hire, Collect income) | recruit + income loop | **Restructure (user: stays as an unconventional income; the inn can later be bought)**: its recruiting questions and Collect income also serve the gym's recruiting / fees. Which of its rooms and scenes stay: open. |
 | 625 gift shops | gifts -> affection | **Keep**, re-stocked for members |
 | 626 Honey Bee rescue | random street event | **Remove?** (or reshape as a slum incident that brings a self-defence student) |
 | 630 bounties / 640 Hunt Quartermaster | combat bounties, hunter ranks, gear shop | **Replace**: the rank ladder becomes gym Reputation, the shop becomes the equipment supplier. Bounty logic goes if combat goes. |
 | 660 dates / 661 Cid friend | dates, hang-outs, affection tiers | **Consolidate** into member hang-outs (661 is the template). Intimate part twos: **remove?** |
-| 670-674, 678, 679_* movie shoots, special scenes, Blast-off, stage show, group/beach/chamber/nurse sets | adult minigame suite | **Remove?** Its engine parts are worth keeping: the meter, Square prompts, holds/pauses as pacing, the loose engine's staged cutaways, new-field copying, sprite gauges. |
-| 682 school dance | passive dance routine, uniforms | **Consolidate** into the 80s spandex class (section 5.1) |
+| 670-674, 678, 679_* movie shoots, special scenes, Blast-off, stage show, group/beach/chamber/nurse sets | adult minigame suite | **Restructure (user: the cameraman stays as an unconventional income)**; which sets / scenes stay: open. Its engine parts are worth keeping: the meter, Square prompts, holds/pauses as pacing, the loose engine's staged cutaways, new-field copying, sprite gauges. |
+| 682 school dance | passive dance routine, uniforms | **Consolidate** into the 80s spandex class (section 6.1) |
 | 675 / 681 / `_female_body`, 985, 990 | bodies, model merging, hand edits | **Keep** (needed for outfits). The undressed variants go with whatever is removed. |
 | 677 scene lab | placement tool | **Keep** |
 | 680 affection list | Square list | **Keep**: members + Tifa's trust |
@@ -257,14 +305,27 @@ An aerobics class in the gym, done 80s style.
 
 **Open:** whether any battle stays as a story beat (e.g. Corneo's enforcers).
 
-## 8. Technical constraints
+## 9. Technical constraints
 
-- **Save space:**
-  - Bank 1 is full and 6 quest bytes are left.
-  - The member stats need ~5 bytes x ~12 recruits, plus the gym and Tifa
-    (~60 bytes).
-  - Removing the Honey Bee and movie systems frees bank 1 188-223 (36 bytes)
-    and their quest bytes.
+- **Save space** (measured with `ff7tool.py save-usage`, 2026-10, on the build;
+  details in `work/save_usage.txt`):
+  - **~155 whole bytes are free** in savemap banks 1-4:
+    - bank 1: 31
+    - bank 2: 53
+    - bank 3: 10
+    - bank 4: 59
+  - Plus 76 bytes to check by hand (just after an exe reference: perhaps part
+    of a table) and many spare bits in flag bytes.
+  - The gym needs ~60 bytes (~5 a member x ~12, plus the gym, Tifa and the
+    week), so it fits without removing anything.
+  - **The open world itself frees almost nothing (1 byte):** pinned fields
+    still test their story flags in code that can still run. Removing
+    features frees their bytes: bank 1 188-223 (Honey Bee / movie, 36) and
+    their quest bytes.
+  - Not covered by the scan:
+    - battle AI (scene.bin can read savemap)
+    - exe code that reaches the savemap through a register base
+    - what the original game's menus copy whole
   - Bounty state is exe-only and not saved, so it is no model for stats.
 - **Text ids are 8-bit (255 a field):** busy fields need gym scenes in new
   fields copied from others (as the dates do).
@@ -275,7 +336,7 @@ An aerobics class in the gym, done 80s style.
 - **mkt_mens:** 13 entities, 60 texts, original squat contest. Its script needs
   dumping before planning the gym's own scenes.
 
-## 9. Order of work (proposed)
+## 10. Order of work (proposed)
 
 1. Decide the audit's **Remove?** rows and combat.
 2. Removal pass: delete or shelve the dropped patches. The build and tests stay

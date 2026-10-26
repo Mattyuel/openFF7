@@ -81,6 +81,26 @@ def test_scene():
     assert forms[324]["enemies"] == ["Guard Scorpion"]
 
 
+def test_saveuse_operands():
+    """save-usage's operand table (read from the exe) fits each opcode's length."""
+    from ff7 import saveuse
+    from ff7.opcodes import OPCODES
+    for op, ops in saveuse.FIELD_OPERANDS.items():
+        length = OPCODES[op][1]
+        for gs, width, sel, off in ops:
+            if op == 0xFD:       # CMUSC: the handler reads offset 6; opcodes.py says 6 bytes (unused by the game?)
+                continue
+            assert off < length and (sel + 1) // 2 < length, (hex(op), off, sel)
+    # BITON var[1][213] bit 2 -> bank 1 byte 213, bit 2
+    u = saveuse.Usage()
+    sec = type("S", (), {"broken": False, "scripts": [[32] * 32], "string_offset": 36,
+                         "data": bytes(32) + bytes([0x82, 0x10, 213, 2]),
+                         "script_bounds": lambda self: [32]})()
+    saveuse.scan_field(u, "t", sec)
+    assert u.bytes[1][213]["w"] == {"t"} and u.bytes[1][213]["bits"] == {2}
+    assert u.free_bits(1, 213) == set(range(8)) - {2}
+
+
 def test_open_vars_unused():
     """openFF7's own save variables (bank 3 96-105, quest areas) are unused by
     the original field and world map scripts."""

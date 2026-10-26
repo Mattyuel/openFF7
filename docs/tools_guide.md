@@ -129,6 +129,37 @@ You rarely need either now. They were used to set up the open world.
 class in `tools/ff7/` and `patches/`. **Search this first** when you want to do something: there
 is usually a helper already. The tests fail if it's out of date, so run it after changing code.
 
+### `save-usage`: which save bytes are free
+
+```
+python3 tools/ff7tool.py build --no-install    # it scans the last build
+python3 tools/ff7tool.py save-usage
+```
+
+Scans the original game and the build (every field script, the world map's
+.ev scripts, the exe) and writes `work/save_usage.txt`: one line per byte of
+savemap banks 1-4 (field var nibbles 1/2, 3/4, 11/12, 13/14) saying who reads
+and writes it. The stdout summary gives counts and the free runs per bank.
+
+| Status | Meaning |
+|---|---|
+| `free` | nothing in the build touches it |
+| `FREED` | the original game used it, the build doesn't (the open world or our edits made it dead) |
+| `write-only` | scripts set it but nothing reads it: most likely reclaimable, check the writer |
+| `bits ... free` | a flag byte whose every access is to known bits; the other bits are spare |
+| `check` | free in the scripts but within 8 bytes after an exe reference: may be part of a table the exe indexes |
+| `reserved` | `_config.QUEST_AREAS` |
+| `used (known)` | `saveuse.KNOWN`: exe tables found by hand |
+
+Only code that can run counts: an IF between two literals (a pinned progress
+test) is decided and its dead branch skipped. Not seen:
+
+- battle AI
+- exe code that reaches the savemap through a register
+- `SETX` / `GETX` / `SEARCHX` (listed as indirect)
+
+Before using a byte, read its line in the file, and use a new game.
+
 ### `lgp-pack`: loose model files into a .lgp
 
 `python3 tools/ff7tool.py lgp-pack FOLDER OUT.lgp` writes every file in FOLDER (e.g. a 7th Heaven
