@@ -36,6 +36,16 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Sector 7 Workout** (683): talk to the Director (the cameraman) at the
+  Sector 7 station: his first question offers "Shoot Sector 7 Workout.".
+  In the gym: the intro talk, then squats. A button name pops up each rep
+  ([SWITCH], [CANCEL] or [OK]); pressing it in time keeps the pace building,
+  a miss slows it right back down. Check: the prompts register (all three
+  buttons), the pace changes are visible, the lines at each new pace, Tifa's
+  spandex and tied-up hair, the fade to part two, the pay at the end and the
+  trip back to the station. Say if a button never counts, or if anything
+  stalls.
+
 - **No random battles** (950_no_combat): walk around fields that used to
   have encounters (Train Graveyard, the Sector 7 pillar's stairs, Shinra HQ
   stairs, the sewers) and the world map: no battle should start. Scripted

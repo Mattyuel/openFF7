@@ -3055,7 +3055,18 @@ def _wall_market(ctx, focus):
         # (user) he stands here from the start; until every girl's final scene was seen (HB_KID) he's only
         # scouting for a man with a way with the ladies
         told, fresh, scout = asm.nop(), asm.nop(), asm.nop()
-        ops += [pitch] + tape(sec, say, end) + _unlocked_or(scout)
+        # (user) the first parody film, Sector 7 Workout (683): offered before anything else
+        import _workout as WO_
+        wx_, wy_ = WO_.ARRIVE
+        wt_ = Walkmesh(ctx.field(WO_.BASE).section("walkmesh")).find(wx_, wy_)
+        assert wt_ is not None
+        ask_w, first_w = hb._ask(sec, "Director\n“Got a film for you and Tifa:\n Sector 7 Workout. Interested?”",
+                                 ["Shoot Sector 7 Workout.", "Talk about other work."])
+        other_w = asm.nop()
+        ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, other_w)] + \
+            hb._say(sec, "Director\n“That's what I like to hear! To the gym!”") + \
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(WO_.FIELD), wx_, wy_, wt_, 0), asm.ret(), other_w]
+        ops += tape(sec, say, end) + _unlocked_or(scout)
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
         for t_ in NEWS[1]:                       # (user) once (if the arrival didn't tell it)
             ops += say(t_)

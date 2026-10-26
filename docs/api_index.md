@@ -1026,6 +1026,15 @@ The movie minigame (user's design).
 - `_set(ctx, cast, moves)` 
 - `apply(ctx)` 
 
+## `patches/683_workout.py`
+(user) Sector 7 Workout: the first parody film (data `_workout.py`, poses `_workout_poses.py`), shot in the
+
+- `_mods()` 
+- `_tie(ctx, hrc)` hrc text with the 'kami' bone's hair part swapped for the short ponytail (written once).
+- `_spandex(ctx)` 
+- `_set(ctx, donor, stand, poses)` 
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1174,7 +1183,7 @@ Shared openFF7 settings used by the patch modules.
 - `point(b)` 
 - `_t(m)` 
 - class `_Body` 
-  - `__init__(ctx)` 
+  - `__init__(ctx, hrc=None, stand=None)` Ruby's skeleton by default; any skeleton with the standard bone names (683: Cloud's).
   - `rot(pitch, roll, yaw)` 
   - `frame(P)` 
 - `build(ctx)` Every move as XZ<letter>0 on Ruby. Returns [(letter, frames, loop)].
@@ -1345,3 +1354,16 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 - `add_line(ctx, field, name, p1, p2, on_cross, init_extra=())` Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
 - `add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=())` Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk
 - `reuse_npc(ctx, field, entity, donor, pos, direction, talk, init_extra=(), main=None)` An NPC in a field already at 16 models: it takes over entity `entity`
+
+## `patches/_workout.py`
+(user) Sector 7 Workout: the first parody film (683_workout). Tifa comes to the gym for the first time,
+
+
+## `patches/_workout_poses.py`
+(user) Sector 7 Workout's poses (683_workout): Tifa squatting, Cloud behind her spotting, squatting with
+
+- `squat(u)` 0 at the top, 1 at the bottom of a rep (u = 0 .. 1).
+- `gap(part, tier)` How far behind her he stands (model units, root to root).
+- `her_pose(part, tier, u)` 
+- `_her_joints(fa, sk, anim, k)` 
+- `build(ctx, hers)` hers = {part: (her .hrc, her stand anim, her prefix)}: builds Ruby's sources, retargets part A onto

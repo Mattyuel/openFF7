@@ -422,7 +422,7 @@ one position after another into films.
   | *Last Train Out* | the opening train ride: the ID scan, nervous passengers, a carriage to themselves | the Sector 7 train |
   | *Happy Hour* | 7th Heaven after closing; the pinball-machine lift down to the hideout | 7th Heaven (mds7pb_1 / mds7pb_2) |
   | *Avalanche Boot Camp* | the bombing mission briefing; Tifa as the drill instructor | the hideout (mds7pb_2) |
-  | *Sector 7 Workout* | a gym training montage (ties the shoots to the gym) | the gym (mkt_mens) |
+  | *Sector 7 Workout* (**built: 683_workout, untested in-game**) | a gym training montage: Tifa's first visit, Cloud spots her squats; squat prompts, pace by hits | the gym (mkt_mens) |
   | *Parade Rehearsal* | the Junon parade drill (user: Cloud and Tifa; a drill instructor shouts positions and a short button prompt asks for the right one: a wrong or late press loses the take) | Junon |
 
   Still proposals:

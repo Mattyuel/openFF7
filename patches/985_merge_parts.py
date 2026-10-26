@@ -46,7 +46,7 @@ def apply(ctx):
             if len(w) > 1 and w[0].isdigit() and int(w[0]) == len(w) - 1:
                 for r in w[1:]:
                     uses.setdefault(r, set()).add(n)
-    done = []
+    done, merged = [], {}                                   # base part -> the bone line's parts it was merged with
     for n, text in hrcs.items():
         lines = text.splitlines(True)
         changed = False
@@ -59,7 +59,16 @@ def apply(ctx):
             if not extra:
                 continue
             base = keep[0]                                  # (the torso, before its neck bar)
-            assert uses[base] == {n}, ("part shared by other models: merging would change them", base, uses[base])
+            if base in merged:                              # (a copy of a model already merged, e.g. 683's
+                assert merged[base] == w[1:], ("shared part, other extras", base, w[1:], merged[base])   # tied-hair
+                lines[k] = line.replace(line.strip(), " ".join([str(len(keep))] + keep))               # Tifa)
+                changed = True
+                continue
+            # a part shared by several models only if every one has the same parts on that bone
+            for m in uses[base]:
+                assert any(l.split()[1:] == w[1:] for l in hrcs[m].splitlines()), \
+                    ("part shared by other models: merging would change them", base, uses[base])
+            merged[base] = w[1:]
             V, P, N, C, tail, ptail = _read(ctx.char_file(_ply(ctx, base)))
             for r in extra:
                 v2, p2, n2, c2, _, _ = _read(ctx.char_file(_ply(ctx, r)))

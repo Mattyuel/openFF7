@@ -13,7 +13,7 @@ no change is shared, the others are written as new parts "ZW<tag><letter>" (.rsd
 colour (B, G, R) for the body's skin (Skye's SKIN) if given. Use it only from patches that
 run after 670 (the standard body is built there).
 
-Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675), K Skye (ZSKA: only `nipples`), N the island nurse (ZIUA, from BTEC, 679_nurse)
+Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675), K Skye (ZSKA: only `nipples`), N the island nurse (ZIUA, from BTEC, 679_nurse), B C D F G the school uniforms (682), W Tifa's spandex (XWTA, 683)
 
 `nipples(ctx, hrc, tag)` adds pink nipples (NIPPLE_*) to a girl with the standard torso (675 adds
 them to every one, Skye included, after all `apply` calls: `apply` wants one part per body bone).

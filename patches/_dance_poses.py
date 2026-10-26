@@ -15,7 +15,8 @@ A pose is a dict (every key optional):
   arm_l/arm_r (a, f, reach[, elbow]): the hand at reach x the arm's length from the shoulder, in the
               direction a degrees up from straight down (out to her side), then f degrees towards her
               front (negative: behind); elbow = the elbow's pole in the body's frame (default back/down/out);
-              "knee" = the hand on her own-side knee; None = hanging (turns with the lean)
+              "knee" = the hand on her own-side knee; None = hanging (turns with the lean);
+              ("at", point[, pole]) = the hand at a model-space point (683: Cloud's hands on her hips)
   leg_l/leg_r (dx, lift, dz): the ankle moved from its stand place (dx out to her side, lift up, dz forward)
 Each move is a function of its beat (0 .. beats) returning a pose; loops are sampled so they join up."""
 import math
@@ -178,9 +179,11 @@ def _t(m):
 
 
 class _Body:
-    def __init__(self, ctx):
+    def __init__(self, ctx, hrc=None, stand=None):
+        """Ruby's skeleton by default; any skeleton with the standard bone names (683: Cloud's)."""
         mv, sp, CP = _mods()
-        self.fa, self.sk, self.I, _, self.rr, self.root0, self.W0, _ = sp._setup(ctx, mv.RUBY_HRC, mv.RUBY_STAND)
+        self.fa, self.sk, self.I, _, self.rr, self.root0, self.W0, _ = \
+            sp._setup(ctx, (hrc or mv.RUBY_HRC).lower(), stand or mv.RUBY_STAND)
         self.sp, self.CP, self.mv = sp, CP, mv
         names = [b[0] for b in self.sk]
         kids = {}
@@ -193,8 +196,9 @@ class _Body:
                 out += below(names[k])
             return out
         up = []
-        for top in ("chest", "non_1", "non_2"):
-            up += below(top)
+        for top in ("chest", "non_1", "non_2", "l_chest", "r_chest"):    # (Cloud: l_ / r_chest on the hip)
+            if top in names and names.index(top) not in up:
+                up += below(top)
         self.upper, self.head = set(up), set(below("head"))
         e = CP._ends(self.fa, self.sk, self.rr, self.root0, self.W0)
         self.e0 = e
@@ -262,7 +266,10 @@ class _Body:
             if spec is None:
                 continue
             S = e[s + "_uparm@"]
-            if spec == "knee":
+            if spec[0] == "at":                       # (683) a hand at a model-space point
+                T = list(spec[1])
+                pole_b = list(spec[2]) if len(spec) > 2 else [sg * 1.0, 0.3, 0.4]
+            elif spec == "knee":
                 K = e[s + "_femur"]
                 T = [K[0] - sg * 0.3, K[1] - 0.7, K[2] - 0.9]
                 pole_b = [sg * 1.0, 0.0, 0.6]
