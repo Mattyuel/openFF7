@@ -449,16 +449,44 @@ one position after another into films.
   - Their lines, profiles and star ranks in 670 / 678 / 679 go with the
     restructure.
 
-  **Later casts** (proposals):
+  **Later casts** (proposals; reworked with the user's notes):
 
-  | Film | Parody of | Set | Cast idea |
-  |---|---|---|---|
-  | *Flower Girl* | "one gil for a flower" | the Sector 5 church | Aerith |
-  | *Specimen* | Hojo's lab and its 'experiments' | the Shinra Mansion basement | Scarlet, the nurse |
-  | *Battle Square Champions* | the Gold Saucer arena and its announcer | Battle Square | Elena, Esther |
-  | *Mile High* | the Highwind's first flight | the Highwind | Cid, Scarlet |
-  | *Costa del Sol Holiday* | the Shinra president's beach getaway | Costa del Sol | everyone |
-  | *Night Shift* | Mideel's clinic: a patient who won't stay in bed | the clinic (ithos, 679_nurse's set) | the nurse, Jessie |
+  - ***Mouth to Mouth*** (Costa del Sol; user: a more specific parody, people
+    needing CPR). A lifeguard show, built on FF7's own CPR scene (Cloud
+    reviving Priscilla at Junon). Cloud is the lifeguard on Costa del Sol's
+    beach. One "drowning" swimmer after another needs CPR, and each turns
+    out to be faking it to get his attention: Tifa, Aerith, Jessie, Elena on
+    leave, Scarlet on a company holiday.
+    - Gameplay: the CPR rhythm (Junon's minigame: press and breathe in time)
+      between the scenes.
+    - Each "victim" has her own excuse for the fake.
+  - ***Castaways*** (user: the Tiny Bronco floating after Rocket Town). The
+    Tiny Bronco, shot down by Shinra, adrift as a boat: a desert-island
+    parody.
+    - Cid insists she's still a plane and appoints himself captain.
+    - Scarlet, who ordered the attack, is shot down with them on her own
+      inspection flight, and has to share the rations.
+    - Cast: Cid, Scarlet, Cloud.
+    - Gameplay: bailing water and rowing prompts between scenes, a Shinra
+      plane overhead to signal or hide from.
+  - ***The Bodyguard*** (Aerith; user: Flower girl needs a parody). The
+    film the game half-tells already: Aerith hires Cloud as her bodyguard,
+    the fee "one date". She's a flower seller treated like a pop star,
+    hounded by the Turks; he's sworn to keep her safe and not fall for her.
+    - Gameplay: escort prompts (a Turk jumps out: the right button blocks
+      him) and flower-selling between scenes.
+    - Set: the Sector 5 church and slums.
+  - ***Saucer Slam*** (Battle Square; user: a wrestling parody). Gold Saucer
+    pro wrestling with Dio as the showman promoter.
+    - Elena the by-the-book face, Scarlet the heel ("Kyahaha!"), Tifa the
+      real fighter nobody can script, Esther as manager or ring announcer.
+    - Cloud is the referee who gets "knocked out" at the worst moment.
+    - Gameplay: move prompts in the ring (grapple button sequences) and a
+      crowd-heat meter (670's meter reused).
+  - ***Specimen*** (Scarlet, the nurse): Hojo's lab and its 'experiments',
+    in the Shinra Mansion basement.
+  - ***Night Shift*** (the nurse, Jessie): Mideel's clinic, a patient who
+    won't stay in bed (ithos, 679_nurse's set).
 
   Each film: an opening scene that sets up the parody, two or three scenes
   with gameplay between them, a finale. 672's scenarios and 674's acts are
