@@ -1,0 +1,55 @@
+flowchart TD
+    START([Chapter starts]) --> MON
+
+    subgraph WEEK [One week]
+        MON["Monday: Tifa's briefing<br/>sets the week's targets<br/>(main-line quests)"]
+        MON --> FREE{"Cloud's free time<br/>(play clock)"}
+
+        FREE --> RECRUIT["Recruit<br/>pitch talk around Midgar / world"]
+        FREE --> TRAIN["Train a member<br/>minigame: squats, spotting, pacing,<br/>arcade, snowboard, races..."]
+        FREE --> CLASS["80s spandex class<br/>(class nights)<br/>rhythm minigame, whole roster"]
+        FREE --> INCIDENT["Incident<br/>Corneo's lackeys, a member's trouble,<br/>broken equipment"]
+        FREE --> HANG["Hang out / gift<br/>a member's affection tier"]
+
+        RECRUIT --> ROSTER[("Roster<br/>new member joins")]
+        TRAIN --> MSTATS[("Member stats<br/>Strength, Stamina,<br/>Technique, Morale")]
+        TRAIN --> RECORDS[("Records board<br/>personal bests")]
+        CLASS --> MSTATS
+        CLASS --> REP[("Gym<br/>Reputation, Money,<br/>Equipment, Cleanliness")]
+        INCIDENT --> REP
+        INCIDENT --> MSTATS
+        HANG --> AFF[("Member affection 0-20")]
+
+        AFF -->|tier reached| GOAL["Member's goal scene<br/>and their story"]
+        GOAL --> MSTATS
+
+        ROSTER --> FREE
+        MSTATS --> FREE
+        AFF --> FREE
+
+        FREE -->|week ends| WEEKEND["Weekend event<br/>competition, open day,<br/>rival, Corneo / Shinra beat"]
+        WEEKEND --> REVIEW["Tifa's review<br/>targets met? who's thriving?"]
+    end
+
+    REP -->|walk-in members,<br/>monthly fees| REP
+    REP --> REVIEW
+    MSTATS --> WEEKEND
+    REVIEW --> TRUST[("Tifa's trust in Cloud 0-20")]
+    REVIEW --> RENT{"Rent / debt due?"}
+    RENT -->|paid| NEXT
+    RENT -->|short| CRISIS["Corneo crisis<br/>story fork, Tifa decides"]
+    CRISIS --> TRUST
+    CRISIS --> NEXT
+
+    NEXT{"Chapter goal met?"}
+    NEXT -->|no| MON
+    NEXT -->|yes| CHAPTER["Next chapter<br/>1 The Deed, 2 The Roster,<br/>3 The Exhibition"]
+    CHAPTER --> MON
+
+    CHAPTER -->|after chapter 3| EXHIBIT["Gold Saucer Exhibition<br/>members' stats compete"]
+    EXHIBIT --> ENDING{"Ending<br/>gym stats x Tifa's trust"}
+    TRUST --> ENDING
+    ENDING --> E1([Co-owned, thriving])
+    ENDING --> E2([Successful, Tifa burned out])
+    ENDING --> E3([Building lost, community kept])
+    ENDING --> E4([Shinra buyout])
