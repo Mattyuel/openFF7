@@ -18,6 +18,10 @@ import _dance_poses as DP
 import _tickets as TK
 
 RUBY_LETTER = "E"               # 670's head reverse (POSITIONS index 4)
+UNDER = "F"                     # (user, since) Jessie under Tifa: QYF.. on Ruby, QJF.. on her
+NOD = 16                        # her head's bob (degrees each way about her side axis); nothing else moves
+SHAKE_DEG, SHAKE_N = 24, 8      # tapping out: her head shaking (degrees, shakes over TRY_FRAMES)
+TRY_FRAMES = 90
 NAPE = (1.15, -1.5, 1.2)        # style 1 at Jessie's head: his hands this far from his neck (out, up, back)
 MOUTH_T, MOUTH_OUT = 0.3, 0.9   # her mouth: this far up her head bone, this far out towards her face
 TIPTOE = 0.6                    # at most this far up on his toes (model units) if a point is too high
@@ -70,6 +74,66 @@ def jessie(ctx, hrc, stand):
     names = mv._retarget(ctx, srcs, "QJ", hrc, stand)
     # (her root is out by her feet: past the window wall, off the walkmesh) every anim's root moved so the
     # model's origin is under her hips (QJE0's mean)
+    from ff7 import fieldanim as fa
+    J = joints(ctx, hrc, names[0].split(".")[0])
+    cx, cz = (sum(j["hip@"][k] for j in J) / len(J) for k in (0, 2))
+    for nm in names:
+        A = fa.Anim(ctx.char_file(nm.split(".")[0].lower() + ".a"))
+        A.frames = [(rr, [rp[0] - cx, rp[1], rp[2] - cz], rots) for rr, rp, rots in A.frames]
+        ctx.char_file(nm.split(".")[0].lower() + ".a", A.build())
+    return names
+
+
+def jessie_under(ctx, hrc, stand):
+    """(user) Jessie on her back under Tifa: 620 `_on_back`'s pose (knees up and apart, feet planted, her head
+    hanging straight down) held still, only the head bobbing about her side axis: QJF0-3 the four stroke
+    speeds (670 SPEEDS, her head furthest out at 7/15 of a stroke), QJF8 the bob's deepest held, QJF7 tapping
+    out (her head shaking), QJF9 still. Built on Ruby (QYF..), retargeted, the root re-centred under her
+    hips. Returns their names (.tor) in the order 0-3, 8, 7, 9."""
+    from ff7 import fieldanim as fa
+    mv, hb, _ = _mods()
+    hb._on_back(ctx, name="QYFB.tor", head_down=True)
+    sk = fa.skeleton(ctx.char_file(mv.RUBY_HRC).decode("latin-1"))
+    I = [b[0] for b in sk].index
+    rr, rp, rots = fa.Anim(ctx.char_file("qyfb.a")).frames[0]
+    root = [rp[0], -rp[1], rp[2]]
+    W0 = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+    head = [i for i, b in enumerate(sk) if b[0] == "head" or _under(sk, b[0], "head")]
+    x = [1.0, 0.0, 0.0]
+
+    def frame(R):
+        W = [fa._mul(R, m) if i in head else m for i, m in enumerate(W0)]
+        return (rr, rp, fa.local_rotations(sk, rr, W))
+    deep = 7 / 15
+    nod = lambda u: fa.axis_angle(x, NOD * math.cos(2 * math.pi * (u - deep)))
+    out = {}
+    for s_, n in enumerate(mv.SPEEDS):
+        out[str(s_)] = [frame(nod(k / n)) for k in range(n)]
+    out["8"] = [frame(nod(deep))]
+    long_axis = fa._vec(W0[I("head")], [0.0, 0.0, -1.0])
+    out["7"] = [frame(fa._mul(nod(deep), fa.axis_angle(long_axis, SHAKE_DEG * math.sin(2 * math.pi * SHAKE_N * t / TRY_FRAMES))))
+                for t in range(TRY_FRAMES)]
+    out["9"] = [frame(fa.axis_angle(x, 0))]
+    srcs = []
+    for d in "0123879":
+        A = fa.Anim(ctx.char_file("qyfb.a"))
+        A.frames = out[d]
+        ctx.char_file(("QY" + UNDER + d).lower() + ".a", A.build())
+        srcs.append("QY%s%s.tor" % (UNDER, d))
+    return _centred(ctx, mv._retarget(ctx, srcs, "QJ", hrc, stand), hrc)
+
+
+def _under(sk, bone, top):
+    parent = {b[0]: b[1] for b in sk}
+    while bone in parent:
+        bone = parent[bone]
+        if bone == top:
+            return True
+    return False
+
+
+def _centred(ctx, names, hrc):
+    """Every anim's root moved so the model's origin is under her hips (the first anim's mean)."""
     from ff7 import fieldanim as fa
     J = joints(ctx, hrc, names[0].split(".")[0])
     cx, cz = (sum(j["hip@"][k] for j in J) / len(J) for k in (0, 2))
@@ -162,14 +226,29 @@ def mouths(ctx, hrc, stand, anim):
     return out
 
 
-def his_tip(ctx):
-    """Cloud's member tip and his root, standing (model space, y down)."""
+def his_tip(ctx, level=False):
+    """Cloud's member tip and his root, standing (model space, y down). level: with his pelvis turned (about
+    its top, `_level`) so the member points straight ahead, level (user)."""
     from ff7 import fieldanim as fa
     mv, hb, _ = _mods()
     J = _stand(ctx, "aaaa.hrc", "acfe.a")
-    _, tip = hb.member_ends(ctx.char_file("zcmp.p"))
-    t = fa._vec(J["hip#"], list(tip))
-    return [J["hip@"][k] + t[k] for k in range(3)], J["root"]
+    base, tip = hb.member_ends(ctx.char_file("zcmp.p"))
+    w = lambda p: [J["hip@"][k] + fa._vec(J["hip#"], list(p))[k] for k in range(3)]
+    t = w(tip)
+    if level:
+        R, P = _level(ctx)
+        t = [P[k] + fa._vec(R, [t[k_] - P[k_] for k_ in range(3)])[k] for k in range(3)]
+    return t, J["root"]
+
+
+def _level(ctx):
+    """(R, P): the turn of his pelvis about its top P (the hip bone's end, standing) making his member level."""
+    from ff7 import fieldanim as fa
+    mv, hb, _ = _mods()
+    J = _stand(ctx, "aaaa.hrc", "acfe.a")
+    base, tip = hb.member_ends(ctx.char_file("zcmp.p"))
+    v = fa._vec(J["hip#"], [tip[k] - base[k] for k in range(3)])
+    return mv._align(fa, v, [0.0, 0.0, -math.hypot(*v)]), J["hip"]
 
 
 def targets(points, n, deep):
@@ -193,7 +272,7 @@ def spot(tips, dc, floor, tip0, root0):
     return sum(xs) / len(xs), sum(ys) / len(ys)
 
 
-def cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nape=False):
+def cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nape=False, level=False):
     """Cloud's frames (written to name.a): his tip at tips[k] (field), standing at cspot (field, on the floor);
     hands = per frame (left, right) field points or None; foot = (out, forward) his left foot on the seat.
     Returns the drops (model units; < 0 = on his toes) for checks."""
@@ -201,7 +280,8 @@ def cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nap
     mv, _, _ = _mods()
     CP = DP._mods()[2]
     him = DP._Body(ctx, "aaaa.hrc", "acfe.a")
-    tip0, root0 = his_tip(ctx)
+    tip0, root0 = his_tip(ctx, level)
+    R_level = _level(ctx)[0] if level else None
     origin = [cspot[0], cspot[1], floor]
     sp = DP._mods()[1]
     I = [b[0] for b in him.sk].index
@@ -228,6 +308,15 @@ def cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nap
             P["arm_l"] = ("at", hl, (1.0, 0.6, -0.2))
             P["arm_r"] = ("at", hr, (-1.0, 0.6, -0.2))
         frame = him.frame(P)
+        if level:                                                          # (user) his member straight and level
+            rr, rp, rots = frame
+            root = [rp[0], -rp[1], rp[2]]
+            F = fa.forward(him.sk, rr, root, rots)
+            W = [mm for mm, _, _ in F]
+            Pp = F[I("hip")][2]
+            W[I("hip")] = fa._mul(R_level, W[I("hip")])
+            rel = fa._vec(R_level, [root[q] - Pp[q] for q in range(3)])
+            frame = CP._frame(fa, him.sk, rr, [Pp[q] + rel[q] for q in range(3)], W)
         if nape:                                                          # hands behind his head
             rr, rp, rots = frame
             root = [rp[0], -rp[1], rp[2]]

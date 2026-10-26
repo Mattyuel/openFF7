@@ -159,14 +159,15 @@ def apply(ctx):
     face = lambda x, y, tx, ty: dt._dir_to(tx - x, ty - y)
     at = lambda p, d: [xyzi(p[0], p[1], Z, tri(*p)), d_(d)]
 
-    def walk(start, stop, walk_anim, stand_anim, d_end):
-        """XYZI stepped WALK_STEP a frame from start to stop with the walk anim, then stand facing d_end."""
+    def walk(start, stop, walk_anim, stand_anim, d_end, fast=False):
+        """XYZI stepped WALK_STEP a frame from start to stop with the walk anim, then stand facing d_end; fast
+        (user: Cloud's walks): twice the step, the walk anim at double speed."""
         (sx, sy), (tx, ty) = start, stop
-        n = max(1, round(math.dist(start, stop) / WALK_STEP))
+        n = max(1, round(math.dist(start, stop) / (WALK_STEP * (2 if fast else 1))))
         stx, sty = round((tx - sx) / n), round((ty - sy) / n)
         top, done = hb._w(1), asm.nop()
         return [d_(face(sx, sy, tx, ty)), asm.setword(CX, sx & 0xFFFF), asm.setword(CY, sy & 0xFFFF),
-                asm.setbyte(WN, 0)] + loop_(walk_anim) + \
+                asm.setbyte(WN, 0)] + [mv._animb(), Op(bytes([0xA2, walk_anim, 1 + fast])), Op(bytes([0xAE, walk_anim, 1 + fast]))] + \
             [top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
              Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], Z, tri(*start))),
              Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done] + \
@@ -188,8 +189,8 @@ def apply(ctx):
     cpos, tpos, efrom, epos, panel = I["cloud"], I["tifa"], I["elena_from"], I["elena"], I["panel"]
     scripts[E["cloudA"]] = {
         0: [Op(bytes([0xA1, 1]))] + at(cpos, face(*cpos, *epos)) + [hb._visi(1)] + hide() + loop_(0) + [asm.ret(), asm.ret()],
-        8: walk(cpos, panel, 1, 0, face(*panel, *GU.CONSOLE)) + [asm.ret()],          # to the console
-        9: walk(panel, ck, 1, 0, dE) + [asm.ret()],                                 # round behind her
+        8: walk(cpos, panel, 1, 0, face(*panel, *GU.CONSOLE), fast=True) + [asm.ret()],    # to the console
+        9: walk(panel, ck, 1, 0, dE, fast=True) + [asm.ret()],                           # round behind her
         4: [hb._visi(0), asm.ret()]}
     scripts[E["tifaA"]] = {
         0: [Op(bytes([0xA1, 2]))] + at(tpos, face(*tpos, *epos)) + [hb._visi(1)] + hide() + loop_(0) + [asm.ret(), asm.ret()],

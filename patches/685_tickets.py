@@ -36,7 +36,7 @@ BARE_JESSIE = "XJEA.HRC"            # her undressed model (the standard body, he
 TIFA_DONOR, JESSIE_DONOR = ("tin_2", 2), ("tin_2", 5)      # AAGB (ABCD stand, ABCE walk), AXDC (ACFE, AAFF)
 BARE_TIFA = "ZTFA.HRC"
 DC = 0xC0                           # Cloud faces -x (the window); Tifa too (her rear to the aisle)
-WALK_STEP = 2.6
+WALK_STEP = 5.2                     # (user: Cloud twice as fast; was 2.6), the walk anim at double speed
 
 TIER, STREAK, KEY, PR, P, SEEN, RND, KP, HOLD, HELD, SINCE, NEXTSW, MOVING = ((5, a) for a in range(100, 113))
 CNT, PAY, REPS, PER, GIL, CX, CY = ((6, a) for a in range(114, 128, 2))
@@ -76,7 +76,7 @@ def poses(ctx):
     mv, hb, dt = _mods()
     j_stand = _jessie(ctx)
     t_stand = "abcd.a"
-    out = {"jessie": TP.jessie(ctx, BARE_JESSIE, j_stand)}                 # QJE0-3, 8, 7, 9
+    out = {"jessie": TP.jessie_under(ctx, BARE_JESSIE, j_stand)}           # QJF0-3, 8, 7, 9
     out["tifa_still"] = TP.still(ctx, "ZVC0", "QNT9")
     out["sit_t"] = TP.sitting(ctx, "QNTS", "aagb.hrc", t_stand)
     out["sit_j"] = TP.sitting(ctx, "QNJS", "axdc.hrc", j_stand)
@@ -88,31 +88,44 @@ def poses(ctx):
     o = [mv._off(p, DC) for p in ent[0]]
     st = (round(TK.TIFA_ENTRY_X - mean(o, 0)), round(TK.TIFA_Y - mean(o, 1)), TK.SEAT)
     # Jessie: her head towards the aisle, her neck at JESSIE_NECK_X
-    J0 = TP.joints(ctx, BARE_JESSIE, "QJE0")[0]
+    # (user) Jessie directly under Tifa: her head between Tifa's thighs at the aisle edge, Tifa's head between
+    # her knees
+    J0 = TP.joints(ctx, BARE_JESSIE, "QJF0")[0]
     dj = _dir_to_x(mv, [J0["head@"][k] - J0["hip@"][k] for k in range(3)])
-    necks = [mv._off(J["head@"], dj) for J in TP.joints(ctx, BARE_JESSIE, "QJE0")]
-    sj = (round(TK.JESSIE_NECK_X - mean(necks, 0)), round(TK.JESSIE_Y - mean(necks, 1)), TK.SEAT)
-    mo = [TP.mouths(ctx, BARE_JESSIE, j_stand, "QJE%d" % s) for s in range(4)]
+    necks = [mv._off(J["head@"], dj) for J in TP.joints(ctx, BARE_JESSIE, "QJF0")]
+    sj = (round(TK.JESSIE_NECK_X - mean(necks, 0)), round(TK.TIFA_Y - mean(necks, 1)), TK.SEAT)
+    mo = [TP.mouths(ctx, BARE_JESSIE, j_stand, "QJF%d" % s) for s in range(4)]
     tip0, root0 = TP.his_tip(ctx)
+    tip0l, _ = TP.his_tip(ctx, level=True)
     deep = 7 / 15
     tips_t = [TP.targets([TP._field(st, DC, p) for p in ent[s]], n, deep) for s in range(4)]
+    # (user: his member level for Tifa) its tip is then lower than her rear: she sinks into the cushion by what's
+    # missing (rather than Cloud floating on his toes)
+    tip_up = TK.FLOOR - tip0l[1] * U                                  # (y down) his level tip's height, standing
+    sink = max(0, round(max(t[2] for ts in tips_t for t in ts) - tip_up - TK.SINK_SPARE * U))
+    st = (st[0], st[1], st[2] - sink)
+    tips_t = [TP.targets([TP._field(st, DC, p) for p in ent[s]], n, deep) for s in range(4)]
+    out["sink"] = sink
     tips_j = [TP.targets([TP._field(sj, dj, p) for p in mo[s]], n, deep) for s in range(4)]
-    ct = tuple(round(c) for c in TP.spot(tips_t[0], DC, TK.FLOOR, tip0, root0))
+    ct = tuple(round(c) for c in TP.spot(tips_t[0], DC, TK.FLOOR, tip0l, root0))
     cj = tuple(round(c) for c in TP.spot(tips_j[0], DC, TK.FLOOR, tip0, root0))
     # hands: on Tifa's hips / Jessie's shoulders (field points per frame)
     def hips(s):
         Js = TP.joints(ctx, BARE_TIFA, "ZVC%d" % s)
         return [tuple(TP._field(st, DC, [J[b + "_femur@"][0] + sg * 0.35, J[b + "_femur@"][1] - 0.9, J[b + "_femur@"][2]])
                       for b, sg in (("l", 1), ("r", -1))) for J in Js]
-    def shoulders(name):
-        return [tuple(TP._field(sj, dj, J[b + "_uparm@"]) for b in "lr") for J in TP.joints(ctx, BARE_JESSIE, name)]
+    def tifa_hips(n):                                                     # (at Jessie: his hands on Tifa's still hips)
+        J = TP.joints(ctx, BARE_TIFA, "QNT9")[0]
+        h = tuple(TP._field(st, DC, [J[b + "_femur@"][0] + sg * 0.35, J[b + "_femur@"][1] - 0.9, J[b + "_femur@"][2]])
+                  for b, sg in (("l", 1), ("r", -1)))
+        return [h] * n
     seat_edge = (ct[0] - TK.EDGE_X) / U                                   # his forward distance to the seat's edge
     foot = (TK.FOOT_UP[0], seat_edge + TK.FOOT_UP[1])
     names = {}
     for key, tips, hands, stance, lean, kw, cs in (
-            ("A", tips_t, hips, TK.STANCE_T, TK.LEAN_T, {}, ct),
-            ("B", tips_t, hips, TK.STANCE_T, TK.LEAN_T, dict(foot=foot), ct),
-            ("C", tips_j, lambda s: shoulders("QJE%d" % s), TK.STANCE_J, TK.LEAN_J, {}, cj),
+            ("A", tips_t, hips, TK.STANCE_T, TK.LEAN_T, dict(level=True), ct),
+            ("B", tips_t, hips, TK.STANCE_T, TK.LEAN_T, dict(foot=foot, level=True), ct),
+            ("C", tips_j, lambda s: tifa_hips(len(tips_j[s])), TK.STANCE_J, TK.LEAN_J, {}, cj),
             ("D", tips_j, None, TK.STANCE_J, TK.LEAN_J * 0.4, dict(nape=True), cj)):
         names[key] = []
         for s in range(4):
@@ -120,8 +133,8 @@ def poses(ctx):
                              stance, lean, **kw)
             names[key].append("QZ%s%d.tor" % (key, s))
             out.setdefault("drops", []).append((key, s, round(min(drops), 2), round(max(drops), 2)))
-    hold_tips = TP.targets([TP._field(sj, dj, p) for p in TP.mouths(ctx, BARE_JESSIE, j_stand, "QJE8")], n, 0.0)
-    TP.cloud(ctx, "QZC8", hold_tips, shoulders("QJE8"), cj, DC, TK.FLOOR, TK.STANCE_J, TK.LEAN_J)
+    hold_tips = TP.targets([TP._field(sj, dj, p) for p in TP.mouths(ctx, BARE_JESSIE, j_stand, "QJF8")], n, 0.0)
+    TP.cloud(ctx, "QZC8", hold_tips, tifa_hips(1), cj, DC, TK.FLOOR, TK.STANCE_J, TK.LEAN_J)
     out.update(cloud=names, hold="QZC8.tor", st=st, sj=sj, dj=dj, ct=ct, cj=cj, j_stand=j_stand)
     return out
 
@@ -157,7 +170,7 @@ def apply(ctx):
     c_anims, t_anims, j_anims = ModelLoader.anims(cl0), ModelLoader.anims(tifa_e), ModelLoader.anims(jess_e)
     bare_c = sum((PZ["cloud"][k] for k in "ABCD"), []) + [PZ["hold"]]
     bare_t = ["ZVC%d.tor" % s for s in range(4)] + [PZ["tifa_still"]]
-    bare_j = PZ["jessie"]                                                   # QJE0-3, 8, 7, 9
+    bare_j = PZ["jessie"]                                                   # QJF0-3, 8, 7, 9
     for nm in bare_c + bare_t + bare_j + [PZ["sit_t"], PZ["sit_j"]]:
         ctx.char_file(nm.split(".")[0].lower() + ".a")                      # (exists)
     loader.models = [cl0, ModelLoader.only_anims(cl0, c_anims[:2]),
@@ -190,7 +203,7 @@ def apply(ctx):
         stx, sty = round((tx - sx) / n), round((ty - sy) / n)
         top, done = hb._w(1), asm.nop()
         return [d_(face(sx, sy, tx, ty)), asm.setword(CX, sx & 0xFFFF), asm.setword(CY, sy & 0xFFFF),
-                asm.setbyte(WN, 0)] + loop_(walk_anim) + \
+                asm.setbyte(WN, 0)] + [mv._animb(), Op(bytes([0xA2, walk_anim, 2])), Op(bytes([0xAE, walk_anim, 2]))] + \
             [top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
              Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], Z, tri(*start))),
              Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done] + \
@@ -241,7 +254,7 @@ def apply(ctx):
     ti = lambda nm: 1 + bare_t.index(nm)
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at(st, DC, TK.SEAT) + ch_(P, [ch_(TIER, [loop_(ti("ZVC%d.tor" % s)) for s in range(4)]),
+        2: at(st, DC, st[2]) + ch_(P, [ch_(TIER, [loop_(ti("ZVC%d.tor" % s)) for s in range(4)]),
                                          loop_(ti(PZ["tifa_still"]))]) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()]}
     ji = lambda k: 1 + k                                                   # QJE0-3 0-3, 8 at 4, 7 at 5, 9 at 6
@@ -474,5 +487,5 @@ def apply(ctx):
     f.sections[0] = sec.build()
     n_text = struct.unpack_from("<H", sec.tail, 0)[0]
     assert n_text <= 255, n_text
-    print("  685: Tickets, please! on %s (Tifa %s, Jessie %s dir %d; Cloud behind %s / at her head %s; drops %s; "
-          "%d texts, script %d bytes)" % (TK.FIELD, st, sj, dj, ck, ch, PZ["drops"], n_text, len(f.sections[0])))
+    print("  685: Tickets, please! on %s (Tifa %s, Jessie %s dir %d; Cloud behind %s / at her head %s; drops %s; Tifa sunk %d; "
+          "%d texts, script %d bytes)" % (TK.FIELD, st, sj, dj, ck, ch, PZ["drops"], PZ["sink"], n_text, len(f.sections[0])))

@@ -28,6 +28,7 @@ SAY = 100
 
 # the poses: Cloud's member tip DEPTH inside at the deepest, travelling STROKE (model units); his stance
 DEPTH, STROKE = 1.0, 1.8
+SINK_SPARE = 0.3                # Tifa sinks into the cushion until his level tip reaches her with this to spare
 STANCE_T, STANCE_J = 1.0, 3.8   # his feet this far out (behind Tifa / at Jessie's head: a wide, low sumo stance: the
                                 # bench is low, his hips sink ~5)
 LEAN_T, LEAN_J = 8, 22          # his upper body leaning forward (degrees)

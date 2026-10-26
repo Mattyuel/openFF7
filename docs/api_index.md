@@ -1273,6 +1273,11 @@ Honey Bee Inn visit scenes, one per girl (see _honey_bee_data.py for the
 Honey Bee visit scenes at higher affection (_honey_bee_gifts: 10-19 =
 
 
+## `patches/_hostile.py`
+(user) Hostile Takeover: the fourth parody film (686_hostile), in the Shinra 66F boardroom. A board meeting:
+
+- `to_b(x, y, z=0)` 
+
 ## `patches/_loose_engine.py`
 (user) The loose group shoot engine: a set (`Set`: a data module, a field, pose letters and hooks; 678 the
 
@@ -1389,6 +1394,9 @@ Shared helpers for character recruitment scenes.
 - `_mods()` 
 - `legs_up(ctx, src, dst)` Ruby's anim src (on her back) with both legs straight up, written to dst.
 - `jessie(ctx, hrc, stand)` Jessie's poses on her undressed `hrc`: QJE0-3 strokes, QJE8 held deep, QJE7 her tap-out squirm, QJE9
+- `jessie_under(ctx, hrc, stand)` (user) Jessie on her back under Tifa: 620 `_on_back`'s pose (knees up and apart, feet planted, her head
+- `_under(sk, bone, top)` 
+- `_centred(ctx, names, hrc)` Every anim's root moved so the model's origin is under her hips (the first anim's mean).
 - `sitting(ctx, name, hrc, stand)` name.a: sitting on the bench's edge (660 `_ledge`): XYZI on the seat.
 - `still(ctx, src, dst, frame=0)` dst.a = src.a's one frame.
 - `_inv_off(v, d)` Model vector (y down) of field vector v for an entity with DIR d (670 `_off` inverted).
@@ -1397,10 +1405,11 @@ Shared helpers for character recruitment scenes.
 - `_stand(ctx, hrc, stand)` 
 - `entry_points(ctx, hrc, stand, anim)` Tifa's entry per frame (model space): 672's ENTRY (Ruby's stand frame) scaled to her legs, carried by
 - `mouths(ctx, hrc, stand, anim)` Her mouth per frame (model space).
-- `his_tip(ctx)` Cloud's member tip and his root, standing (model space, y down).
+- `his_tip(ctx, level=False)` Cloud's member tip and his root, standing (model space, y down). level: with his pelvis turned (about
+- `_level(ctx)` (R, P): the turn of his pelvis about its top P (the hip bone's end, standing) making his member level.
 - `targets(points, n, deep)` Field tip targets: each point + the stroke along n (field unit vector, from her to him): DEPTH inside
 - `spot(tips, dc, floor, tip0, root0)` Cloud's field spot (x, y) for these tip targets: standing, his tip on average where they are.
-- `cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nape=False)` Cloud's frames (written to name.a): his tip at tips[k] (field), standing at cspot (field, on the floor);
+- `cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nape=False, level=False)` Cloud's frames (written to name.a): his tip at tips[k] (field), standing at cspot (field, on the floor);
 
 ## `patches/_travel.py`
 Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.

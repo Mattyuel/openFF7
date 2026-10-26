@@ -44,6 +44,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   ("My turn!" calls; Jessie's HOLD lasts until she taps out). Check the girls
   sit on the bench (not floating / sunk), the train's lights and straps move,
   Cloud lines up with each of them, and the low squat at Jessie's head.
+  Since the feedback: Jessie lies under Tifa (her head between Tifa's thighs,
+  only her head bobs), Cloud's member stays level behind Tifa, and Cloud
+  walks in twice as fast (Going up too).
 - **Going up** (684): the Director's film menu, "Going up.". The glass
   elevator: the intro (Elena walks in, Cloud tries the console, the stuck
   door, Elena undresses, covers up, crawls over; Cloud walks behind her),
