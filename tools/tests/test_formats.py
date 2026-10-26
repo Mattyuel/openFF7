@@ -210,6 +210,6 @@ def test_mirror():
 
 
 if __name__ == "__main__":
-    for fn in [test_api_index_current, test_asm_bins_current, test_lgp_roundtrip, test_fields, test_scene, test_open_vars_unused, test_patches, test_mirror]:
+    for fn in [test_api_index_current, test_asm_bins_current, test_lgp_roundtrip, test_fields, test_scene, test_saveuse_operands, test_open_vars_unused, test_patches, test_mirror]:
         fn()
         print("ok", fn.__name__)
