@@ -1042,6 +1042,15 @@ The movie minigame (user's design).
 - `_rot(v, d)` 
 - `apply(ctx)` 
 
+## `patches/685_tickets.py`
+(user) Tickets, please!: the third parody film (data `_tickets.py`, poses `_tickets_poses.py`), on the
+
+- `_mods()` 
+- `_jessie(ctx)` Her undressed model (as 679_nurse builds the nurse's).
+- `_dir_to_x(mv, v)` The DIR turning model vector v (y down) to field +x.
+- `poses(ctx)` Every pose and spot. Returns a dict.
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1219,7 +1228,7 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_bar(z0, z1, tip0, tip1, r, n, bgr, tail, poly_tail)` A rounded bar along a bone (local -z): rings of radius r at z0 and z1, pointed to tip0 /
 - `face_skin(ctx, hrc)` Her face's skin colour (B, G, R): the head part's most common skin-like vertex colour
 - `apply(ctx, hrc, tag, skin=None, legs=None, bust=1.0, head_drop=0.0)` See the module. legs = {"femur": bands, "tibia": bands} (see `_banded`): her legs'
-- `_bust_tips(ctx)` The standard torso's tip vertex indices (left, right) (see NIPPLE_*).
+- `_bust_tips(ctx)` The standard torso's tip vertex indices (left, right) (see NIPPLE_*). Found once (675) and kept on ctx:
 - `_chest_p(ctx, hrc)` 
 - `nipples(ctx, hrc, tag, tips=None)` `hrc` (an undressed girl's .hrc text, the standard torso on her chest bone) with a pink
 - `tifa_parts(ctx, hrc, raws, tidy, mirror, gen_chest, bust, shape=None)` (675) The user's Tifa parts as the base every girl's body is made from: ctx.tifa_std = {"parts":
@@ -1358,6 +1367,29 @@ Shared helpers for character recruitment scenes.
 ## `patches/_stage_show.py`
 (user) The Gold Saucer stage show (674): the troupe, famous from the videos, performs a live erotic
 
+
+## `patches/_tickets.py`
+(user) Tickets, please!: the third parody film (685_tickets), on the Sector 7 train (tin_2's carriage). Cloud,
+
+
+## `patches/_tickets_poses.py`
+(user) Tickets, please!'s poses (685_tickets).
+
+- `_mods()` 
+- `legs_up(ctx, src, dst)` Ruby's anim src (on her back) with both legs straight up, written to dst.
+- `jessie(ctx, hrc, stand)` Jessie's poses on her undressed `hrc`: QJE0-3 strokes, QJE8 held deep, QJE7 her tap-out squirm, QJE9
+- `sitting(ctx, name, hrc, stand)` name.a: sitting on the bench's edge (660 `_ledge`): XYZI on the seat.
+- `still(ctx, src, dst, frame=0)` dst.a = src.a's one frame.
+- `_inv_off(v, d)` Model vector (y down) of field vector v for an entity with DIR d (670 `_off` inverted).
+- `_field(spot, d, p)` 
+- `joints(ctx, hrc, anim)` Per frame: {bone: end, bone@: start, root} (model space, y down) plus each bone's world matrix.
+- `_stand(ctx, hrc, stand)` 
+- `entry_points(ctx, hrc, stand, anim)` Tifa's entry per frame (model space): 672's ENTRY (Ruby's stand frame) scaled to her legs, carried by
+- `mouths(ctx, hrc, stand, anim)` Her mouth per frame (model space).
+- `his_tip(ctx)` Cloud's member tip and his root, standing (model space, y down).
+- `targets(points, n, deep)` Field tip targets: each point + the stroke along n (field unit vector, from her to him): DEPTH inside
+- `spot(tips, dc, floor, tip0, root0)` Cloud's field spot (x, y) for these tip targets: standing, his tip on average where they are.
+- `cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nape=False)` Cloud's frames (written to name.a): his tip at tips[k] (field), standing at cspot (field, on the floor);
 
 ## `patches/_travel.py`
 Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.

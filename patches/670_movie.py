@@ -3065,15 +3065,23 @@ def _wall_market(ctx, focus):
         gx_, gy_ = GU_.ARRIVE
         gt_ = Walkmesh(ctx.field(GU_.BASE).section("walkmesh")).find(gx_, gy_)
         assert gt_ is not None
+        # (user) and the third, Tickets, please! (685), on the Sector 7 train
+        import _tickets as TK_
+        kx_, ky_ = TK_.ARRIVE
+        kt_ = Walkmesh(ctx.field(TK_.BASE).section("walkmesh")).find(kx_, ky_)
+        assert kt_ is not None
         ask_w, first_w = hb._ask(sec, "Director\n“I've got films lined up. Which one\n are we shooting?”",
-                                 ["Sector 7 Workout.", "Going up.", "Talk about other work."])
-        film2_, other_w = asm.nop(), asm.nop()
+                                 ["Sector 7 Workout.", "Going up.", "Tickets, please!", "Talk about other work."])
+        film2_, film3_, other_w = asm.nop(), asm.nop(), asm.nop()
         ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, film2_)] + \
             hb._say(sec, "Director\n“That's what I like to hear! To the gym!”") + \
             [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(WO_.FIELD), wx_, wy_, wt_, 0), asm.ret(), film2_,
-             asm.if_byte(CHOICE, "==", first_w + 1, other_w)] + \
+             asm.if_byte(CHOICE, "==", first_w + 1, film3_)] + \
             hb._say(sec, "Director\n“Shinra Tower, the glass elevator.\n Elena's waiting. Don't be late!”") + \
-            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(GU_.FIELD), gx_, gy_, gt_, 0), asm.ret(), other_w]
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(GU_.FIELD), gx_, gy_, gt_, 0), asm.ret(), film3_,
+             asm.if_byte(CHOICE, "==", first_w + 2, other_w)] + \
+            hb._say(sec, "Director\n“All aboard! You're the ticket\n inspector. Tifa and Jessie are\n your passengers.”") + \
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(TK_.FIELD), kx_, ky_, kt_, 0xC0), asm.ret(), other_w]
         ops += tape(sec, say, end) + _unlocked_or(scout)
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
         for t_ in NEWS[1]:                       # (user) once (if the arrival didn't tell it)

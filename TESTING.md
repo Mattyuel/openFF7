@@ -36,6 +36,14 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Tickets, please!** (685): the Director's film menu, third choice. On the
+  train: Tifa and Jessie sitting on the near left bench, Cloud walks down the
+  aisle, the ticket banter, the fade to Cloud undressed, the fade to the
+  position (both across the bench: Tifa on all fours, Jessie on her back with
+  her head over the edge and her legs up the window). Same play as Going up
+  ("My turn!" calls; Jessie's HOLD lasts until she taps out). Check the girls
+  sit on the bench (not floating / sunk), the train's lights and straps move,
+  Cloud lines up with each of them, and the low squat at Jessie's head.
 - **Going up** (684): the Director's film menu, "Going up.". The glass
   elevator: the intro (Elena walks in, Cloud tries the console, the stuck
   door, Elena undresses, covers up, crawls over; Cloud walks behind her),

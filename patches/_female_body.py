@@ -13,7 +13,7 @@ no change is shared, the others are written as new parts "ZW<tag><letter>" (.rsd
 colour (B, G, R) for the body's skin (Skye's SKIN) if given. Use it only from patches that
 run after 670 (the standard body is built there).
 
-Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675), K Skye (ZSKA: only `nipples`), N the island nurse (ZIUA, from BTEC, 679_nurse), B C D F G the school uniforms (682), W Tifa's spandex (XWTA, 683)
+Tags in use: R Ruby (ZRHA), E Elena (ZELA), S Scarlet (ZSCA), T Tifa (ZTFA), H the Honey Bee girls (ZHBA, the dancer BADD), A Aerith (ZAEA, from AUFF) (675), K Skye (ZSKA: only `nipples`), N the island nurse (ZIUA, from BTEC, 679_nurse), B C D F G the school uniforms (682), W Tifa's spandex (XWTA, 683), J Jessie (XJEA, 685)
 
 `nipples(ctx, hrc, tag)` adds pink nipples (NIPPLE_*) to a girl with the standard torso (675 adds
 them to every one, Skye included, after all `apply` calls: `apply` wants one part per body bone).
@@ -425,7 +425,11 @@ NIPPLE_R, NIPPLE_N, NIPPLE_LIFT, NIPPLE_TIP, NIPPLE_SINK = 0.3, 8, 0.04, 0.12, 0
 
 
 def _bust_tips(ctx):
-    """The standard torso's tip vertex indices (left, right) (see NIPPLE_*)."""
+    """The standard torso's tip vertex indices (left, right) (see NIPPLE_*). Found once (675) and kept on ctx:
+    681 later gives Skye's model (the standard) Tifa's body, and the search no longer fits that chest; every
+    girl's torso is a vertex-for-vertex copy of the standard's, so the indices stay right."""
+    if getattr(ctx, "bust_tips", None):
+        return ctx.bust_tips
     from ff7 import fieldanim as fa
     hrc = ctx.char_file(STANDARD.lower()).decode("latin-1")
     sk = fa.skeleton(hrc)
@@ -440,6 +444,7 @@ def _bust_tips(ctx):
         i = max((i for i, v in enumerate(V) if s * dot(v, left) > 0.5), key=lambda i: dot(V[i], front))
         assert 0.6 < s * dot(V[i], left) < 2.0, ("bust tip", V[i])
         tips.append(i)
+    ctx.bust_tips = tips
     return tips
 
 
