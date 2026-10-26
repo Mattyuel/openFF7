@@ -421,7 +421,7 @@ one position after another into films.
 
   | Film | Parody of | Set | Cast |
   |---|---|---|---|
-  | *Hostile Takeover* | the Shinra board meeting: executives fight over the budget | the boardroom (blin66 floors) | Scarlet as the cruel exec, Elena as the new hire (proposal) |
+  | *Hostile Takeover* (**built: 686_hostile, untested in-game**) | the Shinra board meeting: executives fight over the budget | the boardroom (blin66 floors) | Scarlet as the cruel exec, Elena as the new hire (proposal) |
   | *Going up* (**built: 684_going_up, untested in-game**) | the Turks' elevator capture, turned round: the stuck glass elevator, Tifa's 'special training' for Elena | Shinra HQ's glass elevator (eleout) | Cloud, Tifa, Elena (user) |
   | *Tickets, please!* (**built: 685_tickets, untested in-game**) | the train ride's ID check, turned round: Cloud the ticket inspector, two bratty passengers with no tickets | the Sector 7 train (tin_2) | Cloud, Tifa, Jessie (user) |
   | *Mako Fever* | a reactor inspection with a stuck elevator | No.1 / No.5 reactor rooms | Cloud, Tifa, Jessie (user) |

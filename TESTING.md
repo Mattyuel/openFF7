@@ -36,6 +36,13 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Hostile Takeover** (686): the Director's film menu, fourth choice. The
+  board meeting in Shinra's 66F boardroom, then the position at the table's
+  front-left corner (everyone drawn 1.5x bigger in this room). Every 5 reps
+  the camera switches between the front view and the overhead vent view
+  (a short fade and a field change): check everyone is in the same place
+  in both, and that the pace, pay and lines carry on across the switch.
+  With Elena underneath a HOLD lasts until she taps out.
 - **Tickets, please!** (685): the Director's film menu, third choice. On the
   train: Tifa and Jessie sitting on the near left bench, Cloud walks down the
   aisle, the ticket banter, the fade to Cloud undressed, the fade to the

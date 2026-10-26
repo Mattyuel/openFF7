@@ -1052,6 +1052,14 @@ The movie minigame (user's design).
 - `poses(ctx)` Every pose and spot. Returns a dict.
 - `apply(ctx)` 
 
+## `patches/686_hostile.py`
+(user) Hostile Takeover: the fourth parody film (data `_hostile.py`), in the Shinra 66F boardroom, starring
+
+- `_mods()` 
+- `_poses(ctx)` Every pose and spot (blin66_6 coordinates; `_build` maps them for the overhead set). P 1: Scarlet on the
+- `apply(ctx)` 
+- `_build(ctx, field, base, overhead, PZ)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1277,6 +1285,19 @@ Honey Bee visit scenes at higher affection (_honey_bee_gifts: 10-19 =
 (user) Hostile Takeover: the fourth parody film (686_hostile), in the Shinra 66F boardroom. A board meeting:
 
 - `to_b(x, y, z=0)` 
+
+## `patches/_hostile_poses.py`
+(user) Hostile Takeover's poses (686_hostile), after the user's annotated sketch: one girl face down along the
+
+- `_mods()` 
+- `unit()` 
+- `_subtree(sk, top)` 
+- `under(ctx, prop=None, probe=False)` QHU0-3 / QHU8 / QHU7 on Ruby (user's sketch: reclining under him): on her back (620 `_on_back`: knees up and
+- `joints(ctx, hrc, anim)` Per frame: {bone: end, bone@: start, bone#: world matrix, root} (model space, y down).
+- `mouth(ctx, hrc, stand, J)` 
+- `_bow(ctx)` (him, face-point function, the bowing pose's dict).
+- `face_point(ctx)` Cloud's face bowing (no drop / shift), model space: where his root has to move from to put it anywhere.
+- `cloud(ctx, name, faces, hands, deep=7 / 15)` Cloud bowing into her (user: his face buried "there" in her): frames written to name.a, one per target in
 
 ## `patches/_loose_engine.py`
 (user) The loose group shoot engine: a set (`Set`: a data module, a field, pose letters and hooks; 678 the
