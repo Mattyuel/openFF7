@@ -18,7 +18,7 @@ something new, hit a trap, or a feature's status changes.
 | How to use the tools (commands, a worked example patch, recipes) | `docs/tools_guide.md` |
 | Midgar / rest-of-world pinning plans | `docs/midgar_plan.md`, `docs/world_plan.md` |
 | Dates with the girls (gondola / space capsule): plan, decisions, FMV facts | `docs/dates_plan.md` |
-| **New direction: the Gym** (no combat, Tifa's gym, minigames, relationships; gil as the hard limit; owned businesses: 7th Heaven, gym, Honey Bee Inn, production company; unlock chain: 7th Heaven shifts -> gym seller -> Honey Bee gigs -> the Director (the cameraman, renamed) -> Materia Store video deal; 7th Heaven bought from Marle; audit of what stays / goes; flowcharts) | `docs/gym_plan.md`, `docs/gym_loop.mmd`, `docs/gym_unlocks.mmd` |
+| **New direction: the Gym** (no combat, Tifa's gym, minigames, relationships; gil as the hard limit; owned businesses: 7th Heaven, gym, Honey Bee Inn, production company; unlock chain: Tifa's 7th Heaven shifts -> gym seller -> Honey Bee gigs -> the Director (the cameraman, renamed) -> Materia Store video deal; 7th Heaven bought from Marle; audit of what stays / goes; flowcharts) | `docs/gym_plan.md`, `docs/gym_loop.mmd`, `docs/gym_unlocks.mmd` |
 | Fields, locations, exits, battles, world map | `docs/inventory/` |
 | .exe findings | `docs/exe_notes.md`, `docs/research_menu.md`, `docs/research_battle.md` |
 | One-off story scenes outside Midgar (applied / open) | `docs/research_story_scenes.md` |

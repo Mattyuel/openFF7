@@ -27,7 +27,8 @@ marked **(decided)**; everything else is a proposal.
 
 ## 2. Story arc
 
-1. **The Deed.** Cloud works shifts at 7th Heaven. A customer there is selling
+1. **The Deed.** Tifa works her shifts at 7th Heaven, with Cloud around the
+   bar. A customer there is selling
    the gym (who: Big Bro fits; he owes Corneo); Cloud meets him at the gym and
    buys it before Corneo takes it. First members come through the squat
    contest. First rent is due. (Order of unlocks: section 4.2.)
@@ -63,7 +64,7 @@ flowchart TD
         FREE --> CLASS["80s spandex class<br/>(class nights)<br/>rhythm minigame, whole roster"]
         FREE --> INCIDENT["Incident<br/>Corneo's lackeys, a member's trouble,<br/>broken equipment"]
         FREE --> HANG["Hang out / gift<br/>a member's affection tier"]
-        FREE --> BAR["7th Heaven shift<br/>bartending minigame, tips"]
+        FREE --> BAR["7th Heaven<br/>Tifa's bar shifts:<br/>takings, tips"]
         FREE --> SIDE["Desperation work<br/>Tifa at the Honey Bee Inn,<br/>Tifa + Cloud on camera<br/>pays now, costs trust"]
         FREE --> COLLECT["Run the businesses<br/>hire / pay staff, buy supplies,<br/>collect profits"]
 
@@ -153,9 +154,11 @@ other expenses. Running short is the pressure that drives every week.
   - **Gym:** monthly member fees (members x tier, more with Reputation),
     drop-in class tickets (the spandex class), personal training sessions
     (a minigame score sets the fee), competition prize money.
-  - **7th Heaven bar-tending:** Cloud works shifts at Tifa's bar. A bartending
-    minigame (mixing orders against the clock / customers' moods), tips by
-    score, and regulars who become gym recruits.
+  - **7th Heaven bar-tending (user: Tifa works the shifts, not Cloud):** the
+    bar's takings and tips, and regulars who become gym recruits. Open: what
+    Cloud, the player, does during a shift (a minigame helping her, or just
+    the takings collected), and whether shifts cost Tifa time she'd otherwise
+    give the gym.
 - **Income, unconventional:** the Director and the Honey Bee Inn (section
   4.1). They start as work done out of desperation and become businesses you
   own.
@@ -212,7 +215,7 @@ add flavour to life in the slums.
     score, finishers) and its stars.
 - **7th Heaven** (user): Tifa only rents it; the building belongs to
   **Marle**, the elderly Sector 7 landlady, and is bought from her. The bar
-  shifts are its minigame; owning it adds staff, stock and profits.
+  shifts are Tifa's; owning it adds staff, stock and profits.
 - **The gym** is the first purchase (section 4.2).
 
 ### 4.2 Unlock chain (user)
@@ -221,7 +224,7 @@ Each business is found through the one before it:
 
 ```mermaid
 flowchart TD
-    BAR["Work shifts at 7th Heaven<br/>(Tifa rents it from Marle)"] --> SELLER["A customer is selling the gym"]
+    BAR["Tifa's shifts at 7th Heaven<br/>(she rents it from Marle)"] --> SELLER["A customer is selling the gym"]
     SELLER --> MEETGYM["Meet him at the gym"] --> GYM(["Buy the gym"])
     BAR -.-> MARLE(["Buy 7th Heaven from Marle<br/>(when: open)"])
     GYM --> HBGIRL["A Honey Bee girl works out at the gym<br/>(in gym clothes, not her outfit)<br/>and recommends the gig"]
