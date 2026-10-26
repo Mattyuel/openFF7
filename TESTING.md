@@ -36,6 +36,14 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Besties** (687): the Director's film menu, fifth choice. Gast's house in
+  Icicle Inn: Tifa and Aerith come down the stairs in their Wall Market
+  dresses, gesture, all three sit on the bed, the roleplay, undressed; then
+  five positions of the same length, a choice between each (the silly one is
+  a gag, then the real one), the finale's quick prompts and an ending that
+  depends on how well you kept the rhythm. Check the walk-in ends with a turn
+  (no snapping), everyone on the bed (not floating / sunk), and how the
+  positions read from this high camera.
 - **Hostile Takeover** (686): the Director's film menu, fourth choice. The
   board meeting in Shinra's 66F boardroom, then the position at the table's
   front-left corner (everyone drawn 1.5x bigger in this room). Every 5 reps

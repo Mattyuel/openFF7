@@ -1060,6 +1060,13 @@ The movie minigame (user's design).
 - `apply(ctx)` 
 - `_build(ctx, field, base, overhead, PZ)` 
 
+## `patches/687_besties.py`
+(user) Besties: the fifth film (data `_besties.py`, poses `_besties_poses.py`), Cloud, Tifa and Aerith in Gast's
+
+- `_mods()` 
+- `_places(ctx, a_stand)` Every spot (x, y, z) and DIR. Returns a dict.
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1124,6 +1131,26 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `cloud_sunbed(ctx, name='ZNW', her_dir=0)` ZNW0-3 (`name`): Cloud lounging (CLOUD_BACK), his root moving as ZNB<k>'s (the cowgirl's beat, same
 - `build(ctx)` Every beach pose on Ruby's skeleton / bare Cloud's (the girls' retargeted by 679).
 - `girl_knees(ctx)` ZMY0-3 from ZMD0-3: hands on her knees (KNEE_HANDS up the thigh, a little out to the side).
+
+## `patches/_besties.py`
+(user) Besties: the fifth film (687_besties), Cloud, Tifa and Aerith in Gast's house in Icicle Inn (snmayor), on
+
+
+## `patches/_besties_poses.py`
+(user) Besties' poses and spots (687_besties). The pairs are the movie's (670: each girl's retargeted strokes,
+
+- `_mods()` 
+- `still(ctx, src, dst, frame=0)` 
+- `sitting(ctx, name, hrc, stand)` name: sitting on an edge (660 `_ledge`), the root moved back (SEAT_IN + SEAT_OUT) so an XYZI on the floor
+- `recline(ctx, hrc, stand)` Aerith sitting up (her knees up and apart): QMU0-3 (bobbing gently: 686's under, her head nodding), 8 / 7 / 9 as
+- `joints(ctx, hrc, anim, frame=0)` {bone: end, bone@: start, bone#: world matrix, root} of one frame (model space, y down).
+- `face(ctx, hrc, stand, J, t=0.3, out=0.9)` Her face's point (between eyes and mouth) in a joints dict.
+- `field(spot, d, m)` Field point of model point m for an entity at spot (x, y, z) with DIR d.
+- class `BedMap` The studio's beds (whitebg1 = a copy of mds7_w3: walkable tops at 54 / 100 / 125) onto one bed (corners
+  - `__init__(ctx, corners, top)` 
+  - `bed_of(p)` 
+  - `point(p, bed_p=None)` A studio point p (x, y, z) -> here; on the bed under bed_p (default: p's own).
+  - `dir(d)` 
 
 ## `patches/_blast_data.py`
 (user) Blast-off (673): the movie's third scene for a co-star, with Cid, in the space capsule.

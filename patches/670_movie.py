@@ -3075,10 +3075,15 @@ def _wall_market(ctx, focus):
         hx_, hy_ = HT_.ARRIVE
         ht_ = Walkmesh(ctx.field(HT_.BASE_A).section("walkmesh")).find(hx_, hy_)
         assert ht_ is not None
+        # (user) and the fifth, Besties (687), in Gast's house in Icicle Inn
+        import _besties as BS_
+        bx_, by_ = BS_.ARRIVE
+        bt_ = Walkmesh(ctx.field(BS_.BASE).section("walkmesh")).find(bx_, by_)
+        assert bt_ is not None
         ask_w, first_w = hb._ask(sec, "Director\n“I've got films lined up. Which one\n are we shooting?”",
                                  ["Sector 7 Workout.", "Going up.", "Tickets, please!", "Hostile Takeover.",
-                                  "Talk about other work."])
-        film2_, film3_, film4_, other_w = asm.nop(), asm.nop(), asm.nop(), asm.nop()
+                                  "Besties.", "Talk about other work."])
+        film2_, film3_, film4_, film5_, other_w = asm.nop(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
         ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, film2_)] + \
             hb._say(sec, "Director\n“That's what I like to hear! To the gym!”") + \
             [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(WO_.FIELD), wx_, wy_, wt_, 0), asm.ret(), film2_,
@@ -3088,10 +3093,13 @@ def _wall_market(ctx, focus):
              asm.if_byte(CHOICE, "==", first_w + 2, film4_)] + \
             hb._say(sec, "Director\n“All aboard! You're the ticket\n inspector. Tifa and Jessie are\n your passengers.”") + \
             [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(TK_.FIELD), kx_, ky_, kt_, 0xC0), asm.ret(), film4_,
-             asm.if_byte(CHOICE, "==", first_w + 3, other_w)] + \
+             asm.if_byte(CHOICE, "==", first_w + 3, film5_)] + \
             hb._say(sec, "Director\n“Shinra's boardroom, 66th floor.\n Scarlet's chairing. Bring your\n business face.”") + \
             [asm.setbyte((3, 142), 0),                                   # (686's camera-switch RESUME flag)
-             Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(HT_.FIELD_A), hx_, hy_, ht_, 0x40), asm.ret(), other_w]
+             Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(HT_.FIELD_A), hx_, hy_, ht_, 0x40), asm.ret(), film5_,
+             asm.if_byte(CHOICE, "==", first_w + 4, other_w)] + \
+            hb._say(sec, "Director\n“Icicle Inn, Gast's old house. Just the\n three of you. Keep it real, okay?”") + \
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(BS_.FIELD), bx_, by_, bt_, 0), asm.ret(), other_w]
         ops += tape(sec, say, end) + _unlocked_or(scout)
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
         for t_ in NEWS[1]:                       # (user) once (if the arrival didn't tell it)
