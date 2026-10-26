@@ -26,20 +26,37 @@ def squat(u):
     return (1 - math.cos(2 * math.pi * u)) / 2
 
 
+def _f(tier):
+    """How far up the tiers (0 .. 1)."""
+    return tier / max(1, len(WO.PERIODS) - 1)
+
+
 def gap(part, tier):
     """How far behind her he stands (model units, root to root)."""
-    return 8.0 - 0.45 * tier if part == "A" else 4.8 - 0.22 * tier
+    f = _f(tier)
+    return 8.0 - 2.4 * f if part == "A" else 4.8 - 1.2 * f
+
+
+def push(part, tier, u):
+    """(user: more back and forth in the overt ones) his hips pushing in: part two from the start, harder and
+    twice a rep at the faster tiers; part one only from the 'training device' tiers (f >= 0.7), once."""
+    f = _f(tier)
+    if part == "A":
+        return 0.0 if f < 0.7 else (0.3 + 0.5 * (f - 0.7) / 0.3) * squat(u) ** 3
+    k = 1 if f < 0.4 else 2
+    return (0.45 + 0.9 * f) * (0.5 - 0.5 * math.cos(2 * math.pi * k * u))
 
 
 def her_pose(part, tier, u):
-    s = squat(u)
+    s, f = squat(u), _f(tier)
+    rock = 0.45 * push(part, tier, u)                                   # she rocks forward as he pushes in
     if part == "A":
-        lean = 12 + (16 + 2 * tier) * s
-        return dict(drop=(3.4 + 0.12 * tier) * s, shift=(0, -0.7 * s), lean=(lean, 0, 0), head=(-lean * 0.6, 0, 0),
+        lean = 12 + (16 + 10 * f) * s
+        return dict(drop=(3.4 + 0.6 * f) * s, shift=(0, -0.7 * s + rock), lean=(lean, 0, 0), head=(-lean * 0.6, 0, 0),
                     leg_l=(0.5, 0, 0), leg_r=(0.5, 0, 0), arm_l=(78 + 8 * s, 88, 0.95), arm_r=(78 + 8 * s, 88, 0.95))
-    lean = 26 + 5 * tier + 14 * s
-    arms = "knee" if tier >= 2 else (55, 75, 0.85)
-    return dict(drop=(3.2 + 0.1 * tier) * s, shift=(0, -0.9 * s), lean=(lean, 0, 0), head=(-lean * 0.7, 0, 0),
+    lean = 26 + 25 * f + 14 * s
+    arms = "knee" if f >= 0.3 else (55, 75, 0.85)
+    return dict(drop=(3.2 + 0.5 * f) * s, shift=(0, -0.9 * s + rock), lean=(lean, 0, 0), head=(-lean * 0.7, 0, 0),
                 leg_l=(0.6, 0, 0), leg_r=(0.6, 0, 0), arm_l=arms, arm_r=arms)
 
 
@@ -81,14 +98,14 @@ def build(ctx, hers):
                 to_his = lambda p: [p[0], p[1], p[2] - g]          # her model space -> his (he's g behind: +z)
                 drop = (J["root"][1] - top) * ratio + HIP_BELOW * s       # her drop, scaled to his height
                 lean = (0.45 if part == "A" else 0.5) * her_pose(part, t, k / n)["lean"][0]
-                push = 0.0 if part == "A" else (0.35 + 0.1 * t) * s ** 3       # his hips in at the bottom
+                push_ = push(part, t, k / n)                                    # his hips in
                 hands = {}
                 for side, sg in (("l", 1), ("r", -1)):
                     h = J[side + "_femur@"]
                     hands["arm_" + side] = ("at", to_his([h[0] + sg * HAND_OUT, h[1] - HAND_UP, h[2]]),
                                             (sg * 1.0, 0.6, -0.2))
                 frames.append(him.frame(dict(drop=drop, lean=(lean, 0, 0), head=(-lean * 0.8, 0, 0),
-                                             shift=(0, push), leg_l=(CLOUD_STANCE, 0, 0), leg_r=(CLOUD_STANCE, 0, 0),
+                                             shift=(0, push_), leg_l=(CLOUD_STANCE, 0, 0), leg_r=(CLOUD_STANCE, 0, 0),
                                              **hands)))
             name = "%s%s%d" % (CLOUD, part, t)
             CP._save(ctx, name, CLOUD_STAND, frames)

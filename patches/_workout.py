@@ -18,12 +18,15 @@ PROMPT_Y = 40                   # the prompt window's top
 LINE_Y = 168                    # the talk window during the squats (lower half)
 SAY = 100                       # frames a line stays up during the squats
 
-# speed tiers: frames per rep (one squat down and up), slowest first; HITS_UP hits in a row step up a tier
-PERIODS = (60, 50, 42, 34, 28, 22)
-HITS_UP = 4
+# speed tiers: frames per rep (one squat down and up); (user) each step 10% faster than the last.
+# HITS_UP hits in a row step the pace up a tier; a miss drops it back to the slowest
+PERIODS = tuple(round(60 * 0.9 ** k) for k in range(8))      # 60 54 49 44 39 35 32 29
+HITS_UP = 3
 PART_A_END = 4                  # part one ends after this many hits at the top tier
 PART_B_REPS = 48                # part two: this many prompts, then the finale
 PAY_HIT = 10                    # gil per hit x (tier + 1)
+CHAT_EVERY = 4                  # (user: long silences) a chatter line every this many reps, when nobody's talking
+HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # the squat contest's squat (mkt_mens: AKAO 28 08 019d)
 
 # the buttons, as the squat contest names them: (IFKEY mask, the prompt's text)
 # (OK as 0x220: IFKEY's mask bit 0x200 is OK too on PC, and 0x20 alone never fired in 670's minigame)
@@ -43,27 +46,65 @@ HOW = "Press the button shown in time with\nthe squat. Hits build the pace; a mi
 LINES_A = {
     1: ["Cloud\n“Feet shoulder-width apart. Sit back,\n like there's a chair behind you.”",
         "Tifa\n“Like this?”"],
-    2: ["Cloud\n“Good. Chest up, knees out over\n your toes.”",
+    3: ["Cloud\n“Good. Chest up, knees out over\n your toes.”",
         "Tifa\n“Ooh, I can already feel it in\n my thighs!”"],
-    3: ["Tifa\n“Is it supposed to feel this... warm?”",
+    4: ["Tifa\n“Is it supposed to feel this... warm?”",
         "Cloud\n“That's the burn. It means it's\n working.”"],
-    4: ["Tifa\n“Cloud... what's that pressing\n against me?”",
+    5: ["Tifa\n“Cloud... what's that pressing\n against me?”",
         "Cloud\n“...A training device. For your\n posture.”",
         "Tifa\n“Oh... ohh. I think it's working.”"],
-    5: ["Tifa\n“Mmmh...! Faster...”"],
+    7: ["Tifa\n“Mmmh...! Faster...”"],
 }
-MISS_A = "Tifa\n“Whoa, wait! Slow down...”"
+CHAT_A = [
+    "Cloud\n“Breathe out on the way up.”",
+    "Tifa\n“How many of these do you do\n a day?”",
+    "Cloud\n“...Enough.”",
+    "Tifa\n“My legs are shaking already!”",
+    "Cloud\n“Weight on your heels.”",
+    "Tifa\n“You're a good teacher, Cloud.”",
+    "Cloud\n“Don't let your knees cave in.”",
+    "Tifa\n“Mm... I'm getting the hang of this.”",
+    "Cloud\n“Keep your eyes forward.”",
+    "Tifa\n“Is it hot in here, or is it just\n the workout?”",
+]
+MISSES_A = [
+    "Tifa\n“Whoa, wait! Slow down...”",
+    "Tifa\n“Oops! I lost my balance.”",
+    "Cloud\n“Reset. Feet planted. Again.”",
+    "Tifa\n“Sorry! Let me catch my breath.”",
+    "Cloud\n“Don't rush it. Form first.”",
+    "Tifa\n“Hah... okay, from the top.”",
+]
 
 # part two (undressed)
 START_B = ["Tifa\n“Don't stop now... I've got the hang\n of it.”"]
 LINES_B = {
     1: ["Cloud\n“Keep that back straight.”", "Tifa\n“Mmm... yes, coach.”"],
-    2: ["Tifa\n“Deeper... I want to feel the\n stretch.”"],
-    3: ["Cloud\n“Good form. Hold it at the bottom.”", "Tifa\n“Ah...! I'm holding...!”"],
-    4: ["Tifa\n“This is the best workout I've\n ever had!”"],
-    5: ["Tifa\n“Cloud... Cloud...!”"],
+    3: ["Tifa\n“Deeper... I want to feel the\n stretch.”"],
+    4: ["Cloud\n“Good form. Hold it at the bottom.”", "Tifa\n“Ah...! I'm holding...!”"],
+    6: ["Tifa\n“This is the best workout I've\n ever had!”"],
+    7: ["Tifa\n“Cloud... Cloud...!”"],
 }
-MISS_B = "Tifa\n“Ah... you lost the rhythm.\n Start slow again.”"
+CHAT_B = [
+    "Tifa\n“Mmm... don't stop.”",
+    "Cloud\n“Hands on your knees. Good.”",
+    "Tifa\n“Ah... is this still a squat?”",
+    "Cloud\n“Advanced technique.”",
+    "Tifa\n“Ohh... I'll be sore tomorrow...”",
+    "Tifa\n“Harder, coach!”",
+    "Cloud\n“Push back into it.”",
+    "Tifa\n“Hah... hah... yes...!”",
+    "Tifa\n“Every gym should have one of\n these 'devices'...”",
+    "Cloud\n“Stay low. Breathe.”",
+]
+MISSES_B = [
+    "Tifa\n“Ah... you lost the rhythm.\n Start slow again.”",
+    "Tifa\n“Mmh, wait... slower, slower...”",
+    "Cloud\n“Easy. Find the rhythm again.”",
+    "Tifa\n“Hah... don't you dare stop now.”",
+    "Tifa\n“Oh! That one threw me off.”",
+    "Cloud\n“Back to basics. Nice and slow.”",
+]
 FINALE = ["Tifa\n“Phew... same time tomorrow, coach?”",
           "Director\n“CUT! That's a wrap! You two are\n naturals.”"]
 PAID = "Director\n“Here's your pay: {VAR} gil.\n Great work today.”"

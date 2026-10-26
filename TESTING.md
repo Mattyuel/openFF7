@@ -51,7 +51,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   buttons), the pace changes are visible, the lines at each new pace, Tifa's
   spandex and tied-up hair, the fade to part two, the pay at the end and the
   trip back to the station. Say if a button never counts, or if anything
-  stalls.
+  stalls. Since the tweaks: each step up should look about 10% faster
+  (8 steps), a hit plays the squat contest's squat sound, a miss always gets
+  a line, someone chats every few reps, and the undressed part's later steps
+  rock back and forth. Say if the speed still never changes.
 
 - **No random battles** (950_no_combat): walk around fields that used to
   have encounters (Train Graveyard, the Sector 7 pillar's stairs, Shinra HQ

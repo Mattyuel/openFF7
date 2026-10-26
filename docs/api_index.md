@@ -1379,7 +1379,9 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 (user) Sector 7 Workout's poses (683_workout): Tifa squatting, Cloud behind her spotting, squatting with
 
 - `squat(u)` 0 at the top, 1 at the bottom of a rep (u = 0 .. 1).
+- `_f(tier)` How far up the tiers (0 .. 1).
 - `gap(part, tier)` How far behind her he stands (model units, root to root).
+- `push(part, tier, u)` (user: more back and forth in the overt ones) his hips pushing in: part two from the start, harder and
 - `her_pose(part, tier, u)` 
 - `_her_joints(fa, sk, anim, k)` 
 - `build(ctx, hers)` hers = {part: (her .hrc, her stand anim, her prefix)}: builds Ruby's sources, retargets part A onto

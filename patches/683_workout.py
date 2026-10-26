@@ -99,7 +99,8 @@ def _spandex(ctx):
 
 
 # ---- the set ------------------------------------------------------------------------------------------------
-TIER, STREAK, KEY, PR, PART, SEEN, RND, KP = ((5, a) for a in range(100, 108))
+TIER, STREAK, KEY, PR, PART, SEEN, RND, KP, CHAT, LN = ((5, a) for a in range(100, 110))
+TALKING = (5, 127)                  # set while the talk entity shows lines (no chatter over it)
 CNT, HITS, PAY, REPS, PER, GIL = ((6, a) for a in range(110, 122, 2))
 PRV = [(5, 124 + k) for k in range(3)]
 
@@ -215,21 +216,35 @@ def _set(ctx, donor, stand, poses):
         pr[2 + k] = [Op(b"\x52\x01\x00\x01"), Op(bytes([0x50, 1]) + struct.pack("<HHHH", (320 - w) // 2, WO.PROMPT_Y, w, 25)),
                      asm.message(1, mv._text_id(sec, text)), asm.ret()]
     scripts[E["prompt"]] = pr
-    # the talk during the squats: window 2, each group's lines in turn, each shut by hush after SAY
-    groups = [WO.LINES_A[t] for t in sorted(WO.LINES_A)] + [WO.LINES_B[t] for t in sorted(WO.LINES_B)] + \
-        [[WO.MISS_A], [WO.MISS_B]]
+    # the talk during the squats: window 2, each line shut by hush after SAY; slots: each tier's lines (the
+    # first time), then one slot per pool (chatter / misses, by part) showing its line number LN; TALKING
+    # while busy
+    def show(text):
+        return [Op(b"\x52\x02\x00\x01"), hb._window(text, 2, 8, WO.LINE_Y), hb._req(E["hush"], 2, wait=False),
+                asm.message(2, mv._text_id(sec, text))]
     talk = {0: [asm.ret(), asm.ret()]}
-    for j, lines in enumerate(groups):
-        ops = []
-        for text in lines:
-            ops += [Op(b"\x52\x02\x00\x01"), hb._window(text, 2, 8, WO.LINE_Y), hb._req(E["hush"], 2, wait=False),
-                    asm.message(2, mv._text_id(sec, text))]
-        talk[2 + j] = ops + [asm.ret()]
+    slot = 2
+    group_a, group_b = {}, {}
+    for lines_, group in ((WO.LINES_A, group_a), (WO.LINES_B, group_b)):
+        for t in sorted(lines_):
+            group[t] = slot
+            talk[slot] = [asm.setbyte(TALKING, 1)] + sum((show(x) for x in lines_[t]), []) + [asm.setbyte(TALKING, 0), asm.ret()]
+            slot += 1
+    pools = {}
+    for key, pool in (("chatA", WO.CHAT_A), ("chatB", WO.CHAT_B), ("missA", WO.MISSES_A), ("missB", WO.MISSES_B)):
+        pools[key] = (slot, len(pool))
+        talk[slot] = [asm.setbyte(TALKING, 1)] + ch(LN, [show(x) for x in pool]) + [asm.setbyte(TALKING, 0), asm.ret()]
+        slot += 1
+    assert slot <= 32, slot
     scripts[E["talk"]] = talk
     scripts[E["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(WO.SAY), Op(b"\x54\x02"), asm.ret()]}
-    group_a = {t: 2 + i for i, t in enumerate(sorted(WO.LINES_A))}
-    group_b = {t: 2 + len(WO.LINES_A) + i for i, t in enumerate(sorted(WO.LINES_B))}
-    miss_a, miss_b = 2 + len(WO.LINES_A) + len(WO.LINES_B), 3 + len(WO.LINES_A) + len(WO.LINES_B)
+
+    def line_from(key):
+        """A random line of a pool, unless someone's already talking."""
+        sl, size = pools[key]
+        busy = asm.nop()
+        return [asm.if_byte(TALKING, "==", 0, busy), Op(bytes([0x99, LN[0], LN[1]])),
+                Op(bytes([0x8D, LN[0] << 4, LN[1], size])), asm.setbyte(TALKING, 1), req(E["talk"], sl), busy]
 
     # the director
     say = lambda t: hb._say(sec, t)
@@ -241,14 +256,16 @@ def _set(ctx, donor, stand, poses):
         main += say(t)
     main += say(WO.HOW) + fade_out + \
         [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(PART, 0), asm.setbyte(SEEN, 1),
+         asm.setbyte(CHAT, 0), asm.setbyte(TALKING, 0),
          asm.setword(HITS, 0), asm.setword(PAY, 0), asm.setword(REPS, 0)] + \
         [hb._req(E[a], 3, wait=False) for a in actors("A")] + [hb._req(E["camera"], 2, wait=False), hb._w(20)] + fade_in
 
     def part_loop(part):
         n = len(WO.PERIODS)
         rep, wait, judge, hit, miss, after, out, tail = (asm.nop() for _ in range(8))
-        ops = [rep] + [hb._req(E[a], 2, wait=False) for a in actors(part)]
-        ops += ch(TIER, [[asm.setword(PER, p)] for p in WO.PERIODS])
+        # (the actors' tier anim loops; it changes only with the tier: slot 2 places them and starts it)
+        restart = [hb._req(E[a], 2, wait=False) for a in actors(part)]
+        ops = [rep] + ch(TIER, [[asm.setword(PER, p)] for p in WO.PERIODS])
         ops += [Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], 3])),   # RANDOM, MOD 3
                 asm.setbyte(KEY, RND), asm.setbyte(KP, KEY), Op(bytes([0x95, KP[0], KP[1]])),   # KP = KEY + 1
                 asm.setbyte(PR, 0), asm.setword(CNT, 0)]
@@ -258,9 +275,11 @@ def _set(ctx, donor, stand, poses):
                 asm.if_byte(PR, "==", 0, judge), asm.if_word(CNT, "<", PER, miss), asm.goto_back(wait)]
         ops += [judge, Op(b"\x54\x01"), asm.if_byte(PR, "==", KP, miss)]
         # a hit: pay, streak, maybe a tier up (and its lines the first time)
-        ops += [hit, Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])),
+        ops += [hit, Op(WO.HIT_SOUND), Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, TIER),
+                Op(bytes([0x96, PAY[0], PAY[1]])),
                 Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(TIER, "<", n - 1, after),
-                asm.if_byte(STREAK, ">=", WO.HITS_UP, after), Op(bytes([0x95, TIER[0], TIER[1]])), asm.setbyte(STREAK, 0)]
+                asm.if_byte(STREAK, ">=", WO.HITS_UP, after), Op(bytes([0x95, TIER[0], TIER[1]])), asm.setbyte(STREAK, 0)] + \
+            restart
         lines = group_a if part == "A" else group_b
         for t in range(1, n):
             nx = asm.nop()
@@ -268,8 +287,11 @@ def _set(ctx, donor, stand, poses):
                 ops += [asm.if_byte(TIER, "==", t, nx), asm.if_byte(SEEN, "bit_off", t, nx), asm.biton(SEEN, t),
                         req(E["talk"], lines[t]), nx]
         rest = asm.nop()
+        quiet = asm.nop()
         ops += [after, rest, asm.if_word(CNT, "<", PER, tail), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),
-                asm.goto_back(rest), tail]
+                asm.goto_back(rest), tail,
+                Op(bytes([0x95, CHAT[0], CHAT[1]])), asm.if_byte(CHAT, ">=", WO.CHAT_EVERY, quiet),     # (user) chatter
+                asm.setbyte(CHAT, 0)] + line_from("chat" + part) + [quiet]
         done = asm.nop()
         if part == "A":                                                 # PART_A_END hits into the top tier
             ops += [asm.if_byte(TIER, "==", n - 1, done), asm.if_byte(STREAK, ">=", WO.PART_A_END, done), asm.goto(out), done]
@@ -279,9 +301,10 @@ def _set(ctx, donor, stand, poses):
         # a miss: the buzz, back to the slowest pace (a line if it was fast), the rest of the rep, then the
         # part's check above (a backward jump: JMPB)
         slow, mtail, mdone = asm.nop(), asm.nop(), asm.nop()
-        ops += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), asm.if_byte(TIER, ">=", 2, slow),
-                req(E["talk"], miss_a if part == "A" else miss_b), slow,
-                asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), mtail, asm.if_word(CNT, "<", PER, mdone),
+        ops += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + line_from("miss" + part) + \
+            [asm.setbyte(CHAT, 0), asm.if_byte(TIER, "!=", 0, slow),
+             asm.setbyte(TIER, 0)] + restart + [slow,
+             asm.setbyte(STREAK, 0), mtail, asm.if_word(CNT, "<", PER, mdone),
                 hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(mtail), mdone, asm.goto_back(tail)]
         return ops, out
 
