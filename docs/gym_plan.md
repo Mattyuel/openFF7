@@ -57,51 +57,47 @@ flowchart TD
 
     subgraph WEEK [One week]
         MON["Monday: Tifa's briefing<br/>sets the week's targets<br/>(main-line quests)"]
-        MON --> FREE{"Cloud's free time<br/>(play clock)"}
+        MON --> DAYSTART
 
-        FREE --> RECRUIT["Recruit<br/>pitch talk around Midgar / world"]
-        FREE --> TRAIN["Train a member<br/>minigame: squats, spotting, pacing,<br/>arcade, snowboard, races..."]
-        FREE --> CLASS["80s spandex class<br/>(class nights)<br/>rhythm minigame, whole roster"]
-        FREE --> INCIDENT["Incident<br/>Corneo's lackeys, a member's trouble,<br/>broken equipment"]
-        FREE --> HANG["Hang out / gift<br/>a member's affection tier"]
-        FREE --> BAR["7th Heaven<br/>Tifa's bar shifts:<br/>takings, tips"]
-        FREE --> SIDE["Desperation work<br/>Tifa at the Honey Bee Inn,<br/>Tifa + Cloud on camera<br/>pays now, costs trust"]
-        FREE --> COLLECT["Run the businesses<br/>hire / pay staff, buy supplies,<br/>collect profits"]
+        subgraph DAY [Each day]
+            DAYSTART(["Morning"]) --> DSHIFT{"Day shift"}
+            DSHIFT --> GYM["Gym<br/>training minigames: squats, spotting,<br/>pacing, 80s spandex class"]
+            DSHIFT --> SHOOT["Shoot<br/>for the Director:<br/>the press-rate meter"]
+            GYM --> BETWEEN
+            SHOOT --> BETWEEN
+            BETWEEN["Between shifts<br/>recruit, hang out, gifts,<br/>collect profits, incidents"]
+            BETWEEN --> NSHIFT{"Night shift"}
+            NSHIFT --> BAR["7th Heaven bar<br/>Tifa serves: drink prompts<br/>over the customers;<br/>Cloud on security"]
+            NSHIFT --> INN["Honey Bee Inn<br/>its own minigame"]
+            BAR --> DAYEND(["Day ends"])
+            INN --> DAYEND
+        end
 
-        BAR --> GIL[("Gil<br/>the hard limit")]
-        SIDE --> GIL
-        SIDE -.->|cost| TRUST[("Tifa's trust in Cloud 0-20")]
-        COLLECT --> GIL
-        BAR -->|regulars| ROSTER
-        TRAIN -->|personal training fee| GIL
-        CLASS -->|class tickets| GIL
-
-        RECRUIT --> ROSTER[("Roster<br/>new member joins")]
-        TRAIN --> MSTATS[("Member stats<br/>Strength, Stamina,<br/>Technique, Morale")]
-        TRAIN --> RECORDS[("Records board<br/>personal bests")]
-        CLASS --> MSTATS
-        CLASS --> REP[("Gym<br/>Reputation, Equipment,<br/>Cleanliness")]
-        INCIDENT --> REP
-        INCIDENT --> MSTATS
-        HANG --> AFF[("Member affection 0-20")]
-
-        AFF -->|tier reached| GOAL["Member's goal scene<br/>and their story"]
+        GYM --> MSTATS[("Member stats<br/>Strength, Stamina,<br/>Technique, Morale")]
+        GYM --> REP[("Gym<br/>Reputation, Equipment,<br/>Cleanliness")]
+        GYM -->|fees, class tickets| GIL[("Gil<br/>the hard limit")]
+        SHOOT -->|pay per shoot,<br/>later video sales| GIL
+        SHOOT -.->|cost| TRUST[("Tifa's trust in Cloud 0-20")]
+        BAR -->|takings, tips| GIL
+        BAR -->|regulars| ROSTER[("Roster")]
+        INN --> GIL
+        INN -.->|cost| TRUST
+        BETWEEN --> ROSTER
+        BETWEEN --> AFF[("Affection 0-20")]
+        AFF -->|tier reached| GOAL["A member's goal scene<br/>and their story"]
         GOAL --> MSTATS
 
-        ROSTER --> FREE
-        MSTATS --> FREE
-        AFF --> FREE
-
-        FREE -->|week ends| WEEKEND["Weekend event<br/>competition, open day,<br/>rival, Corneo / Shinra beat"]
+        DAYEND -->|next day| DAYSTART
+        DAYEND -->|week ends| WEEKEND["Weekend event<br/>competition, open day,<br/>rival, Corneo / Shinra beat"]
         WEEKEND --> REVIEW["Tifa's review<br/>targets met? who's thriving?"]
     end
 
-    REP -->|walk-ins, monthly fees| GIL
-    GIL -->|rent, debt, wages,<br/>supplies, equipment| RENT
-    REP --> REVIEW
     MSTATS --> WEEKEND
+    REP -->|walk-ins, monthly fees| GIL
+    REP --> REVIEW
     REVIEW --> TRUST
-    REVIEW --> RENT{"Rent / debt / expenses<br/>covered?"}
+    REVIEW --> RENT{"Rent / debt / wages /<br/>supplies covered?"}
+    GIL --> RENT
     RENT -->|paid| NEXT
     RENT -->|short| CRISIS["Corneo crisis<br/>story fork, Tifa decides"]
     CRISIS --> TRUST
@@ -111,11 +107,10 @@ flowchart TD
     NEXT -->|no| MON
     NEXT -->|yes| CHAPTER["Next chapter<br/>1 The Deed, 2 The Roster,<br/>3 The Exhibition"]
     CHAPTER --> MON
-    GIL -->|purchase price| BUY["Buy an asset<br/>gym, 7th Heaven, Honey Bee Inn,<br/>production company, ..."]
+    GIL -->|purchase price| BUY["Buy a business<br/>gym, 7th Heaven, Honey Bee Inn,<br/>production company"]
     BUY --> ASSETS[("Owned businesses<br/>staff, supplies, profits")]
-    ASSETS --> COLLECT
-    ASSETS -->|wages, supplies| GIL
-    ASSETS -.->|Honey Bee: hire the girls<br/>studio: hire stars, sell videos<br/>at the Materia Store| SIDE
+    ASSETS -->|profits| GIL
+    ASSETS -->|wages, supplies| RENT
 
     CHAPTER -->|after chapter 3| EXHIBIT["Gold Saucer Exhibition<br/>members' stats compete"]
     EXHIBIT --> ENDING{"Ending<br/>gym stats x Tifa's trust"}
@@ -129,14 +124,17 @@ flowchart TD
 
 1. **Monday:** Tifa's briefing at the gym office. She sets the week's targets;
    these are main-line quests in the 600 framework, as external-giver quests.
-2. **The week:** Cloud's free time.
-   - Recruit people.
-   - Train members (minigames).
-   - Handle incidents.
-   - Hang out with members.
+2. **Each day (user): a day shift and a night shift**, each with its own
+   minigame (section 6.2).
+   - **Day shift:** the gym or a shoot for the Director.
+   - **Night shift:** the 7th Heaven bar or the Honey Bee Inn.
+   - Each is open once it's unlocked (section 4.2).
+   - **Between the shifts** (proposal): recruit, hang out, give gifts,
+     collect profits, incidents.
 3. **The weekend:** an event (a competition, an open day, a rival, a Corneo or
    Shinra beat), then Tifa's review, where the gym stats and her trust change.
-   - Time comes from the play clock (`q_clock`, var[2][247] = minutes).
+   - Time comes from the play clock (`q_clock`, var[2][247] = minutes);
+     whether a day is play time or advances by shifts worked is open.
 
 ## 4. Money: gil is the hard limit (user)
 
@@ -334,6 +332,36 @@ An aerobics class in the gym, done 80s style.
     the gym's Reputation.
   - Members out of step (low Technique) are shown with offset moves.
 - **Class nights on the calendar;** a full class is a Reputation event.
+
+### 6.2 Shift minigames (user)
+
+**Night: the 7th Heaven bar.** Tifa serves; the minigame works like the Junon
+parade's (timed button prompts).
+
+- **The customers:** they sit around the bar and order drinks. Each order
+  shows a button prompt over that customer; each drink is a button. Pressing
+  the right button in time serves it, and tips depend on the timing.
+- **Cloud is security:** one of the inputs deals with a rowdy drunk when one
+  kicks off. Ignored, a drunk scares off customers or costs the night's
+  takings.
+- **The night's score** gives the takings and tips (gil). It's also where
+  regulars come from (gym recruits, the gym seller in section 4.2).
+- **Build** (proposal): a field-script minigame like the movie's meter (670).
+  - Button-glyph sprites placed over each customer (the icon sprite system:
+    `_icon_pixels`, sprite models).
+  - One small entity polling each button once a frame (the 8-ops-a-frame
+    limit; 670's `keys` / `sqkey`).
+  - Timing windows counted in frames.
+  - The original parade's script is worth reading first: how it times its
+    prompts.
+  - The set: a copy of 7th Heaven's bar room.
+
+**Night: the Honey Bee Inn.** Its own minigame: still to design.
+
+**Day: the gym.** The training minigames (section 6: squats, spotting,
+pacing) and the 80s spandex class (6.1).
+
+**Day: a shoot.** The Director's shoots: the existing press-rate meter (670).
 
 ## 7. Relationships
 
