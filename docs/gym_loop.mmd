@@ -8,14 +8,14 @@ flowchart TD
         subgraph DAY [Each day]
             DAYSTART(["Morning"]) --> DSHIFT{"Day shift"}
             DSHIFT --> GYM["Gym<br/>training minigames: squats, spotting,<br/>pacing, 80s spandex class"]
-            DSHIFT --> SHOOT["Shoot<br/>for the Director:<br/>the press-rate meter"]
+            DSHIFT --> SHOOT["Shoot<br/>a parody film: story scenes,<br/>gameplay between them"]
             GYM --> BETWEEN
             SHOOT --> BETWEEN
-            BETWEEN["Between shifts<br/>recruit, hang out, gifts,<br/>collect profits, incidents"]
+            BETWEEN["Free time<br/>recruit, hang out, gifts,<br/>collect profits, incidents"]
             BETWEEN --> NSHIFT{"Night shift"}
             NSHIFT --> BAR["7th Heaven bar<br/>Tifa serves: drink prompts<br/>over the customers;<br/>Cloud on security"]
-            NSHIFT --> INN["Honey Bee Inn<br/>its own minigame"]
-            BAR --> DAYEND(["Day ends"])
+            NSHIFT --> INN["Honey Bee Inn<br/>keep customers happy:<br/>choices by personality,<br/>dance prompts between"]
+            BAR --> DAYEND(["Day ends<br/>(time moves by actions,<br/>not a clock)"])
             INN --> DAYEND
         end
 

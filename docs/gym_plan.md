@@ -62,14 +62,14 @@ flowchart TD
         subgraph DAY [Each day]
             DAYSTART(["Morning"]) --> DSHIFT{"Day shift"}
             DSHIFT --> GYM["Gym<br/>training minigames: squats, spotting,<br/>pacing, 80s spandex class"]
-            DSHIFT --> SHOOT["Shoot<br/>for the Director:<br/>the press-rate meter"]
+            DSHIFT --> SHOOT["Shoot<br/>a parody film: story scenes,<br/>gameplay between them"]
             GYM --> BETWEEN
             SHOOT --> BETWEEN
-            BETWEEN["Between shifts<br/>recruit, hang out, gifts,<br/>collect profits, incidents"]
+            BETWEEN["Free time<br/>recruit, hang out, gifts,<br/>collect profits, incidents"]
             BETWEEN --> NSHIFT{"Night shift"}
             NSHIFT --> BAR["7th Heaven bar<br/>Tifa serves: drink prompts<br/>over the customers;<br/>Cloud on security"]
-            NSHIFT --> INN["Honey Bee Inn<br/>its own minigame"]
-            BAR --> DAYEND(["Day ends"])
+            NSHIFT --> INN["Honey Bee Inn<br/>keep customers happy:<br/>choices by personality,<br/>dance prompts between"]
+            BAR --> DAYEND(["Day ends<br/>(time moves by actions,<br/>not a clock)"])
             INN --> DAYEND
         end
 
@@ -129,12 +129,26 @@ flowchart TD
    - **Day shift:** the gym or a shoot for the Director.
    - **Night shift:** the 7th Heaven bar or the Honey Bee Inn.
    - Each is open once it's unlocked (section 4.2).
-   - **Between the shifts** (proposal): recruit, hang out, give gifts,
-     collect profits, incidents.
+   - **Between the shifts: free time (user)** for recruiting and hanging
+     out (also gifts, collecting profits, incidents).
 3. **The weekend:** an event (a competition, an open day, a rival, a Corneo or
    Shinra beat), then Tifa's review, where the gym stats and her trust change.
-   - Time comes from the play clock (`q_clock`, var[2][247] = minutes);
-     whether a day is play time or advances by shifts worked is open.
+
+**Time passes through actions, not a clock (user).** A day moves on as you
+work its shifts, not as play time runs.
+
+- **Save data:** a day counter and the day's phase (morning / day shift done /
+  free time / night shift done), a few bytes.
+  - The phase advances when a shift ends.
+  - Proposal: free-time actions like a hang-out or a date also cost a slot.
+  - Sleeping (or the night shift's end) starts the next day.
+  - Every seventh day is the weekend.
+- **What changes:** everything that counts play minutes moves to days or
+  actions.
+  - the Honey Bee "Collect" (HB_RATE x stars x minutes, from `q_clock`)
+  - the Director's "come back in 30 minutes" pay (670 `MOVIE_AT`)
+  - the bounty timers
+  - Profits build per day worked instead.
 
 ## 4. Money: gil is the hard limit (user)
 
@@ -356,12 +370,41 @@ parade's (timed button prompts).
     prompts.
   - The set: a copy of 7th Heaven's bar room.
 
-**Night: the Honey Bee Inn.** Its own minigame: still to design.
+**Night: the Honey Bee Inn (user): keep the customers happy.**
+
+- **Personalities:** every customer has a personality, and it decides which
+  choices are right. It works like the dates' conversations (660's
+  questions with a right answer, the profiles in `_movie_profiles` /
+  `_backstories`), except the goal is keeping him happy, not answering him.
+  Each choice raises or lowers his mood.
+- **Prompts between decisions:** button prompts for the standard actions
+  (dances and the like: the Honey Bee dancer's existing dance anims DXHE /
+  DXIB / ...), timed as the bar's.
+- **The night's result:** each customer's mood at the end sets the takings
+  and tips, plus the inn's reputation once you own it.
+- **Before you own it:** only Tifa works these shifts, which costs her trust
+  as section 4.1 says. After the purchase: the hired girls, each better with
+  some personalities (proposal).
+- **Reuses:** the dates' choice / affection logic, 670's prompt icons and
+  per-button polling, onna_4 / onna_52 as the rooms.
 
 **Day: the gym.** The training minigames (section 6: squats, spotting,
 pacing) and the 80s spandex class (6.1).
 
-**Day: a shoot.** The Director's shoots: the existing press-rate meter (670).
+**Day: a shoot (user): parodies with storylines.** The shoots change from
+one position after another into films.
+
+- **Structure:** each film is a parody with a storyline, told in scenes.
+  Gameplay comes between the scenes.
+- **What carries over:** 672's special scenes are closest: a scenario,
+  staged intro lines, actions per line, then positions. The press-rate meter
+  (670), the Square prompts and the holds can be the gameplay between scenes;
+  other kinds of play can be added.
+- **Parody targets:** to decide. Ideas (proposals): FF7's own world (the
+  Loveless play, the Turks, Shinra's boardroom, a Gold Saucer show), or
+  well-known films and genres (heist, spy, horror, space, western).
+- **One film = one shoot day** (proposal). It becomes a video for the
+  Materia Store deal; its score sets its sales.
 
 ## 7. Relationships
 
