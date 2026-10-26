@@ -5,7 +5,7 @@ The minigame: one squat a rep, one prompt a rep ([SWITCH] / [CANCEL] / [OK] at r
 contest names its buttons) in a window the player can't close; the right button before the rep ends is a
 hit, anything else (or nothing) a miss. HITS_UP hits in a row step the pace up a tier (PERIODS: frames a
 rep); a miss drops it back to the slowest. Each new tier the first time: a pair of lines (tips, questions,
-then at tier 4 the 'training device'). Part one (clothed) ends PART_A_END hits into the top tier: fade,
+then at tier 4 the 'training device'). Part one (clothed) lasts PART_A_REPS prompts (user: fixed length): fade,
 both undressed, part two from the slow pace again, the pose more overt with every tier, PART_B_REPS
 prompts. Pay on the spot: PAY_HIT gil x (tier + 1) for every hit.
 
@@ -23,6 +23,7 @@ import math
 import struct
 
 import _female_body as fb
+import _gestures as GS
 import _workout as WO
 import _workout_poses as WP
 from ff7 import asm
@@ -147,9 +148,11 @@ def _set(ctx, donor, stand, poses):
     stand_t = ModelLoader.anims(donor)[0]                            # ABCD
     hers = lambda part: sum((poses[(part, st)][0] for st in range(WP.STYLES[part])), [])
     his = lambda part: sum((poses[(part, st)][1] for st in range(WP.STYLES[part])), [])
+    G = WO.INTRO_GESTURES
     loader.models = [cl0,
-                     ModelLoader.only_anims(cl0, [stand_c] + his("A")),
-                     ModelLoader.only_anims(ModelLoader.with_hrc(donor, SPANDEX_HRC, "workout_tifa.char"), [stand_t] + hers("A")),
+                     ModelLoader.only_anims(cl0, [stand_c] + his("A") + GS.anims(ctx, G, "cloud", "cloud")),
+                     ModelLoader.only_anims(ModelLoader.with_hrc(donor, SPANDEX_HRC, "workout_tifa.char"),
+                                            [stand_t] + hers("A") + GS.anims(ctx, G, "tifa", "tifa")),
                      ModelLoader.only_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC, "workout_cloudb.char"),
                                             [stand_c] + his("B")),
                      ModelLoader.only_anims(ModelLoader.with_hrc(donor, BARE_TIED, "workout_tifab.char"), [stand_t] + hers("B"))]
@@ -205,6 +208,10 @@ def _set(ctx, donor, stand, poses):
                            3: place + [d_(d), hb._visi(1)] + anim + [asm.ret()],
                            4: [hb._visi(0), asm.ret()],
                            5: ch(IX, [canm(1 + k, bottom(t), bottom(t)) for k, (st, t) in enumerate(combos)]) + [asm.ret()]}
+        if part == "A":                                                 # (user: variety) the intro's gestures
+            actor = "tifa" if who == "t" else "cloud"
+            assert len((hers if who == "t" else his)("A")) == len(combos)
+            scripts[E[ent]].update(GS.slots(G, actor, 1 + len(combos), 0, mv._animb()))
         if who == "t":
             scripts[E[ent]][6] = ch(IX, [canm(1 + k, bottom(t), bottom(t) + max(2, WO.PERIODS[t] // 7))
                                          for k, (st, t) in enumerate(combos)]) + [asm.ret()]
@@ -296,8 +303,8 @@ def _set(ctx, donor, stand, poses):
     ix_ops = [asm.setbyte(IX, TIER)] + ch(STYLE, [[Op(bytes([0x85, IX[0] << 4, IX[1], n * st]))] if st else []
                                                   for st in range(max(WP.STYLES.values()))])
     main = [hb._uc(1), hb._menu(1), hb._w(20)] + fade_in + [Op(bytes([0xF2, 0, 0, 0, 0x10, WO.MUSIC]) + bytes(8))]
-    for t in WO.INTRO:
-        main += say(t)
+    for i, t in enumerate(WO.INTRO):
+        main += GS.reqs(G, i, lambda a: E["tifaA" if a == "tifa" else "cloudA"]) + say(t)
     main += say(WO.HOW) + fade_out + \
         [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(PART, 0), asm.setbyte(SEEN, 1),
          asm.setbyte(CHAT, 0), asm.setbyte(TALKING, 0), asm.setbyte(HELD, 0), asm.setbyte(STYLE, 0),
@@ -356,11 +363,11 @@ def _set(ctx, donor, stand, poses):
         busy = asm.nop()
         ops += [asm.if_byte(TALKING, "==", 0, busy), asm.setbyte(TALKING, 1), asm.setbyte(CHAT, 0),
                 req(E["talk"], styles[part]), busy, same]
+        # (user: fixed length, progression by performance) each part a fixed number of prompts; the pace, the
+        # lines and the pay follow the player's hits
         done = asm.nop()
-        if part == "A":                                                 # PART_A_END hits into the top tier
-            ops += [asm.if_byte(TIER, "==", n - 1, done), asm.if_byte(STREAK, ">=", WO.PART_A_END, done), asm.goto(out), done]
-        else:
-            ops += [Op(bytes([0x96, REPS[0], REPS[1]])), asm.if_word(REPS, ">=", WO.PART_B_REPS, done), asm.goto(out), done]
+        ops += [Op(bytes([0x96, REPS[0], REPS[1]])),
+                asm.if_word(REPS, ">=", WO.PART_A_REPS if part == "A" else WO.PART_B_REPS, done), asm.goto(out), done]
         ops += [asm.goto_back(rep)]
         # a miss: the buzz, back to the slowest pace (a line if it was fast), the rest of the rep, then the
         # part's check above (a backward jump: JMPB)
@@ -403,7 +410,7 @@ def _set(ctx, donor, stand, poses):
     ops_a, out_a = part_loop("A")
     main += ops_a + [out_a] + fade_out + [Op(b"\x54\x02")] + \
         [hb._req(E[a], 4, wait=False) for a in actors("A")] + \
-        [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(PART, 1), asm.setbyte(SEEN, 1),
+        [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(PART, 1), asm.setbyte(SEEN, 1), asm.setword(REPS, 0),
          asm.setbyte(STYLE, 0), asm.setbyte(SC, 0), asm.setbyte(IX, 0)] + \
         [hb._req(E[a], 3, wait=False) for a in actors("B")] + [hb._w(20)] + fade_in
     for t in WO.START_B:

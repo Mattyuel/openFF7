@@ -104,9 +104,11 @@ def build_cloud(ctx):
 
 # ---- (user) the crawl and the waiting partners' idles, on Ruby (retargeted by 684) -------------------------
 CRAWL_FRAMES = 30               # one crawl cycle (a step with each knee and hand)
-CRAWL_LEG, CRAWL_ARM, CRAWL_SWAY = 20, 16, 15      # degrees: thighs / arms swing, hips sway (yaw at the waist)
+CRAWL_LEG, CRAWL_ARM = 12, 10     # degrees: thighs / arms swing (user, since: subtler)
+CRAWL_SWAY, CRAWL_ROLL = 6, 5      # (user: the rocking only in the hips, with a twist) the hips' yaw / roll at the waist
 IDLE_FRAMES = 150
-SHAKE = (20, 60, 3, 14)         # Elena waiting: hip shake from frame, to frame, shakes, degrees
+SHAKE = (20, 60, 3, 8)          # Elena waiting: hip shake from frame, to frame, shakes, degrees (user: subtler)
+SHAKE_ROLL = 6                  # ... and its twist (roll) at the same time
 LOOK = (80, 92, 118, 130, 50)   # ... then a look to her right: turn from, held from, back from, done, degrees
 CAM_LOOK = (25, 40, 105, 125)   # Tifa waiting: turns to the camera from, held from, back from, done
 TILT = (70, 82, 18)             # ... tilting her head to her right from, held from, degrees
@@ -137,15 +139,27 @@ def _turned(fa, W, idx, R):
     return [fa._mul(R, m) if i in idx else m for i, m in enumerate(W)]
 
 
-def _sway(fa, sk, root, W, F, deg):
-    """The lower body (pelvis and legs) turned deg about the vertical through the waist; the upper body kept."""
+def _sway(fa, sk, root, W, F, deg, roll=0.0, rr=None):
+    """The lower body (pelvis and legs) turned deg about the vertical through the waist and rolled `roll` about her
+    long axis (a twist); the upper body kept. With rr (the anim's root rotation): (user: the legs accommodating) each
+    thigh re-aimed so its knee stays where it was (the shins and feet unchanged: kneeling stays planted)."""
     I = [b[0] for b in sk].index
     upper = _subtree(sk, "chest")
     lower = {i for i in range(len(sk)) if i not in upper}
-    R = fa.axis_angle([0.0, 1.0, 0.0], deg)
+    R = fa._mul(fa.axis_angle([0.0, 1.0, 0.0], deg), fa.axis_angle([0.0, 0.0, 1.0], roll))
     P = F[I("hip")][2]                                              # (the waist: chest and legs start here)
     rel = fa._vec(R, [root[k] - P[k] for k in range(3)])
-    return [P[k] + rel[k] for k in range(3)], _turned(fa, W, lower, R)
+    root2 = [P[k] + rel[k] for k in range(3)]
+    W2 = _turned(fa, W, {i for i in lower if i not in _subtree(sk, "l_femur") | _subtree(sk, "r_femur")}, R)
+    if rr is None:
+        return root2, _turned(fa, W, lower, R)
+    mv = DP._mods()[0]
+    F2 = fa.forward(sk, rr, root2, fa.local_rotations(sk, rr, W2))
+    for s_ in "lr":
+        hipj, knee = F2[I(s_ + "_femur")][1], F[I(s_ + "_femur")][2]
+        bd = fa._vec(W2[I(s_ + "_femur")], [0.0, 0.0, -1.0])
+        W2[I(s_ + "_femur")] = fa._mul(mv._align(fa, bd, [knee[k] - hipj[k] for k in range(3)]), W2[I(s_ + "_femur")])
+    return root2, W2
 
 
 def _write(ctx, name, fa, sk, rr, frames):
@@ -162,7 +176,7 @@ def crawl(ctx):
     frames = []
     for t in range(CRAWL_FRAMES):
         ph = 2 * math.pi * t / CRAWL_FRAMES
-        r, W = _sway(fa, sk, root, W0, F0, CRAWL_SWAY * math.sin(ph))
+        r, W = _sway(fa, sk, root, W0, F0, CRAWL_SWAY * math.sin(ph), CRAWL_ROLL * math.sin(ph), rr)
         for s, sg in (("l", 1), ("r", -1)):
             W = _turned(fa, W, _subtree(sk, s + "_femur"), fa.axis_angle(x, sg * CRAWL_LEG * math.sin(ph)))
             W = _turned(fa, W, _subtree(sk, s + "_uparm"), fa.axis_angle(x, -sg * CRAWL_ARM * math.sin(ph)))
@@ -192,7 +206,8 @@ def elena_idle(ctx):
     frames = []
     for t in range(IDLE_FRAMES):
         env = math.sin(math.pi * _ease(t, a0, a1))
-        r, W = _sway(fa, sk, root, W0, F0, deg * env * math.sin(2 * math.pi * n * (t - a0) / (a1 - a0)) if a0 <= t <= a1 else 0)
+        wob = env * math.sin(2 * math.pi * n * (t - a0) / (a1 - a0)) if a0 <= t <= a1 else 0
+        r, W = _sway(fa, sk, root, W0, F0, deg * wob, SHAKE_ROLL * wob, rr)
         w = _ease(t, l0, l1) * (1 - _ease(t, l2, l3))
         W = _head_turn(fa, sk, W, F0, fa.axis_angle(y, sign * ldeg * w))
         frames.append((r, W))
@@ -224,3 +239,30 @@ def tifa_idle(ctx, cam_yaw):
         R = fa._mul(roll(sg * tdeg * tw), fa._mul(Y, U))
         frames.append((root, _head_turn(fa, sk, W0, F0, R)))
     return _write(ctx, "QXE0", fa, sk, rr, frames)
+
+
+# ---- (user) Elena's torso: extended down and tapered in, so no gap opens at her waist as her hips rock --------
+TORSO_EXT, TORSO_BAND, TORSO_TAPER = 0.7, 0.6, 0.18   # model units down / the bottom band moved / narrowed by
+
+
+def extend_torso(ctx, hrc):
+    """Her chest part's bottom band (the vertices within TORSO_BAND of its waist end, along the bone) moved
+    TORSO_EXT further down the bone and narrowed by up to TORSO_TAPER (in the bone's frame: the bone runs along -z,
+    so its waist end is the largest z). Written in place; once."""
+    import struct
+    fb = __import__("importlib").import_module("_female_body")
+    if getattr(ctx, "_elena_torso", False):
+        return
+    ctx._elena_torso = True
+    rsd = fb.bones(ctx.char_file(hrc.lower()).decode("latin-1"))["chest"][1][0]
+    name = ctx.char_file(rsd.lower() + ".rsd").decode("latin-1").split("PLY=")[1][:4].lower() + ".p"
+    d = bytearray(ctx.char_file(name))
+    nv = struct.unpack_from("<16I", d, 0)[3]
+    V = [list(struct.unpack_from("<3f", d, 128 + 12 * i)) for i in range(nv)]
+    zmax = max(v[2] for v in V)
+    for i, v in enumerate(V):
+        w = (v[2] - (zmax - TORSO_BAND)) / TORSO_BAND
+        if w > 0:
+            k = 1 - TORSO_TAPER * w
+            struct.pack_into("<3f", d, 128 + 12 * i, v[0] * k, v[1] * k, v[2] + TORSO_EXT * w)
+    ctx.char_file(name, bytes(d))

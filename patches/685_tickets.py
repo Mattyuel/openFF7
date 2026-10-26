@@ -24,6 +24,7 @@ import math
 import struct
 
 import _female_body as fb
+import _gestures as GS
 import _tickets as TK
 import _tickets_poses as TP
 from ff7 import asm
@@ -135,7 +136,12 @@ def poses(ctx):
             out.setdefault("drops", []).append((key, s, round(min(drops), 2), round(max(drops), 2)))
     hold_tips = TP.targets([TP._field(sj, dj, p) for p in TP.mouths(ctx, BARE_JESSIE, j_stand, "QJF8")], n, 0.0)
     TP.cloud(ctx, "QZC8", hold_tips, tifa_hips(1), cj, DC, TK.FLOOR, TK.STANCE_J, TK.LEAN_J)
-    out.update(cloud=names, hold="QZC8.tor", st=st, sj=sj, dj=dj, ct=ct, cj=cj, j_stand=j_stand)
+    # (user: "raise Tifa without changing Cloud or Jessie, and spread her legs") Cloud stays solved against her
+    # spot above; she is drawn TIFA_RAISE higher, her knees TIFA_SPREAD apart round Jessie (QNC0-3, still QNT9)
+    out["tifa"] = TP.spread(ctx, BARE_TIFA, ["ZVC%d" % s for s in range(4)], "QN", TK.TIFA_SPREAD)
+    out["tifa_still"] = TP.still(ctx, "QNC0", "QNT9")
+    out.update(cloud=names, hold="QZC8.tor", st=(st[0], st[1], st[2] + TK.TIFA_RAISE), sj=sj, dj=dj, ct=ct, cj=cj,
+               j_stand=j_stand)
     return out
 
 
@@ -169,15 +175,19 @@ def apply(ctx):
     assert (ModelLoader.hrc(tifa_e), ModelLoader.hrc(jess_e)) == ("AAGB.HRC", "AXDC.HRC")
     c_anims, t_anims, j_anims = ModelLoader.anims(cl0), ModelLoader.anims(tifa_e), ModelLoader.anims(jess_e)
     bare_c = sum((PZ["cloud"][k] for k in "ABCD"), []) + [PZ["hold"]]
-    bare_t = ["ZVC%d.tor" % s for s in range(4)] + [PZ["tifa_still"]]
+    bare_t = PZ["tifa"] + [PZ["tifa_still"]]
     bare_j = PZ["jessie"]                                                   # QJF0-3, 8, 7, 9
     for nm in bare_c + bare_t + bare_j + [PZ["sit_t"], PZ["sit_j"]]:
         ctx.char_file(nm.split(".")[0].lower() + ".a")                      # (exists)
-    loader.models = [cl0, ModelLoader.only_anims(cl0, c_anims[:2]),
-                     ModelLoader.only_anims(tifa_e, t_anims[:2] + [PZ["sit_t"]]),
-                     ModelLoader.only_anims(jess_e, j_anims[:2] + [PZ["sit_j"]]),
+    # (user: variety) the intro's gestures; the girls' seated copies (YGT / YGJ + a letter)
+    G = TK.INTRO_GESTURES
+    g_t = GS.anims(ctx, G, "tifa", "tifa", ModelLoader.hrc(tifa_e), PZ["sit_t"], "YGT")
+    g_j = GS.anims(ctx, G, "jessie", "jessie", ModelLoader.hrc(jess_e), PZ["sit_j"], "YGJ")
+    loader.models = [cl0, ModelLoader.only_anims(cl0, c_anims[:2] + GS.anims(ctx, G, "cloud", "cloud")),
+                     ModelLoader.only_anims(tifa_e, t_anims[:2] + [PZ["sit_t"]] + g_t),
+                     ModelLoader.only_anims(jess_e, j_anims[:2] + [PZ["sit_j"]] + g_j),
                      ModelLoader.only_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC, "tickets_cloudb.char"),
-                                            c_anims[:1] + bare_c),
+                                            c_anims[:1] + bare_c + GS.anims(ctx, G, "cloudB", "cloud")),
                      ModelLoader.only_anims(ModelLoader.with_hrc(tifa_e, BARE_TIFA, "tickets_tifab.char"),
                                             t_anims[:1] + bare_t),
                      ModelLoader.only_anims(ModelLoader.with_hrc(jess_e, BARE_JESSIE, "tickets_jessb.char"),
@@ -207,7 +217,9 @@ def apply(ctx):
             [top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
              Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], Z, tri(*start))),
              Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done] + \
-            at(stop, d_end) + loop_(stand_anim)
+            at((sx + n * stx, sy + n * sty), face(sx, sy, tx, ty)) + loop_(stand_anim) + \
+            [Op(bytes([0xB4, 0, d_end % 256, 0, 8, 2])), Op(b"\xDE")]       # (user: no snapping) where the last step
+                                                                          # lands, then a turn on the spot
     scripts = {}
     fx, fy = TK.FOCUS
     scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0]))] + at((fx, fy), 0) + [hb._visi(0)] +
@@ -240,6 +252,8 @@ def apply(ctx):
             0: [Op(bytes([0xA1, model]))] + at((sitx, y), 0x40, TK.SEAT) + [hb._visi(1)] + hide() + loop_(2) +
             [asm.ret(), asm.ret()],
             4: [hb._visi(0), asm.ret()]}
+    for ent, actor, first, back in (("cloudA", "cloud", 2, 0), ("tifaA", "tifa", 3, 2), ("jessA", "jessie", 3, 2)):
+        scripts[E[ent]].update(GS.slots(G, actor, first, back, mv._animb()))
     # the scene actors: 0 init hidden; 2 = placed by P, the tier's stroke (by STYLE for Cloud); 3 Cloud
     # standing bare before them (intro); 4 hidden; 5 the head hold; Jessie 6 her tap-out
     stroke = lambda base: ch_(TIER, [loop_(1 + base + s) for s in range(4)])
@@ -250,11 +264,12 @@ def apply(ctx):
                    at(ch, DC) + ch_(STYLE, [stroke(qz("C")), stroke(qz("D"))])]) + [hb._visi(1), asm.ret()],
         3: at(TK.CLOUD_TO, DC) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
-        5: loop_(1 + bare_c.index(PZ["hold"])) + [asm.ret()]}
+        5: loop_(1 + bare_c.index(PZ["hold"])) + [asm.ret()],
+        **GS.slots(G, "cloudB", 1 + len(bare_c), 0, mv._animb())}
     ti = lambda nm: 1 + bare_t.index(nm)
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at(st, DC, st[2]) + ch_(P, [ch_(TIER, [loop_(ti("ZVC%d.tor" % s)) for s in range(4)]),
+        2: at(st, DC, st[2]) + ch_(P, [ch_(TIER, [loop_(ti(PZ["tifa"][s])) for s in range(4)]),
                                          loop_(ti(PZ["tifa_still"]))]) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()]}
     ji = lambda k: 1 + k                                                   # QJE0-3 0-3, 8 at 4, 7 at 5, 9 at 6
@@ -353,8 +368,8 @@ def apply(ctx):
     fast_out, fast_in = [Op(mv.FAST_OUT), Op(b"\x6C")], [Op(mv.FAST_IN), Op(b"\x6C")]
     main = [hb._uc(1), hb._menu(1), hb._w(20)] + fade_in + \
         [Op(bytes([0xF2, 0, 0, 0, 0x10, TK.MUSIC]) + bytes(8)), hb._req(E["cloudA"], 8)]
-    for line, action in TK.INTRO_LINES:
-        main += say(line)
+    for i, (line, action) in enumerate(TK.INTRO_LINES):
+        main += GS.reqs(G, i, lambda a: E["jessA" if a == "jessie" else a if a == "cloudB" else a + "A"]) + say(line)
         if action == "bare":                                               # Cloud in his alt model
             main += fade_out + [hb._req(E["cloudA"], 4), hb._req(E["cloudB"], 3), hb._w(10)] + fade_in
         elif action == "scene":                                            # the position

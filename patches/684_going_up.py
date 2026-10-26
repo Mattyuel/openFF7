@@ -23,6 +23,7 @@ import importlib
 import math
 import struct
 
+import _gestures as GS
 import _going_up as GU
 import _going_up_poses as GP
 from ff7 import asm
@@ -83,6 +84,7 @@ def apply(ctx):
     elena_l = ModelLoader(ctx.field(ELENA_DONOR[0]).section("models"))
     elena_e = elena_l.models[ELENA_DONOR[1]]
     e_stand = ModelLoader.anims(elena_e)[0].split(".")[0].lower() + ".a"
+    GP.extend_torso(ctx, BARE_ELENA)                                    # (user: no gap at her waist as her hips rock)
     own = GP.build(ctx, BARE_ELENA, e_stand)                            # QEA0 covering, QEB0 still
     variants = GP.build_cloud(ctx)                                      # QKC0-3 legs swapped, QKJ0-3 no hands
     # the set
@@ -113,6 +115,10 @@ def apply(ctx):
     dT = facing_screen(cam, ch[0], ch[1], Z, (1, 0))
     o = _rot((-1, -38), dT)                                             # (670 head: Cloud 38 before her, facing her)
     tp = (round(ch[0] - o[0]), round(ch[1] - o[1]))
+    # (user) Cloud ever so slightly towards the camera in Tifa's turn (Tifa stays): along the camera's depth axis
+    v = cam.axes[2]
+    nv = math.hypot(v[0], v[1])
+    ch = (round(ch[0] - v[0] / nv * GU.CAM_NUDGE), round(ch[1] - v[1] / nv * GU.CAM_NUDGE))
     dC = (dT + 128) % 256
     for p in (ck, ch, tp):
         tri(*p)
@@ -137,9 +143,11 @@ def apply(ctx):
     hold_c, hold_t, try_t = 1 + bare_c.index("ZNJ8.tor"), 1 + bare_t.index("ZVJ8.tor"), 1 + bare_t.index("ZVJ7.tor")
     ei = loader.add_from(elena_l, ELENA_DONOR[1])
     elena_m = loader.models.pop(ei)
-    loader.models = [cl0, ModelLoader.only_anims(cl0, c_anims[:2]),
-                     ModelLoader.only_anims(ModelLoader.with_hrc(tifa_e, CLOTHED_TIED, "goingup_tifa.char"), t_anims[:2]),
-                     ModelLoader.only_anims(elena_m, ModelLoader.anims(elena_m)[:2]),
+    G = GU.INTRO_GESTURES
+    loader.models = [cl0, ModelLoader.only_anims(cl0, c_anims[:2] + GS.anims(ctx, G, "cloud", "cloud")),
+                     ModelLoader.only_anims(ModelLoader.with_hrc(tifa_e, CLOTHED_TIED, "goingup_tifa.char"),
+                                            t_anims[:2] + GS.anims(ctx, G, "tifa", "tifa")),
+                     ModelLoader.only_anims(elena_m, ModelLoader.anims(elena_m)[:2] + GS.anims(ctx, G, "elena", "elena")),
                      ModelLoader.only_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC, "goingup_cloudb.char"),
                                             c_anims[:1] + bare_c),
                      ModelLoader.only_anims(ModelLoader.with_hrc(tifa_e, BARE_TIFA, "goingup_tifab.char"),
@@ -171,7 +179,9 @@ def apply(ctx):
             [top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
              Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], Z, tri(*start))),
              Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done] + \
-            at(stop, d_end) + loop_(stand_anim)
+            at((sx + n * stx, sy + n * sty), face(sx, sy, tx, ty)) + loop_(stand_anim) + \
+            [Op(bytes([0xB4, 0, d_end % 256, 0, 8, 2])), Op(b"\xDE")]       # (user: no snapping) where the last step
+                                                                          # lands, then a turn on the spot
     scripts = {}
     fx, fy = GU.FOCUS
     scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0]))] + at((fx, fy), 0) + [hb._visi(0)] +
@@ -199,6 +209,8 @@ def apply(ctx):
         0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         8: at(efrom, face(*efrom, *epos)) + [hb._visi(1)] + walk(efrom, epos, 1, 0, face(*epos, *cpos)) + [asm.ret()],
         4: [hb._visi(0), asm.ret()]}
+    for ent, actor in (("cloudA", "cloud"), ("tifaA", "tifa"), ("elenaA", "elena")):  # (user: variety) gestures
+        scripts[E[ent]].update(GS.slots(G, actor, 2, 0, mv._animb()))
     ce, cn = bare_c.index, bare_e.index
     # the scene actors: 0 init hidden; 2 = this rep (by P: placed, the tier's stroke from its start); 4 hidden;
     # Elena 8 covering (intro), 9 the crawl
@@ -330,8 +342,8 @@ def apply(ctx):
     fast_out, fast_in = [Op(mv.FAST_OUT), Op(b"\x6C")], [Op(mv.FAST_IN), Op(b"\x6C")]
     main = [hb._uc(1), hb._menu(1), asm.setbyte(MOVING, 0), hb._w(20)] + fade_in + \
         [Op(bytes([0xF2, 0, 0, 0, 0x10, GU.MUSIC]) + bytes(8)), hb._req(E["elenaA"], 8)]
-    for line, action in GU.INTRO_LINES:
-        main += say(line)
+    for i, (line, action) in enumerate(GU.INTRO_LINES):
+        main += GS.reqs(G, i, lambda a: E[a + "A"]) + say(line)
         if action == "cloud_panel":
             main += [hb._req(E["cloudA"], 8)]
         elif action == "undress":

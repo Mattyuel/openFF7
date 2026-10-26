@@ -17,6 +17,7 @@ FOCUS = (10, 30)                # the hidden player (the camera follows it)
 ELENA_AT = (-20, 20)            # her root (hips) on all fours; she faces screen-left, her rear to Cloud
 HEAD_SHIFT = (35, 28)           # Cloud's spot facing Tifa: this far (field x, y) from his spot behind Elena (right of
                                 # her rear on screen, a little further back); Tifa kneels in front of it, facing him
+CAM_NUDGE = 4                   # (user) Cloud this much nearer the camera in Tifa's turn (field units)
 INTRO = {"cloud": (-55, 15), "tifa": (60, 70), "elena_from": (100, -180), "elena": (55, -10), "panel": (0, 60)}
 CONSOLE = (0, 105)              # the car's control console (back left): Cloud faces it at the panel spot
 # (no Director model: the car is tight; he films from outside, his lines are text)
@@ -54,6 +55,10 @@ INTRO_LINES = [
     ("Elena\n“Y-yes, ma'am...”", None),
     ("Tifa\n“Cloud. Get behind her.”", "behind"),
 ]
+# (user: more variety in the intros) intro line -> [(actor, gesture)] (`_gestures.ANIMS`; the clothed actors,
+# not while they walk)
+INTRO_GESTURES = {3: [("elena", "hop"), ("cloud", "shrug")], 4: [("tifa", "hips")], 5: [("elena", "chest")],
+                  6: [("tifa", "lean")], 7: [("elena", "clasp")], 8: [("cloud", "lookaround")], 9: [("elena", "shrug")]}
 HOW = ("Press the button shown in time. HOLD:\nkeep it held to the end. When Tifa\ncalls Switch!, press {PURPLE}[MENU]{WHITE} in time."
        "{NEW}With Tifa, a HOLD lasts until she taps\nout: let go the moment she does, or\nshe'll get mad.")
 

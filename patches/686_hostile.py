@@ -26,6 +26,7 @@ import importlib
 import math
 import struct
 
+import _gestures as GS
 import _hostile as HT
 import _hostile_poses as HP
 from ff7 import asm
@@ -208,11 +209,12 @@ def _build(ctx, field, base, overhead, PZ):
     bare_e = ["ZY%s%d.tor" % (DOG, sp) for sp in range(4)] + PZ["under"]["e"]
     for nm in bare_c + bare_s + bare_e:
         ctx.char_file(nm.split(".")[0].lower() + ".a")                      # (exists)
+    G = HT.INTRO_GESTURES                                               # (user: variety) the intro's gestures
     big = lambda e: ModelLoader.with_scale(e, HP.SCALE * int(ModelLoader.entry_scale(e)) // 512)
     loader.models = [cl0] + [big(m) for m in (
-        ModelLoader.only_anims(cl0, c_anims[:2]),
-        ModelLoader.only_anims(scar_e, s_anims[:2]),
-        ModelLoader.only_anims(elen_e, e_anims[:2]),
+        ModelLoader.only_anims(cl0, c_anims[:2] + GS.anims(ctx, G, "cloud", "cloud")),
+        ModelLoader.only_anims(scar_e, s_anims[:2] + GS.anims(ctx, G, "scarlet", "scarlet")),
+        ModelLoader.only_anims(elen_e, e_anims[:2] + GS.anims(ctx, G, "elena", "elena")),
         ModelLoader.only_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC, "hostile_cloudb.char"), c_anims[:1] + bare_c),
         ModelLoader.only_anims(ModelLoader.with_hrc(scar_e, BARE_SCARLET, "hostile_scarb.char"), s_anims[:1] + bare_s),
         ModelLoader.only_anims(ModelLoader.with_hrc(elen_e, BARE_ELENA, "hostile_elenb.char"), e_anims[:1] + bare_e))]
@@ -236,7 +238,9 @@ def _build(ctx, field, base, overhead, PZ):
                 top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
                 Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], z, tri(sx_, sy_))),
                 Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done] + \
-            at(stop, d_end) + loop_(stand_anim)
+            [xyzi(sx_ + n * stx, sy_ + n * sty, z, tri(sx_ + n * stx, sy_ + n * sty)),          # (where the last step lands)
+             Op(bytes([0xB3, 0, dt._dir_to(tx - sx_, ty - sy_)]))] + loop_(stand_anim) + \
+            [Op(bytes([0xB4, 0, dd(d_end), 0, 8, 2])), Op(b"\xDE")]        # (user: no snapping) a turn on the spot
     scripts = {}
     fx, fy = HT.FOCUS
     scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0]))] + at((fx, fy), 0) + [hb._visi(0)] +
@@ -255,6 +259,8 @@ def _build(ctx, field, base, overhead, PZ):
         0: [Op(bytes([0xA1, 3]))] + at(I["elena"], face(*I["elena"], *I["scarlet"])) + [hb._visi(1)] + hide() +
         loop_(0) + [asm.ret(), asm.ret()],
         4: [hb._visi(0), asm.ret()]}
+    for ent, actor in (("cloudA", "cloud"), ("scarA", "scarlet"), ("elenA", "elena")):
+        scripts[E[ent]].update(GS.slots(G, actor, 2, 0, mv._animb()))
     # the scene: slot 2 placed by P (Cloud's stroke by STYLE), the tier's stroke; 4 hidden; 5 the hold; Scarlet 6
     # her slap of the table (her fastest stroke)
     stroke = lambda first: ch_(TIER, [loop_(first + s) for s in range(4)])
@@ -369,8 +375,8 @@ def _build(ctx, field, base, overhead, PZ):
     resume_, go_ = asm.nop(), asm.nop()
     main = [hb._uc(1), hb._menu(1), asm.if_byte(RESUME, "!=", 1, resume_)] + \
         [hb._w(20)] + fade_in + [Op(bytes([0xF2, 0, 0, 0, 0x10, HT.MUSIC]) + bytes(8))]
-    for line, action in HT.INTRO_LINES:
-        main += say(line)
+    for i, (line, action) in enumerate(HT.INTRO_LINES):
+        main += GS.reqs(G, i, lambda a: E[{"cloud": "cloudA", "scarlet": "scarA", "elena": "elenA"}[a]]) + say(line)
         if action == "walk":                                               # the consultant walks in
             main += [hb._req(E["cloudA"], 8)]
         elif action == "scene":                                            # the position

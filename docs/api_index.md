@@ -1271,6 +1271,15 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `paint(V, P, cuts, colour_of)` The mesh (V, P) cut along each plane of `cuts` [(normal, c)] and each triangle coloured
 - `tifa_body(ctx, hrc, skin, bust=1.0, legs=None, paints=None)` (user) Her hip / chest / thigh parts (already on her bones by `apply`) and her nipples (`nipples`)
 
+## `patches/_gestures.py`
+(user: "more variety to animation in intro scenes") One-shot gestures for the parody films' intro actors
+
+- `used(gestures, actor)` The gestures `actor` plays in a film, in slot order.
+- `seated(ctx, hrc, gesture, sit, name)` A copy of `gesture` (anim name) with every frame's root, lower body and chest (`LOWER`) from `sit`'s
+- `anims(ctx, gestures, actor, who, hrc=None, sit=None, prefix=None)` The anim names to append to `actor`'s model ('who' = the ANIMS table); seated copies named
+- `slots(gestures, actor, first, stand, animb)` {slot: ops}: each gesture once (ANIME1 waits in the actor's own slot), back to anim `stand`; `first` =
+- `reqs(gestures, i, entity)` REQs (no wait) of line i's gestures; entity(actor) -> entity index.
+
 ## `patches/_going_up.py`
 (user) Going up: the second parody film (684_going_up), in Shinra HQ's glass elevator (eleout, where the
 
@@ -1284,13 +1293,14 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `_ruby_frame(ctx, anim, frame=0)` 
 - `_subtree(sk, top)` 
 - `_turned(fa, W, idx, R)` 
-- `_sway(fa, sk, root, W, F, deg)` The lower body (pelvis and legs) turned deg about the vertical through the waist; the upper body kept.
+- `_sway(fa, sk, root, W, F, deg, roll=0.0, rr=None)` The lower body (pelvis and legs) turned deg about the vertical through the waist and rolled `roll` about her
 - `_write(ctx, name, fa, sk, rr, frames)` 
 - `crawl(ctx)` QXC0: on all fours (Ruby's dog stroke's frame 0), crawling: each thigh and arm swinging about the side
 - `_ease(t, a, b)` 
 - `_head_turn(fa, sk, W, F, R)` The head (and what hangs from it) turned by world rotation R about the neck.
 - `elena_idle(ctx)` QXD0: waiting on all fours: still, a hip shake, still, a look to her right and back (IDLE_FRAMES).
 - `tifa_idle(ctx, cam_yaw)` QXE0: kneeling (Ruby's head position, pulled back: ZMJ9), waiting: turns her head to the camera
+- `extend_torso(ctx, hrc)` Her chest part's bottom band (the vertices within TORSO_BAND of its waist end, along the bone) moved
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
@@ -1458,6 +1468,7 @@ Shared helpers for character recruitment scenes.
 - `targets(points, n, deep)` Field tip targets: each point + the stroke along n (field unit vector, from her to him): DEPTH inside
 - `spot(tips, dc, floor, tip0, root0)` Cloud's field spot (x, y) for these tip targets: standing, his tip on average where they are.
 - `cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nape=False, level=False)` Cloud's frames (written to name.a): his tip at tips[k] (field), standing at cspot (field, on the floor);
+- `spread(ctx, hrc, srcs, prefix, deg)` (user: Tifa over Jessie) copies of her strokes with each leg turned deg outward about her forward axis at
 
 ## `patches/_travel.py`
 Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.

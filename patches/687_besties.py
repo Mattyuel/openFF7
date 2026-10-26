@@ -222,7 +222,7 @@ def apply(ctx):
                 top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
                 Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], 0, tri(sx, sy))),
                 Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done,
-                xyzi(tx, ty, 0, tri(tx, ty))] + loop_(stand_anim) + [Op(bytes([0xB4, 0, d_end % 256, 0, 8, 2])), Op(b"\xDE")]
+                xyzi(sx + n * stx, sy + n * sty, 0, tri(sx + n * stx, sy + n * sty))] + loop_(stand_anim) + [Op(bytes([0xB4, 0, d_end % 256, 0, 8, 2])), Op(b"\xDE")]
     scripts = {}
     fx, fy = BS.ARRIVE
     scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(fx, fy, 0, tri(fx, fy)), d_(0),

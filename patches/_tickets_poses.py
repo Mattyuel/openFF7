@@ -338,3 +338,34 @@ def cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nap
         frames.append(frame)
     CP._save(ctx, name, "acfe.a", frames)
     return drops
+
+
+def spread(ctx, hrc, srcs, prefix, deg):
+    """(user: Tifa over Jessie) copies of her strokes with each leg turned deg outward about her forward axis at
+    the hip (the knees apart, round Jessie): prefix + the source's last two. Returns the names."""
+    from ff7 import fieldanim as fa
+    sk = fa.skeleton(ctx.char_file(hrc.lower()).decode("latin-1"))
+    I = [b[0] for b in sk].index
+    legs = {s_: [i for i, b in enumerate(sk) if b[0] == s_ + "_femur" or _under(sk, b[0], s_ + "_femur")] for s_ in "lr"}
+    z = [0.0, 0.0, -1.0]
+    out = []
+    for src in srcs:
+        A = fa.Anim(ctx.char_file(src.lower() + ".a"))
+        frames = []
+        for rr, rp, rots in A.frames:
+            root = [rp[0], -rp[1], rp[2]]
+            W = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
+            for s_, sg in (("l", 1), ("r", -1)):
+                knee = lambda W_: fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W_))[I(s_ + "_femur")][2][0]
+                R = fa.axis_angle(z, deg)
+                W2 = [fa._mul(R, m) if i in legs[s_] else m for i, m in enumerate(W)]
+                if sg * knee(W2) < sg * knee(W):                            # (the other way: outward)
+                    R = fa.axis_angle(z, -deg)
+                    W2 = [fa._mul(R, m) if i in legs[s_] else m for i, m in enumerate(W)]
+                W = W2
+            frames.append((rr, rp, fa.local_rotations(sk, rr, W)))
+        A.frames = frames
+        name = prefix + src[-2:]
+        ctx.char_file(name.lower() + ".a", A.build())
+        out.append(name + ".tor")
+    return out

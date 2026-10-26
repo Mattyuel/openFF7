@@ -79,6 +79,10 @@ INTRO_LINES = [
     ("Scarlet\n“Ohh...! The board will now review\n your... proposal.”", None),
     ("Elena\n“(Mmph!) ...Supporting, ma'am!”", None),
 ]
+# (user: more variety in the intros) intro line -> [(actor, gesture)] (`_gestures.ANIMS`)
+INTRO_GESTURES = {0: [("scarlet", "hip")], 1: [("elena", "clasp")], 4: [("scarlet", "laugh")], 5: [("cloud", "point")],
+                  6: [("elena", "hop")], 7: [("scarlet", "hip")], 8: [("elena", "chest")], 10: [("elena", "shrug")],
+                  11: [("cloud", "nod")]}
 HOW = ("Press the button shown in time. HOLD:\nkeep it held to the end. When Scarlet\ncalls a switch, press {PURPLE}[MENU]{WHITE} in time."
        "{NEW}With Elena underneath, a HOLD lasts\nuntil she taps out: let go the moment\nshe does, or she'll quit.")
 

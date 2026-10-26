@@ -29,6 +29,8 @@ SAY = 100
 # the poses: Cloud's member tip DEPTH inside at the deepest, travelling STROKE (model units); his stance
 DEPTH, STROKE = 1.0, 1.8
 SINK_SPARE = 0.3                # Tifa sinks into the cushion until his level tip reaches her with this to spare
+TIFA_RAISE = 8                  # (user) ...then she's drawn this much higher (Cloud and Jessie unchanged): room for
+TIFA_SPREAD = 18                # Jessie under her, her knees this many degrees further apart (each)
 STANCE_T, STANCE_J = 1.0, 3.8   # his feet this far out (behind Tifa / at Jessie's head: a wide, low sumo stance: the
                                 # bench is low, his hips sink ~5)
 LEAN_T, LEAN_J = 8, 22          # his upper body leaning forward (degrees)
@@ -81,6 +83,12 @@ INTRO_LINES = [
     ("Cloud\n“...That's not how tickets work.”", None),
     ("Jessie\n“It is today.”", "scene"),
 ]
+# (user: more variety in the intros) intro line -> [(actor, gesture)] (`_gestures.ANIMS`; the girls' seated
+# copies; "cloudB" = Cloud in his alt model, after "bare")
+INTRO_GESTURES = {1: [("jessie", "arms")], 2: [("tifa", "lean")], 3: [("cloud", "point")], 4: [("jessie", "hips")],
+                  5: [("tifa", "hips")], 6: [("jessie", "point")], 7: [("cloud", "formal")], 8: [("tifa", "think")],
+                  11: [("jessie", "arms")], 12: [("tifa", "lean")], 13: [("jessie", "point")], 14: [("tifa", "think")],
+                  15: [("jessie", "hips"), ("cloudB", "coy")], 16: [("tifa", "hips")], 19: [("cloudB", "shakehead")]}
 HOW = ("Press the button shown in time. HOLD:\nkeep it held to the end. When they\ncall My turn!, press {PURPLE}[MENU]{WHITE} in time."
        "{NEW}With Jessie, a HOLD lasts until she taps\nout: let go the moment she does, or\nshe'll get mad.")
 

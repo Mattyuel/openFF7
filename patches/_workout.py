@@ -22,8 +22,8 @@ SAY = 100                       # frames a line stays up during the squats
 # HITS_UP hits in a row step the pace up a tier; a miss drops it back to the slowest
 PERIODS = tuple(round(60 * 0.9 ** k) for k in range(8))      # 60 54 49 44 39 35 32 29
 HITS_UP = 2                     # (user: 50% shorter; was 3)
-PART_A_END = 2                  # part one ends after this many hits at the top tier
-PART_B_REPS = 24                # part two: this many prompts, then the finale
+PART_A_REPS = 16                # (user: fixed length, progression by performance) part one: this many prompts
+PART_B_REPS = 20                # part two: this many prompts, then the finale
 PAY_HIT = 10                    # gil per hit x (tier + 1)
 CHAT_EVERY = 4                  # (user: long silences) a chatter line every this many reps, when nobody's talking
 HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # the squat contest's squat (mkt_mens: AKAO 28 08 019d)
@@ -57,6 +57,9 @@ INTRO = [
     "Tifa\n“Okay! Where do we begin?”",
     "Cloud\n“Squats. The foundation of everything.\n I'll spot you from behind.”",
 ]
+# (user: more variety in the intros) intro line -> [(actor, gesture)] (`_gestures.ANIMS`), played as it shows
+INTRO_GESTURES = {0: [("tifa", "think")], 1: [("cloud", "nod")], 2: [("tifa", "ready")], 3: [("cloud", "stretch")],
+                  4: [("tifa", "hips")], 5: [("cloud", "warmup")]}
 HOW = ("Press the button shown in time with\nthe squat. Hits build the pace; a miss\nslows it right down."
        "{NEW}HOLD: press it and keep it held while\nshe stays down. Let go the moment she\ncalls it, or she'll get mad.")
 
