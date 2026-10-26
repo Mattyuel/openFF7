@@ -485,8 +485,15 @@ one position after another into films.
       crowd-heat meter (670's meter reused).
   - ***Specimen*** (Scarlet, the nurse): Hojo's lab and its 'experiments',
     in the Shinra Mansion basement.
-  - ***Night Shift*** (the nurse, Jessie): Mideel's clinic, a patient who
-    won't stay in bed (ithos, 679_nurse's set).
+  - ***Night Shift*** (user): Tifa, Jessie and Aerith star as nurses on
+    Mideel's clinic's night shift, with a patient (Cloud) who won't stay in
+    bed (ithos, 679_nurse's set).
+    - Costume (user): one generic nurse outfit for all three, on each
+      girl's own head and feet.
+    - Built the way 682's school uniforms are: the standard body painted
+      with the outfit (`_female_body.tifa_body(paints=)` + `_uniform`).
+      The island nurse (679_nurse) is a separate model and stays a
+      character of her own.
 
   Each film: an opening scene that sets up the parody, two or three scenes
   with gameplay between them, a finale. 672's scenarios and 674's acts are
