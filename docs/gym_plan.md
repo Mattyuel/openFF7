@@ -140,7 +140,8 @@ work its shifts, not as play time runs.
 - **Save data:** a day counter and the day's phase (morning / day shift done /
   free time / night shift done), a few bytes.
   - The phase advances when a shift ends.
-  - Proposal: free-time actions like a hang-out or a date also cost a slot.
+  - **Free-time actions cost a slot (user):** one action (a hang-out, a
+    date, a recruiting visit) per free time, so every day forces a choice.
   - Sleeping (or the night shift's end) starts the next day.
   - Every seventh day is the weekend.
 - **What changes:** everything that counts play minutes moves to days or
@@ -400,9 +401,25 @@ one position after another into films.
   staged intro lines, actions per line, then positions. The press-rate meter
   (670), the Square prompts and the holds can be the gameplay between scenes;
   other kinds of play can be added.
-- **Parody targets:** to decide. Ideas (proposals): FF7's own world (the
-  Loveless play, the Turks, Shinra's boardroom, a Gold Saucer show), or
-  well-known films and genres (heist, spy, horror, space, western).
+- **Parody targets (user): FF7's own world.** The Shinra boardroom is the
+  model. Film ideas (proposals; sets are existing fields that already look
+  the part):
+
+  | Film | Parody of | Set (field) | Cast idea |
+  |---|---|---|---|
+  | *Hostile Takeover* | the Shinra board meeting: executives fight over the budget | the boardroom (blin66 floors) | Scarlet as the cruel exec, Elena as the new hire |
+  | *Turks After Hours* | the Turks on a stakeout that goes sideways | a Midgar street / Wall Market | Elena, Ruby |
+  | *Loveless: The Director's Cut* | the play Midgar keeps advertising | the Gold Saucer stage (astage_b) | the cast of 674's stage show |
+  | *Mako Fever* | a reactor inspection with a stuck elevator | No.1 / No.5 reactor rooms | Skye, Tifa |
+  | *The Wall Market Mystery* | a detective story about who stole Corneo's wig | Corneo's mansion (colne_6) | Aerith as the detective |
+  | *Cosmo Candle Confessions* | Cosmo Canyon's elders and their 'ancient wisdom' | Cosmo Canyon | Aerith, Skye |
+  | *Escape Pod* | Shinra's space programme, sealed in with too little air | the rocket's capsule (rcktin7) | Cid's Blast-off cast |
+  | *Gold Saucer Nights* | the date ride gone wrong | the gondola (bwhlin) | Scarlet, Tifa |
+
+  Each film: an opening scene that sets up the parody, two or three scenes
+  with gameplay between them, a finale. 672's scenarios and 674's acts are
+  the closest existing structures, and their lines can be rewritten into
+  films rather than written from scratch.
 - **One film = one shoot day** (proposal). It becomes a video for the
   Materia Store deal; its score sets its sales.
 
