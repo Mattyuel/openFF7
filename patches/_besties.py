@@ -1,17 +1,19 @@
-"""(user) Besties: the fifth film (687_besties), Cloud, Tifa and Aerith in Gast's house in Icicle Inn (snmayor), on
-the bed on the lower floor (where the Ifalna and Professor Gast videos usually play). A sensual, sincere scene:
-the three of them bond, compliment each other openly, offer positions and keep trying new things. Aerith's
-"too much" roleplay (her best friend's boyfriend: a soap opera none of them can play with a straight face) runs
-through it; when an experiment doesn't work they laugh and try something else; it ends with everyone climaxing
-together (how well depends on the player's rhythm), then the three of them, close, in the quiet.
+"""(user) Besties: the fifth film (687_besties), Cloud, Tifa and Aerith in the old house at the edge of Icicle
+Inn (snmayor: Gast's house, never named in the script, user), on the bed on the lower floor. A sensual, sincere
+scene: the three of them bond, compliment each other openly, offer positions and keep trying new things. The
+Director's script, "The Best Friend's Boyfriend" (user: the roleplay is scripted, not their idea; play on the
+cheating more), a soap opera with their own names in it ("saves time"), runs through it scene by scene: they
+read it out, crack up, play along anyway; when an experiment doesn't work they laugh and try something else; it
+ends with everyone climaxing together (how well depends on the player's rhythm), then the three of them, close,
+in the quiet.
 
 Tifa and Aerith start in their Wall Market dresses (user), the models Corneo's mansion uses.
 
-Structure: the intro (dresses, a heart-to-heart on the bed, the roleplay, undressing), then SEGMENTS: each a
-fixed REPS prompts at the pace of the tiers (fixed length, user: progression by performance, not by grinding);
-between segments one of them offers what's next: the real one or a silly experiment that goes wrong (a short
-staged gag) before they carry on. The finale's FINISH prompts and the whole run's hits decide the climax.
-Data only."""
+Structure: the intro (dresses, the script, a heart-to-heart off script, undressing), then SEGMENTS (each a scene
+of the script): each a fixed REPS prompts at the pace of the tiers (fixed length, user: progression by
+performance, not by grinding); between segments one of them offers what's next: the real one or a silly
+experiment that goes wrong (a short staged gag) before they carry on. The finale's FINISH prompts and the whole
+run's hits decide the climax. Data only."""
 
 FIELD = "blackbgh"              # the set: a debug room (only blackbgi leads there, itself only from startmap), a copy
 BASE = "snmayor"                # Gast's house
@@ -43,133 +45,138 @@ KEYS = [(0x80, "{PURPLE}[SWITCH]{WHITE}"), (0x40, "{PURPLE}[CANCEL]{WHITE}"), (0
 SWITCH_KEY = (0x10, "{PURPLE}[MENU]{WHITE}")
 HOLD_LABEL = "HOLD "
 
-# the intro: (line, action) actions: tifa_in / aerith_in (walk from the stairs), gesture_t / gesture_a <anim> (a
-# dress anim once), sit (both sit on the bed's edge, Cloud between them), bare (fade: undressed, standing)
+# the intro: (line, action) actions: walk_in (both from the stairs), gesture_t / gesture_a <anim> (a dress anim
+# once), sit (all three on the bed's edge, Cloud between them), bare (fade: undressed, standing). (user: the
+# roleplay is scripted: the Director's script, not their idea; play on the cheating more)
 INTRO = [
-    ("(Snow taps at the windows of Gast's old house. Down the stairs\n come two familiar dresses.)", "walk_in"),
-    ("Aerith\n“Ta-da! Remember these? Wall Market's\n finest.”", ("gesture_a", "DADD")),
+    ("(Snow taps at the windows of the old house at the edge of Icicle\n Inn. Down the stairs come two familiar dresses.)", "walk_in"),
+    ("Aerith\n“Ta-da! Wall Market's finest, back by\n popular demand.”", ("gesture_a", "DADD")),
     ("Tifa\n“I can't believe we kept them. Do they\n still... look okay?”", ("gesture_t", "APGC")),
     ("Cloud\n“...You both look incredible.”", None),
-    ("Aerith\n“Hear that, Tifa? 'Incredible.' He used\n a whole adjective.”", ("gesture_a", "DDFA")),
-    ("Tifa\n“Aerith!”", ("gesture_t", "CXHB")),
-    ("Aerith\n“Come sit. Both of you.”", "sit"),
-    ("Tifa\n“It's strange... a year ago I'd never have\n said this out loud. But I love you.\n Both of you.”", None),
-    ("Aerith\n“Mm. Me too. You're my best friend,\n Tifa. And Cloud is... Cloud.”", None),
-    ("Cloud\n“I've never felt this safe with anyone.\n Either of you.”", None),
-    ("Aerith\n“Okay, before we all start crying... I\n have an idea. A game.”", None),
-    ("Tifa\n“Oh no. That's your 'trouble' voice.”", None),
-    ("Aerith\n“Roleplay! I'm your best friend. Cloud\n is YOUR boyfriend. And I've had a\n secret crush on him for years...”", None),
-    ("Tifa\n“That's... a little close to home?”", None),
-    ("Aerith\n“That's what makes it naughty! Ahem.\n 'Oh, Cloud... Tifa must never, EVER\n find out about us...'”", None),
-    ("Tifa\n“'Aerith! How COULD you! With MY\n boyfriend!' ...Oh gods. I can't say that\n with a straight face.”", None),
-    ("Cloud\n“'...It's not what it looks like.'”", None),
-    ("Aerith\n“Pfft-! 'Not what it looks like'? Cloud,\n you're not even undressed yet!”", None),
-    ("Tifa\n“This is way too much. ...I love it.”", None),
-    ("Aerith\n“Then let's fix the 'not undressed'\n part.”", "bare"),
-    ("Tifa\n“...Okay. Wow. Aerith, you're gorgeous.”", None),
-    ("Aerith\n“Says the woman with THOSE. Cloud,\n back me up.”", None),
+    ("Aerith\n“'Incredible.' He used a whole\n adjective, Tifa.”", ("gesture_a", "DDFA")),
+    ("Tifa\n“Stop it!”", ("gesture_t", "CXHB")),
+    ("Aerith\n“Come sit. The Director left us the\n script.”", "sit"),
+    ("Tifa\n“(reading) 'The Best Friend's Boyfriend.'\n ...Oh no.”", None),
+    ("Aerith\n“'Tifa loves Cloud. Aerith is her best\n friend. Aerith has wanted Cloud for\n YEARS.'”", None),
+    ("Cloud\n“He used our real names.”", None),
+    ("Aerith\n“There's a note in the margin: 'Saves\n time.'”", None),
+    ("Tifa\n“'Scene one: Tifa is out buying\n groceries...' Wait. I'm the one being\n cheated on?!”", None),
+    ("Aerith\n“Ahem. 'Oh, Cloud... we shouldn't. She's\n my best friend. ...She'll be back in TEN\n MINUTES.'”", None),
+    ("Cloud\n“'...We can't keep doing this.'”", None),
+    ("Aerith\n“Pfft-! 'Keep doing'? It's page one! Who\n WROTE this?!”", None),
+    ("Tifa\n“It's so much. It's SO much. (She hides\n her face in her hands.)”", None),
+    ("Tifa\n“...Before we start, though. Off script?”", None),
+    ("Tifa\n“A year ago I'd never have said this out\n loud. I love you. Both of you.”", None),
+    ("Aerith\n“Mm. Me too. You're my best friend, Tifa.\n For real. Not on page one.”", None),
+    ("Cloud\n“I've never felt this safe with anyone.”", None),
+    ("Aerith\n“Okay, before we all start crying...\n 'Page two: the dresses come off.'”", "bare"),
+    ("Tifa\n“...Wow. Aerith, you're gorgeous.”", None),
+    ("Aerith\n“Says the woman with THOSE. Cloud, back\n me up.”", None),
     ("Cloud\n“You're both... perfect. I don't know\n where to look.”", None),
-    ("Aerith\n“Start with me. Your girlfriend's best\n friend. Very forbidden.”", None),
+    ("Aerith\n“The script says: at your girlfriend.\n Then at her best friend. 'Guiltily.'”", None),
 ]
 HOW = ("Press the button shown in time with them.\nEvery position lasts the same while; the\nbetter your rhythm, the better the ending."
        "{NEW}In the kneeling part, a HOLD lasts until\nshe taps out: let go the moment she does.\nWhen they call My turn!, press {PURPLE}[MENU]{WHITE}.")
 
-# the segments, in order: (key, title, setup lines, chatter, misses, tier lines {tier: lines})
+# the segments, in order: (key, title, setup lines, chatter, misses, tier lines {tier: lines}); each a scene
+# of the Director's script
 SEGMENTS = [
-    dict(key="kiss", title="Aerith on her back; Tifa beside her, kissing her",
-         setup=["Aerith\n“'Oh no... my best friend's right here.\n She'll see everything...'”",
-                "Tifa\n“'I'm not watching. I'm supervising.'\n ...Hi, you.”",
-                "Aerith\n“Mmm... kissing me is cheating.”"],
-         chat=["Tifa\n“You're so beautiful like this, Aerith.”",
-               "Aerith\n“Your lips are so soft, Tifa...”",
-               "Aerith\n“Cloud... slower. I want to remember\n this.”",
-               "Tifa\n“Look at her face, Cloud. Look what\n you're doing to her.”",
-               "Aerith\n“'Tifa must never know...' (giggle) She's\n literally holding my hand.”",
-               "Cloud\n“You feel amazing, Aerith.”"],
-         miss=["Aerith\n“Ow, hair! My hair!”",
-               "Tifa\n“Elbow, Cloud. ELBOW.”",
-               "Aerith\n“(giggle) Rhythm, lover boy.”",
-               "Tifa\n“Slow down... there. Like that.”"],
-         tiers={2: ["Aerith\n“Ah...! Don't stop... either of you...”"],
-                3: ["Tifa\n“She's shaking. Keep going, Cloud.”"]}),
-    dict(key="ride", title="Tifa riding Cloud; Aerith beside them",
-         setup=["Tifa\n“'If my best friend gets you, I get you\n too. That's only fair.'”",
-                "Aerith\n“'This is a betrayal!' ...Of what? I've\n lost the plot.”"],
+    dict(key="edge", title="Tifa on the edge; Cloud kneeling to her; Aerith holding her from behind",
+         setup=["Aerith\n“'Scene two. The best friend comforts\n the girlfriend... while the boyfriend\n makes it up to her.'”",
+                "Tifa\n“'How could you two... ohh... how could\n you...' What's my line?”",
+                "Aerith\n“(whispering) 'I'll never forgive you.'\n You're smiling too much for this\n scene.”"],
+         chat=["Aerith\n“Lean back. I've got you.”",
+               "Tifa\n“Cloud... don't stop... ahh...”",
+               "Aerith\n“Look at her, Cloud. Isn't she\n beautiful?”",
+               "Tifa\n“Aerith, your hands... mm...”",
+               "Aerith\n“'Forgive him, Tifa.' ...That's in the\n script. I promise.”",
+               "Cloud\n“(Mm.) You taste amazing.”"],
+         miss=["Tifa\n“Ah-! Your hair tickles!”",
+               "Aerith\n“(giggle) Breathe, Cloud. Through your\n nose.”",
+               "Tifa\n“Ow, my knee hit your ear. Sorry!”",
+               "Aerith\n“Easy... there. Like that.”"],
+         tiers={2: ["Tifa\n“Ahh...! I can't hold still...”"],
+                3: ["Aerith\n“She's shaking. Don't you dare stop.”"]}),
+    dict(key="ride", title="Tifa riding Cloud; Aerith astride his face; the two of them holding hands",
+         setup=["Tifa\n“'Scene three. The girlfriend takes back\n what's hers.' ...I like this scene.”",
+                "Aerith\n“'And the best friend refuses to leave.'\n Also true.”",
+                "Cloud\n“(Mmph.)”"],
          chat=["Aerith\n“Tifa, you look like a goddess up there.”",
-               "Tifa\n“Ah... Cloud... you feel so good inside\n me.”",
-               "Aerith\n“Can I...? (She kisses Tifa's shoulder.)”",
-               "Tifa\n“Don't stop, either of you...”",
-               "Cloud\n“Tifa... you're incredible.”",
-               "Aerith\n“'My best friend's boyfriend is SO good\n at this.' ...Sorry. Still in character.”"],
-         miss=["Tifa\n“Whoa-! This bed is too narrow!”",
-               "Aerith\n“(giggle) Hold on to something!”",
-               "Tifa\n“Oops. Slipped. Again.”",
-               "Cloud\n“...Sorry.”"],
-         tiers={2: ["Tifa\n“Mmh... Aerith, kiss me...”"],
-                3: ["Aerith\n“Look at her go! Tifa!”"]}),
-    dict(key="taste", title="Tifa on all fours with her face between Aerith's legs; Cloud behind Tifa",
-         setup=["Aerith\n“'Your girlfriend is... oh. Oh, she's\n GOOD at this.'”",
-                "Tifa\n“(Mmh!) Stay in character, Aerith.”",
-                "Aerith\n“I CAN'T, Tifa, not when you do THAT-”"],
+               "Tifa\n“Don't let go of my hands.”",
+               "Aerith\n“'This is a betrayal!' ...Of what? I've\n lost the plot.”",
+               "Tifa\n“Ah... he's so deep... mm...”",
+               "Aerith\n“Cloud, your tongue... ohh, page four\n can wait.”",
+               "Tifa\n“'My boyfriend is SO good at this.'\n ...Off script. Still true.”"],
+         miss=["Tifa\n“Whoa-! Hold on, I'm slipping!”",
+               "Aerith\n“(giggle) Don't buck, Cloud!”",
+               "Tifa\n“Oops. Too far. Again.”",
+               "Cloud\n“(Mmph!) ...Can't... breathe...”"],
+         tiers={2: ["Tifa\n“Aerith... look at me... ahh...”"],
+                3: ["Aerith\n“Together, Tifa! Ride him!”"]}),
+    dict(key="lick", title="Aerith on the edge; Tifa bent over, her mouth on Aerith; Cloud behind Tifa",
+         setup=["Aerith\n“'Scene four. Revenge: the girlfriend\n seduces the best friend.' ...Is this\n still a soap opera?”",
+                "Tifa\n“It just says 'Tifa makes Aerith pay.'\n So... I'm making you pay.”",
+                "Aerith\n“Oh. OH. Okay. I'm paying. I'm paying!”"],
          chat=["Aerith\n“Tifa... your mouth... ahh...”",
-               "Tifa\n“(Mmm...)”",
+               "Tifa\n“(Mmh...)”",
                "Cloud\n“Tifa... you feel unbelievable.”",
-               "Aerith\n“Look at us. This is the best idea I've\n ever had.”",
-               "Aerith\n“Cloud, look at her. Isn't she perfect?”",
+               "Aerith\n“Look at us. Who needs a script?”",
+               "Aerith\n“'I'm sorry I stole your boyfriend!'\n ...I'm not sorry at all.”",
                "Tifa\n“(Mmh!) ...I love you both. Don't stop.”"],
          miss=["Aerith\n“Ah-! Gentle! Gentle!”",
-               "Tifa\n“Sorry!”",
+               "Tifa\n“Sorry! He pushed me!”",
                "Aerith\n“(laughing) The bed squeaked SO loud.”",
                "Tifa\n“Cloud, easy... there.”"],
          tiers={2: ["Aerith\n“Tifa, I'm... I'm close...”"],
                 3: ["Tifa\n“(Mmmh!!)”"]}),
-    dict(key="share", title="Both kneeling for Cloud, taking turns",
-         setup=["Aerith\n“'Let's share him. Best friends share\n everything.'”",
-                "Tifa\n“That line was SO much. ...Okay, it was a\n little hot.”"],
+    dict(key="share", title="On the rug: one kneeling before Cloud, the other behind him, taking turns",
+         setup=["Aerith\n“'Scene five. The two rivals... share\n him.' He underlined 'share' three\n times.”",
+                "Tifa\n“That line is SO much. ...Okay. It's a\n little hot.”"],
          chat=["Tifa\n“Mmh... (She looks up at him.)”",
-               "Aerith\n“You taste... mm. Perfect.”",
-               "Tifa\n“Aerith, your hair's so soft...”",
-               "Aerith\n“Tifa, you're hogging him. (giggle)”",
+               "Aerith\n“(behind him) Your back is so warm...”",
+               "Tifa\n“Aerith, stop tickling him, he keeps\n jumping.”",
+               "Aerith\n“My turn soon. I'm counting.”",
                "Cloud\n“You two... are amazing.”",
                "Tifa\n“Look at his face. I love that face.”"],
          miss=["Tifa\n“(Mmph?!) ...Oops.”",
                "Aerith\n“Ow, nose!”",
                "Tifa\n“Whose turn is it? I lost track!”",
                "Aerith\n“(giggle) Rhythm!”"],
-         tiers={2: ["Aerith\n“Mmh... (She holds Tifa's hand.)”"],
+         tiers={2: ["Aerith\n“He's trembling. I can feel it from back\n here.”"],
                 3: ["Tifa\n“He's close. I can tell.”"]}),
-    dict(key="stack", title="Tifa on her back, Aerith over her; Cloud with both",
-         setup=["Tifa\n“Aerith... you're so close. I can feel\n your heartbeat.”",
-                "Aerith\n“'Your boyfriend, your best friend...\n and you.' ...Okay. The roleplay's over.\n This is just us.”"],
-         chat=["Tifa\n“Kiss me, Aerith.”",
+    dict(key="stack", title="Tifa on her back at the edge; Aerith over her; Cloud with both",
+         setup=["Tifa\n“'Final scene. The girlfriend forgives\n everyone.' ...Everyone? Even me?”",
+                "Aerith\n“Especially you. Now kiss and make up...\n in a very specific way.”",
+                "Tifa\n“The script's over. This is just us.”"],
+         chat=["Tifa\n“Aerith... your hair's everywhere. I love\n it.”",
                "Aerith\n“Tifa... you're shaking.”",
                "Cloud\n“I love you. Both of you.”",
-               "Tifa\n“Don't let go of my hand.”",
+               "Tifa\n“Don't let go, either of you.”",
                "Aerith\n“Cloud... you're so good to us.”",
                "Tifa\n“This is... everything.”"],
          miss=["Aerith\n“Wrong one! (giggle) ...Actually, no,\n that's fine too.”",
                "Tifa\n“Ah! Knee! My knee!”",
                "Aerith\n“The bed! The bed's moving!”",
-               "Tifa\n“(laughing) We're going to break Gast's\n bed.”"],
+               "Tifa\n“(laughing) We're going to break this\n bed.”"],
          tiers={2: ["Tifa\n“Cloud... Aerith... I'm close...”"],
                 3: ["Aerith\n“Together... all of us, together...”"]}),
 ]
 # between segments: (who asks, the question, the real choice, the experiment, the gag's lines)
 OFFERS = [
-    ("Tifa\n“My turn... I want to ride you. Unless\n someone has a better idea?”", "Let Tifa ride.", "Try 'the wheelbarrow'.",
+    ("Tifa\n“'Scene three: the girlfriend takes back\n what's hers.' I want to ride you.\n Unless someone has a better idea?”", "Let Tifa ride.", "Try 'the wheelbarrow'.",
      ["(Cloud lifts Aerith's legs. Aerith walks two steps on her hands,\n wobbles, and folds into a giggling heap on the rug.)",
-      "Aerith\n“I'm fine! I'm fine. That was terrible.”",
+      "Aerith\n“I'm fine! I'm fine. That wasn't in the\n script.”",
       "Tifa\n“Ten points for enthusiasm.”"]),
-    ("Aerith\n“Ooh, I read about something. Tifa, on\n your hands and knees. I'll lie in front\n of you...”", "Do Aerith's idea.", "Try 'the pretzel'.",
-     ["(Three people. Six legs. One single bed. Somebody's foot ends up\n in somebody's ear.)",
+    ("Aerith\n“Page four says 'revenge.' Tifa... I'll\n sit on the edge. You come to me.”", "Do page four.", "Try 'the pretzel'.",
+     ["(Three people. Six legs. One bed. Somebody's foot ends up in\n somebody's ear.)",
       "Tifa\n“Whose foot is this?!”",
       "Aerith\n“Mine! Sorry! Nobody move!”",
       "Cloud\n“...I can't feel my arm.”"]),
-    ("Tifa\n“Can we... both take care of you now?\n Together?”", "Kneel together.", "Try 'the human chair'.",
+    ("Tifa\n“'The rivals share him.' Can we... both\n take care of you now?”", "Kneel together.", "Try 'the human chair'.",
      ["(Aerith sits on Cloud. Tifa sits on Aerith. Cloud sits on nothing.\n The chair lasts exactly one second.)",
       "Aerith\n“Physics! We forgot about physics!”",
       "Tifa\n“I've never laughed this hard naked.”"]),
-    ("Aerith\n“For the finale... Tifa on her back. Me on\n top of her. And you, Cloud... both of us.”", "The finale.", "Try 'the spin cycle'.",
+    ("Aerith\n“For the finale... Tifa on her back. Me\n on top of her. And you, Cloud... both of\n us.”", "The finale.", "Try 'the spin cycle'.",
      ["(Aerith tries to turn around on top of Tifa. Halfway round, their\n knees lock. Everyone freezes.)",
       "Tifa\n“Are we stuck? Are we actually stuck?”",
       "Aerith\n“We're stuck. Kiss me while we wait.”"]),
@@ -202,11 +209,11 @@ CLIMAX = {
              "Aerith\n“Close enough!”",
              "Tifa\n“(laughing) Two out of three at once. I'll\n take it.”"],
 }
-AFTER = ["(Later. Gast's old blanket, three people under it, and the snow\n still falling.)",
+AFTER = ["(Later. One borrowed blanket, three people under it, and the\n snow still falling.)",
          "Tifa\n“Thank you. For tonight. For... everything.”",
-         "Aerith\n“Same time next week? Different\n roleplay.”",
+         "Aerith\n“Same time next week? I'll write the\n script this time.”",
          "Tifa\n“Absolutely not. ...Maybe.”",
-         "Cloud\n“I'm never saying 'it's not what it looks\n like' again.”",
+         "Cloud\n“I'm never saying 'we can't keep doing\n this' again.”",
          "Aerith\n“Pfft-! Hahaha!”",
-         "Director\n“...CUT. I'm not crying. The snow got\n in my eyes.”"]
+         "Director\n“...CUT. The best cheating drama I've\n ever shot, and nobody got cheated on.\n I'm not crying. It's the snow.”"]
 PAID = "Director\n“Here's your pay: {VAR} gil.”"

@@ -36,14 +36,19 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
-- **Besties** (687): the Director's film menu, fifth choice. Gast's house in
-  Icicle Inn: Tifa and Aerith come down the stairs in their Wall Market
-  dresses, gesture, all three sit on the bed, the roleplay, undressed; then
-  five positions of the same length, a choice between each (the silly one is
-  a gag, then the real one), the finale's quick prompts and an ending that
-  depends on how well you kept the rhythm. Check the walk-in ends with a turn
-  (no snapping), everyone on the bed (not floating / sunk), and how the
-  positions read from this high camera.
+- **Besties** (687): the Director's film menu, fifth choice. The old house
+  in Icicle Inn: Tifa and Aerith come down the stairs in their Wall Market
+  dresses, gesture, all three sit on the bed and read the Director's script
+  ("The Best Friend's Boyfriend"), undressed; then five positions of the same
+  length, every one across the bed's left edge and out over the rug so the
+  three are side by side on screen: Tifa on the edge with Cloud kneeling to
+  her and Aerith holding her from behind; the ride across the bed (Aerith on
+  his face, the two holding hands); Tifa bent over Aerith on the edge with
+  Cloud behind; the two taking turns kneeling before / hugging him from
+  behind on the rug; the finale at the edge (Tifa on her back, Aerith over
+  her). Check: nobody passes through anybody, the hips' rocking reads well
+  (not too much), the bed / rug items no longer draw over anyone, and the
+  stack's "my turn" switch (Cloud between Tifa and Aerith's mouth).
 - **Hostile Takeover** (686): the Director's film menu, fourth choice. The
   board meeting in Shinra's 66F boardroom, then the position at the table's
   front-left corner (everyone drawn 1.5x bigger in this room). Every 5 reps

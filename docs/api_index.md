@@ -1061,10 +1061,10 @@ The movie minigame (user's design).
 - `_build(ctx, field, base, overhead, PZ)` 
 
 ## `patches/687_besties.py`
-(user) Besties: the fifth film (data `_besties.py`, poses `_besties_poses.py`), Cloud, Tifa and Aerith in Gast's
+(user) Besties: the fifth film (data `_besties.py`, poses `_besties_poses.py` on the rig `_besties_rig.py`),
 
 - `_mods()` 
-- `_places(ctx, a_stand)` Every spot (x, y, z) and DIR. Returns a dict.
+- `_intro_places()` The intro's spots: sitting on the bed's left edge (Cloud in the middle), standing on the rug before it.
 - `apply(ctx)` 
 
 ## `patches/900_phs.py`
@@ -1133,24 +1133,78 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `girl_knees(ctx)` ZMY0-3 from ZMD0-3: hands on her knees (KNEE_HANDS up the thigh, a little out to the side).
 
 ## `patches/_besties.py`
-(user) Besties: the fifth film (687_besties), Cloud, Tifa and Aerith in Gast's house in Icicle Inn (snmayor), on
+(user) Besties: the fifth film (687_besties), Cloud, Tifa and Aerith in the old house at the edge of Icicle
 
 
 ## `patches/_besties_poses.py`
-(user) Besties' poses and spots (687_besties). The pairs are the movie's (670: each girl's retargeted strokes,
+(user: Besties, round 2: "get the positions right so that characters don't clip through each other, the
 
-- `_mods()` 
-- `still(ctx, src, dst, frame=0)` 
-- `sitting(ctx, name, hrc, stand)` name: sitting on an edge (660 `_ledge`), the root moved back (SEAT_IN + SEAT_OUT) so an XYZI on the floor
-- `recline(ctx, hrc, stand)` Aerith sitting up (her knees up and apart): QMU0-3 (bobbing gently: 686's under, her head nodding), 8 / 7 / 9 as
-- `joints(ctx, hrc, anim, frame=0)` {bone: end, bone@: start, bone#: world matrix, root} of one frame (model space, y down).
-- `face(ctx, hrc, stand, J, t=0.3, out=0.9)` Her face's point (between eyes and mouth) in a joints dict.
-- `field(spot, d, m)` Field point of model point m for an entity at spot (x, y, z) with DIR d.
-- class `BedMap` The studio's beds (whitebg1 = a copy of mds7_w3: walkable tops at 54 / 100 / 125) onto one bed (corners
-  - `__init__(ctx, corners, top)` 
-  - `bed_of(p)` 
-  - `point(p, bed_p=None)` A studio point p (x, y, z) -> here; on the bed under bed_p (default: p's own).
-  - `dir(d)` 
+- `_P(s, a, h)` 
+- `_S(m)` 
+- `_new(ctx, who, body)` 
+- `_standing(ctx, who, facing, stance=0.0)` 
+- `_tip(ctx, rg, E_=None)` 
+- `sitting(ctx, name, hrc, stand)` The intro: sitting on an edge (660 `_ledge`), the root moved back (SEAT_IN + SEAT_OUT) so an XYZI on the
+- `_sit_edge(ctx, who, t, c)` Sitting on the edge facing the rug, leaning back, hips rolling up into him at the deepest.
+- `_edge(ctx, n)` 
+- `_astride(ctx, who, t, facing, tilt, spread, lean_, rock, shin_out=0.05, phase=0.0)` 
+- `_ride(ctx, n)` 
+- `_lick(ctx, n)` 
+- `_share_cloud(ctx, t)` 
+- `_kneel_front(ctx, who, t, target, x0=None, sway=SHARE_SWAY)` 
+- `_share(ctx, n)` 
+- `_share_holds(ctx, sh, n)` The front girl's tapping out (30 frames: pulling back, hips wriggling, hands pushing his thighs).
+- `_stack(ctx, n)` 
+- `_who(key)` 
+- class `Scene` 
+  - `__init__(bed, top)` 
+  - `field(m)` Scene model point -> field (x, y, z).
+  - `model(x, y, z)` 
+- `build(ctx, bed, top)` Every position's anims (written to char.lgp) and spots. Returns {segment: {actor key: (names by speed
+
+## `patches/_besties_rig.py`
+(user: Besties, "get the positions right so that characters don't clip through each other, the movements
+
+- `unit(v)` 
+- `sub(a, b)` 
+- `add(a, b)` 
+- `mul(a, s)` 
+- `dot(a, b)` 
+- `cross(a, b)` 
+- `lerp(a, b, t)` 
+- `align(a, b)` The smallest rotation turning direction a into b.
+- `basis(left, up)` The rotation turning the stand's (left, up, forward) into (left, up, left x up), up made square to left.
+- `bow(deg)` 
+- `turn(deg)` 
+- `lean(deg)` 
+- `chain(*ms)` 
+- `ease(t)` 0 at t = 0 (pulled back) .. 1 at t = 0.5 (deepest) .. 0 at 1, smooth.
+- class `Rig` 
+  - `__init__(ctx=None, hrc=None, stand=None)` 
+  - `copy()` 
+  - `_init(ctx, hrc, stand)` 
+  - `start(body, root=None)` The stand turned by `body` (a matrix: e.g. basis(left, up)); root at `root` (default the stand's).
+  - `pelvis(R)` The whole body turned by R (body frame) about the root (legs are re-solved after).
+  - `waist(R)` The upper body (chest, shoulders and up) turned by R (body frame) about the waist.
+  - `neck(R)` The head (and hair) turned by R in the upper body's frame about the neck.
+  - `turn_bones(bones, R, frame=None)` Every bone in `bones` (with what hangs from them) turned by R in `frame` (default the body's).
+  - `aim(bone, d, keep=())` `bone` pointed along d (model space); bones in `keep` hold their world turn (else they follow).
+  - `ends()` {bone: end, bone@: start, bone#: world matrix} (positions from the world matrices directly).
+  - `_ends_slow()` 
+  - `ik(upper, lower, target, pole, keep_end=True, reach=0.995)` upper / lower re-aimed so lower's end is at target (pulled in to `reach` of the limb if too far), the
+  - `place(joint, target)` The root moved so `joint` (an ends() key) is at target.
+  - `frame()` 
+- `save(ctx, name, base, frames)` 
+- `copy_rig(rg)` 
+- `face_pt(rg, t=0.22, out=1.0, E_=None)` Mouth-ish point: along the head bone from the neck, out along the face's front.
+- `entry(rg, E_=None, v=(0.0, 1.2, 1.0))` Her entry (672 ENTRY in the pelvis bone's frame).
+- `axis_of(rg, bone, v, E_=None)` A stand-frame direction v of `bone`, now.
+- `front(rg, bone, E_=None)` 
+- `hips_of(rg, E_=None)` 
+- `hang_hair(rg, back=0.45, along=None)` Hair bones (non_1, kami) hanging down, a little behind the head; `along`: lying, spread that way.
+- `kneel(rg, tilt, spread, floor_y, shin_up=0.05, shin_out=0.05)` Kneeling in the body's starting frame (G): thighs `tilt` forward of straight down, `spread` out, shins back
+- `stand_feet(rg, feet, pole_fwd=1.0)` Legs re-solved to the ankle points `feet` {l, r}, knees forward; feet keep their turn.
+- `fit(build, cost, x0, steps, rounds=4, bounds=None)` Coordinate descent: build(x) -> rig, cost(rig) -> float; `steps` halved every round (0 = fixed).
 
 ## `patches/_blast_data.py`
 (user) Blast-off (673): the movie's third scene for a co-star, with Cid, in the space capsule.

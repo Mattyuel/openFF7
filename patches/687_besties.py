@@ -1,27 +1,24 @@
-"""(user) Besties: the fifth film (data `_besties.py`, poses `_besties_poses.py`), Cloud, Tifa and Aerith in Gast's
-house in Icicle Inn, on the bed on the lower floor. Sensual and sincere, with Aerith's "too much" roleplay running
-through it, experiments that go wrong, and a climax together that the player's rhythm earns.
+"""(user) Besties: the fifth film (data `_besties.py`, poses `_besties_poses.py` on the rig `_besties_rig.py`),
+Cloud, Tifa and Aerith in the old house at the edge of Icicle Inn, on the bed on the lower floor. Sensual and
+sincere, with the Director's script ("The Best Friend's Boyfriend", a cheating soap opera with their own names in
+it) running through it scene by scene, experiments that go wrong, and a climax together that the player's
+rhythm earns.
 
-The set: FIELD (a debug room) replaced by a copy of snmayor, script blanked, gateways cleared. Models: Cloud (the
-hidden player), clothed Cloud / Tifa (Corneo's mansion's dress AXJA) / Aerith (her dress AZBB) for the intro, bare
-Cloud / Tifa (ZTFA) / Aerith (ZAEA).
+The set: FIELD (a debug room) replaced by a copy of snmayor, script blanked, gateways cleared; the room's mid
+layer tiles (the bed, the rug's books, the dresser: TILES_BEHIND) moved behind every character (user: tiles
+popped through). Models: Cloud (the hidden player), clothed Cloud / Tifa (Corneo's mansion's dress AXJA) /
+Aerith (her dress AZBB) for the intro, bare Cloud / Tifa (ZTFA) / Aerith (ZAEA).
 
 The intro (`_besties.INTRO`, actions per line): they come down from the stairs in their dresses, gestures from the
 dress models' own anims (Tifa APGC fists at her chest / CXHB hand to her cheek, Aerith DADD hands clasped / DDFA
-giggling behind her hand), all three sit on the bed's edge (660 `_ledge`) for the heart-to-heart and the roleplay,
-then (fade) undressed, standing. HOW, then the segments (`SEGMENTS`), each placed by SEG and P (actors' slot 2):
-  0 kiss   Aerith on her back (670 mission ZUA / ZNA), Tifa on all fours alongside her facing the bed's head, her
-           face at Aerith's (her dog's frame 0)
-  1 ride   Tifa riding Cloud (cowgirl ZVB / ZNB), Aerith standing beside the bed
-  2 taste  Tifa on all fours (dog ZVC / ZNC), Cloud behind her, Aerith sitting up at the bed's foot before her
-           (QMU: 686's under, propped up), her crotch at Tifa's mouth, her knees either side of Tifa's head
-  3 share  on the rug: Cloud standing, both kneeling before him either side (head ZVJ / ZUJ, the waiting one her
-           pulled-back frame), P = whose turn; a HOLD lasts until she taps out; "my turn" calls
-  4 stack  Tifa on her back (mission ZVA), Aerith on all fours over her (dog ZUC), Cloud kneeling at them: P 0
-           Tifa (ZNA), 1 Aerith (ZNC), "my turn" calls
-each REPS prompts (fixed length); between them OFFERS: the real next one or an experiment that goes wrong (the
-gag, then on). The finale: FINISH quick prompts; score = hits + 2 x finale hits -> CLIMAX great / good / okay;
-then AFTER on a black screen, the pay, back to the Director. Checked on offline renders only."""
+giggling behind her hand), all three sit on the bed's edge (660 `_ledge`) for the script and the heart-to-heart,
+then (fade) undressed, standing. HOW, then the segments (`SEGMENTS`), each placed by SEG and P (actors' slot 2;
+(user, round 2) every position rebuilt side-on across the bed's left edge so nobody overlaps, see
+`_besties_poses`): 0 edge, 1 ride, 2 lick, 3 share (P = who kneels in front; a HOLD lasts until she taps out;
+"my turn" calls), 4 stack (P 0 Cloud in Tifa, 1 in Aerith's mouth; "my turn" calls). Each REPS prompts (fixed
+length); between them OFFERS: the real next one or an experiment that goes wrong (the gag, then on). The finale:
+FINISH quick prompts; score = hits + 2 x finale hits -> CLIMAX great / good / okay; then AFTER on a black screen,
+the pay, back to the Director. Checked on offline renders only."""
 import importlib
 import math
 import struct
@@ -40,6 +37,8 @@ BARE_TIFA, BARE_AERITH = "ZTFA.HRC", "ZAEA.HRC"
 T_STAND = "abcd.a"                                             # (Aerith's: her donor's first anim, found in apply)
 GESTURES = {"t": ["APGC.tor", "CXHB.tor"], "a": ["DADD.chi", "DDFA.chi"]}
 WALK_STEP = 2.6
+TILES_BEHIND = (100, 4000)      # layer 2 draw ids moved behind the characters (the room's 0-5 are the near
+                                # tree / state layers, 4064 the far wall)
 
 SEG, TIER, STREAK, KEY, PR, RND, KP, HOLD, HELD, P, REPN, TALKING, LN, CHAT, HC, CUE, CL, SEEN, ANGER, FH = \
     ((5, a) for a in range(100, 120))
@@ -53,89 +52,25 @@ def _mods():
         importlib.import_module("660_dates")
 
 
-def _places(ctx, a_stand):
-    """Every spot (x, y, z) and DIR. Returns a dict."""
-    mv, hb, dt = _mods()
-    bm = BP.BedMap(ctx, BS.BED, BS.BED_Z)
-    places = ctx.movie_places
-    names = [p_["name"] for p_ in mv.POSITIONS]
-    pl = lambda n: places[names.index(n)]
-    out = {}
-
-    def pair(n):
-        q = pl(n)
-        return bm.point(q["girl"][:3]), bm.dir(q["gdir"]), bm.point(q["cloud"][:3], q["girl"][:3]), bm.dir(q["cdir"])
-    ax = bm.axis
-    side = (ax[1], -ax[0])                                               # across the bed (to its left: the rug)
-    if side[0] > 0:
-        side = (-side[0], -side[1])
-    # 0 kiss: Aerith (mission) with Cloud; Tifa on all fours beside her, her face at Aerith's
-    g, gd, c, cd = pair("mission")
-    out["kiss"] = dict(aerith=(g, gd), cloud=(c, cd))
-    Ja = BP.joints(ctx, BARE_AERITH, "ZUA1")
-    fa_ = BP.field(g, gd, BP.face(ctx, BARE_AERITH, a_stand, Ja))
-    td = bm.dir(128)                                                     # (facing the bed's head, alongside her)
-    Jt = BP.joints(ctx, BARE_TIFA, "ZVC0")
-    ft = BP.field((0, 0, 0), td, BP.face(ctx, BARE_TIFA, T_STAND, Jt))
-    out["kiss"]["tifa"] = ((round(fa_[0] + side[0] * BP.KISS_SIDE - ft[0]), round(fa_[1] + side[1] * BP.KISS_SIDE - ft[1]),
-                            BS.BED_Z), td)
-    # 1 ride: Tifa (cowgirl) with Cloud; Aerith standing beside the bed, facing her
-    g, gd, c, cd = pair("cowgirl")
-    out["ride"] = dict(tifa=(g, gd), cloud=(c, cd))
-    ax_ = (g[0] + side[0] * BP.STAND_OFF, g[1] + side[1] * BP.STAND_OFF)
-    out["ride"]["aerith"] = ((round(ax_[0]), round(ax_[1]), 0), dt._dir_to(g[0] - ax_[0], g[1] - ax_[1]))
-    # 2 taste: Tifa (dog) with Cloud; Aerith reclining before her, her crotch at Tifa's mouth, her head away
-    g, gd, c, cd = pair("dog")
-    out["taste"] = dict(tifa=(g, gd), cloud=(c, cd))
-    Jt = BP.joints(ctx, BARE_TIFA, "ZVC1", 7)
-    mouth = BP.field(g, gd, BP.face(ctx, BARE_TIFA, T_STAND, Jt, 0.25, 1.1))
-    Jr = BP.joints(ctx, BARE_AERITH, "QMU8")
-    crotch = [(Jr["l_femur@"][k] + Jr["r_femur@"][k]) / 2 for k in range(3)]
-    hv = [Jr["head@"][k] - Jr["hip@"][k] for k in range(3)]
-    fwd = (math.sin(gd * math.pi / 128), -math.cos(gd * math.pi / 128))     # Tifa's facing
-    ad = max(range(256), key=lambda d: sum(a * b for a, b in zip(mv._off(hv, d)[:2], fwd)) / (math.hypot(*mv._off(hv, d)[:2]) + 1e-9))
-    co = mv._off(crotch, ad)
-    out["taste"]["aerith"] = ((round(mouth[0] + fwd[0] * 3 - co[0]), round(mouth[1] + fwd[1] * 3 - co[1]), BS.BED_Z), ad)
-    # 3 share: on the rug; Cloud facing the bed side-on, the girls either side before him
-    cx, cy = BS.CARPET
-    cdir = dt._dir_to(side[0] * -1, side[1] * -1)                        # (towards the bed)
-    a0 = cdir * math.pi / 128
-    out["share"] = dict(cloud=((cx, cy, 0), cdir))
-    for who, sg in (("tifa", 1), ("aerith", -1)):
-        a = a0 + sg * math.radians(BP.SHARE_ANG)
-        gx, gy = cx + math.sin(a) * BP.SHARE_GAP, cy - math.cos(a) * BP.SHARE_GAP
-        out["share"][who] = ((round(gx), round(gy), 0), dt._dir_to(cx - gx, cy - gy))
-    out["share"]["cdirs"] = (round(cdir + BP.SHARE_ANG * 256 / 360) % 256, round(cdir - BP.SHARE_ANG * 256 / 360) % 256)
-    # 4 stack: Tifa (mission) with Cloud; Aerith (dog) over her, placed from the same Cloud spot
-    g, gd, c, cd = pair("mission")
-    q = pl("dog")
-    rel = (q["girl"][0] - q["cloud"][0], q["girl"][1] - q["cloud"][1])
-    # (the studio's dog has Cloud behind her at the bed's head, both facing its foot; the mission the other way
-    # round: the dog pair turned half round, so Aerith is over Tifa, face to face, her rear to Cloud)
-    ct, st_ = math.cos(bm.theta + math.pi), math.sin(bm.theta + math.pi)
-    adog = bm.point(q["girl"][:3])
-    cdog = bm.point(q["cloud"][:3], q["girl"][:3])
-    out["stack"] = dict(tifa=(g, gd), cloud=(c, cd),
-                        aerith=((round(c[0] + rel[0] * ct - rel[1] * st_), round(c[1] + rel[0] * st_ + rel[1] * ct), adog[2]),
-                                (bm.dir(q["gdir"]) + 128) % 256),
-                        cloud1=((c[0], c[1], cdog[2]), (bm.dir(q["cdir"]) + 128) % 256))
-    # the intro: standing spots on the rug, then sitting on the bed's left edge (Cloud in the middle)
+def _intro_places():
+    """The intro's spots: sitting on the bed's left edge (Cloud in the middle), standing on the rug before it."""
+    _, _, dt = _mods()
     A, B, C, D = BS.BED
     e0, e1 = (A[0], A[1]), (D[0], D[1])                                    # the left edge, foot to head
-    out_n = side
-    sit = {}
+    ex, ey = e1[0] - e0[0], e1[1] - e0[1]
+    ln = math.hypot(ex, ey)
+    out_n = (-ey / ln, ex / ln)
+    if out_n[0] > 0:
+        out_n = (-out_n[0], -out_n[1])                                     # (out over the rug)
+    sit, stand = {}, {}
     for who, t in (("tifa", 0.15), ("cloud", 0.5), ("aerith", 0.85)):
-        px, py = e0[0] + (e1[0] - e0[0]) * t, e0[1] + (e1[1] - e0[1]) * t
+        px, py = e0[0] + ex * t, e0[1] + ey * t
         sit[who] = ((round(px + out_n[0] * BP.SEAT_OUT), round(py + out_n[1] * BP.SEAT_OUT), BS.BED_Z),
                     dt._dir_to(out_n[0], out_n[1]))
-    out["sit"] = sit
-    stand = {}
     for who, t in (("tifa", 0.3), ("cloud", 0.5), ("aerith", 0.7)):
-        px, py = e0[0] + (e1[0] - e0[0]) * t, e0[1] + (e1[1] - e0[1]) * t
+        px, py = e0[0] + ex * t, e0[1] + ey * t
         stand[who] = ((round(px + out_n[0] * 55), round(py + out_n[1] * 55), 0), dt._dir_to(out_n[0], out_n[1]))
-    out["stand"] = stand
-    out["side"] = side
-    return out
+    return {"sit": sit, "stand": stand}
 
 
 def apply(ctx):
@@ -145,12 +80,11 @@ def apply(ctx):
     t_donor = ModelLoader(ctx.field(TIFA_DRESS[0]).section("models")).models[TIFA_DRESS[1]]
     ae = ModelLoader(ctx.field("bwhlin").section("models")).models[1]                   # (AUFF: her own stand)
     a_stand = ModelLoader.anims(ae)[0].split(".")[0].lower() + ".a"
-    recl = BP.recline(ctx, BARE_AERITH, a_stand)                                       # QMU0-3, 8, 7
-    t_still = BP.still(ctx, "ZVC0", "QPT9")                                            # Tifa on all fours, still
+    PZ = BP.build(ctx, BS.BED, BS.BED_Z)                                               # (user, round 2) every position
     sits = {"tifa": BP.sitting(ctx, "QPT1", "axja.hrc", "abcd.a"),
             "aerith": BP.sitting(ctx, "QPA1", "azbb.hrc", "avbf.a"),
             "cloud": BP.sitting(ctx, "QPC1", "aaaa.hrc", "acfe.a")}
-    PL = _places(ctx, a_stand)
+    PL = _intro_places()
     # the set
     ctx.field(BS.FIELD)
     ctx.field(BS.BASE)
@@ -159,6 +93,9 @@ def apply(ctx):
     for slot in range(12):
         trig = tg.set_gateway_field(trig, slot, tg.UNUSED)
     f.set_section("triggers", trig)
+    # (user: background tiles popping through) the room's mid layer (the bed, the rug's books and bottles, the
+    # dresser: draw ids TILES_BEHIND) behind every character, their order kept; the near / far ones stay
+    dt.tiles_behind(f, lambda i: TILES_BEHIND[0] <= i < TILES_BEHIND[1], 3960, 4094)
     sec = Script.parse(f.sections[0])
     dt._clear_texts(sec)
     mesh = Walkmesh(f.section("walkmesh"))
@@ -183,9 +120,15 @@ def apply(ctx):
     tw = [td_anims[0], td_anims[1], sits["tifa"]] + GESTURES["t"]
     aw = [ad_anims[0], ad_anims[1], sits["aerith"]] + GESTURES["a"]
     assert all(g_ in td_anims for g_ in GESTURES["t"]) and all(g_ in ad_anims for g_ in GESTURES["a"])
-    bare_c = ["ZN%s%d.tor" % (L, s) for L in "ABCJ" for s in range(4)] + ["ZNJ8.tor"]
-    bare_t = ["ZV%s%d.tor" % (L, s) for L in "ABCJ" for s in range(4)] + ["ZVJ9.tor", "ZVJ8.tor", "ZVJ7.tor", t_still]
-    bare_a = ["ZU%s%d.tor" % (L, s) for L in "ACJ" for s in range(4)] + ["ZUJ9.tor", "ZUJ8.tor", "ZUJ7.tor"] + recl
+    sp_ = lambda seg, key: PZ[seg][key][0]                                             # its 4 speeds
+    bare_c = sum((sp_(seg, k) for seg, k in (("edge", "cloud"), ("ride", "cloud"), ("lick", "cloud"),
+                  ("share", "cloud_t"), ("share", "cloud_a"), ("stack", "cloud"), ("stack", "cloud1"))), []) + \
+        [PZ["holds"]["cloud_tifa"], PZ["holds"]["cloud_aerith"]]
+    bare_t = sum((sp_(seg, k) for seg, k in (("edge", "tifa"), ("ride", "tifa"), ("lick", "tifa"),
+                  ("share", "tifa_front"), ("share", "tifa_back"), ("stack", "tifa"))), []) + PZ["holds"]["tifa"]
+    bare_a = sum((sp_(seg, k) for seg, k in (("edge", "aerith"), ("ride", "aerith"), ("lick", "aerith"),
+                  ("share", "aerith_front"), ("share", "aerith_back"), ("stack", "aerith"), ("stack", "aerith1"))), []) + \
+        PZ["holds"]["aerith"]
     for nm in bare_c + bare_t + bare_a:
         ctx.char_file(nm.split(".")[0].lower() + ".a")                                # (exists)
     loader.models = [cl0, ModelLoader.only_anims(cl0, c_anims[:2] + [sits["cloud"]]),
@@ -242,44 +185,38 @@ def apply(ctx):
             sc[10 + j] = once(3 + j, 0) + [asm.ret()]
         scripts[E[ent]] = sc
     # the scene actors: slot 2 = placed by SEG (and P), the tier's stroke; 3 = standing bare (intro); 4 hidden;
-    # 5 / 6 the hold / tapping out (share)
-    stroke = lambda first: ch_(TIER, [loop_(first + s) for s in range(4)])
+    # 5 / 6 the hold / tapping out (share: the girl in front, P 0 Tifa / 1 Aerith). Each actor's spot per segment
+    # (`_besties_poses`: the anims carry the offsets from it); the same stroke length for everyone in a tier.
+    stroke = lambda first: ch_(TIER, [loop_(first + s_) for s_ in range(4)])
     ci, ti, ai = (lambda n: 1 + bare_c.index(n)), (lambda n: 1 + bare_t.index(n)), (lambda n: 1 + bare_a.index(n))
-    K, R_, T_, H_, St = PL["kiss"], PL["ride"], PL["taste"], PL["share"], PL["stack"]
+    spot = lambda seg, key: (PZ[seg][key][1], PZ[seg][key][2])
+    go = lambda seg, key, idx: at(spot(seg, key)) + stroke(idx(PZ[seg][key][0][0]))
     scripts[E["cloudB"]] = {
         0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: ch_(SEG, [at(K["cloud"]) + stroke(ci("ZNA0.tor")),
-                     at(R_["cloud"]) + stroke(ci("ZNB0.tor")),
-                     at(T_["cloud"]) + stroke(ci("ZNC0.tor")),
-                     at((H_["cloud"][0], 0)) + ch_(P, [[d_(H_["cdirs"][0])], [d_(H_["cdirs"][1])]]) + stroke(ci("ZNJ0.tor")),
-                     ch_(P, [at(St["cloud"]) + stroke(ci("ZNA0.tor")), at(St["cloud1"]) + stroke(ci("ZNC0.tor"))])]) +
-        [hb._visi(1), asm.ret()],
+        2: ch_(SEG, [go("edge", "cloud", ci), go("ride", "cloud", ci), go("lick", "cloud", ci),
+                     ch_(P, [go("share", "cloud_t", ci), go("share", "cloud_a", ci)]),
+                     ch_(P, [go("stack", "cloud", ci), go("stack", "cloud1", ci)])]) + [hb._visi(1), asm.ret()],
         3: at(S["cloud"]) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
-        5: loop_(ci("ZNJ8.tor")) + [asm.ret()]}
-    wait_t, wait_a = loop_(ti("ZVJ9.tor")), loop_(ai("ZUJ9.tor"))
+        5: ch_(P, [loop_(ci(PZ["holds"]["cloud_tifa"])), loop_(ci(PZ["holds"]["cloud_aerith"]))]) + [asm.ret()]}
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: ch_(SEG, [at(K["tifa"]) + loop_(ti(t_still)),
-                     at(R_["tifa"]) + stroke(ti("ZVB0.tor")),
-                     at(T_["tifa"]) + stroke(ti("ZVC0.tor")),
-                     at(H_["tifa"]) + ch_(P, [stroke(ti("ZVJ0.tor")), wait_t]),
-                     at(St["tifa"]) + stroke(ti("ZVA0.tor"))]) + [hb._visi(1), asm.ret()],
+        2: ch_(SEG, [go("edge", "tifa", ti), go("ride", "tifa", ti), go("lick", "tifa", ti),
+                     ch_(P, [go("share", "tifa_front", ti), go("share", "tifa_back", ti)]),
+                     go("stack", "tifa", ti)]) + [hb._visi(1), asm.ret()],
         3: at(S["tifa"]) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
-        5: loop_(ti("ZVJ8.tor")) + [asm.ret()],
-        6: loop_(ti("ZVJ7.tor")) + [asm.ret()]}
+        5: loop_(ti(PZ["holds"]["tifa"][0])) + [asm.ret()],                # held deep
+        6: loop_(ti(PZ["holds"]["tifa"][1])) + [asm.ret()]}                # tapping out
     scripts[E["aerB"]] = {
         0: [Op(bytes([0xA1, 6])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: ch_(SEG, [at(K["aerith"]) + stroke(ai("ZUA0.tor")),
-                     at(R_["aerith"]) + loop_(0),
-                     at(T_["aerith"]) + stroke(ai(recl[0])),
-                     at(H_["aerith"]) + ch_(P, [wait_a, stroke(ai("ZUJ0.tor"))]),
-                     at(St["aerith"]) + stroke(ai("ZUC0.tor"))]) + [hb._visi(1), asm.ret()],
+        2: ch_(SEG, [go("edge", "aerith", ai), go("ride", "aerith", ai), go("lick", "aerith", ai),
+                     ch_(P, [go("share", "aerith_back", ai), go("share", "aerith_front", ai)]),
+                     ch_(P, [go("stack", "aerith", ai), go("stack", "aerith1", ai)])]) + [hb._visi(1), asm.ret()],
         3: at(S["aerith"]) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
-        5: loop_(ai("ZUJ8.tor")) + [asm.ret()],
-        6: loop_(ai("ZUJ7.tor")) + [asm.ret()]}
+        5: loop_(ai(PZ["holds"]["aerith"][0])) + [asm.ret()],
+        6: loop_(ai(PZ["holds"]["aerith"][1])) + [asm.ret()]}
     # the buttons: a press = up -> down (PR = its number), HELD bit k while held
     for k, (mask, _) in enumerate(BS.KEYS + [BS.SWITCH_KEY]):
         top, up, held = hb._w(1), asm.nop(), asm.nop()

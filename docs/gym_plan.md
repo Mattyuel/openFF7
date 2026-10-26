@@ -424,7 +424,7 @@ one position after another into films.
   | *Hostile Takeover* (**built: 686_hostile, untested in-game**) | the Shinra board meeting: executives fight over the budget | the boardroom (blin66 floors) | Scarlet as the cruel exec, Elena as the new hire (proposal) |
   | *Going up* (**built: 684_going_up, untested in-game**) | the Turks' elevator capture, turned round: the stuck glass elevator, Tifa's 'special training' for Elena | Shinra HQ's glass elevator (eleout) | Cloud, Tifa, Elena (user) |
   | *Tickets, please!* (**built: 685_tickets, untested in-game**) | the train ride's ID check, turned round: Cloud the ticket inspector, two bratty passengers with no tickets | the Sector 7 train (tin_2) | Cloud, Tifa, Jessie (user) |
-  | *Besties* (**built: 687_besties, untested in-game**) | a sincere, sensual night together; Aerith's "too much" roleplay | Gast's house, Icicle Inn (snmayor) | Cloud, Tifa, Aerith (user) |
+  | *Besties* (**built: 687_besties, untested in-game**) | a sincere, sensual night together; the Director's "too much" cheating-drama script | the old house in Icicle Inn (snmayor) | Cloud, Tifa, Aerith (user) |
   | *Mako Fever* | a reactor inspection with a stuck elevator | No.1 / No.5 reactor rooms | Cloud, Tifa, Jessie (user) |
   | *Escape Pod* | Shinra's space programme, sealed in with too little air | the rocket's capsule (rcktin7) | Cid, Aerith (user) |
 
