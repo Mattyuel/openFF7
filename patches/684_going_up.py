@@ -46,6 +46,9 @@ WN = (5, 134)                        # a walk's frame count
 # Cloud's pose variant, SC reps since it changed, ANGER Tifa's strikes, HC / CUE the head hold's frames / her
 # tap-out frame, CL the prompt window's line
 TALKING, LN, CHAT, STYLE, SC, ANGER, HC, CUE, CL = ((5, a) for a in range(135, 144))
+# (user) the waiting partner's idle runs while 1 (her slot 2 doesn't restart it every rep); each written only
+# by that girl's own scripts and the director before the scene starts
+IDLE_E, IDLE_T = (5, 144), (5, 145)
 
 
 def _mods():
@@ -56,6 +59,19 @@ def _mods():
 def _rot(v, d):
     a = d * 2 * math.pi / 256
     return v[0] * math.cos(a) - v[1] * math.sin(a), v[0] * math.sin(a) + v[1] * math.cos(a)
+
+
+def _camera_yaw(mv, d, v):
+    """Degrees (about her vertical, as `_going_up_poses.tifa_idle` turns her head) from facing ahead to field
+    direction v, for an entity with DIR d; at most 75 either way."""
+    from ff7 import fieldanim as fa
+    a = d * 2 * math.pi / 256
+    F0, F1 = math.sin(a), -math.cos(a)
+    m = (-F1 * v[0] + F0 * v[1], -F1 * v[1] - F0 * v[0])           # (670 `_off` inverted: model x, z)
+    n = math.hypot(*m)
+    best = max(range(-75, 76), key=lambda t: sum(p * q for p, q in zip(
+        (lambda w: (w[0], w[2]))(fa._vec(fa.axis_angle([0.0, 1.0, 0.0], t), [0.0, 0.0, -1.0])), (m[0] / n, m[1] / n))))
+    return best
 
 
 def apply(ctx):
@@ -107,7 +123,14 @@ def apply(ctx):
     c_anims = ModelLoader.anims(cl0)
     t_anims = ModelLoader.anims(tifa_e)
     bare_c = ["ZNC%d.tor" % s for s in range(4)] + ["ZNJ%d.tor" % s for s in range(4)] + ["ZNJ8.tor"] + variants
-    bare_t = ["ZVJ%d.tor" % s for s in range(4)] + ["ZVJ9.tor", "ZVJ8.tor", "ZVJ7.tor"]    # (8 held deep, 7 her squirm)
+    # (user) Elena's crawl (QEC0) and her idle while Tifa has him (QED0: a hip shake, a look to her right);
+    # Tifa's idle while Elena has him (QVE0: a look at the camera, her head tilted to her right)
+    v = cam.axes[2]
+    yaw = _camera_yaw(mv, dT, (-v[0], -v[1]))
+    own += mv._retarget(ctx, [GP.crawl(ctx), GP.elena_idle(ctx)], "QE", BARE_ELENA, e_stand)
+    t_idle = mv._retarget(ctx, [GP.tifa_idle(ctx, yaw)], "QV", BARE_TIFA,
+                          ModelLoader.anims(tifa_e)[0].split(".")[0].lower() + ".a")
+    bare_t = ["ZVJ%d.tor" % s for s in range(4)] + ["ZVJ9.tor", "ZVJ8.tor", "ZVJ7.tor"] + t_idle   # (8 held deep, 7 her squirm)
     bare_e = own + ["ZYC%d.tor" % s for s in range(4)]
     for n in bare_c + bare_t + bare_e:
         ctx.char_file(n.split(".")[0].lower() + ".a")                    # (exists)
@@ -179,7 +202,8 @@ def apply(ctx):
     # the scene actors: 0 init hidden; 2 = this rep (by P: placed, the tier's stroke from its start); 4 hidden;
     # Elena 8 covering (intro), 9 the crawl
     stroke = lambda base: ch_(TIER, [loop_(1 + base + s) for s in range(4)])
-    qk = lambda n: bare_c.index(n) - 1                                  # (stroke adds 1)
+    qk = lambda n: bare_c.index(n)                                      # (stroke adds the stand's 1; user saw a dog
+                                                                        # stroke in Tifa's turn when this was off by one)
     scripts[E["cloudB"]] = {
         0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: ch_(P, [at(ck, dE) + ch_(STYLE, [stroke(0), stroke(qk("QKC0.tor"))]),
@@ -187,9 +211,15 @@ def apply(ctx):
         4: [hb._visi(0), asm.ret()],
         5: loop_(hold_c) + [asm.ret()]}
     ti = lambda n: 1 + bare_t.index(n)
+
+    def idle(flag, i):
+        """Her idle loop, started only if it isn't running (flag)."""
+        on = asm.nop()
+        return [asm.if_byte(flag, "==", 0, on)] + loop_(i) + [asm.setbyte(flag, 1), on]
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at(tp, dT) + ch_(P, [loop_(ti("ZVJ9.tor")), ch_(TIER, [loop_(ti("ZVJ%d.tor" % s)) for s in range(4)])]) +
+        2: at(tp, dT) + ch_(P, [idle(IDLE_T, ti(t_idle[0])),
+                                [asm.setbyte(IDLE_T, 0)] + ch_(TIER, [loop_(ti("ZVJ%d.tor" % s)) for s in range(4)])]) +
         [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(hold_t) + [asm.ret()],                                  # held deep
@@ -198,7 +228,7 @@ def apply(ctx):
     n_crawl = max(1, round(math.dist(epos, (ex, ey)) / (WALK_STEP * 0.5)))
     stx, sty = round((ex - epos[0]) / n_crawl), round((ey - epos[1]) / n_crawl)
     ctop, cdone = hb._w(1), asm.nop()
-    crawl = at(epos, dE) + loop_(ei_("ZYC0.tor")) + \
+    crawl = at(epos, dE) + loop_(ei_("QEC0.tor")) + \
         [asm.setword(CX, epos[0] & 0xFFFF), asm.setword(CY, epos[1] & 0xFFFF), asm.setbyte(WN, 0),
          ctop, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
          Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], Z, tri(*epos))),
@@ -206,8 +236,8 @@ def apply(ctx):
         at((ex, ey), dE) + loop_(ei_("QEB0.tor"))
     scripts[E["elenaB"]] = {
         0: [Op(bytes([0xA1, 6])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at((ex, ey), dE) + ch_(P, [ch_(TIER, [loop_(ei_("ZYC%d.tor" % s)) for s in range(4)]),
-                                       loop_(ei_("QEB0.tor"))]) + [hb._visi(1), asm.ret()],
+        2: at((ex, ey), dE) + ch_(P, [[asm.setbyte(IDLE_E, 0)] + ch_(TIER, [loop_(ei_("ZYC%d.tor" % s)) for s in range(4)]),
+                                       idle(IDLE_E, ei_("QED0.tor"))]) + [hb._visi(1), asm.ret()],
         8: at(epos, face(*epos, *cpos)) + [hb._visi(1)] + loop_(ei_(own[0])) + [asm.ret()],
         9: crawl + [asm.ret()],
         4: [hb._visi(0), asm.ret()]}
@@ -309,7 +339,8 @@ def apply(ctx):
             main += [hb._req(E["elenaB"], 9)]
         elif action == "behind":
             main += [hb._req(E["cloudA"], 9)] + fade_out + [hb._req(E["cloudA"], 4), hb._req(E["tifaA"], 4)]
-            main += [asm.setbyte(P, 0), asm.setbyte(TIER, 0), asm.setbyte(STYLE, 0)] + \
+            main += [asm.setbyte(P, 0), asm.setbyte(TIER, 0), asm.setbyte(STYLE, 0), asm.setbyte(IDLE_E, 0),
+                     asm.setbyte(IDLE_T, 0)] + \
                 [hb._req(E[a], 2) for a in ("cloudB", "tifaB", "elenaB")] + [hb._w(20)] + fade_in
     main += say(GU.HOW)
     main += [asm.setbyte(STREAK, 0), asm.setbyte(SEEN, 0x11), asm.setword(PAY, 0), asm.setword(REPS, 0),

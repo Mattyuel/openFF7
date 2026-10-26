@@ -35,10 +35,10 @@ FOOT_UP = (2.2, 1.6)            # (style 1 behind Tifa) his left foot up on the 
 LEGS_SPREAD = 14                # Jessie's straight legs up the window, this far apart (degrees each)
 
 PERIODS = (60, 45, 33, 24)      # frames a rep: 3 strokes of the 20 / 15 / 11 / 8-frame speeds
-HITS_UP = 4
+HITS_UP = 3                     # (user: 50% shorter scenes; was 4)
 HOLD_ODDS = 52                  # in 256, per rep from tier 1: a HOLD prompt
-SWITCH_MIN, SWITCH_RANGE = 8, 5
-TOTAL_REPS = 64
+SWITCH_MIN, SWITCH_RANGE = 4, 3
+TOTAL_REPS = 32                 # (user: 50% shorter; was 64)
 PAY_HIT = 15
 SWITCH_BONUS = 5
 HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # (user) 683's squat sound, as Going up
@@ -49,7 +49,7 @@ HOLD_BONUS = 2
 MAD_PENALTY = 10
 MAD_LIMIT = 3
 RESULT_WAIT = 50
-STYLE_EVERY = 6
+STYLE_EVERY = 3                 # (user: transitions sooner; was 6)
 
 KEYS = [(0x80, "{PURPLE}[SWITCH]{WHITE}"), (0x40, "{PURPLE}[CANCEL]{WHITE}"), (0x220, "{PURPLE}[OK]{WHITE}")]
 SWITCH_KEY = (0x10, "{PURPLE}[MENU]{WHITE}")

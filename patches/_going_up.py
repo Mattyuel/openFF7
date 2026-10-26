@@ -27,10 +27,10 @@ SAY = 100
 
 # the tiers: frames a rep (a prompt every 3 strokes of the 20 / 15 / 11 / 8-frame speeds), hits to step up
 PERIODS = (60, 45, 33, 24)
-HITS_UP = 4
+HITS_UP = 3                     # (user: 50% shorter scenes; was 4)
 HOLD_ODDS = 52                  # in 256, per rep from tier 1: a HOLD prompt
-SWITCH_MIN, SWITCH_RANGE = 8, 5 # reps with one partner before Tifa calls "Switch!" (8..12)
-TOTAL_REPS = 64
+SWITCH_MIN, SWITCH_RANGE = 4, 3 # reps with one partner before Tifa calls "Switch!" (4..6)
+TOTAL_REPS = 32                 # (user: 50% shorter; was 64)
 PAY_HIT = 15                    # gil per hit x (tier + 1); a held one pays double
 SWITCH_BONUS = 5                # (x PAY_HIT)
 
@@ -80,7 +80,7 @@ MAD_LIMIT = 3
 RESULT_WAIT = 50
 # (user: variations) Cloud's pose alternates every STYLE_EVERY reps: behind Elena 0 right knee up / 1 his left
 # (the camera's side); before Tifa 0 hands on her head / 1 hands behind his own head
-STYLE_EVERY = 6
+STYLE_EVERY = 3                 # (user: transitions sooner; was 6)
 STYLE_LINES = [[["Cloud\n“Switching legs.”"],
                 ["Elena\n“W-what are you doing with your\n leg...? Ah... ahh...!”", "Cloud\n“Better angle.”"]],
                [["Tifa\n“(Mmph!)”", "Elena\n“Hands back on. Noted.”"],

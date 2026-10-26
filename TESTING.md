@@ -59,6 +59,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   ~1 s after she taps out makes her mad (pay off, slow again); the third
   time she climbs out and the shoot ends. Say if the tap-out is hard to
   notice or the window to let go feels too short.
+  Since the feedback: half as long, styles change every 3 reps; Elena
+  crawls properly; while Tifa has Cloud, Elena shakes her hips and looks to
+  her right now and then; while Elena has him, Tifa looks at the camera and
+  tilts her head. Cloud should never play a behind-Elena move at Tifa.
 - **Sector 7 Workout** (683): talk to the Director (the cameraman) at the
   Sector 7 station: his first question offers "Shoot Sector 7 Workout.".
   In the gym: the intro talk, then squats. A button name pops up each rep

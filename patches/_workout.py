@@ -21,9 +21,9 @@ SAY = 100                       # frames a line stays up during the squats
 # speed tiers: frames per rep (one squat down and up); (user) each step 10% faster than the last.
 # HITS_UP hits in a row step the pace up a tier; a miss drops it back to the slowest
 PERIODS = tuple(round(60 * 0.9 ** k) for k in range(8))      # 60 54 49 44 39 35 32 29
-HITS_UP = 3
-PART_A_END = 4                  # part one ends after this many hits at the top tier
-PART_B_REPS = 48                # part two: this many prompts, then the finale
+HITS_UP = 2                     # (user: 50% shorter; was 3)
+PART_A_END = 2                  # part one ends after this many hits at the top tier
+PART_B_REPS = 24                # part two: this many prompts, then the finale
 PAY_HIT = 10                    # gil per hit x (tier + 1)
 CHAT_EVERY = 4                  # (user: long silences) a chatter line every this many reps, when nobody's talking
 HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # the squat contest's squat (mkt_mens: AKAO 28 08 019d)
@@ -43,7 +43,7 @@ RESULT_WAIT = 50
 HOLD_LABEL = "HOLD "
 # (user: variations) the pose's style changes every STYLE_EVERY reps (`_workout_poses.STYLES`: A clothed
 # 0 spotted / 1 sumo, hands behind her head; B 0 bent over / 1 Cloud cocks a leg up / 2 touching her toes)
-STYLE_EVERY = 6
+STYLE_EVERY = 3                 # (user: transitions sooner; was 6)
 
 # the buttons, as the squat contest names them: (IFKEY mask, the prompt's text)
 # (OK as 0x220: IFKEY's mask bit 0x200 is OK too on PC, and 0x20 alone never fired in 670's minigame)

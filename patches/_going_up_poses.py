@@ -100,3 +100,127 @@ def build_cloud(ctx):
         CP._save(ctx, "%sJ%d" % (VARIANT, s), src, frames)
         names.append("%sJ%d.tor" % (VARIANT, s))
     return names
+
+
+# ---- (user) the crawl and the waiting partners' idles, on Ruby (retargeted by 684) -------------------------
+CRAWL_FRAMES = 30               # one crawl cycle (a step with each knee and hand)
+CRAWL_LEG, CRAWL_ARM, CRAWL_SWAY = 20, 16, 15      # degrees: thighs / arms swing, hips sway (yaw at the waist)
+IDLE_FRAMES = 150
+SHAKE = (20, 60, 3, 14)         # Elena waiting: hip shake from frame, to frame, shakes, degrees
+LOOK = (80, 92, 118, 130, 50)   # ... then a look to her right: turn from, held from, back from, done, degrees
+CAM_LOOK = (25, 40, 105, 125)   # Tifa waiting: turns to the camera from, held from, back from, done
+TILT = (70, 82, 18)             # ... tilting her head to her right from, held from, degrees
+CAM_UP = 12                     # (she looks up a little: the camera is above)
+
+
+def _ruby_frame(ctx, anim, frame=0):
+    from ff7 import fieldanim as fa
+    mv, _, _ = DP._mods()
+    sk = fa.skeleton(ctx.char_file(mv.RUBY_HRC).decode("latin-1"))
+    rr, rp, rots = fa.Anim(ctx.char_file(anim.lower() + ".a")).frames[frame]
+    root = [rp[0], -rp[1], rp[2]]
+    F = fa.forward(sk, rr, root, rots)
+    return fa, sk, rr, root, [m for m, _, _ in F], F
+
+
+def _subtree(sk, top):
+    names = [b[0] for b in sk]
+    out, todo = set(), [top]
+    while todo:
+        n = todo.pop()
+        out.add(names.index(n))
+        todo += [b[0] for b in sk if b[1] == n]
+    return out
+
+
+def _turned(fa, W, idx, R):
+    return [fa._mul(R, m) if i in idx else m for i, m in enumerate(W)]
+
+
+def _sway(fa, sk, root, W, F, deg):
+    """The lower body (pelvis and legs) turned deg about the vertical through the waist; the upper body kept."""
+    I = [b[0] for b in sk].index
+    upper = _subtree(sk, "chest")
+    lower = {i for i in range(len(sk)) if i not in upper}
+    R = fa.axis_angle([0.0, 1.0, 0.0], deg)
+    P = F[I("hip")][2]                                              # (the waist: chest and legs start here)
+    rel = fa._vec(R, [root[k] - P[k] for k in range(3)])
+    return [P[k] + rel[k] for k in range(3)], _turned(fa, W, lower, R)
+
+
+def _write(ctx, name, fa, sk, rr, frames):
+    mv, _, CP = DP._mods()
+    CP._save(ctx, name, mv.RUBY_STAND, [(rr, [r[0], -r[1], r[2]], fa.local_rotations(sk, rr, W)) for r, W in frames])
+    return name + ".tor"
+
+
+def crawl(ctx):
+    """QXC0: on all fours (Ruby's dog stroke's frame 0), crawling: each thigh and arm swinging about the side
+    axis (opposite pairs together), the hips swaying."""
+    fa, sk, rr, root, W0, F0 = _ruby_frame(ctx, "ZMC0")
+    x = [1.0, 0.0, 0.0]
+    frames = []
+    for t in range(CRAWL_FRAMES):
+        ph = 2 * math.pi * t / CRAWL_FRAMES
+        r, W = _sway(fa, sk, root, W0, F0, CRAWL_SWAY * math.sin(ph))
+        for s, sg in (("l", 1), ("r", -1)):
+            W = _turned(fa, W, _subtree(sk, s + "_femur"), fa.axis_angle(x, sg * CRAWL_LEG * math.sin(ph)))
+            W = _turned(fa, W, _subtree(sk, s + "_uparm"), fa.axis_angle(x, -sg * CRAWL_ARM * math.sin(ph)))
+        frames.append((r, W))
+    return _write(ctx, "QXC0", fa, sk, rr, frames)
+
+
+def _ease(t, a, b):
+    return 0.0 if t <= a else 1.0 if t >= b else (1 - math.cos(math.pi * (t - a) / (b - a))) / 2
+
+
+def _head_turn(fa, sk, W, F, R):
+    """The head (and what hangs from it) turned by world rotation R about the neck."""
+    return _turned(fa, W, _subtree(sk, "head"), R)
+
+
+def elena_idle(ctx):
+    """QXD0: waiting on all fours: still, a hip shake, still, a look to her right and back (IDLE_FRAMES)."""
+    fa, sk, rr, root, W0, F0 = _ruby_frame(ctx, "ZMC0")
+    I = [b[0] for b in sk].index
+    a0, a1, n, deg = SHAKE
+    l0, l1, l2, l3, ldeg = LOOK
+    y = [0.0, 1.0, 0.0]
+    # (her right is -x: the turn's sign that takes her face that way)
+    tip = lambda W: fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W))[I("head")][2][0]
+    sign = 1 if tip(_head_turn(fa, sk, W0, F0, fa.axis_angle(y, 20))) < tip(W0) else -1
+    frames = []
+    for t in range(IDLE_FRAMES):
+        env = math.sin(math.pi * _ease(t, a0, a1))
+        r, W = _sway(fa, sk, root, W0, F0, deg * env * math.sin(2 * math.pi * n * (t - a0) / (a1 - a0)) if a0 <= t <= a1 else 0)
+        w = _ease(t, l0, l1) * (1 - _ease(t, l2, l3))
+        W = _head_turn(fa, sk, W, F0, fa.axis_angle(y, sign * ldeg * w))
+        frames.append((r, W))
+    return _write(ctx, "QXD0", fa, sk, rr, frames)
+
+
+def tifa_idle(ctx, cam_yaw):
+    """QXE0: kneeling (Ruby's head position, pulled back: ZMJ9), waiting: turns her head to the camera
+    (cam_yaw degrees about the vertical, CAM_UP up), tilts it to her right, back (IDLE_FRAMES)."""
+    fa, sk, rr, root, W0, F0 = _ruby_frame(ctx, "ZMJ9")
+    I = [b[0] for b in sk].index
+    c0, c1, c2, c3 = CAM_LOOK
+    t0, t1, tdeg = TILT
+    y, x = [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]
+    # her face's way (her head's frame) and the tilt's sign (to her right: the head top towards -x)
+    S = fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W0))
+    hv = [S[I("head")][2][k] - S[I("head")][1][k] for k in range(3)]
+    def top_x(R):
+        return fa._vec(R, hv)[0]
+    frames = []
+    for t in range(IDLE_FRAMES):
+        w = _ease(t, c0, c1) * (1 - _ease(t, c2, c3))
+        tw = _ease(t, t0, t1) * (1 - _ease(t, c2, c3))
+        Y = fa.axis_angle(y, cam_yaw * w)
+        U = fa.axis_angle(x, -CAM_UP * w)
+        face = fa._vec(Y, [0.0, 0.0, -1.0])                            # roll about her (turned) line of sight
+        roll = lambda d: fa.axis_angle(face, d)
+        sg = 1 if top_x(fa._mul(roll(10), Y)) < top_x(Y) else -1
+        R = fa._mul(roll(sg * tdeg * tw), fa._mul(Y, U))
+        frames.append((root, _head_turn(fa, sk, W0, F0, R)))
+    return _write(ctx, "QXE0", fa, sk, rr, frames)

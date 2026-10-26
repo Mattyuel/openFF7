@@ -1040,6 +1040,7 @@ The movie minigame (user's design).
 
 - `_mods()` 
 - `_rot(v, d)` 
+- `_camera_yaw(mv, d, v)` Degrees (about her vertical, as `_going_up_poses.tifa_idle` turns her head) from facing ahead to field
 - `apply(ctx)` 
 
 ## `patches/685_tickets.py`
@@ -1245,6 +1246,16 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `build(ctx, hrc, stand)` Writes QEA0 / QEB0 for Elena's bare `hrc`. Returns their names (.tor).
 - `_mirror_legs(fa, sk, W)` Each leg's world rotations taken from the other leg, mirrored in x.
 - `build_cloud(ctx)` QKC0-3 / QKJ0-3 from ZNC0-3 / ZNJ0-3 (Cloud's skeleton). Returns their names (.tor).
+- `_ruby_frame(ctx, anim, frame=0)` 
+- `_subtree(sk, top)` 
+- `_turned(fa, W, idx, R)` 
+- `_sway(fa, sk, root, W, F, deg)` The lower body (pelvis and legs) turned deg about the vertical through the waist; the upper body kept.
+- `_write(ctx, name, fa, sk, rr, frames)` 
+- `crawl(ctx)` QXC0: on all fours (Ruby's dog stroke's frame 0), crawling: each thigh and arm swinging about the side
+- `_ease(t, a, b)` 
+- `_head_turn(fa, sk, W, F, R)` The head (and what hangs from it) turned by world rotation R about the neck.
+- `elena_idle(ctx)` QXD0: waiting on all fours: still, a hip shake, still, a look to her right and back (IDLE_FRAMES).
+- `tifa_idle(ctx, cam_yaw)` QXE0: kneeling (Ruby's head position, pulled back: ZMJ9), waiting: turns her head to the camera
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
