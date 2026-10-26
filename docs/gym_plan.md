@@ -62,11 +62,13 @@ flowchart TD
         FREE --> INCIDENT["Incident<br/>Corneo's lackeys, a member's trouble,<br/>broken equipment"]
         FREE --> HANG["Hang out / gift<br/>a member's affection tier"]
         FREE --> BAR["7th Heaven shift<br/>bartending minigame, tips"]
-        FREE --> SIDE["Unconventional work<br/>cameraman, Honey Bee Inn<br/>big pay, costs trust / reputation"]
+        FREE --> SIDE["Desperation work<br/>Tifa at the Honey Bee Inn,<br/>Tifa + Cloud on camera<br/>pays now, costs trust"]
+        FREE --> COLLECT["Run the businesses<br/>hire / pay staff, buy supplies,<br/>collect profits"]
 
         BAR --> GIL[("Gil<br/>the hard limit")]
         SIDE --> GIL
-        SIDE -.->|cost| AFF
+        SIDE -.->|cost| TRUST[("Tifa's trust in Cloud 0-20")]
+        COLLECT --> GIL
         BAR -->|regulars| ROSTER
         TRAIN -->|personal training fee| GIL
         CLASS -->|class tickets| GIL
@@ -95,7 +97,7 @@ flowchart TD
     GIL -->|rent, debt, wages,<br/>supplies, equipment| RENT
     REP --> REVIEW
     MSTATS --> WEEKEND
-    REVIEW --> TRUST[("Tifa's trust in Cloud 0-20")]
+    REVIEW --> TRUST
     REVIEW --> RENT{"Rent / debt / expenses<br/>covered?"}
     RENT -->|paid| NEXT
     RENT -->|short| CRISIS["Corneo crisis<br/>story fork, Tifa decides"]
@@ -106,8 +108,11 @@ flowchart TD
     NEXT -->|no| MON
     NEXT -->|yes| CHAPTER["Next chapter<br/>1 The Deed, 2 The Roster,<br/>3 The Exhibition"]
     CHAPTER --> MON
-    CHAPTER -.->|later| INN["Buy the Honey Bee Inn<br/>second business: income + upkeep"]
-    INN --> GIL
+    GIL -->|purchase price| BUY["Buy an asset<br/>gym, 7th Heaven, Honey Bee Inn,<br/>production company, ..."]
+    BUY --> ASSETS[("Owned businesses<br/>staff, supplies, profits")]
+    ASSETS --> COLLECT
+    ASSETS -->|wages, supplies| GIL
+    ASSETS -.->|Honey Bee: hire the girls<br/>studio: hire stars, sell videos<br/>at the Materia Store| SIDE
 
     CHAPTER -->|after chapter 3| EXHIBIT["Gold Saucer Exhibition<br/>members' stats compete"]
     EXHIBIT --> ENDING{"Ending<br/>gym stats x Tifa's trust"}
@@ -149,22 +154,68 @@ other expenses. Running short is the pressure that drives every week.
   - **7th Heaven bar-tending:** Cloud works shifts at Tifa's bar. A bartending
     minigame (mixing orders against the clock / customers' moods), tips by
     score, and regulars who become gym recruits.
-- **Income, unconventional** (user: the cameraman and the Honey Bee Inn stay,
-  restructured to fit the gym's story):
-  - **the cameraman:** shoots that pay well, with costs to Reputation,
-    Tifa's trust or a member's affection
-  - **the Honey Bee Inn:** work there / a partnership
-  - These are what to adapt from 620 / 670-679 rather than remove; how
-    they're reframed is still to decide.
-- **Buying the Honey Bee Inn (user):** later in the game you can buy the inn
-  itself: a second business with its own income and upkeep, owned like the
-  gym.
+- **Income, unconventional:** the cameraman and the Honey Bee Inn (section
+  4.1). They start as work done out of desperation and become businesses you
+  own.
 - **Tracking:**
   - Gil is the real wallet (GOLDU / GOLDD / CHGLD, as now).
   - The week's ledger (income by source, expenses) is shown at Tifa's
     review; it needs a few save bytes for this week's totals.
 - **Failure:** rent short = the Corneo crisis (section 3), not a game over;
   repeated misses lead to the buyout ending.
+
+### 4.1 Owned businesses (user)
+
+The game's progression is **buying assets**. Each one needs staff and supplies,
+and pays out profits you collect.
+
+**Assets:**
+- 7th Heaven
+- the gym
+- the Honey Bee Inn
+- the production company
+- more to come
+
+Each asset has:
+
+| | |
+|---|---|
+| **Purchase price** | a gil goal that a chapter can be built around |
+| **Staff** | hired, then paid wages every week; who works there sets the income |
+| **Resources** | supplies bought to keep it running (stock, equipment, film); short supplies cut income |
+| **Profits** | build up while you're away; collected in person, as the Honey Bee manager's "Collect" does now (gil x rate x minutes, capped) |
+| **Upgrades** | later: more staff slots, better equipment, higher rates |
+
+**The cameraman and the Honey Bee Inn: desperation, then ownership.** In the
+gym's story these scenes are about making money out of desperation, and they
+add flavour to life in the slums.
+
+- **The Honey Bee Inn:**
+  - **Before you own it:** only Tifa works there. It's quick money when rent
+    is short, at a cost: Tifa's trust, and her own feelings about it.
+  - **After you buy it:** you hire the others. 620's recruiting (finding the
+    girls around the world, the star questions) becomes hiring staff. The inn
+    then pays profits, less their wages.
+- **The cameraman:**
+  - **Before you own the company:** shoots with only Tifa and Cloud, paid per
+    shoot (670's pay-per-press). The cameraman is the boss.
+  - **Buy the production company:** you hire the stars (the co-stars: Ruby,
+    Skye, Elena, Scarlet, Aerith, ...) and the cameraman himself, as paid
+    staff.
+  - **Sell the videos:** a deal with the Materia Store salesman in Wall
+    Market (`mkt_m`) to sell them from his shop. The deal is a scene; then he
+    pays your share of sales.
+  - **The shift:** from being paid for a shoot to collecting profits. Each
+    shoot makes a video; videos sell over time, by its quality (the meter's
+    score, finishers) and its stars.
+- **7th Heaven** is bought too (from whom: open; Tifa runs it today). The bar
+  shifts are its minigame; owning it adds staff, stock and profits.
+- **The gym** is the first purchase (chapter 1, from Big Bro).
+
+**Save data per asset** (estimate, from the free bytes `save-usage` found):
+an owned bit, staff bits, a supply level, unpaid profit or its last-collected
+minute (2 bytes), an upgrade level. That is ~5-6 bytes an asset, plus the
+videos' stock / sales counters for the production company.
 
 ## 5. Tracking
 
@@ -278,12 +329,12 @@ An aerobics class in the gym, done 80s style.
 | 200-230 recruits | party joins in the world | **Consolidate**: join the party *and* the gym roster; the recruit talk becomes the gym pitch. |
 | 250 / 280 trains, chocobo rides | travel | **Keep** |
 | 600 quests (framework, Quests screen, markers) | 90 quests, mostly kill quests | **Keep the framework, replace the content.** Kill quests don't fit with no combat: new kinds `score` (a minigame result) and `attend` (an event). Givers become Tifa's briefings plus members' goals. |
-| 620 Honey Bee recruitment (stars, questions, hire, Collect income) | recruit + income loop | **Restructure (user: stays as an unconventional income; the inn can later be bought)**: its recruiting questions and Collect income also serve the gym's recruiting / fees. Which of its rooms and scenes stay: open. |
+| 620 Honey Bee recruitment (stars, questions, hire, Collect income) | recruit + income loop | **Restructure (user, section 4.1)**: Tifa alone until you buy the inn, then 620's recruiting becomes hiring staff and its Collect becomes the asset's profits. Which rooms / scenes stay: open. |
 | 625 gift shops | gifts -> affection | **Keep**, re-stocked for members |
 | 626 Honey Bee rescue | random street event | **Remove?** (or reshape as a slum incident that brings a self-defence student) |
 | 630 bounties / 640 Hunt Quartermaster | combat bounties, hunter ranks, gear shop | **Replace**: the rank ladder becomes gym Reputation, the shop becomes the equipment supplier. Bounty logic goes if combat goes. |
 | 660 dates / 661 Cid friend | dates, hang-outs, affection tiers | **Consolidate** into member hang-outs (661 is the template). Intimate part twos: **remove?** |
-| 670-674, 678, 679_* movie shoots, special scenes, Blast-off, stage show, group/beach/chamber/nurse sets | adult minigame suite | **Restructure (user: the cameraman stays as an unconventional income)**; which sets / scenes stay: open. Its engine parts are worth keeping: the meter, Square prompts, holds/pauses as pacing, the loose engine's staged cutaways, new-field copying, sprite gauges. |
+| 670-674, 678, 679_* movie shoots, special scenes, Blast-off, stage show, group/beach/chamber/nurse sets | adult minigame suite | **Restructure (user, section 4.1)**: Tifa + Cloud paid per shoot, then buy the production company: hire the stars and the cameraman, sell the videos at the Materia Store. The star ranks / co-star unlocks become hiring; which sets / scenes stay: open. Its engine parts are worth keeping: the meter, Square prompts, holds/pauses as pacing, the loose engine's staged cutaways, new-field copying, sprite gauges. |
 | 682 school dance | passive dance routine, uniforms | **Consolidate** into the 80s spandex class (section 6.1) |
 | 675 / 681 / `_female_body`, 985, 990 | bodies, model merging, hand edits | **Keep** (needed for outfits). The undressed variants go with whatever is removed. |
 | 677 scene lab | placement tool | **Keep** |
