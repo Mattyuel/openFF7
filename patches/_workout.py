@@ -28,6 +28,23 @@ PAY_HIT = 10                    # gil per hit x (tier + 1)
 CHAT_EVERY = 4                  # (user: long silences) a chatter line every this many reps, when nobody's talking
 HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # the squat contest's squat (mkt_mens: AKAO 28 08 019d)
 
+# (user: more going on) the hold on her cue: from HOLD_TIER, HOLD_ODDS in 256 a rep is a HOLD prompt; pressed in
+# time and kept held, both freeze at the bottom (Cloud holding her down) until she calls it after HOLD_MIN +
+# random HOLD_RANGE frames; let go within LETGO frames = a hit plus HOLD_BONUS x (tier + 1); let go before her
+# call = a miss; still holding after LETGO = she's mad: MAD_PENALTY off the pay, the pace back to slow, and at
+# MAD_LIMIT she walks out (the shoot ends, an affection point lost). Results stay up RESULT_WAIT frames.
+HOLD_TIER, HOLD_ODDS = 2, 44
+HOLD_MIN, HOLD_RANGE = 30, 60
+LETGO = 24
+HOLD_BONUS = 3
+MAD_PENALTY = 10                # (x PAY_HIT gil)
+MAD_LIMIT = 3
+RESULT_WAIT = 50
+HOLD_LABEL = "HOLD "
+# (user: variations) the pose's style changes every STYLE_EVERY reps (`_workout_poses.STYLES`: A clothed
+# 0 spotted / 1 sumo, hands behind her head; B 0 bent over / 1 Cloud cocks a leg up / 2 touching her toes)
+STYLE_EVERY = 6
+
 # the buttons, as the squat contest names them: (IFKEY mask, the prompt's text)
 # (OK as 0x220: IFKEY's mask bit 0x200 is OK too on PC, and 0x20 alone never fired in 670's minigame)
 KEYS = [(0x80, "{PURPLE}[SWITCH]{WHITE}"), (0x40, "{PURPLE}[CANCEL]{WHITE}"), (0x220, "{PURPLE}[OK]{WHITE}")]
@@ -40,7 +57,8 @@ INTRO = [
     "Tifa\n“Okay! Where do we begin?”",
     "Cloud\n“Squats. The foundation of everything.\n I'll spot you from behind.”",
 ]
-HOW = "Press the button shown in time with\nthe squat. Hits build the pace; a miss\nslows it right down."
+HOW = ("Press the button shown in time with\nthe squat. Hits build the pace; a miss\nslows it right down."
+       "{NEW}HOLD: press it and keep it held while\nshe stays down. Let go the moment she\ncalls it, or she'll get mad.")
 
 # part one (clothed): (tier reached for the first time) -> lines
 LINES_A = {
@@ -76,6 +94,24 @@ MISSES_A = [
     "Tifa\n“Hah... okay, from the top.”",
 ]
 
+STYLE_A = [["Cloud\n“Back to a normal stance.\n Hands forward.”"],
+           ["Cloud\n“Wide stance. Hands behind your\n head. Sumo squats.”", "Tifa\n“Ooh, I feel that in a\n whole new place.”"]]
+HOLDS_A = ["Cloud\n“Pause at the bottom. Hold it there.”",
+           "Cloud\n“Stay down. I've got you.”",
+           "Cloud\n“Hold... don't come up yet.”"]
+CUES_A = ["Tifa\n“Okay, up! Let me up!”",
+          "Tifa\n“Cloud, that's enough! Up!”",
+          "Tifa\n“My legs! Let go!”"]
+GOOD_A = ["Tifa\n“Phew! That burned... in a good way.”",
+          "Cloud\n“Good. That's how you build strength.”",
+          "Tifa\n“I didn't know I could hold it\n that long!”"]
+EARLY_A = ["Cloud\n“Not yet. You came up too soon.”",
+           "Tifa\n“Sorry, I couldn't hold it!”"]
+MAD_A = ["Tifa\n“Hey! I said UP! My legs are\n on fire!”",
+         "Tifa\n“When I say let go, you let go.\n Last warning, coach.”"]
+WALKOUT_A = ["Tifa\n“That's it. Find yourself another\n student.”",
+             "Director\n“Tifa, wait! ...CUT! Great. Just\n great.”"]
+
 # part two (undressed)
 START_B = ["Tifa\n“Don't stop now... I've got the hang\n of it.”"]
 LINES_B = {
@@ -105,6 +141,24 @@ MISSES_B = [
     "Tifa\n“Oh! That one threw me off.”",
     "Cloud\n“Back to basics. Nice and slow.”",
 ]
+STYLE_B = [["Cloud\n“Back to it. Hands on your knees.”"],
+           ["Tifa\n“Cloud... what are you doing with\n your leg?”", "Cloud\n“Better angle.”"],
+           ["Cloud\n“Now fold all the way over. Touch\n your toes.”", "Tifa\n“Like this...? Oh. OH.”"]]
+HOLDS_B = ["Cloud\n“Stay down. Right there.”",
+           "Tifa\n“Ah... hold me there...”",
+           "Cloud\n“Don't move.”"]
+CUES_B = ["Tifa\n“Ah...! Let go, let go!”",
+          "Tifa\n“Too much! Let me up!”",
+          "Tifa\n“Cloud, enough...! Up!”"]
+GOOD_B = ["Tifa\n“Hah... that was... intense.”",
+          "Tifa\n“Mmm... you listen. I like that.”",
+          "Cloud\n“Breathe. Again.”"]
+EARLY_B = ["Cloud\n“Already? Stay down longer.”",
+           "Tifa\n“Sorry... I slipped.”"]
+MAD_B = ["Tifa\n“Cloud! I said let go! That's not\n funny.”",
+         "Tifa\n“When I say stop, you STOP.\n ...Last warning.”"]
+WALKOUT_B = ["Tifa\n“No. We're done. You don't listen.”",
+             "Director\n“...And she's gone. CUT. We'll fix it\n in the edit.”"]
 FINALE = ["Tifa\n“Phew... same time tomorrow, coach?”",
           "Director\n“CUT! That's a wrap! You two are\n naturals.”"]
 PAID = "Director\n“Here's your pay: {VAR} gil.\n Great work today.”"

@@ -1234,6 +1234,8 @@ The standard female body (user): Skye's bare body from the neck down, built by
 (user) Going up's own poses (684_going_up): Elena covering up (standing, head down and turned aside, one
 
 - `build(ctx, hrc, stand)` Writes QEA0 / QEB0 for Elena's bare `hrc`. Returns their names (.tor).
+- `_mirror_legs(fa, sk, W)` Each leg's world rotations taken from the other leg, mirrored in x.
+- `build_cloud(ctx)` QKC0-3 / QKJ0-3 from ZNC0-3 / ZNJ0-3 (Cloud's skeleton). Returns their names (.tor).
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
@@ -1380,8 +1382,8 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 
 - `squat(u)` 0 at the top, 1 at the bottom of a rep (u = 0 .. 1).
 - `_f(tier)` How far up the tiers (0 .. 1).
-- `gap(part, tier)` How far behind her he stands (model units, root to root).
+- `gap(part, tier, style=0)` How far behind her he stands (model units, root to root).
 - `push(part, tier, u)` (user: more back and forth in the overt ones) his hips pushing in: part two from the start, harder and
-- `her_pose(part, tier, u)` 
+- `her_pose(part, tier, u, style=0)` 
 - `_her_joints(fa, sk, anim, k)` 
-- `build(ctx, hers)` hers = {part: (her .hrc, her stand anim, her prefix)}: builds Ruby's sources, retargets part A onto
+- `build(ctx, hers)` hers = {part: (her .hrc, her stand anim, her prefix)}: builds Ruby's sources for every style,

@@ -43,6 +43,14 @@ Existing saves load, but they keep their own story progress; use a new game.
   button held until the window closes) and Tifa's "Switch!" ([MENU] in
   time). Check the car and its glass look right (the background's layers),
   the switching between Elena and Tifa, the car moving at the end, the pay.
+  Since the variety update: a hit plays the squat sound; lines after misses
+  and every few reps; Cloud's pose alternates every 6 reps (behind Elena his
+  near knee comes up instead of the far one; before Tifa his hands go behind
+  his head). With Tifa a HOLD lasts until she taps out (her squirm + a line
+  in the top window): let go then. Letting go early is a miss; holding on
+  ~1 s after she taps out makes her mad (pay off, slow again); the third
+  time she climbs out and the shoot ends. Say if the tap-out is hard to
+  notice or the window to let go feels too short.
 - **Sector 7 Workout** (683): talk to the Director (the cameraman) at the
   Sector 7 station: his first question offers "Shoot Sector 7 Workout.".
   In the gym: the intro talk, then squats. A button name pops up each rep
@@ -55,6 +63,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   (8 steps), a hit plays the squat contest's squat sound, a miss always gets
   a line, someone chats every few reps, and the undressed part's later steps
   rock back and forth. Say if the speed still never changes.
+  Since the variety update: the pose changes every 6 reps (clothed: a wide
+  sumo squat, hands behind her head; undressed: Cloud cocks his near leg up,
+  then she folds over to her toes). From the third step some prompts read
+  HOLD: press and keep holding while she stays down, then let go when she
+  calls it in the top window (late = she's mad; three times = she walks out).
 
 - **No random battles** (950_no_combat): walk around fields that used to
   have encounters (Train Graveyard, the Sector 7 pillar's stairs, Shinra HQ

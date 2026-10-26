@@ -54,7 +54,8 @@ INTRO_LINES = [
     ("Elena\n“Y-yes, ma'am...”", None),
     ("Tifa\n“Cloud. Get behind her.”", "behind"),
 ]
-HOW = ("Press the button shown in time. HOLD:\nkeep it held to the end. When Tifa\ncalls Switch!, press {PURPLE}[MENU]{WHITE} in time.")
+HOW = ("Press the button shown in time. HOLD:\nkeep it held to the end. When Tifa\ncalls Switch!, press {PURPLE}[MENU]{WHITE} in time."
+       "{NEW}With Tifa, a HOLD lasts until she taps\nout: let go the moment she does, or\nshe'll get mad.")
 
 # lines at each tier reached the first time with that partner
 LINES = {
@@ -66,7 +67,61 @@ LINES = {
         3: ["Tifa\n“Mmph...!”"]},
 }
 SWITCH_CALL = ["Tifa\n“Switch! Her turn.”", "Tifa\n“Switch! Back to me.”"]
-MISS = "Tifa\n“Lost the rhythm! Start slow again.”"
+HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # (user) the squat sound, as 683's
+CHAT_EVERY = 4                  # a chatter line every this many reps, when nobody's talking
+# (user: a hold during head) with Tifa a HOLD lasts until she taps out after HOLD_MIN + random HOLD_RANGE
+# frames; let go within LETGO = a hit, double pay plus HOLD_BONUS x (tier + 1); before = a miss; later = she's
+# mad (MAD_PENALTY off, back to slow; at MAD_LIMIT she walks out). Results stay up RESULT_WAIT frames.
+HOLD_MIN, HOLD_RANGE = 45, 90
+LETGO = 30
+HOLD_BONUS = 2
+MAD_PENALTY = 10                # (x PAY_HIT gil)
+MAD_LIMIT = 3
+RESULT_WAIT = 50
+# (user: variations) Cloud's pose alternates every STYLE_EVERY reps: behind Elena 0 right knee up / 1 his left
+# (the camera's side); before Tifa 0 hands on her head / 1 hands behind his own head
+STYLE_EVERY = 6
+STYLE_LINES = [[["Cloud\n“Switching legs.”"],
+                ["Elena\n“W-what are you doing with your\n leg...? Ah... ahh...!”", "Cloud\n“Better angle.”"]],
+               [["Tifa\n“(Mmph!)”", "Elena\n“Hands back on. Noted.”"],
+                ["Elena\n“Look, no hands! Show-off.”"]]]
+CHAT = [["Elena\n“Is this in the Turks' manual?”",
+         "Tifa\n“Arch your back, rookie.”",
+         "Elena\n“Tseng can never, EVER find out.”",
+         "Tifa\n“You're doing great. Don't look\n at the camera.”",
+         "Elena\n“Ah...! Professionalism... ah...”",
+         "Tifa\n“Mm, she's a fast learner.”"],
+        ["Elena\n“So THAT'S the technique...”",
+         "Tifa\n“Mmh... mm!”",
+         "Elena\n“Should I be writing this down?”",
+         "Elena\n“I'm not jealous. I'm observing.”",
+         "Cloud\n“Easy, Tifa.”",
+         "Elena\n“How is she even breathing?”"]]
+MISSES = [["Elena\n“Hey! Find the rhythm!”",
+           "Tifa\n“Lost it! Slow and steady.”",
+           "Elena\n“Was that... on purpose?”",
+           "Tifa\n“Again. From the top.”"],
+          ["Tifa\n“Mmph?! ...Slower!”",
+           "Elena\n“Ha! Even the trainer fumbles.”",
+           "Tifa\n“(Mm-mm.) Try again.”",
+           "Elena\n“Rhythm, Cloud!”"]]
+HOLDS = ["Tifa\n“Mmph...!”",
+         "Elena\n“She's... she's taking all of it...”",
+         "Cloud\n“Stay right there.”"]
+CUES = ["Tifa\n“Mmph! (*tap tap tap*)”",
+        "Tifa\n“Mm-mm! (*slaps his thigh*)”",
+        "Tifa\n“(*tap tap*) MMPH!”"]
+GOOD = ["Tifa\n“Hahh... good. You listen.”",
+        "Tifa\n“Hah... hah... wow.”",
+        "Elena\n“Taking notes... lots of notes.”"]
+EARLY = ["Tifa\n“Hah... that's all? I could've gone\n longer.”",
+         "Elena\n“Already? I'd have lasted longer.”"]
+MAD = ["Tifa\n“*cough* When I tap, you LET GO,\n Cloud!”",
+       "Tifa\n“Do that again and this training\n session is over.”"]
+WALKOUT = ["Tifa\n“That's it. I'm out. Enjoy the ride,\n rookie.”",
+           "(Tifa pries the doors open and climbs\n out of the car.)",
+           "Elena\n“W-wait! Don't leave me alone with\n him!”",
+           "Director\n“CUT! ...Somebody get that door open.”"]
 HOLD_LABEL = "HOLD "
 FINALE = ["(The car shudders... and starts to rise.)",
           "Elena\n“It's... going up.”",

@@ -103,6 +103,10 @@ TIER, STREAK, KEY, PR, PART, SEEN, RND, KP, CHAT, LN = ((5, a) for a in range(10
 TALKING = (5, 127)                  # set while the talk entity shows lines (no chatter over it)
 CNT, HITS, PAY, REPS, PER, GIL = ((6, a) for a in range(110, 122, 2))
 PRV = [(5, 124 + k) for k in range(3)]
+# (user: more going on) HELD bit k while button k is down; HOLD this rep is a hold; STYLE the pose's variation,
+# SC reps since it changed; ANGER her strikes; HC / CUE the hold's frame count / her call's frame; IX = STYLE x
+# tiers + TIER (the actors' anim and spot); CL the prompt window's line
+HELD, HOLD, STYLE, SC, ANGER, HC, CUE, IX, CL = ((5, a) for a in range(128, 137))
 
 
 def _set(ctx, donor, stand, poses):
@@ -125,27 +129,30 @@ def _set(ctx, donor, stand, poses):
         t = mesh.find(round(x), round(y))
         assert t is not None, ("off the floor", x, y)
         return t
-    # spots: Tifa at SQUAT_AT facing screen-left, Cloud `gap` behind her (per part and tier: his anims put
-    # his hands on her hips at that gap)
+    # spots: Tifa at SQUAT_AT facing screen-left, Cloud `gap` behind her (per part, style and tier: his anims
+    # put his hands on her hips at that gap)
     sx, sy = WO.SQUAT_AT
     d = facing_screen(cam, sx, sy, 0, WO.FACING)
+    n = len(WO.PERIODS)
 
-    def behind(part, t):
-        ox, oy, _ = mv._off((0, 0, WP.gap(part, t)), d)
+    def behind(part, st, t):
+        ox, oy, _ = mv._off((0, 0, WP.gap(part, t, st)), d)
         return round(sx + ox), round(sy + oy)
-    # models: 0 the hidden player, 1 Cloud (A), 2 Tifa (A), 3 bare Cloud (B), 4 bare Tifa (B), 5 the Director
+    # models: 0 the hidden player, 1 Cloud (A), 2 Tifa (A), 3 bare Cloud (B), 4 bare Tifa (B), 5 the Director;
+    # each actor's anims: its stand, then every style's tiers (index 1 + IX)
     loader = ModelLoader(f.section("models"))
     cl0 = loader.models[0]
     assert ModelLoader.hrc(cl0) == "AAAA.HRC"
     stand_c = ModelLoader.anims(cl0)[0]                              # ACFE
     stand_t = ModelLoader.anims(donor)[0]                            # ABCD
-    (her_a, his_a), (her_b, his_b) = poses["A"], poses["B"]
+    hers = lambda part: sum((poses[(part, st)][0] for st in range(WP.STYLES[part])), [])
+    his = lambda part: sum((poses[(part, st)][1] for st in range(WP.STYLES[part])), [])
     loader.models = [cl0,
-                     ModelLoader.only_anims(cl0, [stand_c] + his_a),
-                     ModelLoader.only_anims(ModelLoader.with_hrc(donor, SPANDEX_HRC, "workout_tifa.char"), [stand_t] + her_a),
+                     ModelLoader.only_anims(cl0, [stand_c] + his("A")),
+                     ModelLoader.only_anims(ModelLoader.with_hrc(donor, SPANDEX_HRC, "workout_tifa.char"), [stand_t] + hers("A")),
                      ModelLoader.only_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC, "workout_cloudb.char"),
-                                            [stand_c] + his_b),
-                     ModelLoader.only_anims(ModelLoader.with_hrc(donor, BARE_TIED, "workout_tifab.char"), [stand_t] + her_b)]
+                                            [stand_c] + his("B")),
+                     ModelLoader.only_anims(ModelLoader.with_hrc(donor, BARE_TIED, "workout_tifab.char"), [stand_t] + hers("B"))]
     # (the donor's scale: Tifa comes from a 768 field; add_from rescales to this one)
     for k in (2, 4):
         tmp = ModelLoader(ctx.field(DONOR[0]).section("models"))
@@ -158,6 +165,7 @@ def _set(ctx, donor, stand, poses):
     loader.models[cm] = ModelLoader.only_anims(loader.models[cm], cam_anims + [mv.CAMERA_STILL])
     still = len(cam_anims)
     assert len(loader.models) == 6
+    assert all(len(ModelLoader.anims(m)) <= 47 for m in loader.models)
     # entities
     names = ["produce", "cloud", "cloudA", "tifaA", "cloudB", "tifaB", "camera", "k_sw", "k_ca", "k_ok",
              "prompt", "talk", "hush"]
@@ -167,6 +175,7 @@ def _set(ctx, donor, stand, poses):
     xyzi, d_ = hb._xyzi, (lambda dd: Op(bytes([0xB3, 0, dd])))
     hide = lambda: [Op(b"\x7E\x01"), Op(b"\xC7\x01")]               # TLKON 01, SOLID 01
     loop_ = lambda i: [mv._animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
+    canm = lambda i, a, b: [mv._animb(), Op(bytes([0xBC, i, a, b, 1]))]     # CANM!2: frames a..b, then held
     ch = mv._chain
     face = lambda x, y, tx, ty: dt._dir_to(tx - x, ty - y)
     scripts = {}
@@ -175,50 +184,67 @@ def _set(ctx, donor, stand, poses):
                            hide() + [asm.ret(), asm.ret()]}
     ix, iy = WO.INTRO_TIFA
     cx_, cy_ = WO.INTRO_CLOUD
-    # the actors: init hidden (B) / at the intro (A); slot 2 = this rep (the tier's anim from its start);
-    # slot 3 = at the squat spot; slot 4 = hidden
+    # the actors: init hidden (B) / at the intro (A); slot 2 = place + the IX anim from its start (only when
+    # the tier or style changes); 3 = the same and shown; 4 = hidden; 5 = the hold (the IX anim's bottom frame
+    # held); 6 (hers) = her call: rising a little from the bottom and straining there
     for ent, model, part, who in [("cloudA", 1, "A", "c"), ("tifaA", 2, "A", "t"), ("cloudB", 3, "B", "c"),
                                   ("tifaB", 4, "B", "t")]:
-        n = len(WO.PERIODS)
-        if who == "t":
-            spot = lambda t: (sx, sy)
-        else:
-            spot = lambda t, part=part: behind(part, t)
+        combos = [(st, t) for st in range(WP.STYLES[part]) for t in range(n)]
+        spot = (lambda st, t: (sx, sy)) if who == "t" else (lambda st, t, part=part: behind(part, st, t))
         if part == "A":
             at = (ix, iy, face(ix, iy, cx_, cy_)) if who == "t" else (cx_, cy_, face(cx_, cy_, ix, iy))
             init = [Op(bytes([0xA1, model])), xyzi(at[0], at[1], 0, tri(at[0], at[1])), d_(at[2]), hb._visi(1)] + \
                 hide() + loop_(0)
         else:
             init = [Op(bytes([0xA1, model])), hb._visi(0)] + hide()
-        place = ch(TIER, [[xyzi(*spot(t), 0, tri(*spot(t))), d_(d)] for t in range(n)])
+        place = ch(IX, [[xyzi(*spot(st, t), 0, tri(*spot(st, t))), d_(d)] for st, t in combos])
+        anim = ch(IX, [loop_(1 + k) for k in range(len(combos))])
+        bottom = lambda t: WO.PERIODS[t] // 2
         scripts[E[ent]] = {0: init + [asm.ret(), asm.ret()],
-                           2: place + ch(TIER, [loop_(1 + t) for t in range(n)]) + [asm.ret()],
-                           3: place + [d_(d), hb._visi(1)] + loop_(1) + [asm.ret()],
-                           4: [hb._visi(0), asm.ret()]}
+                           2: place + anim + [asm.ret()],
+                           3: place + [d_(d), hb._visi(1)] + anim + [asm.ret()],
+                           4: [hb._visi(0), asm.ret()],
+                           5: ch(IX, [canm(1 + k, bottom(t), bottom(t)) for k, (st, t) in enumerate(combos)]) + [asm.ret()]}
+        if who == "t":
+            scripts[E[ent]][6] = ch(IX, [canm(1 + k, bottom(t), bottom(t) + max(2, WO.PERIODS[t] // 7))
+                                         for k, (st, t) in enumerate(combos)]) + [asm.ret()]
     mx, my = WO.CAMERA_AT
     scripts[E["camera"]] = {0: [Op(bytes([0xA1, 5])), xyzi(mx, my, 0, tri(mx, my)), d_(face(mx, my, sx, sy)),
                                 hb._visi(1)] + hide() + loop_(still) + [asm.ret(), asm.ret()],
                             2: loop_(film) + [asm.ret()]}
-    # the buttons: one small entity each (8 ops a frame): a press = up -> down; PR = its number
+    # the buttons: one small entity each (8 ops a frame): a press = up -> down; PR = its number; HELD bit k
+    # while it's down
     for k, (mask, _) in enumerate(WO.KEYS):
         top, up, held = hb._w(1), asm.nop(), asm.nop()
         scripts[E[["k_sw", "k_ca", "k_ok"][k]]] = {
             0: [asm.ret(), asm.setbyte(PRV[k], 0), top,
                 Op(bytes([0x30]) + struct.pack("<H", mask) + b"\x00", target=up),     # IFKEY: not held -> up
                 asm.if_byte(PRV[k], "==", 0, held),                                    # held before: nothing new
-                asm.setbyte(PRV[k], 1), asm.setbyte(PR, k + 1), held, asm.goto_back(top),
-                up, asm.setbyte(PRV[k], 0), asm.goto_back(top), asm.ret()]}
-    # the prompt: window 1, can't be closed by the player; the director closes it (WCLSE 01)
+                asm.setbyte(PRV[k], 1), asm.setbyte(PR, k + 1), asm.biton(HELD, k), held, asm.goto_back(top),
+                up, asm.setbyte(PRV[k], 0), asm.bitoff(HELD, k), asm.goto_back(top), asm.ret()]}
+    # the prompt: window 1, can't be closed by the player; the director closes it (WCLSE 01). Slots 2-4 the
+    # buttons, 5-7 HOLD + the button, then the hold's lines (one slot per pool, its line by CL)
     pr = {0: [asm.ret(), asm.ret()]}
-    for k, (_, label) in enumerate(WO.KEYS):
+    labels = [l for _, l in WO.KEYS] + [WO.HOLD_LABEL + l for _, l in WO.KEYS]
+    for k, label in enumerate(labels):
         text = "   " + label + "   "
         w = (len(label.replace("{PURPLE}", "").replace("{WHITE}", "")) + 6) * 7 + 24
         pr[2 + k] = [Op(b"\x52\x01\x00\x01"), Op(bytes([0x50, 1]) + struct.pack("<HHHH", (320 - w) // 2, WO.PROMPT_Y, w, 25)),
                      asm.message(1, mv._text_id(sec, text)), asm.ret()]
+    pslot = 2 + len(labels)
+    hold_pools = {}
+    for key, pool in (("holdA", WO.HOLDS_A), ("holdB", WO.HOLDS_B), ("cueA", WO.CUES_A), ("cueB", WO.CUES_B),
+                      ("goodA", WO.GOOD_A), ("goodB", WO.GOOD_B), ("earlyA", WO.EARLY_A), ("earlyB", WO.EARLY_B),
+                      ("madA", WO.MAD_A), ("madB", WO.MAD_B)):
+        hold_pools[key] = (pslot, len(pool))
+        pr[pslot] = [Op(b"\x52\x01\x00\x01")] + ch(CL, [[hb._window(x, 1, 8, WO.PROMPT_Y), asm.message(1, mv._text_id(sec, x))]
+                                                        for x in pool]) + [asm.ret()]
+        pslot += 1
+    assert pslot <= 32, pslot
     scripts[E["prompt"]] = pr
     # the talk during the squats: window 2, each line shut by hush after SAY; slots: each tier's lines (the
-    # first time), then one slot per pool (chatter / misses, by part) showing its line number LN; TALKING
-    # while busy
+    # first time), each style's (when it starts), then one slot per pool (chatter / misses, by part) showing
+    # its line number LN; TALKING while busy
     def show(text):
         return [Op(b"\x52\x02\x00\x01"), hb._window(text, 2, 8, WO.LINE_Y), hb._req(E["hush"], 2, wait=False),
                 asm.message(2, mv._text_id(sec, text))]
@@ -230,6 +256,13 @@ def _set(ctx, donor, stand, poses):
             group[t] = slot
             talk[slot] = [asm.setbyte(TALKING, 1)] + sum((show(x) for x in lines_[t]), []) + [asm.setbyte(TALKING, 0), asm.ret()]
             slot += 1
+    styles = {}
+    for part, lines_ in (("A", WO.STYLE_A), ("B", WO.STYLE_B)):
+        assert len(lines_) == WP.STYLES[part]
+        styles[part] = slot
+        talk[slot] = [asm.setbyte(TALKING, 1)] + ch(STYLE, [sum((show(x) for x in ls), []) for ls in lines_]) + \
+            [asm.setbyte(TALKING, 0), asm.ret()]
+        slot += 1
     pools = {}
     for key, pool in (("chatA", WO.CHAT_A), ("chatB", WO.CHAT_B), ("missA", WO.MISSES_A), ("missB", WO.MISSES_B)):
         pools[key] = (slot, len(pool))
@@ -238,6 +271,7 @@ def _set(ctx, donor, stand, poses):
     assert slot <= 32, slot
     scripts[E["talk"]] = talk
     scripts[E["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(WO.SAY), Op(b"\x54\x02"), asm.ret()]}
+    req = lambda ent, slot: Op(bytes([0x01, ent, 0xC0 | slot]))     # REQ: never waits (the talk may be busy)
 
     def line_from(key):
         """A random line of a pool, unless someone's already talking."""
@@ -246,34 +280,56 @@ def _set(ctx, donor, stand, poses):
         return [asm.if_byte(TALKING, "==", 0, busy), Op(bytes([0x99, LN[0], LN[1]])),
                 Op(bytes([0x8D, LN[0] << 4, LN[1], size])), asm.setbyte(TALKING, 1), req(E["talk"], sl), busy]
 
+    def prompt_line(key, pick=None):
+        """A line of a hold pool in the prompt window (random, or line `pick` var - 1)."""
+        sl, size = hold_pools[key]
+        if pick is None:
+            ops = [Op(bytes([0x99, CL[0], CL[1]])), Op(bytes([0x8D, CL[0] << 4, CL[1], size]))]
+        else:
+            ops = [asm.setbyte(CL, pick), Op(bytes([0x87, CL[0] << 4, CL[1], 1]))]     # MINUS
+        return [hb._w(2)] + ops + [req(E["prompt"], sl)]                 # (its last line just closed)
+
     # the director
     say = lambda t: hb._say(sec, t)
     fade_out, fade_in = [Op(hb.FADE_OUT), Op(b"\x6C")], [Op(hb.FADE_IN), Op(b"\x6C")]
     actors = lambda part: ["cloudA", "tifaA"] if part == "A" else ["cloudB", "tifaB"]
-    req = lambda ent, slot: Op(bytes([0x01, ent, 0xC0 | slot]))     # REQ: never waits (the talk may be busy)
+    ix_ops = [asm.setbyte(IX, TIER)] + ch(STYLE, [[Op(bytes([0x85, IX[0] << 4, IX[1], n * st]))] if st else []
+                                                  for st in range(max(WP.STYLES.values()))])
     main = [hb._uc(1), hb._menu(1), hb._w(20)] + fade_in + [Op(bytes([0xF2, 0, 0, 0, 0x10, WO.MUSIC]) + bytes(8))]
     for t in WO.INTRO:
         main += say(t)
     main += say(WO.HOW) + fade_out + \
         [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(PART, 0), asm.setbyte(SEEN, 1),
-         asm.setbyte(CHAT, 0), asm.setbyte(TALKING, 0),
+         asm.setbyte(CHAT, 0), asm.setbyte(TALKING, 0), asm.setbyte(HELD, 0), asm.setbyte(STYLE, 0),
+         asm.setbyte(SC, 0), asm.setbyte(ANGER, 0), asm.setbyte(IX, 0),
          asm.setword(HITS, 0), asm.setword(PAY, 0), asm.setword(REPS, 0)] + \
         [hb._req(E[a], 3, wait=False) for a in actors("A")] + [hb._req(E["camera"], 2, wait=False), hb._w(20)] + fade_in
+    walkout = asm.nop()
+
+    def frames(var, limit):
+        """Wait while var < limit, a frame each (IFs only jump forward: the loop is JMPB)."""
+        top, done = asm.nop(), asm.nop()
+        return [top, asm.if_byte(var, "<", limit, done), hb._w(1), Op(bytes([0x95, var[0], var[1]])),
+                asm.goto_back(top), done]
 
     def part_loop(part):
-        n = len(WO.PERIODS)
         rep, wait, judge, hit, miss, after, out, tail = (asm.nop() for _ in range(8))
-        # (the actors' tier anim loops; it changes only with the tier: slot 2 places them and starts it)
-        restart = [hb._req(E[a], 2, wait=False) for a in actors(part)]
+        # (the actors' anim loops; it changes only with the tier or style: slot 2 places them and starts it)
+        restart = ix_ops + [hb._req(E[a], 2, wait=False) for a in actors(part)]
         ops = [rep] + ch(TIER, [[asm.setword(PER, p)] for p in WO.PERIODS])
         ops += [Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], 3])),   # RANDOM, MOD 3
                 asm.setbyte(KEY, RND), asm.setbyte(KP, KEY), Op(bytes([0x95, KP[0], KP[1]])),   # KP = KEY + 1
-                asm.setbyte(PR, 0), asm.setword(CNT, 0)]
-        ops += ch(KEY, [[hb._req(E["prompt"], 2 + k, wait=False)] for k in range(3)])
+                asm.setbyte(PR, 0), asm.setword(CNT, 0), asm.setbyte(HOLD, 0)]
+        nohold = asm.nop()                                              # (user) now and then a hold
+        ops += [asm.if_byte(TIER, ">=", WO.HOLD_TIER, nohold), Op(bytes([0x99, RND[0], RND[1]])),
+                asm.if_byte(RND, "<", WO.HOLD_ODDS, nohold), asm.setbyte(HOLD, 1), nohold]
+        ops += ch(HOLD, [ch(KEY, [[hb._req(E["prompt"], 2 + k, wait=False)] for k in range(3)]),
+                         ch(KEY, [[hb._req(E["prompt"], 5 + k, wait=False)] for k in range(3)])])
         # frames: back round while nothing is pressed and CNT < PER (IFs only jump forward)
+        hold = asm.nop()
         ops += [wait, hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),                 # INC2
                 asm.if_byte(PR, "==", 0, judge), asm.if_word(CNT, "<", PER, miss), asm.goto_back(wait)]
-        ops += [judge, Op(b"\x54\x01"), asm.if_byte(PR, "==", KP, miss)]
+        ops += [judge, Op(b"\x54\x01"), asm.if_byte(PR, "==", KP, miss), asm.if_byte(HOLD, "==", 0, hold)]
         # a hit: pay, streak, maybe a tier up (and its lines the first time)
         ops += [hit, Op(WO.HIT_SOUND), Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, TIER),
                 Op(bytes([0x96, PAY[0], PAY[1]])),
@@ -287,11 +343,19 @@ def _set(ctx, donor, stand, poses):
                 ops += [asm.if_byte(TIER, "==", t, nx), asm.if_byte(SEEN, "bit_off", t, nx), asm.biton(SEEN, t),
                         req(E["talk"], lines[t]), nx]
         rest = asm.nop()
-        quiet = asm.nop()
+        quiet, same = asm.nop(), asm.nop()
         ops += [after, rest, asm.if_word(CNT, "<", PER, tail), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),
                 asm.goto_back(rest), tail,
                 Op(bytes([0x95, CHAT[0], CHAT[1]])), asm.if_byte(CHAT, ">=", WO.CHAT_EVERY, quiet),     # (user) chatter
                 asm.setbyte(CHAT, 0)] + line_from("chat" + part) + [quiet]
+        # (user: variations) every STYLE_EVERY reps the next style, its lines (unless someone's talking)
+        ops += [Op(bytes([0x95, SC[0], SC[1]])), asm.if_byte(SC, ">=", WO.STYLE_EVERY, same), asm.setbyte(SC, 0),
+                Op(bytes([0x95, STYLE[0], STYLE[1]]))]
+        wrap = asm.nop()
+        ops += [asm.if_byte(STYLE, ">=", WP.STYLES[part], wrap), asm.setbyte(STYLE, 0), wrap] + restart
+        busy = asm.nop()
+        ops += [asm.if_byte(TALKING, "==", 0, busy), asm.setbyte(TALKING, 1), asm.setbyte(CHAT, 0),
+                req(E["talk"], styles[part]), busy, same]
         done = asm.nop()
         if part == "A":                                                 # PART_A_END hits into the top tier
             ops += [asm.if_byte(TIER, "==", n - 1, done), asm.if_byte(STREAK, ">=", WO.PART_A_END, done), asm.goto(out), done]
@@ -301,25 +365,62 @@ def _set(ctx, donor, stand, poses):
         # a miss: the buzz, back to the slowest pace (a line if it was fast), the rest of the rep, then the
         # part's check above (a backward jump: JMPB)
         slow, mtail, mdone = asm.nop(), asm.nop(), asm.nop()
+        drop = [asm.if_byte(TIER, "!=", 0, slow), asm.setbyte(TIER, 0)] + restart + [slow, asm.setbyte(STREAK, 0)]
         ops += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + line_from("miss" + part) + \
-            [asm.setbyte(CHAT, 0), asm.if_byte(TIER, "!=", 0, slow),
-             asm.setbyte(TIER, 0)] + restart + [slow,
-             asm.setbyte(STREAK, 0), mtail, asm.if_word(CNT, "<", PER, mdone),
-                hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(mtail), mdone, asm.goto_back(tail)]
+            [asm.setbyte(CHAT, 0)] + drop + \
+            [mtail, asm.if_word(CNT, "<", PER, mdone),
+             hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(mtail), mdone, asm.goto_back(tail)]
+        # (user) the hold: both freeze at the bottom (he holds her down) until she calls it; let go in time =
+        # a hit plus a bonus; before her call = a miss; too late = she's mad (MAD_LIMIT: she walks out)
+        early, cue, good, late, calm = (asm.nop() for _ in range(5))
+        ops += [hold] + [hb._req(E[a], 5, wait=False) for a in actors(part)] + prompt_line("hold" + part) + \
+            [Op(bytes([0x99, CUE[0], CUE[1]])), Op(bytes([0x8D, CUE[0] << 4, CUE[1], WO.HOLD_RANGE])),
+             Op(bytes([0x85, CUE[0] << 4, CUE[1], WO.HOLD_MIN])), asm.setbyte(HC, 0)]
+        hw, lw = asm.nop(), asm.nop()
+        ops += [hw, hb._w(1), asm.if_byte(HELD, "bit_on", KEY, early), Op(bytes([0x95, HC[0], HC[1]])),
+                asm.if_byte(HC, "<", CUE, cue), asm.goto_back(hw)]
+        ops += [cue, Op(b"\x54\x01"), hb._req(E[actors(part)[1]], 6, wait=False)] + prompt_line("cue" + part) + \
+            [asm.setbyte(HC, 0), lw, hb._w(1), asm.if_byte(HELD, "bit_on", KEY, good), Op(bytes([0x95, HC[0], HC[1]])),
+             asm.if_byte(HC, "<", WO.LETGO, late), asm.goto_back(lw)]
+        result = lambda: [asm.setbyte(HC, 0)] + frames(HC, WO.RESULT_WAIT) + [Op(b"\x54\x01")]
+        # let go in time: the materia chime, the bonus, a line, then counted as a hit
+        ops += [good, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 0xEA, 1, 0x40]))]
+        for _ in range(WO.HOLD_BONUS):
+            ops += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
+        ops += prompt_line("good" + part) + restart + result() + [asm.goto_back(hit)]
+        # too soon: a miss
+        ops += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + prompt_line("early" + part) + \
+            [asm.setbyte(TIER, 0)] + restart + [asm.setbyte(STREAK, 0)] + result() + [asm.goto_back(tail)]
+        # too late: she's mad
+        ops += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x95, ANGER[0], ANGER[1]])),
+                asm.if_byte(ANGER, ">=", WO.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
+            prompt_line("mad" + part, ANGER) + [asm.setbyte(TIER, 0)] + restart + [asm.setbyte(STREAK, 0)]
+        zero, paid_ = asm.nop(), asm.nop()
+        ops += [asm.if_word(PAY, "<", WO.MAD_PENALTY, zero), hb._arith(0x88, PAY, WO.MAD_PENALTY), asm.goto(paid_),
+                zero, asm.setword(PAY, 0), paid_] + result() + [asm.goto_back(tail)]
         return ops, out
 
     ops_a, out_a = part_loop("A")
     main += ops_a + [out_a] + fade_out + [Op(b"\x54\x02")] + \
         [hb._req(E[a], 4, wait=False) for a in actors("A")] + \
-        [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(PART, 1), asm.setbyte(SEEN, 1)] + \
+        [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(PART, 1), asm.setbyte(SEEN, 1),
+         asm.setbyte(STYLE, 0), asm.setbyte(SC, 0), asm.setbyte(IX, 0)] + \
         [hb._req(E[a], 3, wait=False) for a in actors("B")] + [hb._w(20)] + fade_in
     for t in WO.START_B:
         main += say(t)
     ops_b, out_b = part_loop("B")
+    pay = asm.nop()
     main += ops_b + [out_b, Op(b"\x54\x01"), Op(b"\x54\x02"), hb._w(30)]
     for t in WO.FINALE:
         main += say(t)
-    main += [asm.setword(GIL, PAY), hb._arith(0x8A, GIL, WO.PAY_HIT),
+    main += [asm.goto(pay)]
+    # (user) she walked out: she's gone, the Director's line, an affection point lost; paid what was earned
+    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + mv.lose_affection("tifa") + \
+        ch(PART, [sum((say(t) for t in WO.WALKOUT_A[:1]), []) + fade_out + [hb._req(E["tifaA"], 4, wait=False), hb._w(10)] +
+                  fade_in + sum((say(t) for t in WO.WALKOUT_A[1:]), []),
+                  sum((say(t) for t in WO.WALKOUT_B[:1]), []) + fade_out + [hb._req(E["tifaB"], 4, wait=False), hb._w(10)] +
+                  fade_in + sum((say(t) for t in WO.WALKOUT_B[1:]), [])])
+    main += [pay, asm.setword(GIL, PAY), hb._arith(0x8A, GIL, WO.PAY_HIT),
              Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), Op(bytes([0xF1, 0, 0x68, 1, 0x40]))]
     paid = say(WO.PAID)
     paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))       # MPRA2 after WINDOW

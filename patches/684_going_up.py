@@ -42,6 +42,10 @@ TIER, STREAK, KEY, PR, P, SEEN, RND, KP, HOLD, HELD, SINCE, NEXTSW, MOVING = ((5
 CNT, PAY, REPS, PER, GIL, CX, CY = ((6, a) for a in range(114, 128, 2))
 PRV = [(5, 130 + k) for k in range(4)]
 WN = (5, 134)                        # a walk's frame count
+# (user: variety) TALKING while the talk entity shows lines, LN its pool's line, CHAT reps since chatter, STYLE
+# Cloud's pose variant, SC reps since it changed, ANGER Tifa's strikes, HC / CUE the head hold's frames / her
+# tap-out frame, CL the prompt window's line
+TALKING, LN, CHAT, STYLE, SC, ANGER, HC, CUE, CL = ((5, a) for a in range(135, 144))
 
 
 def _mods():
@@ -64,6 +68,7 @@ def apply(ctx):
     elena_e = elena_l.models[ELENA_DONOR[1]]
     e_stand = ModelLoader.anims(elena_e)[0].split(".")[0].lower() + ".a"
     own = GP.build(ctx, BARE_ELENA, e_stand)                            # QEA0 covering, QEB0 still
+    variants = GP.build_cloud(ctx)                                      # QKC0-3 legs swapped, QKJ0-3 no hands
     # the set
     ctx.field(GU.FIELD)
     ctx.field(GU.BASE)
@@ -101,11 +106,12 @@ def apply(ctx):
     assert ModelLoader.hrc(cl0) == "AAAA.HRC"
     c_anims = ModelLoader.anims(cl0)
     t_anims = ModelLoader.anims(tifa_e)
-    bare_c = ["ZNC%d.tor" % s for s in range(4)] + ["ZNJ%d.tor" % s for s in range(4)]
-    bare_t = ["ZVJ%d.tor" % s for s in range(4)] + ["ZVJ9.tor"]
+    bare_c = ["ZNC%d.tor" % s for s in range(4)] + ["ZNJ%d.tor" % s for s in range(4)] + ["ZNJ8.tor"] + variants
+    bare_t = ["ZVJ%d.tor" % s for s in range(4)] + ["ZVJ9.tor", "ZVJ8.tor", "ZVJ7.tor"]    # (8 held deep, 7 her squirm)
     bare_e = own + ["ZYC%d.tor" % s for s in range(4)]
     for n in bare_c + bare_t + bare_e:
         ctx.char_file(n.split(".")[0].lower() + ".a")                    # (exists)
+    hold_c, hold_t, try_t = 1 + bare_c.index("ZNJ8.tor"), 1 + bare_t.index("ZVJ8.tor"), 1 + bare_t.index("ZVJ7.tor")
     ei = loader.add_from(elena_l, ELENA_DONOR[1])
     elena_m = loader.models.pop(ei)
     loader.models = [cl0, ModelLoader.only_anims(cl0, c_anims[:2]),
@@ -173,16 +179,21 @@ def apply(ctx):
     # the scene actors: 0 init hidden; 2 = this rep (by P: placed, the tier's stroke from its start); 4 hidden;
     # Elena 8 covering (intro), 9 the crawl
     stroke = lambda base: ch_(TIER, [loop_(1 + base + s) for s in range(4)])
+    qk = lambda n: bare_c.index(n) - 1                                  # (stroke adds 1)
     scripts[E["cloudB"]] = {
         0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: ch_(P, [at(ck, dE) + stroke(0), at(ch, dC) + stroke(4)]) + [hb._visi(1), asm.ret()],
-        4: [hb._visi(0), asm.ret()]}
+        2: ch_(P, [at(ck, dE) + ch_(STYLE, [stroke(0), stroke(qk("QKC0.tor"))]),
+                   at(ch, dC) + ch_(STYLE, [stroke(4), stroke(qk("QKJ0.tor"))])]) + [hb._visi(1), asm.ret()],
+        4: [hb._visi(0), asm.ret()],
+        5: loop_(hold_c) + [asm.ret()]}
     ti = lambda n: 1 + bare_t.index(n)
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: at(tp, dT) + ch_(P, [loop_(ti("ZVJ9.tor")), ch_(TIER, [loop_(ti("ZVJ%d.tor" % s)) for s in range(4)])]) +
         [hb._visi(1), asm.ret()],
-        4: [hb._visi(0), asm.ret()]}
+        4: [hb._visi(0), asm.ret()],
+        5: loop_(hold_t) + [asm.ret()],                                  # held deep
+        6: loop_(try_t) + [asm.ret()]}                                   # tapping out: her squirm
     ei_ = lambda n: 1 + bare_e.index(n)
     n_crawl = max(1, round(math.dist(epos, (ex, ey)) / (WALK_STEP * 0.5)))
     stx, sty = round((ex - epos[0]) / n_crawl), round((ey - epos[1]) / n_crawl)
@@ -217,6 +228,14 @@ def apply(ctx):
         w = (len(label.replace("{PURPLE}", "").replace("{WHITE}", "")) + 6) * 7 + 24
         pr[2 + j] = [Op(b"\x52\x01\x00\x01"), Op(bytes([0x50, 1]) + struct.pack("<HHHH", (320 - w) // 2, GU.PROMPT_Y, w, 25)),
                      asm.message(1, mv._text_id(sec, text)), asm.ret()]
+    pslot = 2 + len(labels)
+    hold_pools = {}
+    for key, pool in (("hold", GU.HOLDS), ("cue", GU.CUES), ("good", GU.GOOD), ("early", GU.EARLY), ("mad", GU.MAD)):
+        hold_pools[key] = (pslot, len(pool))
+        pr[pslot] = [Op(b"\x52\x01\x00\x01")] + ch_(CL, [[hb._window(x, 1, 8, GU.PROMPT_Y), asm.message(1, mv._text_id(sec, x))]
+                                                         for x in pool]) + [asm.ret()]
+        pslot += 1
+    assert pslot <= 32, pslot
     scripts[E["prompt"]] = pr
     # the talk: window 2, groups of lines each shut by hush after SAY
     groups, gid = [], {}
@@ -227,18 +246,52 @@ def apply(ctx):
     for k, line in enumerate(GU.SWITCH_CALL):
         gid[("switch", k)] = len(groups)
         groups.append([line])
-    gid["miss"] = len(groups)
-    groups.append([GU.MISS])
+    def show(text):
+        return [Op(b"\x52\x02\x00\x01"), hb._window(text, 2, 8, GU.LINE_Y), hb._req(E["hush"], 2, wait=False),
+                asm.message(2, mv._text_id(sec, text))]
     talk = {0: [asm.ret(), asm.ret()]}
+    busy_ = lambda ops: [asm.setbyte(TALKING, 1)] + ops + [asm.setbyte(TALKING, 0), asm.ret()]
     for j, lines in enumerate(groups):
-        ops = []
-        for text in lines:
-            ops += [Op(b"\x52\x02\x00\x01"), hb._window(text, 2, 8, GU.LINE_Y), hb._req(E["hush"], 2, wait=False),
-                    asm.message(2, mv._text_id(sec, text))]
-        talk[2 + j] = ops + [asm.ret()]
+        talk[2 + j] = busy_(sum((show(t) for t in lines), []))
+    slot = 2 + len(groups)
+    style_slot = slot                                                   # (by P, then STYLE)
+    talk[slot] = busy_(ch_(P, [ch_(STYLE, [sum((show(t) for t in ls), []) for ls in GU.STYLE_LINES[p]])
+                               for p in (0, 1)]))
+    slot += 1
+    pools = {}
+    for key, pool in (("chat0", GU.CHAT[0]), ("chat1", GU.CHAT[1]), ("miss0", GU.MISSES[0]), ("miss1", GU.MISSES[1])):
+        pools[key] = (slot, len(pool))
+        talk[slot] = busy_(ch_(LN, [show(t) for t in pool]))
+        slot += 1
+    assert slot <= 32, slot
     scripts[E["talk"]] = talk
     scripts[E["hush"]] = {0: [asm.ret(), asm.ret()], 2: [hb._w(GU.SAY), Op(b"\x54\x02"), asm.ret()]}
     req = lambda ent, slot: Op(bytes([0x01, ent, 0xC0 | slot]))        # REQ: never waits
+
+    def line_from(key):
+        """A random line of a talk pool, unless someone's already talking."""
+        sl, size = pools[key]
+        busy = asm.nop()
+        return [asm.if_byte(TALKING, "==", 0, busy), Op(bytes([0x99, LN[0], LN[1]])),
+                Op(bytes([0x8D, LN[0] << 4, LN[1], size])), asm.setbyte(TALKING, 1), req(E["talk"], sl), busy]
+
+    def by_p(fn):
+        return ch_(P, [fn(0), fn(1)])
+
+    def prompt_line(key, pick=None):
+        """A line of a hold pool in the prompt window (random, or line `pick` var - 1)."""
+        sl, size = hold_pools[key]
+        if pick is None:
+            ops = [Op(bytes([0x99, CL[0], CL[1]])), Op(bytes([0x8D, CL[0] << 4, CL[1], size]))]
+        else:
+            ops = [asm.setbyte(CL, pick), Op(bytes([0x87, CL[0] << 4, CL[1], 1]))]     # MINUS
+        return [hb._w(2)] + ops + [req(E["prompt"], sl)]                 # (its last line just closed)
+
+    def frames(var, limit):
+        """Wait while var < limit, a frame each (IFs only jump forward: the loop is JMPB)."""
+        top, done = asm.nop(), asm.nop()
+        return [top, asm.if_byte(var, "<", limit, done), hb._w(1), Op(bytes([0x95, var[0], var[1]])),
+                asm.goto_back(top), done]
 
     # the director
     say = lambda t: hb._say(sec, t)
@@ -256,11 +309,12 @@ def apply(ctx):
             main += [hb._req(E["elenaB"], 9)]
         elif action == "behind":
             main += [hb._req(E["cloudA"], 9)] + fade_out + [hb._req(E["cloudA"], 4), hb._req(E["tifaA"], 4)]
-            main += [asm.setbyte(P, 0), asm.setbyte(TIER, 0)] + \
+            main += [asm.setbyte(P, 0), asm.setbyte(TIER, 0), asm.setbyte(STYLE, 0)] + \
                 [hb._req(E[a], 2) for a in ("cloudB", "tifaB", "elenaB")] + [hb._w(20)] + fade_in
     main += say(GU.HOW)
     main += [asm.setbyte(STREAK, 0), asm.setbyte(SEEN, 0x11), asm.setword(PAY, 0), asm.setword(REPS, 0),
-             asm.setbyte(SINCE, 0), asm.setbyte(NEXTSW, GU.SWITCH_MIN), asm.setbyte(HELD, 0)]
+             asm.setbyte(SINCE, 0), asm.setbyte(NEXTSW, GU.SWITCH_MIN), asm.setbyte(HELD, 0),
+             asm.setbyte(TALKING, 0), asm.setbyte(CHAT, 0), asm.setbyte(SC, 0), asm.setbyte(ANGER, 0)]
     n = len(GU.PERIODS)
     rep, wait, judge, hit, miss, rest, tail, holdw, done_h, sw_rep, normal, after = (asm.nop() for _ in range(12))
     main += [rep] + [req(E[a], 2) for a in ("cloudB", "tifaB", "elenaB")]
@@ -277,14 +331,16 @@ def apply(ctx):
                        ch_(KEY, [[hb._req(E["prompt"], 5 + k, wait=False)] for k in range(3)])])
     main += [wait, hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),
              asm.if_byte(PR, "==", 0, judge), asm.if_word(CNT, "<", PER, miss), asm.goto_back(wait)]
-    main += [judge, asm.if_byte(PR, "==", KP, miss)]
+    head_hold, nohead = asm.nop(), asm.nop()
+    main += [judge, asm.if_byte(PR, "==", KP, miss),
+             asm.if_byte(HOLD, "==", 1, nohead), asm.if_byte(P, "==", 1, nohead), asm.goto(head_hold), nohead]
     # a HOLD: the button kept down to the rep's end (the window stays up meanwhile)
     main += [asm.if_byte(HOLD, "==", 1, done_h), holdw, asm.if_word(CNT, "<", PER, done_h),
              asm.if_byte(HELD, "bit_on", KEY, miss), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(holdw),
              done_h, Op(b"\x54\x01")]
     # a hit: pay (a HOLD twice), streak, maybe a tier up (its lines the first time with this partner)
     once = asm.nop()
-    main += [hit, Op(bytes([0x96, REPS[0], REPS[1]])), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])),
+    main += [hit, Op(GU.HIT_SOUND), Op(bytes([0x96, REPS[0], REPS[1]])), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])),
              asm.if_byte(HOLD, "==", 1, once), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])), once,
              Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(TIER, "<", n - 1, after),
              asm.if_byte(STREAK, ">=", GU.HITS_UP, after), Op(bytes([0x95, TIER[0], TIER[1]])), asm.setbyte(STREAK, 0)]
@@ -297,12 +353,20 @@ def apply(ctx):
                          asm.biton(SEEN, bit), req(E["talk"], 2 + gid[(part, t)]), nx]
     main += [after, rest, asm.if_word(CNT, "<", PER, tail), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),
              asm.goto_back(rest), tail, Op(bytes([0x95, SINCE[0], SINCE[1]]))]
+    # (user: long silences) chatter every CHAT_EVERY reps; (user: variations) Cloud's pose every STYLE_EVERY
+    quiet, same, busy = asm.nop(), asm.nop(), asm.nop()
+    main += [Op(bytes([0x95, CHAT[0], CHAT[1]])), asm.if_byte(CHAT, ">=", GU.CHAT_EVERY, quiet), asm.setbyte(CHAT, 0)] + \
+        by_p(lambda p: line_from("chat%d" % p)) + [quiet]
+    main += [Op(bytes([0x95, SC[0], SC[1]])), asm.if_byte(SC, ">=", GU.STYLE_EVERY, same), asm.setbyte(SC, 0),
+             Op(bytes([0x93, STYLE[0] << 4, STYLE[1], 1])),                   # XOR STYLE, 1 (the next rep shows it)
+             asm.if_byte(TALKING, "==", 0, same), asm.setbyte(TALKING, 1), asm.setbyte(CHAT, 0),
+             req(E["talk"], style_slot), same]
     fin = asm.nop()
     main += [asm.if_word(REPS, "<", GU.TOTAL_REPS, fin), asm.goto_back(rep)]
     # a miss: the buzz, back to the slowest pace (Tifa says so if it was fast), the rep's rest, then on
     slow, mtail, mdone = asm.nop(), asm.nop(), asm.nop()
     main += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
-             asm.if_byte(TIER, ">=", 2, slow), req(E["talk"], 2 + gid["miss"]), slow,
+             asm.setbyte(CHAT, 0)] + by_p(lambda p: line_from("miss%d" % p)) + [slow,
              asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), mtail, asm.if_word(CNT, "<", PER, mdone),
              hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(mtail), mdone, asm.goto_back(tail)]
     # Tifa's "Switch!": [MENU] in time = a bonus; either way Cloud switches partner (fast fade)
@@ -319,11 +383,45 @@ def apply(ctx):
          asm.setbyte(NEXTSW, RND), Op(bytes([0x85, NEXTSW[0] << 4, NEXTSW[1], GU.SWITCH_MIN])),      # PLUS
          ] + fast_out + [req(E[a], 2) for a in ("cloudB", "tifaB", "elenaB")] + [hb._w(8)] + fast_in + \
         [asm.goto_back(rep)]
+    # (user) the head hold: both held deep until Tifa taps out; let go in time = a hit (double pay) plus a
+    # bonus; before = a miss; too late = she's mad (MAD_LIMIT: she walks out)
+    early, cue, good, late, calm, hw, lw = (asm.nop() for _ in range(7))
+    result = [asm.setbyte(HC, 0)] + frames(HC, GU.RESULT_WAIT) + [Op(b"\x54\x01")]
+    restart = [req(E[a], 2) for a in ("cloudB", "tifaB")]
+    walkout = asm.nop()
+    main += [head_hold, Op(b"\x54\x01"), req(E["cloudB"], 5), req(E["tifaB"], 5)] + prompt_line("hold") + \
+        [Op(bytes([0x99, CUE[0], CUE[1]])), Op(bytes([0x8D, CUE[0] << 4, CUE[1], GU.HOLD_RANGE])),
+         Op(bytes([0x85, CUE[0] << 4, CUE[1], GU.HOLD_MIN])), asm.setbyte(HC, 0),
+         hw, hb._w(1), asm.if_byte(HELD, "bit_on", KEY, early), Op(bytes([0x95, HC[0], HC[1]])),
+         asm.if_byte(HC, "<", CUE, cue), asm.goto_back(hw),
+         cue, Op(b"\x54\x01"), req(E["tifaB"], 6)] + prompt_line("cue") + \
+        [asm.setbyte(HC, 0), lw, hb._w(1), asm.if_byte(HELD, "bit_on", KEY, good), Op(bytes([0x95, HC[0], HC[1]])),
+         asm.if_byte(HC, "<", GU.LETGO, late), asm.goto_back(lw)]
+    main += [good, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 0xEA, 1, 0x40]))]           # (the materia chime)
+    for _ in range(GU.HOLD_BONUS):
+        main += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
+    main += prompt_line("good") + restart + result + [asm.goto_back(hit)]
+    main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + \
+        prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + result + [asm.goto_back(tail)]
+    zero, paid_ = asm.nop(), asm.nop()
+    main += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
+             Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.if_byte(ANGER, ">=", GU.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
+        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + \
+        [asm.if_word(PAY, "<", GU.MAD_PENALTY, zero), hb._arith(0x88, PAY, GU.MAD_PENALTY), asm.goto(paid_),
+         zero, asm.setword(PAY, 0), paid_] + result + [asm.goto_back(tail)]
     # the end: the car moves at last
+    pay = asm.nop()
     main += [fin, Op(b"\x54\x01"), Op(b"\x54\x02"), asm.setbyte(MOVING, 1), hb._w(30)]
     for t in GU.FINALE:
         main += say(t)
-    main += [asm.setword(GIL, PAY), hb._arith(0x8A, GIL, GU.PAY_HIT),
+    main += [asm.goto(pay)]
+    # (user) Tifa walked out: she climbs out, an affection point lost; paid what was earned
+    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + mv.lose_affection("tifa") + say(GU.WALKOUT[0]) + \
+        fade_out + [req(E["tifaB"], 4), asm.setbyte(P, 0), asm.setbyte(STYLE, 0)] + \
+        [req(E[a], 2) for a in ("cloudB", "elenaB")] + [hb._w(10)] + fade_in
+    for t in GU.WALKOUT[1:]:
+        main += say(t)
+    main += [pay, asm.setword(GIL, PAY), hb._arith(0x8A, GIL, GU.PAY_HIT),
              Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), Op(bytes([0xF1, 0, 0x68, 1, 0x40]))]
     paid = say(GU.PAID)
     paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))

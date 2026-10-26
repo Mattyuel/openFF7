@@ -401,6 +401,20 @@ one position after another into films.
   staged intro lines, actions per line, then positions. The press-rate meter
   (670), the Square prompts and the holds can be the gameplay between scenes;
   other kinds of play can be added.
+- **Keeping the minigames interesting (user: "boring after a while and repetitive").** Built so far
+  (683 / 684): speed tiers, chatter and miss lines, HOLD prompts, Tifa's Switch call, **hold on her
+  cue** (keep holding until she calls it / taps out, let go fast: late = mad, three times = she walks
+  out), **pose styles** alternating every few reps. Options for later films (and to retrofit):
+  - *Fake-outs*: a "Wait..." prompt where pressing is the mistake.
+  - *Combos*: two or three buttons in one rep at the top tiers.
+  - *Mood meter*: her mood rises with hits and drops with misses; at the top she asks for something
+    (a style, faster, a hold), at the bottom she complains or walks.
+  - *Requests*: she or the Director asks for a style ("Leg up!") with a prompt; obeying in time pays.
+  - *Interruptions*: someone walks in (a guard on the train, a Turk in the elevator): freeze (no
+    presses) until they leave, or it's a miss.
+  - *Stamina*: Cloud's bar drains with speed; a breather (a slow tier) refills it, empty = forced slow.
+  - *Finisher QTE*: a short sequence of prompts at the end decides the finisher bonus.
+  - *Partner choice*: a two-way prompt picks who's next (each girl's lines react).
 - **Parody targets (user): FF7's own world.**
 
   **Approved (user):**
