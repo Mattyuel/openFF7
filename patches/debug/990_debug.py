@@ -25,7 +25,7 @@ import struct
 
 import _cid as CID
 
-from _config import HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL, MOVIE_RANK, MOVIE_STATE, SPECIAL_ON
+from _config import COMBAT, HB_AFFECTION, HB_HIRED, HB_KID, HB_JOB, HB_LAST, HB_VISIT, HUNTER_PTS, MOVIE_AT, MOVIE_GIRL, MOVIE_RANK, MOVIE_STATE, SPECIAL_ON
 from _recruit import sound
 from _travel import CHOICE, window
 import _honey_bee_gifts as gifts
@@ -225,5 +225,6 @@ def apply(ctx):
             continue
         f.sections[0] = data
         added += 1
-    _wm_hook(ctx)
+    if COMBAT:          # else 950_no_combat already stops the world map roll
+        _wm_hook(ctx)
     print("  debug menu in %d fields (%d left out: %s ...)" % (added, len(skipped), " ".join(skipped)))

@@ -36,6 +36,12 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **No random battles** (950_no_combat): walk around fields that used to
+  have encounters (Train Graveyard, the Sector 7 pillar's stairs, Shinra HQ
+  stairs, the sewers) and the world map: no battle should start. Scripted
+  fights (boss lines, the Honey Bee thugs) still happen. If a field still
+  rolls battles, say which.
+
 - New game skips the opening and starts with Cloud alone at street level in
   front of the Sector 7 station with the slums theme playing; menu (including
   PHS) is available. Walking up to the train should no longer board it.

@@ -1033,6 +1033,11 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_hides_phs_show(op)` Story scenes (Kalm inn, cargo ship) add PHS to the menu (OR2 var[2][28]);
 - `apply(ctx)` 
 
+## `patches/950_no_combat.py`
+(user) No combat (docs/gym_plan.md): no random battles anywhere while
+
+- `apply(ctx)` 
+
 ## `patches/985_merge_parts.py`
 (user) Cloud's / Cid's member and the girls' nipples merged into the part they sit on (the pelvis /
 

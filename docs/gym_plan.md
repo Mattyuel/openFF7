@@ -345,16 +345,30 @@ An aerobics class in the gym, done 80s style.
 
 ### Combat
 
-**Combat is not in this game.** What exists:
+**Decided (user, 2026-10): combat goes, for now.**
 
-- The debug build already turns encounters off:
-  - a field `BTLON` hold
-  - the world map battle call stub
-- Shipping those as the default removes random battles.
-- Scripted boss lines (600's boss lines, 130's elevator, 180's Motor Ball,
-  170's Reno) would be removed or turned into non-combat beats.
+- **Done:** `950_no_combat.py` turns random battles off while
+  `_config.COMBAT` is False.
+  - Every field's encounter tables are disabled (181 fields).
+  - The world map's encounter roll always says "no battle".
+  - Flipping `COMBAT` back to True restores both.
+- **Not done yet:** the scripted battles. 84 fields still have a `BATTLE` op
+  in code that can run:
+  - openFF7's own boss lines (600's quest bosses, 130 HQ roof / elevator,
+    170 Reno, 180 Motor Ball, 250 Guard Scorpion / Air Buster, 626's thugs)
+  - original story fights the pinning leaves reachable (most behind flags
+    that never get set)
+  - the world map's scripted fights in wm*.ev
 
-**Open:** whether any battle stays as a story beat (e.g. Corneo's enforcers).
+  They are to be removed or turned into non-combat beats with the rest of the
+  restructure (the list comes from scanning the build's reachable code).
+- **Knock-on effects:**
+  - Kill quests (600) and bounties (630) can no longer be finished: they
+    count battle kills. They are replaced by gym quests anyway (section 8).
+  - Cloud no longer levels up.
+  - Chocobo catching (a battle) and Yuffie's world map encounter are gone.
+    230 recruits Yuffie as an NPC.
+  - The debug menu's encounters toggle does nothing.
 
 ## 9. Technical constraints
 

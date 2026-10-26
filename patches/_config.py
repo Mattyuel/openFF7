@@ -103,6 +103,10 @@ SPECIAL_ON = ((1, 213), 7)
 HB_RATE = 2                     # gil per star per minute
 HB_CAP = 270                      # minutes counted at most (60 stars: 32400 gil, fits a signed word)
 
+# (user) No combat for now (docs/gym_plan.md): 950_no_combat turns random battles off in every field and on the
+# world map while this is False (debug: the encounters toggle then does nothing)
+COMBAT = False
+
 # Regions that keep their own story line in a private 16-bit variable
 # (reads/writes of story progress in their fields are redirected to it).
 # name -> (variable, initial value at new game)
