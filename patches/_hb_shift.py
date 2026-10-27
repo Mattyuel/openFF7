@@ -69,11 +69,12 @@ LATE = [
     "Cloud\n“I'll take out the trash. And his\n wallet. For the lamp.”",
 ]
 
-# Each customer: name, donor (field, model), type, start mood, rate (gil a mood point at the end), lines.
+# Each customer: name, donor (field, model), height (x Cloud's height in the room; default 1; 689 rescales every
+# customer to it: user, Hobbs and the Lackey were too big), type, start mood, rate (gil a mood point at the end), lines.
 # rounds: (prompt text, [(option, weight, reply)]); a weight "X" = the incident (pushy only).
 CUSTOMERS = [
     # ---- open ----------------------------------------------------------------------------------------------
-    dict(key="dio", name="Dio", donor=("jet", 4), type="open", mood=5, rate=40, pos="head",
+    dict(key="dio", name="Dio", donor=("jet", 4), height=1.11, type="open", mood=5, rate=40, pos="head",
          intro=["Dio\n“Shh! I'm not here. Officially I'm\n judging a chocobo race in Junon.”",
                 "Dio\n“Unofficially I want the best service\n in Midgar, and I always say exactly\n what I want. Ha ha HA!”"],
          rounds=[
@@ -96,29 +97,30 @@ CUSTOMERS = [
                "Tifa\n“*cough* You're buying a drink, and\n leaving a very big tip.”"],
          meh="Dio\n“Entertaining! Not legendary. Here.\n For the effort.”",
          bad="Dio\n“I've seen better shows at the\n Chocobo Square! Good day!”"),
-    dict(key="bruno", name="Bruno", donor=("games_1", 8), type="open", mood=5, rate=35, pos="cowgirl",
-         intro=["Bruno\n“Evening, miss. Bruno. Arm-wrestling\n champion, Gold Saucer, eleven years.”",
-                "Bruno\n“All day I'm on top of things. Pinning\n arms. Tonight I'd like someone else\n in charge. If that's okay.”"],
+    # (user: "don't use Bruno for honeybee, replace him with someone else") Rico, a Costa del Sol beach bum
+    dict(key="rico", name="Rico", donor=("del2", 8), type="open", mood=5, rate=35, pos="cowgirl",
+         intro=["Rico\n“Heyyy. Rico. Costa del Sol. First\n time in Midgar. Is the sky always\n this... ceiling?”",
+                "Rico\n“Back home I just lie on the sand and\n let the waves do everything. Tonight\n I'd like you to be the waves.”"],
          rounds=[
-             ("Bruno\n“Arm-wrestle me first? It's how I say\n hello.”",
-              [("Win. Easily.", 2, "Bruno\n“...WHAT. HOW. Oh, I'm in love.”"),
-               ("Let him win.", -1, "Bruno\n“...You let me win. Don't pity me.”"),
-               ("Call it a draw.", 1, "Bruno\n“A draw! Haven't had one of those\n since my first match.”")]),
-             ("Bruno\n“My forearm's bigger than my thigh.\n Is that weird? Be honest.”",
-              [("“It's weird. I like weird.”", 2, "Bruno\n“...Nobody ever says that.”"),
-               ("“It's a great forearm.”", 1, "Bruno\n“Thank you. I oil it.”"),
-               ("“Have you tried leg day?”", -1, "Bruno\n“Leg day is for quitters.”")]),
-             ("Bruno\n“So. I'd like you on top. You lead,\n I'll just... hold on. Would that be\n alright?”",
-              [("“Lie down, champ.”", 2, "Bruno\n“Yes ma'am!”"),
-               ("“I'll pin you in three seconds.”", 1, "Bruno\n“Please do.”"),
-               ("“Maybe. Earn it.”", 0, "Bruno\n“I've earned eleven belts. I'll earn\n this.”")])],
-         good=["Tifa\n“On your back, champion. And keep\n your hands on my hips. Gently.”",
-               "Bruno\n“Oh... oh, you're... strong...”",
+             ("Rico\n“You've got a beach face. You ever\n surfed?”",
+              [("“I'd stand on the board first try.”", 2, "Rico\n“...Marry me. Kidding. Mostly.”"),
+               ("“Sand gets everywhere.”", -1, "Rico\n“That's the BEST part, though.”"),
+               ("“Teach me sometime.”", 1, "Rico\n“Lesson one: lie down. Lesson two:\n lie down more.”")]),
+             ("Rico\n“I brought you a shell. It's a real\n one. From the actual sea.”",
+              [("Hold it to your ear.", 2, "Rico\n“You hear it? That's home.”"),
+               ("“It smells like fish.”", -1, "Rico\n“...That's also home.”"),
+               ("“Thank you, Rico.”", 1, "Rico\n“Aw. Nobody says my name like that.”")]),
+             ("Rico\n“So, uh. Could you be on top? I'll\n just float. I'm a really good\n floater.”",
+              [("“Lie back. Catch the wave.”", 2, "Rico\n“Riding it, babe.”"),
+               ("“I'll make you seasick.”", 1, "Rico\n“Worth it.”"),
+               ("“Maybe. Earn it.”", 0, "Rico\n“I'll paddle out for it.”")])],
+         good=["Tifa\n“On your back, surfer. Hands on my\n hips. Let the tide come in.”",
+               "Rico\n“Whoa... whoa, here comes a big one...”",
                "Tifa\n“Mm... ahh... you're not so bad\n yourself.”",
-               "Bruno\n“I yield! I YIELD! ...Again! Again!”",
-               "Tifa\n“Pinned. One, two, three. You're out.”"],
-         meh="Bruno\n“Good match. Rematch some time.”",
-         bad="Bruno\n“You don't respect the forearm. I\n can tell.”"),
+               "Rico\n“Wipe-OUT! ...Again! Paddle back\n out!”",
+               "Tifa\n“Surf's up, Rico. Time to go home.”"],
+         meh="Rico\n“Nice swell. I'll come back next\n season.”",
+         bad="Rico\n“Bummer. You've got no beach in\n you.”"),
     dict(key="pete", name="Pete", donor=("blackbg2", 9), type="open", mood=6, rate=30, pos="mission",
          intro=["Pete\n“Evening, ma'am. Pete. Back from\n three months on a cargo ship.”",
                 "Pete\n“I'll be honest: I just want to lie\n down with a nice girl in a bed that\n doesn't rock. Is that alright?”"],

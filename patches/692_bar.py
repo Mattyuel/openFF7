@@ -87,6 +87,29 @@ def _walk(hb, animb, path, wx, wy, n_, walk, stand, to, step):
     return WK.walk(hb, animb, path, wx, wy, n_, walk, stand, to, step)
 
 
+def _retile(f):
+    """(user: the counter drew over the seated patrons, the door area over Cloud and the patron he walks out) the
+    counter's front to COUNTER_TO, the door's bench / floor tiles to DOOR_TO.., the PC depth (+38) on the room's own
+    line (fitted on its layer-2 tiles: id -> depth is near linear over the furniture's range)."""
+    from ff7.background import Background
+    bg = Background(f.section("background"))
+    layer2 = [t for k, _, ts, _ in bg.layers if k == 2 and ts for t in ts]
+    pts = sorted({(t._get("<H", 24), t._get("<I", 38)) for t in layer2 if 1000 < t._get("<H", 24) < 4000})
+    (i0, d0), (i1, d1) = pts[0], pts[-1]
+    depth = lambda i: round(d0 + (i - i0) * (d1 - d0) / (i1 - i0))
+    new = {i: BR.COUNTER_TO for i in BR.COUNTER_TILES}
+    new.update({i: BR.DOOR_TO + k for k, i in enumerate(BR.DOOR_TILES)})
+    moved = 0
+    for t in layer2:
+        i = t._get("<H", 24)
+        if i in new:
+            t._set("<H", 24, new[i])
+            t._set("<I", 38, depth(new[i]))
+            moved += 1
+    assert moved >= 40, moved
+    f.set_section("background", bg.build())
+
+
 def _marle(ctx):
     """Marle in the real 7th Heaven: "Work a shift." -> the set."""
     import _travel as TV
@@ -121,6 +144,7 @@ def apply(ctx):
     for slot in range(12):
         trig = tg.set_gateway_field(trig, slot, tg.UNUSED)
     f.set_section("triggers", trig)
+    _retile(f)
     sec = Script.parse(f.sections[0])
     old = [bytes(n).rstrip(b"\0").decode("latin-1") for n in sec.entity_names]
     keep = [sec.script_ops(old.index(n), 0) for n in KEEP]
@@ -140,11 +164,13 @@ def apply(ctx):
     # (user: Cloud got stuck walking along the bar into a corner: MOVE follows the walkmesh's pieces) the walks
     # step XYZI along waypoints: Cloud post -> the aisle -> beside the patron; then both -> the aisle -> the door;
     # Cloud back to his post. Every leg is all floor (asserted)
+    door_side = spot(*BR.DOOR_SIDE)
     path_in = lambda s: [post, aisle, beside[s]]
     path_cust = lambda s: [stand[s], aisle, door]
-    path_out = lambda s: [beside[s], aisle, door, post]
+    path_out = lambda s: [beside[s], aisle, door_side]                  # (then, the patron gone, back to the post)
+    path_back = [door_side, post]
     for s in range(3):
-        for path in (path_in(s), path_cust(s), path_out(s)):
+        for path in (path_in(s), path_cust(s), path_out(s), path_back):
             for a, b in zip(path, path[1:]):
                 assert _walkable(mesh, a, b), (s, a, b)
     player = spot(*BR.ARRIVE)
@@ -220,9 +246,11 @@ def apply(ctx):
     walk = lambda path, w: _walk(hb, mv._animb, path, *w, 1, 0, to, BR.WALK_STEP)
     for s in range(3):
         ce = [E["c%d%s" % (s, "ab"[c])] for c in range(2)]
+        # (user: the rowdy one walked too close to Cloud) Cloud leads, the patron follows FOLLOW frames later;
+        # Cloud waits beside the door until he has gone out, then walks back to his post
         sec_s[2 + s] = walk(path_in(s), CW) + [d_(to(beside[s], stand[s])), hb._w(10)] + \
-            ch_(CUR[s], [[req(e, 5)] for e in ce]) + [hb._w(8)] + walk(path_out(s), CW) + \
-            [d_(BR.CLOUD_DIR), asm.ret()]
+            ch_(CUR[s], [[req(e, 5)] for e in ce]) + walk(path_out(s), CW) + \
+            [d_(to(door_side, door)), hb._w(BR.FOLLOW + 50)] + walk(path_back, CW) + [d_(BR.CLOUD_DIR), asm.ret()]
     scripts[E["sec"]] = sec_s
     for s in range(3):
         for c in range(2):
@@ -235,7 +263,7 @@ def apply(ctx):
                                                 asm.ret()],
                 3: at(stand[s], to(stand[s], post)) + loop_(3) + [hb._visi(1), asm.ret()],
                 4: [hb._visi(0), asm.ret()],
-                5: walk(path_cust(s), UW) + [hb._visi(0), asm.ret()]}
+                5: [hb._w(BR.FOLLOW)] + walk(path_cust(s), UW) + [hb._visi(0), asm.ret()]}
     # the windows: winS slot 2+k drink k, 6+k drink k urgent, 10 / 11 rowdy (drunk / angry); status 2+k busy, 6 escort
     texts = {}
     for k, (name, _, _, label, _, _) in enumerate(BR.DRINKS):

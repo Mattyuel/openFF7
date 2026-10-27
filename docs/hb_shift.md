@@ -53,7 +53,7 @@ manager.
 
 - Built: see `CLAUDE.md` (689 row). **Untested in-game.** Checked on offline renders: the talk spots, the three
   bed / floor positions, the punch, the kick, the falls.
-- Cast as built: open Dio (head), Bruno the arm-wrestler (cowgirl), Pete the sailor (mission); timid Private
+- Cast as built: open Dio (head), Rico the Costa del Sol beach bum (cowgirl; user: replaced Bruno the arm-wrestler), Pete the sailor (mission); timid Private
   Hobbs (wants praise), Gus the mechanic (wants to talk fuel pumps), Professor Nabe (wants to see her kata);
   pushy Spike the punk (aggressive), Corneo's lackey (misses the Don), Mr. Dunmore of Shinra Accounts (wants
   not to be in charge).

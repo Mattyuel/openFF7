@@ -1106,6 +1106,7 @@ The movie minigame (user's design).
 - `_sway(ctx, hrc, stand, name)` A drunk swaying on his feet: the body leaning side to side once a cycle about his feet, the upper body and
 - `_walkable(mesh, a, b)` 
 - `_walk(hb, animb, path, wx, wy, n_, walk, stand, to, step)` 
+- `_retile(f)` (user: the counter drew over the seated patrons, the door area over Cloud and the patron he walks out) the
 - `_marle(ctx)` Marle in the real 7th Heaven: "Work a shift." -> the set.
 - `apply(ctx)` 
 

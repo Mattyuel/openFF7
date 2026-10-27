@@ -19,16 +19,16 @@ LEAD_IN = 60                    # frames before the first customer sits down
 
 # the drinks: (name, "a ..." for the busy line, button mask, button label, make frames, price gil)
 DRINKS = [
-    ("Beer", "a beer", 0x220, "[OK]", 40, 20),
-    ("Wine", "a glass of wine", 0x40, "[CANCEL]", 75, 35),
-    ("Spirit", "a spirit", 0x80, "[SWITCH]", 105, 50),
-    ("Cocktail", "a cocktail", 0x10, "[MENU]", 190, 90),
+    ("Beer", "a beer", 0x220, "[OK]", 28, 20),          # (user: making took a little long; was 40 / 75 / 105 / 190)
+    ("Wine", "a glass of wine", 0x40, "[CANCEL]", 50, 35),
+    ("Spirit", "a spirit", 0x80, "[SWITCH]", 70, 50),
+    ("Cocktail", "a cocktail", 0x10, "[MENU]", 120, 90),
 ]
 ESCORT_KEY = (0x08, "[PAGEDOWN]")   # R1: Cloud escorts a rowdy customer out
 QUICK_TIP = 10                  # gil more when served with more than URGENT frames of patience left
-URGENT = 90                     # frames of patience left when the order turns urgent ("!!")
-PATIENCE = (240,)               # frames: base + PATIENCE_BY[drink] + RANDOM (0-255): beers wait least, cocktails most
-PATIENCE_BY = [-60, 0, 30, 120]
+URGENT = 70                     # frames of patience left when the order turns urgent ("!!")
+PATIENCE = (130,)               # frames: base + PATIENCE_BY[drink] + RANDOM (0-255): beers wait least, cocktails most
+PATIENCE_BY = [-40, 0, 20, 70]  # (user: the orders stayed up too long, no challenge; was 240 + -60 / 0 / 30 / 120)
 ROWDY_PATIENCE = 240            # frames a rowdy customer waits for Cloud before he trashes the place
 ROWDY_ODDS = 32                 # in 256: a new customer arrives already drunk and rowdy
 ANGRY_ODDS = 128                # in 256: a missed order turns the customer rowdy instead of leaving
@@ -50,9 +50,18 @@ CLOUD_POST, CLOUD_DIR = (40, -60), 0xC0
 DOOR = (240, 0)
 AISLE = (-95, -30)                              # the top of the aisle in front of the stools (walks go through it)
 BESIDE = 28                                     # Cloud stops this far up the aisle from the patron he walks out
+FOLLOW = 7                                      # (user: the rowdy one walked too close to Cloud) Cloud leads, the
+                                                # patron sets off this many frames later (~BESIDE + 28 apart)
+DOOR_SIDE = (215, 45)                           # Cloud waits here, beside the door, until the patron has gone out
 WALK_STEP = 4.0                                 # (field units a frame: the walks step XYZI, no MOVE: MOVE got stuck
                                                 # on the walkmesh's separate pieces, user)
 MARLE_AT, MARLE_DIR = (120, -40), 0xC0
+# (user: the bar's tiles drew over the seated patrons; Cloud and the patron vanished behind tiles near the
+# entrance) the counter's front (draw id 1332) between the patrons (position depth / 4 1328-1347) and Tifa behind
+# it (1357); the bench and floor by the door (1328 / 1329 / 1344 / 1360) behind everyone (just past the room's
+# furthest furniture, 1402); the PC depth (+38) along the room's own line (~720 a step)
+COUNTER_TILES, COUNTER_TO = (1332,), 1355
+DOOR_TILES, DOOR_TO = (1328, 1329, 1344, 1360), 1404
 HEAD_Z = 90                                     # a seated customer's head above the floor (window placement)
 WIN_RIGHT, WIN_TOP, WIN_GAP = 22, 40, 28        # order windows: right of the head; from y 40, 28 px apart
 

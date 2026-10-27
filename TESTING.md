@@ -69,6 +69,9 @@ Existing saves load, but they keep their own story progress; use a new game.
   R1 sends Cloud to walk them out (no drinks while he does). Two minutes, then the takings. Check the order
   windows sit beside the right customers, the customers sit on the stools, Cloud's walk-out route doesn't
   get stuck, and that R1 is really the right button.
+  Since: drinks are quicker to make and orders run out sooner; seated patrons draw over the counter; when
+  Cloud walks a rowdy one out he leads with a gap, waits by the door while the patron leaves, and neither
+  vanishes behind the tiles by the door.
 - **Therapy Session** (691): the Director's film menu has "Therapy Session." after Going There: Junon's
   doctor's office. Cloud and Tifa sit on the couch and take turns telling their secret fantasy; after each,
   its scene on the couch (Cloud's: him over her, holding her down; Tifa's: her on top), then her finisher.
@@ -85,13 +88,15 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Honey Bee shift** (689): the Honey Bee manager in onna_4 has "Tifa's shift." (once you have the job):
   a copy of the inn's room, Tifa in her Wall Market dress, three customers one at a time (random of
   nine, dressed). Each: his opening, three choices of how Tifa handles him, each followed by two button
-  prompts while she dances; the meter at the top is his mood. Endings: the open ones (Dio, Bruno, Pete)
+  prompts while she dances; the meter at the top is his mood. Endings: the open ones (Dio, Rico, Pete)
   go all the way at a high mood (head on the floor, cowgirl / mission on the bed); the timid ones (Hobbs,
   Gus, Nabe) get their scene (Tifa's kick for Nabe); the pushy ones (Spike, the lackey, Dunmore) can
   cross a line: "Call security." = Cloud walks in from the door, three punches, the customer falls flat;
   "Handle it herself." = her kick, Cloud arrives after. Then the tips and back to the lobby. Check:
   the walk-in doesn't get stuck, the falls land on the floor, the bed positions sit on the bed, the
   meter is visible, the dance moves play on her dress.
+  Since: "Call security." Cloud runs in (3x faster) along the back wall and round the bed's end, not across
+  the bed; Private Hobbs and the Lackey are Cloud's height now; Rico (a Costa del Sol beach bum) replaces Bruno.
 - **Fixes** (684, 688): Going up: the Director only appears after the fade into the scene, standing at the
   back right of the car. The Basics: in sixty-nine Tifa's legs are wider and she sits a little further
   down Cloud.

@@ -21,6 +21,7 @@ import _hb_dances as HD
 import _hb_shift as HS
 import _walker as WK
 from ff7 import asm
+from ff7 import fieldanim as fa
 from ff7 import triggers as tg
 from ff7.field import FieldFile
 from ff7.models import ModelLoader
@@ -32,7 +33,11 @@ PRV = [(5, 116 + k) for k in range(3)]
 CNT, PER, GIL, TIP = ((6, a) for a in range(120, 128, 2))
 DANCING, TR = (5, 119), (5, 128)        # Tifa dances while DANCING; TR her pick
 SW = ((6, 130), (6, 132), (5, 136), (6, 134))     # security's walk (x, y words, step counter, z word)
-SEC_VIA = (-100, -120)                  # (user: he got stuck behind the customer) his way in, round the customer
+SEC_VIA = [(240, 195), (-20, 195), (-20, 165), (-100, -120)]   # (user: he got stuck behind the customer) his way
+                                        # in, round the customer; (user: "he walks through the bed") first back
+                                        # to the wall, along it past the bed's left end (its piece: x 17-208), then
+                                        # forward (a straight line from (-20, 195) to the customer isn't all floor)
+SEC_STEP, SEC_RUN = 9.0, 3              # (user: "like 3 times faster"; was 3.0, walking) field units a frame, running
 TIFA_DONOR = ("colne_4", 5)             # Tifa's Wall Market dress, AXJA (stand ABCD, walk ABCE)
 BARE_TIFA = "ZTFA.HRC"
 FALL_FRAMES, FALL_REST = 14, 0.9         # our own fall (`_fall`): frames to the floor; the root's height lying
@@ -167,8 +172,9 @@ def apply(ctx):
     lay = _layout(mesh)
     talk_t, talk_g = _spot(mesh, *HS.TALK_TIFA), _spot(mesh, *HS.TALK_GUEST)
     door, guard = _spot(mesh, *HS.DOOR), _spot(mesh, *HS.SECURITY_AT)
-    via = _spot(mesh, *SEC_VIA)
-    assert WK.floor_leg(mesh, door, via, 60) and WK.floor_leg(mesh, via, guard, 60)
+    via = [_spot(mesh, *p) for p in SEC_VIA]
+    sec_path = [door] + via + [guard]
+    assert all(WK.floor_leg(mesh, a, b, 60) for a, b in zip(sec_path, sec_path[1:]))
     focus = [_spot(mesh, *HS.FOCUS_TALK), _spot(mesh, *HS.FOCUS_BED)]
     # anims
     kick = _kick(ctx, "AXJA.HRC", "YHKK")
@@ -192,15 +198,25 @@ def apply(ctx):
     assert ModelLoader.hrc(tifa_e) == "AXJA.HRC" and t_anims[:2] == ["ABCD.yos", "ABCE.yos"]
     tifa_list = t_anims[:2] + tifa_d + [kick]
     bare_list = t_anims[:1] + sum((hers[p] for p in POS_ORDER), [])
+    run = "AAGA.aki"                                                    # (Cloud's run: security, 3x the walk)
     models = [ModelLoader.only_anims(cl0, c_anims[:2]),
               ModelLoader.only_anims(tifa_e, tifa_list),
               ModelLoader.only_anims(ModelLoader.with_hrc(tifa_e, BARE_TIFA, "hbshift_tifab.char"), bare_list),
-              ModelLoader.only_anims(cl0, c_anims[:2] + [punch])]
+              ModelLoader.only_anims(cl0, c_anims[:2] + [punch, run])]
     cust_lists = []
+    # (user: "Hobbs is way too big", "Lackey is too big") each customer scaled to Cloud's height here x his
+    # `height` (fieldanim.height of his stand x entry scale, as 626's thugs); the donor fields' scales were off
+    tall = lambda e: fa.height(ctx.char_file(ModelLoader.hrc(e).lower()).decode("latin-1"),
+                               ctx.char_file(ModelLoader.anims(e)[0].split(".")[0].lower() + ".a"))
+    cloud_h = tall(cl0) * ModelLoader.entry_scale(cl0)
+    rescaled = []
     for cu in HS.CUSTOMERS:
         dl = ModelLoader(ctx.field(cu["donor"][0]).section("models"))
         k = loader.add_from(dl, cu["donor"][1])
         e = loader.models.pop(k)
+        sc = round(cloud_h * cu.get("height", 1.0) / tall(e))
+        rescaled.append((cu["key"], ModelLoader.entry_scale(e), sc))
+        e = ModelLoader.with_scale(e, sc)
         own = ModelLoader.anims(e)
         fall = _fall(ctx, ModelLoader.hrc(e), own[0].split(".")[0].lower() + ".a", "YHF%d" % len(cust_lists))
         lst = own[:1] + [fall] + (strokes[cu["pos"]] if cu["type"] == "open" else [])
@@ -254,8 +270,8 @@ def apply(ctx):
     # security: in from the door to his spot by the customer (MOVE: the straight line is floor, asserted)
     scripts[E["sec"]] = {
         0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at(door, to(door, via)) + [hb._visi(1), hb.sound(HS.DOOR_SOUND)] +
-        WK.walk(hb, mv._animb, [door, via, guard], *SW[:3], 1, 0, to, 3.0, wz=SW[3]) +
+        2: at(door, to(door, via[0])) + [hb._visi(1), hb.sound(HS.DOOR_SOUND)] +
+        WK.walk(hb, mv._animb, sec_path, *SW[:3], SEC_RUN, 0, to, SEC_STEP, wz=SW[3]) +
         [d_(to(guard, talk_g))] + loop_(0) + [asm.ret()],
         3: once(2) + [asm.ret()],
         4: [hb._visi(0), asm.ret()]}
@@ -429,3 +445,4 @@ def apply(ctx):
     print("  689: Honey Bee shift on %s (%d customers; layout %s; %d texts, script %d bytes)"
           % (HS.FIELD, len(HS.CUSTOMERS), {p: (v[0][:3], v[1], v[2][:3], v[3]) for p, v in lay.items()}, n_text,
              len(f.sections[0])))
+    print("  689: customers rescaled to Cloud's height (key, donor scale, now): %s" % rescaled)
