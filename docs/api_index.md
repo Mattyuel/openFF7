@@ -1110,14 +1110,16 @@ The movie minigame (user's design).
 - `apply(ctx)` 
 
 ## `patches/693_gym.py`
-(user) The gym's training activities (data `_gym.py`): Tifa in the Wall Market gym (mkt_mens, added at `TIFA_AT`)
+(user) Tifa's aerobics classes (data `_aerobics.py`, moves `_aerobic_poses.py`; replaces the gym's one-on-one
 
 - `_mods()` 
-- `_squat(ctx, hrc, n, name)` A bodyweight squat over n frames (frame 0 standing, n/2 at the bottom): hips down and back, the torso leaning
-- `_plank(ctx, hrc, names)` Three 8-frame trembling planks (sag, straight, pike): the body pitched forward (solved: hands on the floor, arms
-- `_tifa(ctx)` Tifa in the real gym: "Run a session." -> the set.
+- `_girl(ctx, g, text)` Her spandex .hrc text: the standard body (her head and feet), a scoop-neck leotard, tights, leg warmers.
+- `_respray(d, col, skin, near=None)` .p bytes d with every vertex / polygon colour that isn't skin-like set to col.
+- `_man(ctx, g, text)` His spandex .hrc text: his own parts, every non-skin colour on his body resprayed (tank top / long sleeves,
+- `_cast(ctx, loader)` Model entries (Tifa, then the pool), each its spandex .hrc and only its stand + the aerobic moves.
+- `_unproject(cam, mesh, sx, sy)` The floor point (x, y, z, tri) the camera projects to screen (sx, sy) (Newton on the floor).
+- `_tifa(ctx, arrive)` 
 - `apply(ctx)` 
-- `_bucket(var, blocks)` sag below 4, straight 4-6, pike above 6 (the meter's 11 steps).
 
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
@@ -1142,6 +1144,27 @@ PHS usable from the start: the save points in early Midgar (and a few story
 (user) Hand-edited char.lgp files: every file in patches/char_overrides/ (e.g. a .p part edited in a
 
 - `apply(ctx)` 
+
+## `patches/_aerobic_poses.py`
+(user) The aerobics class's moves (693_gym, data `_aerobics.py`): the reference sheet "Aerobic exercise at home"
+
+- `_sw(b)` +1 on the left beat, -1 on the right (smooth).
+- `knee_lift(b)` 
+- `jacks(b)` 
+- `heel_kick(b)` 
+- `cross_crunch(b)` 
+- `side_knee(b)` 
+- `twist(b)` 
+- `chest_fly(b)` 
+- `high_knee(b)` 
+- `squat_punch(b)` 
+- `bounce(b)` 
+- `finish(b)` 
+- `build(ctx, hrc, stand, prefix)` The moves on this model: [A0, A1, B0, B1, ..., I0, I1, S0, Z0] (model loader names, "<prefix>A0.tor").
+
+## `patches/_aerobics.py`
+(user) Tifa's aerobics classes (693_gym; replaces the gym's one-on-one sessions with Wedge / Biggs / Jessie):
+
 
 ## `patches/_backstories.py`
 (user) The four date girls' hidden histories: their traumas, what they want, and what doesn't
@@ -1469,10 +1492,6 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `extend_torso(ctx, hrc)` Her chest part's bottom band (the vertices within TORSO_BAND of its waist end, along the bone) moved
 - `bend(ctx, hrc, stand, srcs, prefix, waist, neck, replant=False)` (user: a third style) copies of `srcs` (her strokes) with the upper body turned `waist` degrees at the
 - `_bend_sign(r, side, fwd, bone)` +1 if turning `bone`'s subtree positively about `side` moves its end towards `fwd`, else -1.
-
-## `patches/_gym.py`
-(user) The gym's training activities (693_gym; plan docs/gym_plan.md sections 5-6): Tifa in the Wall Market gym
-
 
 ## `patches/_hb_dances.py`
 (user) Tifa's own dances for the Honey Bee shift (689), replacing the borrowed Honey Bee dancer's moves: "rocking her

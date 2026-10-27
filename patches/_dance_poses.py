@@ -252,6 +252,8 @@ class _Body:
             d = math.dist(Hj, T)
             if d > (L1 + L2) * 0.995:
                 T = [Hj[k] + (T[k] - Hj[k]) * (L1 + L2) * 0.995 / d for k in range(3)]
+            if d < abs(L1 - L2) + 0.15:                 # (693: Aerith's short thigh bone, a high knee)
+                T = [Hj[k] + (T[k] - Hj[k]) * (abs(L1 - L2) + 0.15) / max(d, 1e-6) for k in range(3)]
             side = fa._vec(Y, [sg * 0.35, 0.0, 0.0])
             pole = [fwd[k] + side[k] for k in range(3)]
             foot = W[I(s + "_foot")]

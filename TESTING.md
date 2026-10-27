@@ -55,12 +55,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   station shows one Cloud and one Tifa (the bench / stretch / ring showed two of one before).
   Tickets: he stops further from the girls. Sector 7 Workout: two more squat styles (overhead squats in part
   one, a split squat in part two) in the rotation.
-- **Gym sessions** (693): Tifa now stands in the Wall Market gym; "Run a session." opens the session menu.
-  Squats with Wedge (a button prompt per squat; three misses in a row and he quits), plank with Biggs (the
-  meter is his hips drifting: [OK] lifts them, [CANCEL] lowers them, 30 s; either end and he collapses),
-  run with Jessie (press [OK] on each "Step!"; in time she speeds up from a walk to a sprint). Check the
-  member stands on the open floor by the ring, the meter shows during the plank, the run's speeds look
-  right, and the fee is paid.
+- **Aerobics class** (693, replaces the gym sessions): Tifa in the Wall Market gym, "Run a class." takes you to
+  the Junon dock (in front of the cargo ship). Five random classmates (from Aerith, Yuffie, Cloud, Cid, Barret,
+  Elena, Jessie) in colourful spandex behind Tifa, everyone facing the camera. Tifa calls each move; press the
+  button shown on every move cycle (four buttons, quick); 8 hits in a row = a cheer and a tip; a miss = a
+  classmate's flub line. At the end: the finish pose, a grade, a classmate's reaction, the patrons' pay, and
+  "Another class?". Check everyone is visible and in sync, the outfits look right (especially the men's
+  resprayed clothes), the camera frames the class, and the prompts are hittable at the faster tempo.
 - **7th Heaven bar shift** (692): Marle stands in 7th Heaven (right of the door area); "Work a shift." takes
   you to the bar. Customers sit on three stools and order: beer {OK}, wine {CANCEL}, spirit {SWITCH} (Square),
   cocktail {MENU} (Triangle). One drink at a time; "Tifa is busy making ..." shows at the top while she
@@ -79,7 +80,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   speed), then the mount on the bed in three variations, each after a fade: over her from above (as the
   special scenes), side-on facing the camera with his foot on her head, and turned round in a plank,
   hands on the bed, his hips flopping. Prompts, the meter and the finisher as in The Basics. Check the
-  foot sits on her head, the plank's hands and toes reach the bed, and the camera shows the bed.
+  foot sits on her head (since: placed further out on her head so the leg isn't folded across him, and he
+  stands half a step further forward), the plank's hands and toes reach the bed, and the camera shows the bed.
 - **Honey Bee shift** (689): the Honey Bee manager in onna_4 has "Tifa's shift." (once you have the job):
   a copy of the inn's room, Tifa in her Wall Market dress, three customers one at a time (random of
   nine, dressed). Each: his opening, three choices of how Tifa handles him, each followed by two button

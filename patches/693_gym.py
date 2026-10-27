@@ -1,25 +1,25 @@
-"""(user) The gym's training activities (data `_gym.py`): Tifa in the Wall Market gym (mkt_mens, added at `TIFA_AT`)
-offers "Run a session." -> FIELD (a debug room only startmap leads to) = a copy of mkt_mens, script blanked,
-gateways cleared. Tifa asks who's training; each session: fade, the member on `TRAIN_AT` (side-on), Cloud
-coaching beside him, the member's lines, the how-to, the game, his result line, the fee (GOLDU), back to the menu:
+"""(user) Tifa's aerobics classes (data `_aerobics.py`, moves `_aerobic_poses.py`; replaces the gym's one-on-one
+sessions with Wedge / Biggs / Jessie): Tifa in the Wall Market gym (mkt_mens, added at `TIFA_AT`) offers
+"Run a class." -> FIELD (a debug room only startmap leads to) = a copy of the Junon dock (jundoc1a: the send-off
+drill for Rufus in front of the cargo ship; user: closer, lower angles than the gym), script blanked, gateways
+cleared.
 
-- squats (Wedge, avafat): the films' prompt game (a random button a rep, `SQUAT_PERIODS` by tier, `SQUAT_HITS_UP`
-  in a row = the next tier; `SQUAT_QUIT` misses in a row = he quits); his squat XKW0-3 built here (`_squat`);
-- plank (Biggs, avaman): the danger meter (`_danger`, tag V) is his hips: entity `drift` moves it a step every
-  `PLANK_DRIFT` frames (direction flipping `PLANK_FLIP` in 256), [OK] / [CANCEL] move it back; his pose follows
-  (sag XKB0 / straight XKB1 / pike XKB2, `_plank`, trembling); either end = he collapses; the `clock` entity
-  counts frames and the frames in the middle band (4-6);
-- run (Jessie, avawoman): a "Step!" prompt every beat (`RUN_BEAT` by pace), [OK] within `RUN_WINDOW` = in time;
-  `RUN_HITS_UP` in a row = pace up (walk, jog, run, sprint: her walk / run anims at speed 1-3), a miss = down.
+The class: five classmates picked at random from `POOL` (each its own entity, placed on a slot `SLOTS` by the
+director's pick: SL (5,120+m) = slot + 1, 0 = not in today's class, hidden), Tifa out front, everyone facing the
+camera, in colourful spandex (`_girl` / `_man`), all doing the same moves (`_aerobic_poses.build` on each model)
+started together by the director (M (5,101) = the anim; every dancer's slot 3). The routine `ROUTINE`: Tifa calls
+each move (window 2, closing itself), one button prompt a move cycle (window 1; four buttons, one polling entity
+each), a hit = the squat sound, a miss = the buzz and a classmate's flub; `COMBO` hits in a row = a cheer and a tip.
+At the end the finish pose, Tifa's grade line, a classmate's reaction, the patrons' pay (GOLDU), "Another class?"
 
-Checked on offline renders only (spots, poses), untested in-game."""
+Checked on offline renders only (layout, moves, outfits), untested in-game."""
 import importlib
 import math
 import struct
 
-import _besties_rig as RG
-import _danger as DG
-import _gym as GY
+import _aerobic_poses as AP
+import _aerobics as AE
+import _female_body as fb
 from ff7 import asm
 from ff7 import triggers as tg
 from ff7.camera import facing_screen, Camera
@@ -28,119 +28,165 @@ from ff7.models import ModelLoader
 from ff7.script import Op, Script
 from ff7.walkmesh import Walkmesh
 
-TIER, STREAK, KEY, PR, RND, KP, REPN, METER, DIRV, DC, PACE, MAXP, FAIL, SES = ((5, a) for a in range(100, 114))
-PRV = [(5, 114 + k) for k in range(3)]
-CNT, PER, PAY, GIL, T, GOODF, BL = ((6, a) for a in range(120, 134, 2))
-MEMBERS = {"squats": ("mds7pb_1", 5), "plank": ("mds7pb_1", 4), "run": ("mds7pb_1", 3)}   # Wedge, Biggs, Jessie
-ORDER = ("squats", "plank", "run")
-CLOUD_SRC, TIFA_SRC = ("mds7pb_1", 0), ("mds7pb_1", 2)
+M, KEY, PR, KP, RND, STREAK, USED, K, TALKING, LN, GRADE = ((5, a) for a in range(100, 111))
+PRV = [(5, 111 + k) for k in range(4)]
+ROUND = (5, 115)                                 # 0 = the first class of the visit (the intro)
+SL = [(5, 120 + m) for m in range(len(AE.POOL))]
+CNT, HITS, PAY, CY, GIL = ((6, a) for a in range(130, 140, 2))
+TIFA_SRC = ("blue_2", 1)                         # (her AAGB entry; the spandex XWTA is 683's)
 
 
 def _mods():
     return importlib.import_module("670_movie"), importlib.import_module("620_honey_bee"), \
-        importlib.import_module("660_dates")
+        importlib.import_module("660_dates"), importlib.import_module("682_school_dance"), \
+        importlib.import_module("683_workout")
 
 
-def _squat(ctx, hrc, n, name):
-    """A bodyweight squat over n frames (frame 0 standing, n/2 at the bottom): hips down and back, the torso leaning
-    in, knees forward over the planted feet (leg IK), arms raised forward for balance."""
-    rg0 = RG.Rig(ctx, hrc, "acfe.a").start(RG.basis(RG.LEFT, RG.UP))
-    E0 = rg0.ends()
-    feet = {s: E0[s + "_tibia"] for s in "lr"}
-    legs = rg0.length["l_femur"] + rg0.length["l_tibia"]
-    frames = []
-    for t in range(n):
-        e = (1 - math.cos(2 * math.pi * t / n)) / 2
-        rg = RG.Rig(ctx, hrc, "acfe.a").start(RG.basis(RG.LEFT, RG.UP))
-        rg.root = RG.add(rg.root, [0.0, GY.SQUAT_DROP * legs * e, 0.35 * GY.SQUAT_DROP * legs * e])
-        rg.waist(RG.bow(GY.SQUAT_LEAN * e))
-        for s, sx in (("l", 1), ("r", -1)):
-            rg.ik(s + "_femur", s + "_tibia", feet[s], [sx * 0.3, 0.0, -1.0], keep_end=True)
-            d = RG.unit(RG.lerp([0.0, 1.0, 0.0], [0.0, 0.0, -1.0], GY.SQUAT_ARMS * e))
-            rg.aim(s + "_uparm", d)
-            rg.aim(s + "_foarm", d)
-        frames.append(rg.frame())
-    return RG.save(ctx, name, "acfe.a", frames)
+# ---- the outfits ---------------------------------------------------------------------------------------------
+def _girl(ctx, g, text):
+    """Her spandex .hrc text: the standard body (her head and feet), a scoop-neck leotard, tights, leg warmers."""
+    mv, hb, dt, sd, wo = _mods()
+    skin = fb.face_skin(ctx, text)
+    hrc = fb.apply(ctx, text, g["tag"], skin, None, 1.0, 0.0)
+    if "armer" in fb.bones(hrc):
+        lines = hrc.splitlines(True)
+        k = next(k for k in range(len(lines) - 3) if lines[k].strip() == "armer")
+        lines[k + 3] = lines[k + 3].replace(lines[k + 3].strip(), "0")
+        hrc = "".join(lines)
+    top = g["top"]
+    chest = ([([0.0, 0.0, 1.0], wo.NECK_Z)], lambda c: skin if c[2] < wo.NECK_Z else top)
+    fb.tifa_body(ctx, hrc, skin, g["bust"], paints={"chest": chest, "hip": ([], lambda c: top)})
+    bn = fb.bones(hrc)
+    for b, col in [("l_femur", g["tights"]), ("r_femur", g["tights"]), ("l_tibia", g["warmers"]),
+                   ("r_tibia", g["warmers"])]:
+        p = sd._ply(ctx, bn[b][1][0])
+        ctx.char_file(p, sd._recolour(ctx.char_file(p), col))
+    return hrc
 
 
-def _plank(ctx, hrc, names):
-    """Three 8-frame trembling planks (sag, straight, pike): the body pitched forward (solved: hands on the floor, arms
-    straight, ankles at their standing height),
-    the root lowered until the hands are on the floor, legs straight back to the ankles on the floor; sag = hips
-    lowered, pike = hips raised (and the waist bent); hands and ankles held where the straight plank planted them
-    (arm and leg IK)."""
-    rg0 = RG.Rig(ctx, hrc, "acfe.a").start(RG.basis(RG.LEFT, RG.UP))
-    E0 = rg0.ends()
-    floor = max(E0[s + "_foot"][1] for s in "lr")
-    ankle = max(E0[s + "_tibia"][1] for s in "lr")
+MAN_BONES = {"chest": "top", "l_chest": "top", "r_chest": "top", "l_collar": "top", "r_collar": "top",
+             "l_uparm": "top", "r_uparm": "top", "l_foarm": "top", "r_foarm": "top",
+             "hip": "tights", "l_hip": "tights", "r_hip": "tights", "l_femur": "tights", "r_femur": "tights",
+             "l_tibia": "warmers", "r_tibia": "warmers", "l_foot": "shoes", "r_foot": "shoes"}
+SKIN_NEAR = 70                   # a colour this close (sum of |B|+|G|+|R| differences) to his face's skin stays
 
-    def base(bow=None):
-        rg = RG.Rig(ctx, hrc, "acfe.a").start(RG.basis(RG.LEFT, RG.UP))
-        rg.pelvis(RG.bow(bow if bow is not None else pitch))
-        for s in "lr":
-            rg.aim(s + "_uparm", [0.0, 1.0, 0.0])
-            rg.aim(s + "_foarm", [0.0, 1.0, 0.0])
-        E = rg.ends()
-        low = max(E[s + "_hand"][1] for s in "lr")
-        rg.root = RG.add(rg.root, [0.0, floor - low, 0.0])
-        return rg
-    # the pitch at which, hands on the floor and arms straight, the ankles are at their standing height
-    lo, hi = 45.0, 89.0                                 # (more pitch = flatter = ankles higher: y smaller)
-    for _ in range(30):
-        pitch = (lo + hi) / 2
-        y = max(base(pitch).ends()[s + "_tibia"][1] for s in "lr")
-        lo, hi = (pitch, hi) if y > ankle else (lo, pitch)
-    rg = base()
-    E = rg.ends()
-    hands = {s: E[s + "_foarm"] for s in "lr"}
-    feet = {}
-    for s in "lr":                                     # straight legs back from the hips, ankles on the floor
-        H, L = E[s + "_femur@"], (rg.length[s + "_femur"] + rg.length[s + "_tibia"]) * 0.99
-        feet[s] = E[s + "_tibia"]
+
+def _respray(d, col, skin, near=None):
+    """.p bytes d with every vertex / polygon colour that isn't skin-like set to col."""
+    d = bytearray(d)
+    h = struct.unpack_from("<16I", d, 0)
+    nv, nn, nu, nt, nc, npoly = h[3], h[4], h[5], h[6], h[7], h[9]
+    oc = 128 + 12 * nv + 12 * nn + 12 * nu + 8 * nt
+    for o in [oc + 4 * i for i in range(nc)] + [oc + 4 * nc + 4 * j for j in range(npoly)]:
+        if sum(abs(d[o + k] - skin[k]) for k in range(3)) > (near or SKIN_NEAR):
+            d[o:o + 3] = bytes(col)
+    return bytes(d)
+
+
+def _man(ctx, g, text):
+    """His spandex .hrc text: his own parts, every non-skin colour on his body resprayed (tank top / long sleeves,
+    tights, leg warmers, sneakers), as new parts XR<tag><n> (.rsd) -> XP<tag><n> (.p): his own files are shared
+    by every field."""
+    mv, hb, dt, sd, wo = _mods()
+    skin = g.get("skin") or fb.face_skin(ctx, text)
+    cols = dict(top=g["top"], tights=g["tights"], warmers=g["warmers"], shoes=AE.SNEAKERS)
+    lines = text.splitlines(True)
+    n = 0
+    for k in range(len(lines) - 3):
+        name = lines[k].strip()
+        if name not in MAN_BONES or not lines[k + 2].strip().replace(".", "").replace("-", "").isdigit():
+            continue
+        parts = lines[k + 3].split()
+        if not parts or not parts[0].isdigit() or int(parts[0]) != len(parts) - 1:
+            continue
+        new = [parts[0]]
+        for r in parts[1:]:
+            rsd = ctx.char_file(r.lower() + ".rsd").decode("latin-1")
+            old_p = rsd.split("PLY=")[1][:4]
+            r_, p_ = "XR%s%s" % (g["tag"], chr(65 + n)), "XP%s%s" % (g["tag"], chr(65 + n))
+            n += 1
+            ctx.char_file(p_.lower() + ".p", _respray(ctx.char_file(old_p.lower() + ".p"), cols[MAN_BONES[name]], skin,
+                                                                 g.get("skin_near")))
+            ctx.char_file(r_.lower() + ".rsd", rsd.replace("PLY=%s." % old_p, "PLY=%s." % p_).encode("latin-1"))
+            new.append(r_)
+        lines[k + 3] = lines[k + 3].replace(lines[k + 3].strip(), " ".join(new))
+    assert 8 <= n <= 26, (g["key"], n)
+    return "".join(lines)
+
+
+def _cast(ctx, loader):
+    """Model entries (Tifa, then the pool), each its spandex .hrc and only its stand + the aerobic moves."""
     out = []
-    for name, (dy, bow) in zip(names, ((GY.PLANK_SAG[0], GY.PLANK_SAG[1]), (0.0, 0.0),
-                                        (-GY.PLANK_PIKE[0], GY.PLANK_PIKE[1]))):
-        frames = []
-        for k in range(8):
-            rg = base()
-            rg.root = RG.add(rg.root, [0.06 * math.sin(k * 2.3), dy, 0.0])
-            rg.waist(RG.bow(bow))
-            for s, sx in (("l", 1), ("r", -1)):
-                rg.ik(s + "_femur", s + "_tibia", feet[s], [0.0, -1.0, 0.0] if dy > 0 else [0.0, 1.0, 0.0],
-                      keep_end=False)
-                rg.ik(s + "_uparm", s + "_foarm", hands[s], [sx * 1.0, 0.0, 0.5], keep_end=False)
-            frames.append(rg.frame())
-        out.append(RG.save(ctx, name, "acfe.a", frames))
+    wo = _mods()[4]
+    tifa = ModelLoader(ctx.field(TIFA_SRC[0]).section("models"))
+    e = tifa.models[TIFA_SRC[1]]
+    stand = ModelLoader.anims(e)[0]
+    names = AP.build(ctx, wo.SPANDEX_HRC.lower(), stand.split(".")[0].lower() + ".a", AE.PREFIX["tifa"])
+    k = loader.add_from(tifa, TIFA_SRC[1])
+    e = loader.models.pop(k)
+    out.append(ModelLoader.only_anims(ModelLoader.with_hrc(e, wo.SPANDEX_HRC, "aer_tifa.char"), [stand] + names))
+    for g in AE.POOL:
+        donor = ModelLoader(ctx.field(g["donor"][0]).section("models"))
+        e = donor.models[g["donor"][1]]
+        text = ctx.char_file(ModelLoader.hrc(e).lower()).decode("latin-1")
+        hrc = (_girl if g["kind"] == "girl" else _man)(ctx, g, text)
+        hname = "XA%sA.HRC" % g["tag"]
+        ctx.char_file(hname.lower(), hrc.encode("latin-1"))
+        stand = ModelLoader.anims(e)[0]
+        names = AP.build(ctx, hname.lower(), stand.split(".")[0].lower() + ".a", AE.PREFIX[g["key"]])
+        k = loader.add_from(donor, g["donor"][1])
+        e = loader.models.pop(k)
+        out.append(ModelLoader.only_anims(ModelLoader.with_hrc(e, hname, "aer_%s.char" % g["key"]), [stand] + names))
     return out
 
 
-def _tifa(ctx):
-    """Tifa in the real gym: "Run a session." -> the set."""
+# ---- the layout ----------------------------------------------------------------------------------------------
+def _unproject(cam, mesh, sx, sy):
+    """The floor point (x, y, z, tri) the camera projects to screen (sx, sy) (Newton on the floor)."""
+    t0 = min(range(len(mesh.tris)), key=lambda i: math.dist(cam.project(*mesh.center(i)), (sx, sy)))
+    x, y = map(float, mesh.center(t0)[:2])
+    for _ in range(40):
+        t = mesh.find(round(x), round(y))
+        z = mesh.height(t, round(x), round(y)) if t is not None else mesh.center(t0)[2]
+        p = cam.project(x, y, z)
+        ex, ey = sx - p[0], sy - p[1]
+        if abs(ex) < 0.3 and abs(ey) < 0.3:
+            break
+        px, py = cam.project(x + 10, y, z), cam.project(x, y + 10, z)
+        a, b, c, d = (px[0] - p[0]) / 10, (py[0] - p[0]) / 10, (px[1] - p[1]) / 10, (py[1] - p[1]) / 10
+        det = a * d - b * c
+        x += (d * ex - b * ey) / det
+        y += (-c * ex + a * ey) / det
+    x, y = round(x), round(y)
+    t = mesh.find(x, y)
+    assert t is not None, ("off the floor", sx, sy, x, y)
+    return x, y, mesh.height(t, x, y), t
+
+
+# ---- Tifa in the gym ---------------------------------------------------------------------------------------
+def _tifa(ctx, arrive):
     import _travel as TV
     hb = _mods()[1]
-    mesh = Walkmesh(ctx.field(GY.BASE).section("walkmesh"))
-    tt = mesh.find(*GY.TIFA_AT)
+    mesh = Walkmesh(ctx.field(AE.GYM).section("walkmesh"))
+    tt = mesh.find(*AE.TIFA_AT)
     assert tt is not None
-    model = TV.copy_model(ctx, GY.BASE, *TIFA_SRC)
-    ax, ay = GY.ARRIVE
-    at_ = mesh.find(ax, ay)
-    assert at_ is not None
+    model = TV.copy_model(ctx, AE.GYM, "mds7pb_1", 2)
 
     def talk(sec):
-        ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + hb._say(sec, GY.TIFA_TALK["greet"])
-        ask, first = hb._ask(sec, *GY.TIFA_TALK["ask"])
+        ops = [hb._uc(1), Op(b"\x35\x00\x08\x02"), hb._w(8)] + hb._say(sec, AE.TIFA_TALK["greet"])
+        ask, first = hb._ask(sec, *AE.TIFA_TALK["ask"])
         no = asm.nop()
         ops += ask + [asm.if_byte(hb.CHOICE, "==", first, no), hb._uc(0), Op(hb.FADE_OUT), Op(b"\x6C"),
-                      asm.mapjump(ctx.maplist.index(GY.FIELD), ax, ay, at_, 0), asm.ret(), no]
-        return ops + hb._say(sec, GY.TIFA_TALK["no"]) + [hb._uc(0), asm.ret()]
-    TV.add_npc(ctx, GY.BASE, "gymtifa", model, (*GY.TIFA_AT, round(mesh.height(tt, *GY.TIFA_AT)), tt), 0x00, talk)
+                      asm.mapjump(ctx.maplist.index(AE.FIELD), arrive[0], arrive[1], arrive[3], 0), asm.ret(), no]
+        return ops + hb._say(sec, AE.TIFA_TALK["no"]) + [hb._uc(0), asm.ret()]
+    TV.add_npc(ctx, AE.GYM, "gymtifa", model, (*AE.TIFA_AT, round(mesh.height(tt, *AE.TIFA_AT)), tt), 0x00, talk)
 
 
+# ---- the class -----------------------------------------------------------------------------------------------
 def apply(ctx):
-    mv, hb, dt = _mods()
-    _tifa(ctx)
-    ctx.field(GY.FIELD)
-    f = ctx._fields[GY.FIELD] = FieldFile(ctx._orig_raw[GY.BASE])
+    mv, hb, dt, sd, wo = _mods()
+    ctx.field(AE.FIELD)
+    f = ctx._fields[AE.FIELD] = FieldFile(ctx._orig_raw[AE.BASE])
     trig = f.section("triggers")
     for slot in range(12):
         trig = tg.set_gateway_field(trig, slot, tg.UNUSED)
@@ -149,224 +195,162 @@ def apply(ctx):
     dt._clear_texts(sec)
     mesh = Walkmesh(f.section("walkmesh"))
     cam = Camera(f.sections[1])
-    spot = lambda p: (p[0], p[1], round(mesh.height(mesh.find(*p), *p)), mesh.find(*p))
-    for p in [GY.TRAIN_AT, GY.COACH_AT, GY.ARRIVE] + GY.WAIT_AT:
-        assert mesh.find(*p) is not None, p
-    train, coach, focus = spot(GY.TRAIN_AT), spot(GY.COACH_AT), spot(GY.ARRIVE)
-    waits = [spot(p) for p in GY.WAIT_AT]
-    side = facing_screen(cam, *train[:3], (-1, 0))                   # (683: side-on, facing screen-left)
-    to = lambda a, b: dt._dir_to(b[0] - a[0], b[1] - a[1])
-    # models: 0 the hidden player, 1 Cloud, 2 Tifa, 3 Wedge, 4 Biggs, 5 Jessie, 6 / 7 the meter
+    view = _unproject(cam, mesh, *AE.VIEW)
+    slots = [_unproject(cam, mesh, *s) for s in AE.SLOTS]
+    tifa_at = _unproject(cam, mesh, *AE.TIFA_S)
+    face = lambda p: facing_screen(cam, *p[:3], (0, 1))
+    _tifa(ctx, view)
+    # models: 0 the hidden player (Cloud), 1 Tifa, 2.. the pool
     loader = ModelLoader(f.section("models"))
-    donor = lambda fs: ModelLoader(ctx.field(fs[0]).section("models"))
     cl0 = loader.models[0]
     assert ModelLoader.hrc(cl0) == "AAAA.HRC"
-    out = [ModelLoader.only_anims(cl0, ModelLoader.anims(cl0)[:1])]
-    for src in (CLOUD_SRC, TIFA_SRC) + tuple(MEMBERS[k] for k in ORDER):
-        i = loader.add_from(donor(src), src[1])
-        out.append(loader.models.pop(i))
-    hrc = {k: ModelLoader.hrc(out[3 + j]).lower() for j, k in enumerate(ORDER)}
-    squats = [_squat(ctx, hrc["squats"], n, "XKW%d" % k) for k, n in enumerate(GY.SQUAT_PERIODS)]
-    planks = _plank(ctx, hrc["plank"], ["XKB0", "XKB1", "XKB2"])
-    an = lambda m: ModelLoader.anims(m)
-    out[1] = ModelLoader.only_anims(out[1], an(out[1])[:1])
-    out[2] = ModelLoader.only_anims(out[2], an(out[2])[:1])
-    out[3] = ModelLoader.only_anims(out[3], an(out[3])[:1] + squats)
-    out[4] = ModelLoader.only_anims(out[4], an(out[4])[:1] + planks)
-    assert an(out[5])[:3] == ["ACFE.aki", "AAFF.aki", "AAGA.aki"], an(out[5])[:3]
-    out[5] = ModelLoader.only_anims(out[5], an(out[5])[:3])
-    loader.models = out
-    meter = DG.build(ctx, f, loader, "V", focus[:3])
-    assert len(loader.models) == 8
+    loader.models = [ModelLoader.only_anims(cl0, ModelLoader.anims(cl0)[:1])]
+    cast = _cast(ctx, loader)
+    loader.models += cast
+    assert len(loader.models) == 2 + len(AE.POOL) <= 16
+    n_anims = sum(len(ModelLoader.anims(m)) for m in loader.models)
+    assert n_anims <= 173 and all(len(ModelLoader.anims(m)) <= 47 for m in loader.models), n_anims
+    letters = [L for L, _ in AP.MOVES]
+    anim = lambda L, t: 1 + 2 * letters.index(L) + t if L else 1 + 2 * len(letters)     # (None: the bounce)
+    FINISH = 2 + 2 * len(letters)
     # entities
-    names = ["dir", "cloud", "coach", "tifa", "wedge", "biggs", "jessie", "k_sw", "k_ca", "k_ok", "prompt", "clock",
-             "drift", "gauge", "cursor"]
+    P = ["p_" + g["key"][:6] for g in AE.POOL]
+    names = ["dir", "cloud", "tifa"] + P + ["k_sw", "k_ca", "k_ok", "k_mn", "prompt", "voice", "hush"]
     sec.entity_names = [n.encode("latin-1").ljust(8, b"\0") for n in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {n: i for i, n in enumerate(names)}
     xyzi, d_ = hb._xyzi, (lambda dd: Op(bytes([0xB3, 0, dd % 256])))
-    hide = lambda: [Op(b"\x7E\x01"), Op(b"\xC7\x01")]
-    loop_ = lambda i, sp=1: [mv._animb(), Op(bytes([0xA2, i, sp])), Op(bytes([0xAE, i, sp]))]
-    ch_ = mv._chain
-    at = lambda p, d: [xyzi(*p[:4]), d_(d)]
-    req = lambda ent, slot: Op(bytes([0x01, ent, 0xC0 | slot]))
-    scripts = {}
-    scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0]))] + at(focus, 0) + [hb._visi(0)] + hide() +
-                           [asm.ret(), asm.ret()]}
-    scripts[E["coach"]] = {0: [Op(bytes([0xA1, 1]))] + at(coach, to(coach, train)) + [hb._visi(1)] + hide() + loop_(0) +
-                           [asm.ret(), asm.ret()]}
-    tifa_at = spot((GY.TRAIN_AT[0] - 20, GY.TRAIN_AT[1] + 60)) if mesh.find(GY.TRAIN_AT[0] - 20, GY.TRAIN_AT[1] + 60) \
-        is not None else waits[1]
-    scripts[E["tifa"]] = {0: [Op(bytes([0xA1, 2]))] + at(tifa_at, to(tifa_at, train)) + [hb._visi(1)] + hide() +
-                          loop_(0) + [asm.ret(), asm.ret()]}
-    # members: 2 on the training spot (idle), 3 the tier's / pose's anim, 4 back to waiting, 5.. pace anims (Jessie)
-    for j, k in enumerate(ORDER):
-        ent = E[["wedge", "biggs", "jessie"][j]]
-        w = waits[j]
-        s = {0: [Op(bytes([0xA1, 3 + j]))] + at(w, to(w, train)) + [hb._visi(1)] + hide() + loop_(0) +
-             [asm.ret(), asm.ret()],
-             2: at(train, side) + loop_(0) + [asm.ret()],
-             4: at(w, to(w, train)) + loop_(0) + [asm.ret()]}
-        if k == "squats":
-            s[3] = ch_(TIER, [loop_(1 + t) for t in range(4)]) + [asm.ret()]
-        elif k == "plank":
-            s[3] = [asm.nop()] + _bucket(METER, [loop_(1), loop_(2), loop_(3)]) + [asm.ret()]
-        else:
-            s[3] = ch_(PACE, [loop_(1), loop_(2), loop_(2, 2), loop_(2, 3)]) + [asm.ret()]
-        scripts[ent] = s
-    # buttons
-    for k, (mask, _) in enumerate(GY.KEYS):
+    noface = [Op(b"\x7E\x01"), Op(b"\xC7\x01")]                     # (TLKON off, SOLID off)
+    play = lambda i: [mv._animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
+    dance = [asm.nop()] + mv._chain(M, [play(i) for i in range(FINISH + 1)]) + [asm.ret()]
+    scripts = {E["cloud"]: {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(*view), hb._visi(0)] + noface +
+                            [asm.ret(), asm.ret()]},
+               E["tifa"]: {0: [Op(bytes([0xA1, 1])), xyzi(*tifa_at), d_(face(tifa_at)), hb._visi(1)] + noface +
+                           play(anim(None, 0)) + [asm.ret(), asm.ret()], 3: dance}}
+    for m, g in enumerate(AE.POOL):
+        place, gone = [asm.nop()], asm.nop()
+        place += [asm.if_byte(SL[m], "!=", 0, gone)] + \
+            mv._chain(SL[m], [[]] + [[xyzi(*s), d_(face(s))] for s in slots]) + \
+            [hb._visi(1)] + play(anim(None, 0)) + [asm.ret(), gone, hb._visi(0), asm.ret()]
+        idle = asm.nop()
+        scripts[E[P[m]]] = {0: [Op(bytes([0xA1, 2 + m])), xyzi(*view), hb._visi(0)] + noface + [asm.ret(), asm.ret()],
+                            2: place,
+                            3: [asm.if_byte(SL[m], "!=", 0, idle)] + dance[1:-1] + [asm.ret(), idle, asm.ret()]}
+    # the buttons: one small entity each (an up -> down change sets PR = k + 1)
+    for k, (mask, _) in enumerate(AE.KEYS):
         top_, up, held = hb._w(1), asm.nop(), asm.nop()
-        scripts[E[["k_sw", "k_ca", "k_ok"][k]]] = {
+        scripts[E[["k_sw", "k_ca", "k_ok", "k_mn"][k]]] = {
             0: [asm.ret(), asm.setbyte(PRV[k], 0), top_,
                 Op(bytes([0x30]) + struct.pack("<H", mask) + b"\x00", target=up),
                 asm.if_byte(PRV[k], "==", 0, held), asm.setbyte(PRV[k], 1), asm.setbyte(PR, k + 1), held,
                 asm.goto_back(top_), up, asm.setbyte(PRV[k], 0), asm.goto_back(top_), asm.ret()]}
     pr = {0: [asm.ret(), asm.ret()]}
-    for j, label in enumerate([lb for _, lb in GY.KEYS] + [GY.STEP]):
+    for j, (_, label) in enumerate(AE.KEYS):
         text = "   " + label + "   "
         w = (len(label.replace("{PURPLE}", "").replace("{WHITE}", "")) + 6) * 7 + 24
         pr[2 + j] = [Op(b"\x52\x01\x00\x01"), Op(bytes([0x50, 1]) + struct.pack("<HHHH", (320 - w) // 2, 30, w, 25)),
                      asm.message(1, mv._text_id(sec, text)), asm.ret()]
     scripts[E["prompt"]] = pr
-    sc_ = DG.scripts(meter, METER, xyzi)
-    scripts[E["gauge"]], scripts[E["cursor"]] = sc_["gauge"], sc_["cursor"]
-    MG_ = (E["gauge"], E["cursor"])
-    biggs = E["biggs"]
-    # plank: the clock (frames; frames in the middle band) and the drift, both running while the plank does
-    ctop, cnot, cend = hb._w(1), asm.nop(), asm.nop()
-    scripts[E["clock"]] = {0: [asm.ret(), asm.ret()],
-                           2: [asm.setword(T, 0), asm.setword(GOODF, 0), ctop, Op(bytes([0x96, T[0], T[1]])),
-                               asm.if_byte(METER, ">=", 4, cnot), asm.if_byte(METER, "<=", 6, cnot),
-                               Op(bytes([0x96, GOODF[0], GOODF[1]])), cnot,
-                               asm.if_byte(SES, "==", 1, cend), asm.goto_back(ctop), cend, asm.ret()]}
-    dtop, early, skip, flip, dmove, dneg, dend = (hb._w(1),) + tuple(asm.nop() for _ in range(6))
-    bump = [req(E["cursor"], 2), req(biggs, 3)]
-    scripts[E["drift"]] = {0: [asm.ret(), asm.ret()],
-                           2: [asm.setbyte(DC, 0), dtop, Op(bytes([0x95, DC[0], DC[1]])),
-                               asm.if_byte(SES, "==", 1, dend),
-                               asm.if_word(T, ">=", GY.PLANK_FRAMES // 2, early),          # (quicker from half way)
-                               asm.if_byte(DC, ">=", GY.PLANK_DRIFT[1], skip), asm.goto(dmove),
-                               early, asm.if_byte(DC, ">=", GY.PLANK_DRIFT[0], skip),
-                               dmove, asm.setbyte(DC, 0), Op(bytes([0x99, RND[0], RND[1]])),
-                               asm.if_byte(RND, "<", GY.PLANK_FLIP, flip), Op(bytes([0x93, DIRV[0] << 4, DIRV[1], 1])),
-                               flip, asm.if_byte(DIRV, "==", 1, dneg), Op(bytes([0x85, METER[0] << 4, METER[1], 1]))] +
-                           bump + [asm.goto(skip), dneg, Op(bytes([0x87, METER[0] << 4, METER[1], 1]))] + bump +
-                           [skip, asm.goto_back(dtop), dend, asm.ret()]}
+    # the voice: slot 2+i shows line i in window 2 (no close) for SAY frames; TALKING while it's up
+    lines = [AE.CALLS[c] for c in AE.CALLS] + [AE.FAST] + AE.CHEERS + [AE.FLUBS[g["key"]] for g in AE.POOL]
+    vo = {0: [asm.ret(), asm.ret()]}
+    for i, text in enumerate(lines):
+        vo[2 + i] = [asm.setbyte(TALKING, 1), Op(b"\x52\x02\x00\x01"), hb._window(text, 2, 8, 150),
+                     hb._req(E["hush"], 2, wait=False), asm.message(2, mv._text_id(sec, text)), asm.ret()]
+    scripts[E["voice"]] = vo
+    scripts[E["hush"]] = {0: [asm.ret(), asm.ret()],
+                          2: [hb._w(AE.SAY), Op(b"\x54\x02"), asm.setbyte(TALKING, 0), asm.ret()]}
+    call_of = {c: j for j, c in enumerate(AE.CALLS)}
+    FAST_L, CHEER_L = len(AE.CALLS), len(AE.CALLS) + 1
+    FLUB_L = CHEER_L + len(AE.CHEERS)
+    voice = lambda i: hb._req(E["voice"], 2 + i, wait=False)
 
+    def say_free(i):                                                 # (unless a line is already up)
+        busy = asm.nop()
+        return [asm.if_byte(TALKING, "==", 0, busy), voice(i), busy]
     # the director
     say = lambda t: hb._say(sec, t)
-    lines = lambda ts: sum((say(t) for t in ts), [])
     fade_out, fade_in = [Op(hb.FADE_OUT), Op(b"\x6C")], [Op(hb.FADE_IN), Op(b"\x6C")]
     buzz = Op(bytes([0xF1, 0, 3, 0, 0x40]))
-    chime = Op(bytes([0xF1, 0, 0xEA, 1, 0x40]))
-    members = [E["wedge"], E["biggs"], E["jessie"]]
-    main = [hb._uc(1), hb._menu(1), asm.setbyte(SES, 0), hb._w(20)] + fade_in + \
-        [Op(bytes([0xF2, 0, 0, 0, 0x10, GY.MUSIC]) + bytes(8))] + lines(GY.INTRO)
-    menu_top = asm.nop()
-    main += [menu_top]
-    ask, first = hb._ask(sec, *GY.MENU)
-    main += ask
-    sess_lab = [asm.nop() for _ in ORDER]
-    bye = asm.nop()
-    for j in range(len(ORDER)):
+    rnd = lambda mod: [Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], mod]))]
+    dancers = [E["tifa"]] + [E[p] for p in P]
+    start_all = [hb._req(e, 3, wait=False) for e in dancers]
+    again = asm.nop()
+    main = [hb._uc(1), hb._menu(1), asm.setbyte(ROUND, 0), again, asm.setbyte(USED, 0), asm.setbyte(K, 1)]
+    for m in range(len(AE.POOL)):
+        main += [asm.setbyte(SL[m], 0)]
+    # five classmates at random: RND until an unused one, its slot = K (IFs jump forward only: retry via a goto)
+    pick, retry, picked, pick_done = (asm.nop() for _ in range(4))
+    main += [pick] + rnd(len(AE.POOL))
+    main += mv._chain(RND, [[asm.if_byte(USED, "bit_off", m, retry), asm.biton(USED, m), asm.setbyte(SL[m], K),
+                             asm.goto(picked)] for m in range(len(AE.POOL))])
+    main += [retry, asm.goto_back(pick), picked, Op(bytes([0x95, K[0], K[1]])),
+             asm.if_byte(K, "<=", len(AE.SLOTS), pick_done), asm.goto_back(pick), pick_done]
+    main += [hb._req(E[p], 2) for p in P]
+    seen = asm.nop()
+    main += [asm.setbyte(M, anim(None, 0))] + start_all + [hb._w(15)] + fade_in + \
+        [Op(bytes([0xF2, 0, 0, 0, 0x10, AE.MUSIC]) + bytes(8)), asm.if_byte(ROUND, "==", 0, seen)]
+    for t in AE.INTRO:
+        main += say(t)
+    main += say(AE.HOW) + [seen, asm.setbyte(ROUND, 1)]
+    main += [asm.setword(HITS, 0), asm.setword(PAY, 0), asm.setbyte(STREAK, 0), asm.setbyte(TALKING, 0)]
+    total, fast_said = 0, False
+    for L, tempo, cycles in AE.ROUTINE:
+        per = AP.CYCLE * AP.BEATS[tempo]
+        main += [asm.setbyte(M, anim(L, tempo))] + start_all
+        main += [voice(FAST_L)] if tempo and not fast_said else [voice(call_of[L])]
+        fast_said = fast_said or tempo == 1
+        if L is None:
+            main += [hb._w(per * cycles)]
+            continue
+        total += cycles
+        top, wait, judge, miss, hit_done, rest, nxt, done = (asm.nop() for _ in range(8))
+        main += [asm.setword(CY, 0), top] + rnd(len(AE.KEYS)) + \
+            [asm.setbyte(KEY, RND), asm.setbyte(KP, KEY), Op(bytes([0x95, KP[0], KP[1]])), asm.setbyte(PR, 0),
+             asm.setword(CNT, 0)] + mv._chain(KEY, [[hb._req(E["prompt"], 2 + k, wait=False)]
+                                                   for k in range(len(AE.KEYS))])
+        main += [wait, hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.if_byte(PR, "==", 0, judge),
+                 asm.if_word(CNT, "<", per - 2, miss), asm.goto_back(wait),
+                 judge, Op(b"\x54\x01"), asm.if_byte(PR, "==", KP, miss),
+                 Op(AE.HIT_SOUND), Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, 1 + tempo),
+                 Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(STREAK, ">=", AE.COMBO, hit_done),
+                 asm.setbyte(STREAK, 0), hb._arith(0x86, PAY, AE.COMBO_TIP)] + rnd(len(AE.CHEERS))
+        main += mv._chain(RND, [say_free(CHEER_L + j) for j in range(len(AE.CHEERS))]) + [asm.goto(hit_done)]
+        main += [miss, Op(b"\x54\x01"), buzz, asm.setbyte(STREAK, 0)] + rnd(len(AE.POOL))
+        main += mv._chain(RND, [[asm.if_byte(SL[m], "!=", 0, hit_done)] + say_free(FLUB_L + m)
+                                for m in range(len(AE.POOL))])
+        main += [hit_done, rest, asm.if_word(CNT, "<", per, nxt), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),
+                 asm.goto_back(rest), nxt, Op(bytes([0x96, CY[0], CY[1]])), asm.if_word(CY, "<", cycles, done),
+                 asm.goto_back(top), done]
+    # the finish, the grade, a classmate's reaction, the pay
+    main += [hb._w(AE.SAY), asm.setbyte(M, FINISH)] + start_all + [hb._w(30)]
+    grade_done = asm.nop()
+    main += [asm.setbyte(GRADE, len(AE.GRADES) - 1)]
+    for gi, (share, _) in enumerate(AE.GRADES[:-1]):
         nx = asm.nop()
-        main += [asm.if_byte(hb.CHOICE, "==", first + j, nx), asm.goto(sess_lab[j]), nx]
-    main += [asm.goto(bye)]
-    paid = asm.nop()
-
-    def start(j, kind):
-        d = GY.SESSIONS[kind]
-        return fade_out + [hb._req(members[j], 2), asm.setword(PAY, 0), asm.setword(GIL, 0), asm.setbyte(FAIL, 0),
-                           hb._w(15)] + fade_in + lines(d["intro"]) + say(d["how"])
-
-    def result(j, kind, good_test):
-        d = GY.SESSIONS[kind]
-        ok_, done = asm.nop(), asm.nop()
-        ops = []
-        if "quit" in d or "fail" in d:
-            nf = asm.nop()
-            ops += [asm.if_byte(FAIL, "!=", 0, nf)] + say(d.get("quit") or d["fail"]) + [asm.goto(done), nf]
-        ops += good_test(ok_) + say(d["good"]) + [asm.goto(done), ok_] + say(d["ok"]) + [done]
-        fee = say(GY.FEE)
-        fee.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
-        ops += [Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), Op(bytes([0xF1, 0, 0x68, 1, 0x40]))] + fee
-        return ops + fade_out + [hb._req(members[j], 4), hb._w(10)] + fade_in + [asm.goto_back(menu_top)]
-    # squats
-    j = 0
-    n = len(GY.SQUAT_PERIODS)
-    rep, wait, judge, miss, tail, after, rest, sq_end, mrow = (asm.nop() for _ in range(9))
-    sq = [sess_lab[j]] + start(j, "squats") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), asm.setbyte(REPN, 0),
-                                               asm.setbyte(DC, 0), req(members[j], 3)]
-    sq += [rep] + ch_(TIER, [[asm.setword(PER, p_)] for p_ in GY.SQUAT_PERIODS])
-    sq += [Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], 3])), asm.setbyte(KEY, RND),
-           asm.setbyte(KP, KEY), Op(bytes([0x95, KP[0], KP[1]])), asm.setbyte(PR, 0), asm.setword(CNT, 0)]
-    sq += ch_(KEY, [[hb._req(E["prompt"], 2 + k, wait=False)] for k in range(3)])
-    sq += [wait, hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.if_byte(PR, "==", 0, judge),
-           asm.if_word(CNT, "<", PER, miss), asm.goto_back(wait),
-           judge, Op(b"\x54\x01"), asm.if_byte(PR, "==", KP, miss),
-           Op(GY.HIT_SOUND), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])), asm.setbyte(DC, 0),
-           Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(TIER, "<", n - 1, after),
-           asm.if_byte(STREAK, ">=", GY.SQUAT_HITS_UP, after), Op(bytes([0x95, TIER[0], TIER[1]])),
-           asm.setbyte(STREAK, 0), req(members[j], 3), after,
-           rest, asm.if_word(CNT, "<", PER, tail), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(rest),
-           tail, Op(bytes([0x95, REPN[0], REPN[1]])), asm.if_byte(REPN, "<", GY.SQUAT_REPS, sq_end),
-           asm.goto_back(rep)]
-    slow = asm.nop()
-    sq += [miss, Op(b"\x54\x01"), buzz, asm.setbyte(STREAK, 0), Op(bytes([0x95, DC[0], DC[1]])),
-           asm.if_byte(DC, ">=", GY.SQUAT_QUIT, mrow), asm.setbyte(FAIL, 1), asm.goto(sq_end), mrow,
-           asm.if_byte(TIER, "!=", 0, slow), asm.setbyte(TIER, 0), req(members[j], 3), slow,
-           asm.goto_back(rest), sq_end, Op(b"\x54\x01"),
-           asm.setword(GIL, PAY), hb._arith(0x8A, GIL, GY.SQUAT_FEE)]
-    sq += result(j, "squats", lambda ok_: [asm.if_word(PAY, ">=", GY.SQUAT_REPS + 10, ok_)])
-    # plank
-    j = 1
-    pl = [sess_lab[j]] + start(j, "plank") + [asm.setbyte(SES, 1), asm.setbyte(DIRV, 0), asm.setbyte(PR, 0)] + \
-        DG.start(METER, MG_) + [req(members[j], 3), req(E["clock"], 2), req(E["drift"], 2)]
-    ptop, pnok, pnca, pchk, pend = hb._w(1), asm.nop(), asm.nop(), asm.nop(), asm.nop()
-    pl += [ptop, asm.if_byte(PR, "==", 3, pnok), asm.setbyte(PR, 0), Op(bytes([0x85, METER[0] << 4, METER[1], 1])),
-           req(E["cursor"], 2), req(biggs, 3), pnok,
-           asm.if_byte(PR, "==", 2, pnca), asm.setbyte(PR, 0), Op(bytes([0x87, METER[0] << 4, METER[1], 1])),
-           req(E["cursor"], 2), req(biggs, 3), pnca,
-           asm.if_byte(METER, "==", 0, pchk), asm.setbyte(FAIL, 1), asm.goto(pend), pchk]
-    p2 = asm.nop()
-    pl += [asm.if_byte(METER, ">=", DG.STEPS - 1, p2), asm.setbyte(FAIL, 1), asm.goto(pend), p2,
-           asm.if_word(T, "<", GY.PLANK_FRAMES, pend), asm.goto_back(ptop),
-           pend, asm.setbyte(SES, 0), hb._w(3)] + DG.hide(MG_) + \
-        [asm.setword(GIL, GOODF), hb._arith(0x8C, GIL, 30), hb._arith(0x8A, GIL, GY.PLANK_FEE)]
-    pl += result(j, "plank", lambda ok_: [asm.if_word(GOODF, ">=", GY.PLANK_FRAMES * 2 // 3, ok_)])
-    # run
-    j = 2
-    rn = [sess_lab[j]] + start(j, "run") + [asm.setbyte(PACE, 0), asm.setbyte(MAXP, 0), asm.setbyte(STREAK, 0),
-                                            asm.setbyte(REPN, 0), req(members[j], 3)]
-    beat, inwin, hit, rmiss, rrest, rdone, rnext = (asm.nop() for _ in range(7))
-    rn += [beat] + ch_(PACE, [[asm.setword(BL, b_)] for b_ in GY.RUN_BEAT]) + \
-        [asm.setbyte(PR, 0), asm.setword(CNT, 0), hb._req(E["prompt"], 5, wait=False)]
-    win_lp = hb._w(1)
-    rn += [win_lp, Op(bytes([0x96, CNT[0], CNT[1]])), asm.if_byte(PR, "!=", 0, inwin), asm.if_byte(PR, "==", 3, rmiss),
-           asm.goto(hit), inwin, asm.if_word(CNT, "<", GY.RUN_WINDOW, rmiss), asm.goto_back(win_lp)]
-    up_, dn_ = asm.nop(), asm.nop()
-    rn += [hit, Op(b"\x54\x01"), Op(GY.HIT_SOUND), hb._arith(0x86, PAY, PACE), Op(bytes([0x96, PAY[0], PAY[1]])),
-           Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(STREAK, ">=", GY.RUN_HITS_UP, rrest),
-           asm.if_byte(PACE, "<", 3, rrest), asm.setbyte(STREAK, 0), Op(bytes([0x95, PACE[0], PACE[1]])),
-           req(members[j], 3), asm.if_byte(PACE, "==", 3, rrest), asm.setbyte(MAXP, 1), asm.goto(rrest),
-           rmiss, Op(b"\x54\x01"), buzz, asm.setbyte(STREAK, 0), asm.if_byte(PACE, "!=", 0, rrest),
-           Op(bytes([0x97, PACE[0], PACE[1]])), req(members[j], 3)]
-    rest_lp = hb._w(1)
-    rn += [rrest, asm.if_word(CNT, "<", BL, rnext), rest_lp, Op(bytes([0x96, CNT[0], CNT[1]])),
-           asm.if_word(CNT, "<", BL, rnext), asm.goto_back(rest_lp), rnext,
-           Op(bytes([0x95, REPN[0], REPN[1]])), asm.if_byte(REPN, "<", GY.RUN_BEATS, rdone), asm.goto_back(beat),
-           rdone, asm.setword(GIL, PAY), hb._arith(0x8A, GIL, GY.RUN_FEE)]
-    rn += result(j, "run", lambda ok_: [asm.if_byte(MAXP, "!=", 0, ok_)])
-    main += sq + pl + rn
-    # done for today: back beside Tifa in the real gym
-    bm = Walkmesh(ctx.field(GY.BASE).section("walkmesh"))
-    bx, by = GY.TIFA_AT[0] + 30, GY.TIFA_AT[1]
+        main += [asm.if_word(HITS, ">=", math.ceil(share * total), nx), asm.setbyte(GRADE, gi), asm.goto(grade_done), nx]
+    main += [grade_done] + mv._chain(GRADE, [say(t) for _, t in AE.GRADES])
+    react, absent, reacted = asm.nop(), asm.nop(), asm.nop()
+    main += [react] + rnd(len(AE.POOL))
+    main += mv._chain(RND, [[asm.if_byte(SL[m], "!=", 0, absent)] +
+                            mv._chain(GRADE, [say(t) for t in AE.REACT[g["key"]]]) + [asm.goto(reacted)]
+                            for m, g in enumerate(AE.POOL)])
+    main += [absent, asm.goto_back(react), reacted]
+    main += [asm.setword(GIL, PAY)] + mv._chain(GRADE, [[hb._arith(0x86, GIL, len(AE.SLOTS) * fee)] for fee in AE.FEES])
+    paid = say(AE.PAID)
+    paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
+    main += [Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), Op(bytes([0xF1, 0, 0x68, 1, 0x40]))] + paid
+    ask, first = hb._ask(sec, *AE.AGAIN)
+    bye = asm.nop()
+    main += ask + [asm.if_byte(hb.CHOICE, "==", first, bye)] + fade_out + [hb._w(10), asm.goto_back(again), bye]
+    # back beside Tifa in the gym
+    bm = Walkmesh(ctx.field(AE.GYM).section("walkmesh"))
+    bx, by = AE.TIFA_AT[0] + 30, AE.TIFA_AT[1]
     bt = bm.find(bx, by)
     assert bt is not None
     stop_ = hb._w(30)
-    main += [bye] + say(GY.BYE) + fade_out + \
-        [asm.bitoff((1, 213), 2), hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(GY.BASE), bx, by, bt, 0xC0),
+    main += say(AE.BYE) + fade_out + \
+        [asm.bitoff((1, 213), 2), hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(AE.GYM), bx, by, bt, 0xC0),
          stop_, asm.goto_back(stop_)]
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
@@ -375,13 +359,5 @@ def apply(ctx):
     f.sections[0] = sec.build()
     n_text = struct.unpack_from("<H", sec.tail, 0)[0]
     assert n_text <= 255, n_text
-    print("  693: gym sessions on %s (train %s side %d, coach %s, waits %s; %d texts, script %d bytes)"
-          % (GY.FIELD, train[:3], side, coach[:3], [w[:3] for w in waits], n_text, len(f.sections[0])))
-
-
-def _bucket(var, blocks):
-    """sag below 4, straight 4-6, pike above 6 (the meter's 11 steps)."""
-    lo, mid, end = asm.nop(), asm.nop(), asm.nop()
-    return [asm.if_byte(var, "<", 4, lo)] + blocks[0] + [asm.goto(end), lo,
-                                                         asm.if_byte(var, "<=", 6, mid)] + blocks[1] + \
-        [asm.goto(end), mid] + blocks[2] + [end]
+    print("  693: aerobics on %s (view %s, Tifa %s, slots %s; %d prompts, %d anims, %d texts, script %d bytes)"
+          % (AE.FIELD, view[:3], tifa_at[:3], [s[:2] for s in slots], total, n_anims, n_text, len(f.sections[0])))

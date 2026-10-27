@@ -21,12 +21,15 @@ import _tickets_poses as TP
 STROKE, DEPTH = 2.2, 1.0            # (model units) the side mount's stroke; how far in at the deepest
 FLOP, PLANK_BOW = 2.4, 112          # the plank's hip lift at the top; its forward pitch (degrees)
 SIDE_FOOT = (3.0, 1.6)              # his planted left foot: this far to his left and behind her entry
-HEAD_FOOT_UP = 6.4                  # his right ankle this far above her head bone's end (user: his foot went
-                                    # through her head: her hair's top is ~3.75 above it, his sole ~1.6 below the ankle)
-HEAD_FOOT_BACK = 0.35               # ...and this share of the way back along her head bone (the hair's highest point)
-SIDE_DOWN = 1.0                     # (user: "move cloud down ... toward the bottom of the screen in his forward
-                                    # direction") his root this much further forward (he faces the camera), the
-                                    # tip kept at her entry by the fit
+HEAD_FOOT_UP = 6.0                  # his right ankle this far above her head bone's end (user: his foot went
+                                    # through her head; the sole clears her hair by ~1.6 field units, measured offline)
+HEAD_FOOT_BACK = 0.0                # ...and this share of the way back along her head bone: at its end (user: "his
+                                    # leg is bent wrong": 0.35 back put the foot ~4.5 model units from his hip, shorter
+                                    # than his shin needs, so the knee folded across to his left; now ~5.6)
+SIDE_DOWN = 3.0                     # (user: "move cloud down ... toward the bottom of the screen in his forward
+                                    # direction"; then halfway back (1.0); then half a step forward again) his root
+                                    # this much further forward (he faces the camera) after the fit
+KNEE_POLE = (-0.6, -1.0, -0.8)      # the raised leg's knee: up, forward and out to his right
 PLANK_LEGS = 0.25                   # his legs out behind, this much down (model y per unit back)
 PLANK_HANDS = (0.9, 1.0)            # hands: this far either side of his shoulders and ahead of them
 DIRS = {"side": 0x00, "plank": 0x40}    # his DIR (she faces 0xC0: -x); side faces the camera (-y)
@@ -103,7 +106,7 @@ def build(ctx, hb, spot, gdir, frames_per):
                 if mount == "side":
                     rg.root = RG.sub(rg.root, RG.mul(md, STROKE * (1 - e)))
                     rg.ik("l_femur", "l_tibia", plant, [0.6, -0.2, -1.0])
-                    rg.ik("r_femur", "r_tibia", on_head, [-0.4, -0.6, -1.0])
+                    rg.ik("r_femur", "r_tibia", on_head, list(KNEE_POLE))
                     rg.aim("r_foot", RG.unit([-0.35, 0.0, -1.0]))              # (the sole level on her head)
                     Et = rg.ends()
                     for sd, sx in (("l", 1), ("r", -1)):                      # hands on his hips
