@@ -3085,10 +3085,15 @@ def _wall_market(ctx, focus):
         ux_, uy_ = TU_.ARRIVE
         ut_ = Walkmesh(ctx.field(TU_.BASE).section("walkmesh")).find(ux_, uy_)
         assert ut_ is not None
+        # (user) and Going There (690): the special scenes' tutorial, in Corneo's bedroom
+        import _going_there as GT_
+        tx_, ty_ = GT_.ARRIVE
+        tt_ = Walkmesh(ctx.field(GT_.BASE).section("walkmesh"))
+        tt_ = max((t for t in range(len(tt_.tris)) if tt_.contains(t, tx_, ty_)), key=lambda t: tt_.height(t, tx_, ty_))
         ask_w, first_w = hb._ask(sec, "Director\n“I've got films lined up. Which one\n are we shooting?”",
                                  ["The Basics (start here).", "Sector 7 Workout.", "Going up.", "Tickets, please!",
-                                  "Hostile Takeover.", "Besties.", "Talk about other work."])
-        film1_, film2_, film3_, film4_, film5_, other_w = (asm.nop() for _ in range(6))
+                                  "Hostile Takeover.", "Besties.", "Going There.", "Talk about other work."])
+        film1_, film2_, film3_, film4_, film5_, film6_, other_w = (asm.nop() for _ in range(7))
         ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, film1_)] + \
             hb._say(sec, "Director\n“Orientation! Everybody starts\n somewhere. To the inn!”") + \
             [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(TU_.FIELD), ux_, uy_, ut_, 0), asm.ret(), film1_]
@@ -3106,9 +3111,12 @@ def _wall_market(ctx, focus):
             hb._say(sec, "Director\n“Shinra's boardroom, 66th floor.\n Scarlet's chairing. Bring your\n business face.”") + \
             [asm.setbyte((3, 142), 0),                                   # (686's camera-switch RESUME flag)
              Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(HT_.FIELD_A), hx_, hy_, ht_, 0x40), asm.ret(), film5_,
-             asm.if_byte(CHOICE, "==", first_w + 4, other_w)] + \
+             asm.if_byte(CHOICE, "==", first_w + 4, film6_)] + \
             hb._say(sec, "Director\n“Icicle Inn, Gast's old house. Just the\n three of you. Keep it real, okay?”") + \
-            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(BS_.FIELD), bx_, by_, bt_, 0), asm.ret(), other_w]
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(BS_.FIELD), bx_, by_, bt_, 0), asm.ret(), film6_,
+             asm.if_byte(CHOICE, "==", first_w + 5, other_w)] + \
+            hb._say(sec, "Director\n“Corneo's bedroom. Tifa, you read the\n contract, right? ...Right?”") + \
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(GT_.FIELD), tx_, ty_, tt_, 0), asm.ret(), other_w]
         ops += tape(sec, say, end) + _unlocked_or(scout)
         ops += [asm.if_byte(MOVIE_GIRL, "bit_on", 0, fresh), asm.if_byte(MOVIE_GIRL, "bit_off", 2, told)]
         for t_ in NEWS[1]:                       # (user) once (if the arrival didn't tell it)

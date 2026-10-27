@@ -1086,6 +1086,12 @@ The movie minigame (user's design).
 - `_layout(mesh)` {position: (girl spot, girl dir, his spot, his dir)} on this room, from 670's relative layout.
 - `apply(ctx)` 
 
+## `patches/690_going_there.py`
+(user) Going There: the Director's second tutorial-style film (data `_going_there.py`, poses `_going_there_poses.py`),
+
+- `_mods()` 
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1383,6 +1389,17 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `anims(ctx, gestures, actor, who, hrc=None, sit=None, prefix=None)` The anim names to append to `actor`'s model ('who' = the ANIMS table); seated copies named
 - `slots(gestures, actor, first, stand, animb)` {slot: ops}: each gesture once (ANIME1 waits in the actor's own slot), back to anim `stand`; `first` =
 - `reqs(gestures, i, entity)` REQs (no wait) of line i's gestures; entity(actor) -> entity index.
+
+## `patches/_going_there.py`
+(user) Going There: the Director's second tutorial-style film (690_going_there), after the contract Tifa signed
+
+
+## `patches/_going_there_poses.py`
+(user) Going There (690): Cloud's two new mounts over Tifa in the special scenes' insert (672: she on her knees,
+
+- `_tip(ctx, hb, rg, E=None)` (tip, base) of his member in model space for this rig.
+- `_hers(ctx, spot, gdir, cdir, anim, frame)` Her entry and the top of her head at `frame` of `anim`, in his model space (both entities at `spot`).
+- `build(ctx, hb, spot, gdir, frames_per)` {mount: [anim names per speed]}, {mount: still name}, {mount: fit error} (model units).
 
 ## `patches/_going_up.py`
 (user) Going up: the second parody film (684_going_up), in Shinra HQ's glass elevator (eleout, where the

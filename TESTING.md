@@ -42,6 +42,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   further right and back along the table, the girl on top a little further from Cloud's face, the girl on
   the floor on one knee with the other foot planted, left hand behind her, right arm reaching up; in the
   vent view nobody is hidden under the table.
+- **Going There** (690): the Director's film menu has "Going There." after Besties: Corneo's bedroom.
+  Clothed intro (the contract, page nine), then the ride on the bed (Tifa astride facing Cloud's feet,
+  slow), head on the floor in front of the bed (a gag at the start, the dirty-talk lesson, then the top
+  speed), then the mount on the bed in three variations, each after a fade: over her from above (as the
+  special scenes), side-on facing the camera with his foot on her head, and turned round in a plank,
+  hands on the bed, his hips flopping. Prompts, the meter and the finisher as in The Basics. Check the
+  foot sits on her head, the plank's hands and toes reach the bed, and the camera shows the bed.
 - **Honey Bee shift** (689): the Honey Bee manager in onna_4 has "Tifa's shift." (once you have the job):
   a copy of the inn's room, Tifa in her Wall Market dress, three customers one at a time (random of
   nine, dressed). Each: his opening, three choices of how Tifa handles him, each followed by two button

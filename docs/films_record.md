@@ -20,12 +20,13 @@ offered from the start.
 | 3 | Tickets, please! | `685_tickets` / `_tickets` | `blackbg6` = copy of the train `tin_2` | Cloud, Tifa, Jessie | Tifa on all fours over Jessie; Jessie's tap-out hold |
 | 4 | Hostile Takeover. | `686_hostile` / `_hostile` | `blackbg5` (front, `blin66_6`) + `blackbg8` (overhead, `blin66_5`), alternating | Cloud, Scarlet, Elena | boardroom table; two camera angles, state carried across by bank 2 142-156 |
 | 5 | Besties. | `687_besties` / `_besties` | `blackbgh` = copy of Gast's house `snmayor` | Cloud, Tifa, Aerith | the Director's soap-opera script; 5 segments with offers / gags between; scored climax |
+| 6 | Going There. | `690_going_there` / `_going_there` (+ `_going_there_poses`) | `blackbgb` = copy of Corneo's bedroom `colne_6` (672's special set) | Cloud, Tifa | the second tutorial: ride (672's finisher, slow), head (gag, dirty talk), mount in three variations (front / side, foot on her head / reverse plank) |
 
 The older movie shoots (670 solo co-stars, 672 special, 673 Blast-off, 674 stage show, 678/679 group
 sets, 682 school dance) are still reached from the same Director through the co-star flow. They use
 670's press-rate meter, not the prompt game below.
 
-## 2. The shared prompt game (683-688)
+## 2. The shared prompt game (683-690)
 
 Every film runs the same loop, copied into each patch rather than shared. 684's code is the template;
 685 and 686 are copies of it.
@@ -85,7 +86,7 @@ Every film runs the same loop, copied into each patch rather than shared. 684's 
 
 - **Temp vars:** each film keeps its own block, from (5,100) to about (5,148) and (6,110-135). They only
   matter inside that film's set.
-- **Meter:** 683 (5,137-139); 684-686 (5,146-148); 687 (5,141-143); 688 (5,109-111).
+- **Meter:** 683 (5,137-139); 684-686 (5,146-148); 687 (5,141-143); 688 (5,109-111); 690 (5,109-111).
 - **Saved:** only 686's camera switch, bank 2 142-156 (`RESUME` + its state; METER at 156).
   670 clears RESUME before jumping in.
 - **Affection:** a walk-out costs a point (670 `lose_affection`). Tifa, Elena and Scarlet have one;

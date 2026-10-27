@@ -41,7 +41,7 @@ WM_ROLL_CALL, WM_ROLL = 0x76760B, 0x767641
 L1, R1 = 0x0004, 0x0008
 TEXTS_NEEDED, MAX_ENTITIES = 5, 48
 SKIP = {"blackbge", "shpin_22", "nivgate3", "hyou12", "blackbgk", "blackbg3", "blackbg4",
-        "blackbg5", "blackbg6", "blackbg8", "blackbgh", "blackbg9", "blackbgc"}   # 677's scene lab (L1 / R1 turn its actors);
+        "blackbg5", "blackbg6", "blackbg8", "blackbgh", "blackbg9", "blackbgc", "blackbgb"}   # 677's scene lab (L1 / R1 turn its actors);
         # 678 / 679's group sets; (user) every parody film's set (683-688: Square is a prompt there)
 
 PAGES = [
