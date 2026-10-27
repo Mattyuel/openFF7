@@ -1074,6 +1074,18 @@ The movie minigame (user's design).
 - `_taste(ctx, hb, girl, gdir, cloud, cdir)` (user: "the director can suggest cloud taste tifa, which will involve cloud putting his head there and
 - `apply(ctx)` 
 
+## `patches/689_hb_shift.py`
+(user) The Honey Bee Inn shift (data `_hb_shift.py`, plan docs/hb_shift.md): Tifa works a night at the inn, Cloud
+
+- `_mods()` 
+- `_punch(ctx, name)` Cloud's three punches (the last an uppercut) on AAAA: the right fist from a guard by his chin out to arm's
+- `_kick(ctx, hrc, name)` Tifa's front kick on her dress (AXJA): the right knee up, the leg snapped out high, held, back; leaning back,
+- `_fall(ctx, hrc, stand, name)` A customer knocked flat on his back, stiff as a plank (on his own skeleton): pitched back about his root
+- `_spot(mesh, x, y, high=False)` (x, y, z, tri) on the floor (or the highest piece there: the bed).
+- `_walkable(mesh, a, b)` 
+- `_layout(mesh)` {position: (girl spot, girl dir, his spot, his dir)} on this room, from 670's relative layout.
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1395,6 +1407,10 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `extend_torso(ctx, hrc)` Her chest part's bottom band (the vertices within TORSO_BAND of its waist end, along the bone) moved
 - `bend(ctx, hrc, stand, srcs, prefix, waist, neck, replant=False)` (user: a third style) copies of `srcs` (her strokes) with the upper body turned `waist` degrees at the
 - `_bend_sign(r, side, fwd, bone)` +1 if turning `bone`'s subtree positively about `side` moves its end towards `fwd`, else -1.
+
+## `patches/_hb_shift.py`
+(user) The Honey Bee Inn shift (689_hb_shift): Tifa works a night at the inn, Cloud is security. Three customers
+
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).

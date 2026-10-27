@@ -589,6 +589,9 @@ def _manager(ctx, back):
     rx, ry, rtri, rdir = ROOM_ARRIVE
     assert Walkmesh(ctx.field(ROOM).section("walkmesh")).contains(rtri, rx, ry)
 
+    import _hb_shift as shift_data
+    shift_tri = Walkmesh(ctx.field(shift_data.BASE).section("walkmesh")).find(*shift_data.ARRIVE[:2])
+
     def talk(sec):
         end, offer, visit, tips, cut = _uc(0), asm.nop(), asm.nop(), asm.nop(), asm.nop()
         qx = _quests()
@@ -608,10 +611,16 @@ def _manager(ctx, back):
         ops += qx.reward_ops(sec, "hb_first") + [asm.setbyte(qs, qx.DONE), owed]
         menu, first = _ask(sec, "Manager\n“Back again, partner? What'll it be?”",
                            ["Visit one of the girls.", "Collect the girls' earnings.",
-                            "Where do I find girls?", "Nothing."])
+                            "Where do I find girls?", "Tifa's shift.", "Nothing."])
+        shift = asm.nop()
         ops += menu + [asm.if_byte(CHOICE, "!=", first, visit),
                        asm.if_byte(CHOICE, "!=", first + 1, cut),
-                       asm.if_byte(CHOICE, "!=", first + 2, tips), asm.goto(end)]
+                       asm.if_byte(CHOICE, "!=", first + 2, tips),
+                       asm.if_byte(CHOICE, "!=", first + 3, shift), asm.goto(end)]
+        # (user) Tifa works a shift at the inn, Cloud on security (689_hb_shift)
+        sx, sy, sdir = shift_data.ARRIVE
+        ops += [shift] + _say(sec, "Manager\n“Tifa's on tonight? The customers\n will be lining up round the block!”") + \
+            [_uc(0), asm.mapjump(ctx.maplist.index(shift_data.FIELD), sx, sy, shift_tri, sdir), asm.ret()]
         ops += [cut] + _collect(sec, end)
         # visit (user): one page per star rating, One Star Girls first. A girl not hired yet
         # is "????" and picking her just shows the page again. The menu text can't change

@@ -42,6 +42,16 @@ Existing saves load, but they keep their own story progress; use a new game.
   further right and back along the table, the girl on top a little further from Cloud's face, the girl on
   the floor on one knee with the other foot planted, left hand behind her, right arm reaching up; in the
   vent view nobody is hidden under the table.
+- **Honey Bee shift** (689): the Honey Bee manager in onna_4 has "Tifa's shift." (once you have the job):
+  a copy of the inn's room, Tifa in her Wall Market dress, three customers one at a time (random of
+  nine, dressed). Each: his opening, three choices of how Tifa handles him, each followed by two button
+  prompts while she dances; the meter at the top is his mood. Endings: the open ones (Dio, Bruno, Pete)
+  go all the way at a high mood (head on the floor, cowgirl / mission on the bed); the timid ones (Hobbs,
+  Gus, Nabe) get their scene (Tifa's kick for Nabe); the pushy ones (Spike, the lackey, Dunmore) can
+  cross a line: "Call security." = Cloud walks in from the door, three punches, the customer falls flat;
+  "Handle it herself." = her kick, Cloud arrives after. Then the tips and back to the lobby. Check:
+  the walk-in doesn't get stuck, the falls land on the floor, the bed positions sit on the bed, the
+  meter is visible, the dance moves play on her dress.
 - **Fixes** (684, 688): Going up: the Director only appears after the fade into the scene, standing at the
   back right of the car. The Basics: in sixty-nine Tifa's legs are wider and she sits a little further
   down Cloud.
