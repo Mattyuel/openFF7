@@ -21,7 +21,11 @@ import _tickets_poses as TP
 STROKE, DEPTH = 2.2, 1.0            # (model units) the side mount's stroke; how far in at the deepest
 FLOP, PLANK_BOW = 2.4, 112          # the plank's hip lift at the top; its forward pitch (degrees)
 SIDE_FOOT = (3.0, 1.6)              # his planted left foot: this far to his left and behind her entry
-HEAD_FOOT_UP = 1.0                  # his right sole this far above the top of her head
+HEAD_FOOT_UP = 6.4                  # his right ankle this far above her head bone's end (user: his foot went
+                                    # through her head: her hair's top is ~3.75 above it, his sole ~1.6 below the ankle)
+HEAD_FOOT_BACK = 0.35               # ...and this share of the way back along her head bone (the hair's highest point)
+SIDE_DOWN = 2.0                     # (user: "move cloud down the bed half a step") his root this much further
+                                    # from her head along the bed, the tip kept at her entry by the fit
 PLANK_LEGS = 0.25                   # his legs out behind, this much down (model y per unit back)
 PLANK_HANDS = (0.9, 1.0)            # hands: this far either side of his shoulders and ahead of them
 DIRS = {"side": 0x00, "plank": 0x40}    # his DIR (she faces 0xC0: -x); side faces the camera (-y)
@@ -41,7 +45,8 @@ def _hers(ctx, spot, gdir, cdir, anim, frame):
     e = TP.entry_points(ctx, "ZTFA.HRC", "abcd.a", anim)[frame]
     J = TP.joints(ctx, "ZTFA.HRC", anim)[frame]
     to_him = lambda p: TP._inv_off([TP._field(spot, gdir, p)[k] - spot[k] for k in range(3)], cdir)
-    return to_him(e), to_him(J["head"])
+    top = [J["head"][k] + HEAD_FOOT_BACK * (J["head@"][k] - J["head"][k]) for k in range(3)]
+    return to_him(e), to_him(top)
 
 
 def build(ctx, hb, spot, gdir, frames_per):
@@ -75,6 +80,11 @@ def build(ctx, hb, spot, gdir, frames_per):
         else:
             x0, st, bd = [0, 0, 0, 10, 0], [1.0, 1.0, 1.0, 5, 8], [(-8, 8), (-8, 8), (-8, 8), (-10, 50), (-40, 40)]
         x, deep = RG.fit(base_rig, cost, x0, st, rounds=5, bounds=bd)
+        if mount == "side":                                     # half a step down the bed, still in her
+            away = RG.unit([entry[0] - head[0], 0.0, entry[2] - head[2]])
+            want = RG.add(deep.root, RG.mul(away, SIDE_DOWN))
+            cost2 = lambda rg: cost(rg) * 6 + math.dist(rg.root, want)
+            x, deep = RG.fit(base_rig, cost2, x, st, rounds=5, bounds=bd)
         errs[mount] = cost(deep)
         tip, bs = _tip(ctx, hb, deep)
         md = RG.unit(RG.sub(tip, bs))
@@ -95,6 +105,7 @@ def build(ctx, hb, spot, gdir, frames_per):
                     rg.root = RG.sub(rg.root, RG.mul(md, STROKE * (1 - e)))
                     rg.ik("l_femur", "l_tibia", plant, [0.6, -0.2, -1.0])
                     rg.ik("r_femur", "r_tibia", on_head, [-0.4, -0.6, -1.0])
+                    rg.aim("r_foot", RG.unit([-0.35, 0.0, -1.0]))              # (the sole level on her head)
                     Et = rg.ends()
                     for sd, sx in (("l", 1), ("r", -1)):                      # hands on his hips
                         w = RG.add(Et[sd + "_femur@"], [sx * 1.3, -2.1, 0.3])

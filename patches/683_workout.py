@@ -133,7 +133,9 @@ METER, SIDE, DEC = (5, 137), (5, 138), (5, 139)     # (user) the danger meter (`
 # DK its kind (0 / 1); SPC the spot's presses
 ST, START, MOOD, DARE, DN, DF, DK, SPC = ((5, a) for a in range(140, 148))
 # the actors: entity -> (model, {station: the station's first anim index in the model})
-ACTORS = ["cloudA", "tifaA", "tifaC", "cloudB", "tifaB"]
+# (in model order: the engine hands out models by the order the entities' CHARs run; tifaC before cloudB showed
+# two Clouds on the bench and two Tifas on the floor, user)
+ACTORS = ["cloudA", "tifaA", "cloudB", "tifaB", "tifaC"]
 
 
 def _set(ctx, donor, stand, poses, circ):

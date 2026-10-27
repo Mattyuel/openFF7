@@ -430,6 +430,17 @@ def _check_chars(name, script, models):
     chars = sorted(o.raw[1] for o in sec.ops if o.op == 0xA1)
     if chars != list(range(models)):
         raise SystemExit("BUILD CHECK FAILED: %s: CHAR models %s, %d models" % (name, chars, models))
+    # (user: the workout's bench showed two Clouds) the engine hands out models in the order entities run their
+    # CHAR, whatever its operand: entity k's CHAR must be the k-th model (true for all original fields)
+    order = []
+    for e in range(len(sec.entry)):
+        try:
+            ops = sec.script_ops(e, 0)
+        except Exception:
+            continue
+        order += [o.raw[1] for o in ops if o.op == 0xA1][:1]
+    if order != sorted(order):
+        raise SystemExit("BUILD CHECK FAILED: %s: CHAR models out of entity order %s" % (name, order))
 
 
 LZSS_CACHE = os.path.join(ROOT, "build", "cache", "lzss")

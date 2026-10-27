@@ -1,9 +1,10 @@
 """(user) Going There: the Director's second tutorial-style film (690_going_there), after the contract Tifa signed
-for the special scenes. In a copy of Don Corneo's bedroom (672's set) three positions, the special scenes' poses:
+(user: the dialogue never mentions the special scenes, which may not stay). In a copy of Don Corneo's bedroom
+(672's set) three positions, the special scenes' poses:
 "ride" (672's third, the finisher: Cloud on his back, Tifa astride facing his feet, this time in the back and
-taken slow, with "the special stuff"), "head" (straight from there to her mouth; she gags, then it isn't so bad;
+taken slow, with plenty of lube), "head" (straight from there to her mouth; she gags, then it isn't so bad;
 the Director has Cloud talk dirty, he's awful at it, Tifa coaches him; then she tells him to fuck her face),
-"mount" (672's first, the insert, in three mounts: front as in the specials, side-on with his foot on her head,
+"mount" (672's first, the insert, in three mounts: front as 672's, side-on with his foot on her head,
 then reversed in a plank on her, flopping his hips; Tifa egging him on). The prompt game, the danger meter and
 the finisher as 688. Data only."""
 
@@ -20,7 +21,7 @@ HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # (683's squat
 START = {"C": (15, 45), "G": (-15, 45)}     # the intro: 672's near_r / near_l
 
 INTRO = [
-    "Director\n“Tifa! My star. You read the contract\n for the special scenes, right? All of\n it? Including page nine?”",
+    "Director\n“Tifa! My star. You read the contract,\n right? All of it? Including page\n nine?”",
     "Tifa\n“...I signed it.”",
     "Director\n“Signing is reading, legally. And you\n prepared as per the instructions? The\n ones in the envelope?”",
     "Tifa\n“I prepared. Thoroughly. Very\n thoroughly. I don't want to talk\n about how thoroughly.”",
@@ -42,8 +43,8 @@ OUTRO = [
 # pull back, then the lines), frenzy (lines, then the top speed), mount (fade, the next of his mounts, lines)
 SEGMENTS = [
     dict(key="ride", reps=12, setup=[
-        "Director\n“Position one, from the specials:\n Cloud on his back, Tifa on top facing\n his feet. You're in charge, Tifa.”",
-        "Director\n“And use the special stuff. Lots. Then\n some more. There's no such thing as\n too much of the special stuff.”",
+        "Director\n“Position one: Cloud on his back,\n Tifa on top facing his feet. You're\n in charge, Tifa.”",
+        "Director\n“And use the lube. Lots. Then some\n more. There's no such thing as too\n much lube.”",
         "Tifa\n“(She works the bottle like it owes\n her money.) Okay. Slippery. Very\n slippery. Here goes...”",
         "Tifa\n“Nnh... wait. Wait, wait. It's not...\n it won't... how is it so BIG from\n this end?”",
         "Director\n“Breathe out as you sit. Push back a\n little, like you're letting it in.\n Slow. Slower than that.”",
@@ -52,7 +53,7 @@ SEGMENTS = [
             (1, "pause", ["Tifa\n“Hah... it's like a stretch that\n burns, then stops burning. Full.\n So full. Is it all the way?”",
                           "Cloud\n“Halfway.”",
                           "Tifa\n“HALFWAY?!”",
-                          "Director\n“More special stuff! And Cloud: stay\n still. Let her come to you.”"]),
+                          "Director\n“More lube! And Cloud: stay still.\n Let her come to you.”"]),
             (3, "talk", ["Cloud\n“It's... so tight. Hot. It grips the\n whole way down, not just at the\n start. I'm trying not to move.”",
                          "Tifa\n“Good. Keep trying. ...Oh, that's\n deeper. Slowly, slowly...”"]),
             (5, "pause", ["Tifa\n“Hah... okay. Okay, I think it's\n found its place. The ache's gone.\n Now it's just this deep, heavy...”",
@@ -97,11 +98,11 @@ SEGMENTS = [
         ],
         after=[
             "Tifa\n“*cough* *cough* Hah... hah... my\n voice is GONE. Was that dirty enough\n for you?”",
-            "Director\n“Dirty enough for the whole slum!\n Final position: from the specials,\n with some... variations. On the bed!”"]),
+            "Director\n“Dirty enough for the whole slum!\n Final position, with some...\n variations. On the bed!”"]),
     dict(key="mount", reps=15, setup=[
         "Director\n“Tifa, knees on the bed, chest down,\n hips up. Cloud: up and over her, from\n above. Like a jockey.”",
         "Tifa\n“Like a WHAT?”",
-        "Director\n“More special stuff! Always more!”",
+        "Director\n“More lube! Always more!”",
         "Tifa\n“Just get in me, Cloud. I'm ready.\n I'm so ready it's embarrassing.”"],
         beats=[
             (2, "talk", ["Tifa\n“Ahh! From above it goes straight\n down... so deep... yes, like that,\n harder!”",
