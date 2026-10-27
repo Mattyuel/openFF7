@@ -47,6 +47,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   Tickets: Jessie (seated, intro) now only turns / nods her head, no arm moves.
   Going There, mount part, the side-on variation: Cloud half a step further down the screen (forward), his foot resting on
   top of Tifa's head (not through it); no line mentions the special scenes.
+  Honey Bee shift: "Call security." Cloud walks in round the customer (no getting stuck); Tifa dances her own
+  moves (hip rock, clasped hands + leg back, a twirl, hand on head, arms spread, high five, ...), one after another.
   7th Heaven bar shift: patrons sit on the stools at the counter (no stepping / snapping); the camera on the
   counter and Tifa; [PAGEDOWN] Cloud walks up the aisle, then out of the door on the right wall with the patron.
   Sector 7 Workout (circuit, work in progress): squats -> bench (top off) -> floor stretch -> ring; each

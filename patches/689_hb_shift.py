@@ -17,7 +17,9 @@ import struct
 import _besties_rig as RG
 import _danger as DG
 import _gestures as GS
+import _hb_dances as HD
 import _hb_shift as HS
+import _walker as WK
 from ff7 import asm
 from ff7 import triggers as tg
 from ff7.field import FieldFile
@@ -28,9 +30,11 @@ from ff7.walkmesh import Walkmesh
 KEY, PR, RND, KP, HELD, METER, SIDE, DEC, CUST, STEPK, VN, DN, POS, VIEW, TIER, N2 = ((5, a) for a in range(100, 116))
 PRV = [(5, 116 + k) for k in range(3)]
 CNT, PER, GIL, TIP = ((6, a) for a in range(120, 128, 2))
+DANCING, TR = (5, 119), (5, 128)        # Tifa dances while DANCING; TR her pick
+SW = ((6, 130), (6, 132), (5, 136), (6, 134))     # security's walk (x, y words, step counter, z word)
+SEC_VIA = (-100, -120)                  # (user: he got stuck behind the customer) his way in, round the customer
 TIFA_DONOR = ("colne_4", 5)             # Tifa's Wall Market dress, AXJA (stand ABCD, walk ABCE)
 BARE_TIFA = "ZTFA.HRC"
-DANCES = ["DXHE.tor", "DXIB.tor", "DXIF.tor", "DXJA.tor"]     # the Honey Bee dancer's moves (on Ruby's skeleton)
 FALL_FRAMES, FALL_REST = 14, 0.9         # our own fall (`_fall`): frames to the floor; the root's height lying
 POS_ORDER = ("head", "cowgirl", "mission")
 # 670's raw spots (girl x y dz dir, cloud x y dz dir) and the turn onto this bed (mission: her head to the pillow
@@ -163,12 +167,14 @@ def apply(ctx):
     lay = _layout(mesh)
     talk_t, talk_g = _spot(mesh, *HS.TALK_TIFA), _spot(mesh, *HS.TALK_GUEST)
     door, guard = _spot(mesh, *HS.DOOR), _spot(mesh, *HS.SECURITY_AT)
-    assert _walkable(mesh, HS.DOOR, HS.SECURITY_AT)
+    via = _spot(mesh, *SEC_VIA)
+    assert WK.floor_leg(mesh, door, via, 60) and WK.floor_leg(mesh, via, guard, 60)
     focus = [_spot(mesh, *HS.FOCUS_TALK), _spot(mesh, *HS.FOCUS_BED)]
     # anims
-    tifa_d = mv._retarget(ctx, DANCES, "YH", "axja.hrc", "abcd.a")
     kick = _kick(ctx, "AXJA.HRC", "YHKK")
     rock = GS._hiprock(ctx, "AXJA.HRC", "YHHR")
+    # (user: "tifa needs custom dances rather than the honeybee ones") her hip rock + her own moves (_hb_dances)
+    tifa_d = [rock] + HD.build(ctx, "AXJA.HRC", "abcd.a", "YK")
     punch = _punch(ctx, "YHPU")
     strokes = {p: ["ZN%s%d.tor" % (HS.POSITIONS[p]["letter"], s) for s in range(4)] for p in POS_ORDER}
     hers = {p: ["ZV%s%d.tor" % (HS.POSITIONS[p]["letter"], s) for s in range(4)] for p in POS_ORDER}
@@ -184,7 +190,7 @@ def apply(ctx):
     tifa_e = loader.models.pop(ti)
     t_anims = ModelLoader.anims(tifa_e)
     assert ModelLoader.hrc(tifa_e) == "AXJA.HRC" and t_anims[:2] == ["ABCD.yos", "ABCE.yos"]
-    tifa_list = t_anims[:2] + tifa_d + [kick, rock]
+    tifa_list = t_anims[:2] + tifa_d + [kick]
     bare_list = t_anims[:1] + sum((hers[p] for p in POS_ORDER), [])
     models = [ModelLoader.only_anims(cl0, c_anims[:2]),
               ModelLoader.only_anims(tifa_e, tifa_list),
@@ -225,10 +231,15 @@ def apply(ctx):
                            hide() + [asm.ret(), asm.ret()],
                            2: ch_(VIEW, [at(fc, 0) for fc in focus]) + [asm.ret()]}
     ti_ = lambda n: tifa_list.index(n)
+    d_top, d_end = hb._w(1), asm.nop()
+    dance_loop = [d_top, asm.if_byte(DANCING, "!=", 0, d_end), Op(bytes([0x99, TR[0], TR[1]])),
+                  Op(bytes([0x8D, TR[0] << 4, TR[1], len(tifa_d)]))] + \
+        ch_(TR, [once(ti_(n)) for n in tifa_d]) + [asm.goto_back(d_top), d_end] + loop_(0) + [asm.ret()]
     scripts[E["tifa"]] = {
         0: [Op(bytes([0xA1, 1]))] + at(talk_t, face_t) + [hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: at(talk_t, face_t) + [hb._visi(1)] + loop_(0) + [asm.ret()],
-        3: ch_(DN, [loop_(ti_(n)) for n in tifa_d]) + [asm.ret()],
+        # her dances, one after another (each from her stance back to it: no snap) while DANCING; then her stance
+        3: dance_loop,
         4: [hb._visi(0), asm.ret()],
         5: once(ti_(kick)) + [asm.ret()],
         6: once(ti_(rock)) + [asm.ret()],
@@ -243,8 +254,9 @@ def apply(ctx):
     # security: in from the door to his spot by the customer (MOVE: the straight line is floor, asserted)
     scripts[E["sec"]] = {
         0: [Op(bytes([0xA1, 3])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at(door, to(door, guard)) + [hb._visi(1), hb.sound(HS.DOOR_SOUND), hb._move(*guard[:2]),
-                                         d_(to(guard, talk_g))] + loop_(0) + [asm.ret()],
+        2: at(door, to(door, via)) + [hb._visi(1), hb.sound(HS.DOOR_SOUND)] +
+        WK.walk(hb, mv._animb, [door, via, guard], *SW[:3], 1, 0, to, 3.0, wz=SW[3]) +
+        [d_(to(guard, talk_g))] + loop_(0) + [asm.ret()],
         3: once(2) + [asm.ret()],
         4: [hb._visi(0), asm.ret()]}
     for k, cu in enumerate(HS.CUSTOMERS):
@@ -298,8 +310,7 @@ def apply(ctx):
     buzz = Op(bytes([0xF1, 0, 3, 0, 0x40]))
     # the dance: PROMPTS prompts while she dances (REQEW'd by the director, which waits)
     top_, wait, judge, miss, nxt, end_, last = (asm.nop() for _ in range(7))
-    dance = [asm.setbyte(N2, 0), top_, Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], 4])),
-             asm.setbyte(DN, RND), req(E["tifa"], 3),
+    dance = [asm.setbyte(N2, 0), asm.setbyte(DANCING, 1), req(E["tifa"], 3), top_, Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], 4])),
              Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], 3])), asm.setbyte(KEY, RND),
              asm.setbyte(KP, KEY), Op(bytes([0x95, KP[0], KP[1]])), asm.setbyte(PR, 0), asm.setword(CNT, 0)]
     dance += ch_(KEY, [[hb._req(E["prompt"], 2 + k, wait=False)] for k in range(3)])
@@ -309,7 +320,7 @@ def apply(ctx):
     dance += [hb.sound(HS.HIT_SOUND)] + mood(1) + [hb._arith(0x86, GIL, 10), asm.goto(nxt)]
     dance += [miss, Op(b"\x54\x01"), buzz] + mood(-1) + [asm.if_byte(METER, "!=", 0, nxt), asm.goto(end_)]
     dance += [nxt, hb._w(12), Op(bytes([0x95, N2[0], N2[1]])), asm.if_byte(N2, "<", HS.PROMPTS, last),
-              asm.goto_back(top_), last, end_, req(E["tifa"], 7), asm.ret()]
+              asm.goto_back(top_), last, end_, asm.setbyte(DANCING, 0), asm.ret()]
     scripts[E["dance"]] = {0: [asm.ret(), asm.ret()], 2: dance}
 
     # the director

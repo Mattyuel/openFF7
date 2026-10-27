@@ -21,6 +21,7 @@ import math
 import struct
 
 import _bar as BR
+import _walker as WK
 import _besties_rig as RG
 from _recruit import sound
 from ff7 import asm
@@ -79,30 +80,11 @@ def _sway(ctx, hrc, stand, name):
 
 
 def _walkable(mesh, a, b):
-    """The straight line a -> b stays on the floor (no stool / counter tops: z within 3 of 0)."""
-    for k in range(41):
-        x, y = a[0] + (b[0] - a[0]) * k / 40, a[1] + (b[1] - a[1]) * k / 40
-        t = mesh.find(round(x), round(y))
-        if t is None or abs(mesh.tris[t][0][2]) > 3:
-            return False
-    return True
+    return WK.floor_leg(mesh, a, b)
 
 
 def _walk(hb, animb, path, wx, wy, n_, walk, stand, to, step):
-    """Ops walking an entity along `path` ((x, y, z, tri) points) by stepped XYZI on temp words wx / wy (counter
-    byte n_): walk anim `walk` looping, facing each leg, landing exactly on each point; then anim `stand`."""
-    ops = [animb(), Op(bytes([0xA2, walk, 1])), Op(bytes([0xAE, walk, 1]))]
-    for a, b in zip(path, path[1:]):
-        n = max(1, round(math.hypot(b[0] - a[0], b[1] - a[1]) / step))
-        dx, dy = round((b[0] - a[0]) / n), round((b[1] - a[1]) / n)
-        top, done = hb._w(1), asm.nop()
-        ops += [Op(bytes([0xB3, 0, to(a, b) % 256])), asm.setword(wx, a[0] & 0xFFFF), asm.setword(wy, a[1] & 0xFFFF),
-                asm.setbyte(n_, 0), top,
-                hb._arith(0x86, wx, dx & 0xFFFF), hb._arith(0x86, wy, dy & 0xFFFF),
-                Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", wx[1], wy[1], 0, a[3])),
-                Op(bytes([0x95, n_[0], n_[1]])), asm.if_byte(n_, "<", n, done), asm.goto_back(top), done,
-                hb._xyzi(*b[:4])]
-    return ops + [animb(), Op(bytes([0xA2, stand, 1])), Op(bytes([0xAE, stand, 1]))]
+    return WK.walk(hb, animb, path, wx, wy, n_, walk, stand, to, step)
 
 
 def _marle(ctx):

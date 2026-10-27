@@ -1104,8 +1104,8 @@ The movie minigame (user's design).
 
 - `_mods()` 
 - `_sway(ctx, hrc, stand, name)` A drunk swaying on his feet: the body leaning side to side once a cycle about his feet, the upper body and
-- `_walkable(mesh, a, b)` The straight line a -> b stays on the floor (no stool / counter tops: z within 3 of 0).
-- `_walk(hb, animb, path, wx, wy, n_, walk, stand, to, step)` Ops walking an entity along `path` ((x, y, z, tri) points) by stepped XYZI on temp words wx / wy (counter
+- `_walkable(mesh, a, b)` 
+- `_walk(hb, animb, path, wx, wy, n_, walk, stand, to, step)` 
 - `_marle(ctx)` Marle in the real 7th Heaven: "Work a shift." -> the set.
 - `apply(ctx)` 
 
@@ -1474,6 +1474,33 @@ The standard female body (user): Skye's bare body from the neck down, built by
 (user) The gym's training activities (693_gym; plan docs/gym_plan.md sections 5-6): Tifa in the Wall Market gym
 
 
+## `patches/_hb_dances.py`
+(user) Tifa's own dances for the Honey Bee shift (689), replacing the borrowed Honey Bee dancer's moves: "rocking her
+
+- `_ease(t)` 
+- `_dir(rg, bone)` 
+- class `_Pose` One frame: her stance turned / swayed, then arms, legs and head by weight w.
+  - `__init__(ctx, hrc, stand, w, beat, yaw=0.0, rise=0.0)` 
+  - `m(v)` A direction / offset in her own (turned) frame -> model space.
+  - `head(turn_=0.0, tilt=0.0, nod=0.0)` 
+  - `plant(side)` 
+  - `leg_aim(side, thigh, shin)` 
+  - `leg_cross(side)` This leg's ankle crossed over in front of the other foot.
+  - `arm_aim(side, up, fo)` 
+  - `arm_to(side, target, pole)` Wrist to `target` (a model-space point), blended from where it hangs.
+  - `at(joint, off)` A point `off` (her frame) from a joint of the posed rig.
+  - `frame()` 
+- `_clasp(P)` (user) Hands clasped in front, head tilted sideways, her right leg lifted back.
+- `_hand_on_head(P)` (sheet 1) Right hand on her head, the left arm straight down a little out, face to the side.
+- `_profile(P)` (sheet 2) Face to the side, her left knee lifted forward, hands behind her back.
+- `_cheek(P)` (sheet 3) Both hands together beside her face, head tilted into them, her left leg lifted back.
+- `_spread(P)` (sheet 4) Arms spread out wide, her right leg crossed over.
+- `_touch_face(P)` (sheet 5) Her right hand to her cheek, the left arm behind her, her right leg crossed over.
+- `_high_five(P)` (sheet 8) Head tilted, her left hand behind her head, the right raised high, legs straight.
+- `_arms_out(P)` (sheet 9) Arms outward, her left leg lifted back.
+- `_twirl(ctx, hrc, stand, n)` (user) A pretty twirl: one full turn on the spot, up on her toes, arms rising into a curve (her left arm up
+- `build(ctx, hrc, stand, prefix)` Her dances as anim names (prefix + letter + '0'); the hip rock is _gestures' own (689 adds it).
+
 ## `patches/_hb_shift.py`
 (user) The Honey Bee Inn shift (689_hb_shift): Tifa works a night at the inn, Cloud is security. Three customers
 
@@ -1670,6 +1697,12 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 ## `patches/_tutorial.py`
 (user) The Basics: the first film in the Director's menu (688_tutorial), before Sector 7 Workout. In the
 
+
+## `patches/_walker.py`
+Scripted walks without MOVE (user: MOVE got stuck on walkmesh piece edges and on other entities: the bar
+
+- `floor_leg(mesh, a, b, level=3)` The straight line a -> b stays on the floor (walkmesh, z within `level` of 0: no stool / counter tops).
+- `walk(hb, animb, path, wx, wy, n_, walk_anim, stand_anim, to, step, wz=None)` Ops: walk along `path` ((x, y, z, tri) points) on temp words wx / wy (counter byte n_), anims by index;
 
 ## `patches/_wiggle.py`
 (user: "after head holds add a moment where cloud stops pulls out and wiggles his hips left and right a few
