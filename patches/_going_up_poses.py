@@ -266,3 +266,49 @@ def extend_torso(ctx, hrc):
             k = 1 - TORSO_TAPER * w
             struct.pack_into("<3f", d, 128 + 12 * i, v[0] * k, v[1] * k, v[2] + TORSO_EXT * w)
     ctx.char_file(name, bytes(d))
+
+
+def bend(ctx, hrc, stand, srcs, prefix, waist, neck, replant=False):
+    """(user: a third style) copies of `srcs` (her strokes) with the upper body turned `waist` degrees at the
+    waist and the head `neck` degrees at the neck, both about her own side axis (the line between her hip joints:
+    + = the chest / face goes down towards her front); hips and legs untouched, so whatever meets her there still
+    does. `replant`: her hands put back where they were (on all fours). prefix + the source's last two."""
+    import _besties_rig as RG
+    from ff7 import fieldanim as fa
+    rg = RG.Rig(ctx, hrc, stand)
+    out = []
+    for src in srcs:
+        A = fa.Anim(ctx.char_file(src.split(".")[0].lower() + ".a"))
+        frames = []
+        for rr, rp, rots in A.frames:
+            r = rg.copy() if hasattr(rg, "W") else rg.start(fa.euler_matrix(0, 0, 0)).copy()
+            r.root = [rp[0], -rp[1], rp[2]]
+            r.W = [m for m, _, _ in fa.forward(r.sk, rr, r.root, rots)]
+            r.rr = rr
+            E0 = r.ends()
+            side = RG.unit(RG.sub(E0["l_femur@"], E0["r_femur@"]))
+            up = RG.unit(RG.sub(E0["chest"], E0["hip@"]))                 # (along her spine, hips to shoulders)
+
+            def turn_about(idx, deg):
+                R = fa.axis_angle(side, deg)
+                r.W = [fa._mul(R, m) if i in idx else m for i, m in enumerate(r.W)]
+            fwd = RG.cross(side, up)                                         # (her front: forward standing, her
+                                                                            #  belly on all fours)
+            turn_about(r.upper, waist * _bend_sign(r, side, fwd, "chest"))     # (chest, shoulders, head)
+            turn_about(r.head, neck * _bend_sign(r, side, fwd, "head"))
+            if replant:
+                for s, sx in (("l", 1), ("r", -1)):
+                    pole = RG.sub(E0[s + "_uparm"], RG.lerp(E0[s + "_uparm@"], E0[s + "_foarm"], 0.5))
+                    r.ik(s + "_uparm", s + "_foarm", E0[s + "_foarm"], pole)
+            frames.append(r.frame())
+        name = prefix + src.split(".")[0][-2:]
+        out.append(RG.save(ctx, name, src.split(".")[0].lower() + ".a", frames))
+    return out
+
+
+def _bend_sign(r, side, fwd, bone):
+    """+1 if turning `bone`'s subtree positively about `side` moves its end towards `fwd`, else -1."""
+    import _besties_rig as RG
+    E = r.ends()
+    v = RG.sub(E[bone], E[bone + "@"])
+    return 1 if RG.dot(RG.cross(side, v), fwd) > 0 else -1

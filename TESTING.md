@@ -36,6 +36,12 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Fixes round** (683, 684, 686): Workout: Tifa's first intro gesture is the hip rock (no running on the
+  spot). Going up: every few reps a third style: Cloud squatting behind Elena reaching for her head (Elena
+  arched, head back), and a sumo squat before Tifa (her leaning in, head up). Hostile Takeover: the group
+  further right and back along the table, the girl on top a little further from Cloud's face, the girl on
+  the floor on one knee with the other foot planted, left hand behind her, right arm reaching up; in the
+  vent view nobody is hidden under the table.
 - **Fixes** (684, 688): Going up: the Director only appears after the fade into the scene, standing at the
   back right of the car. The Basics: in sixty-nine Tifa's legs are wider and she sits a little further
   down Cloud.

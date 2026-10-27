@@ -47,6 +47,7 @@ WALK_STEP = 2.6
 WALK_FAST = 3.0                     # (user: Cloud's intro walk way too slow) steps of 3 x WALK_STEP: the 684 fast walk
                                     # (2x) at this set's 1.5x scale, the walk anim at speed 2 (strides match)
 TABLE_TILES = (160,)                # blin66_6: the table's draw id (it covered everyone at its front-left corner)
+TABLE_TILES_B = (160, 208)          # blin66_5 (overhead): the table's draw ids over the actors (128 = the grating)
 BG_STATES = ((1, 0), (2, 0))        # blin66_6's init: the chairs (param 1) and desk (2) states on (user: tiles missing)
 
 TIER, STREAK, KEY, PR, P, SEEN, RND, KP, HOLD, HELD, SINCE, NEXTSW, MOVING = ((5, a) for a in range(100, 113))
@@ -178,8 +179,9 @@ def _build(ctx, field, base, overhead, PZ):
     for slot in range(12):
         trig = tg.set_gateway_field(trig, slot, tg.UNUSED)
     f.set_section("triggers", trig)
-    if not overhead:                                     # (user: the table covered Scarlet and Cloud) its tiles behind
-        dt.tiles_behind(f, lambda i: i in TABLE_TILES, 4090, 4094)
+    # (user: the table covered Scarlet and Cloud; since: in the vent view too, "the girl on the table is hidden
+    # under the table, as is Cloud's head") its tiles behind; the vent's grating (128) stays in front
+    dt.tiles_behind(f, lambda i: i in (TABLE_TILES_B if overhead else TABLE_TILES), 4090, 4094)
     sec = Script.parse(f.sections[0])
     dt._clear_texts(sec)
     from ff7.walkmesh import Walkmesh

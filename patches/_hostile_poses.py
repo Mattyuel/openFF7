@@ -21,12 +21,18 @@ LEAN, PELVIS_TILT = 42, 80          # Cloud: upper body leant forward into her (
 HEAD_DOWN = 24                      # ... his head bowed
 FACE_T, FACE_OUT = 0.35, 1.0        # his face: this far up his head bone, this far out in front
 STANCE = 3.2                        # his feet this far out (she lies between them)
-FACE_IN = 0.4                       # (user: "buried") his face this far into her, past her entry point
+FACE_IN = -0.5                      # his face this far into her, past her entry point (user: "buried": 0.4; then,
+                                    # since: "a little further away from Cloud")
 HANDS_OUT = 3.4                     # style 1: his hands flat on the table this far either side
 UNDER_PROP = 35                     # her torso this far up from lying flat (686 solves it per girl)
 UNDER_HEAD = 20                     # her head tipped back (face up at him)
 UNDER_SIT, UNDER_SPREAD = 82, 22    # (user: kneeling, leaning back) her thighs forward of straight down / apart
-UNDER_HANDS = (2.4, 1.8)            # her hands on the floor this far behind her hips / either side
+UNDER_HANDS = (2.4, 1.8)            # her left hand on the floor this far behind her hips / out to her left
+UNDER_KNEE_OUT = 12                 # (user: knee up, foot planted) her legs this far out from straight (degrees)
+UNDER_KNEE_SIT = 60                 # ... the kneeling thigh this far forward of straight down (hips low: her mouth at
+                                    # his tip's height)
+UNDER_FOOT, UNDER_ANKLE = 4.2, 0.5  # ... the planted foot's ankle this far ahead of her right hip / above the floor
+UNDER_REACH = (-0.25, -0.8, -0.55)  # (user) her right arm reaching up to him (her body's frame: x left, y down, z back)
 UNDER_BOB, UNDER_NOD = 7, 10        # her bob: the upper body's pitch / her head's nod each way (degrees)
 MOUTH_T, MOUTH_OUT = 0.3, 0.9       # her mouth: up her head bone, out towards her face
 SHAKE_DEG, SHAKE_N, TRY_FRAMES = 24, 8, 90
@@ -53,6 +59,28 @@ def _subtree(sk, top):
     return out
 
 
+def _knee_up(rg, floor_y):
+    """(user: "a simple knee-up foot planted position") in the body's starting frame (G): her left knee down, the
+    thigh `UNDER_KNEE_SIT` forward of straight down (sitting back towards that heel: lower hips) and the shin flat
+    behind; the root moved so that knee / shin rests at floor_y (model, y down); then her right foot planted flat
+    on the floor `UNDER_FOOT` ahead of her right hip (two-bone IK, the knee up)."""
+    import _besties_rig as RG
+    G = rg.G
+    o, t = math.radians(UNDER_KNEE_OUT), math.radians(UNDER_KNEE_SIT)
+    rg.aim("l_femur", RG.fa._vec(G, [math.sin(o) * math.cos(t), math.cos(o) * math.cos(t), -math.sin(t)]))
+    rg.aim("l_tibia", RG.fa._vec(G, RG.unit([0.05, 0.05, 1.0])))
+    rg.aim("l_foot", RG.fa._vec(G, RG.unit([0.0, 0.25, 1.0])))
+    E_ = rg.ends()
+    low = max(E_["l_femur"][1], E_["l_tibia"][1])
+    rg.root = RG.add(rg.root, [0.0, floor_y - low, 0.0])
+    E_ = rg.ends()
+    ankle = RG.add(E_["r_femur@"], RG.fa._vec(G, [-math.sin(o) * UNDER_FOOT, 0.0, -UNDER_FOOT]))
+    ankle[1] = floor_y - UNDER_ANKLE                     # (y down) the ankle this far above the floor
+    rg.ik("r_femur", "r_tibia", ankle, RG.fa._vec(G, [-0.2, -1.0, -1.0]), keep_end=False)
+    rg.aim("r_foot", RG.fa._vec(G, RG.unit([0.0, 0.15, -1.0])))
+    return rg
+
+
 def under(ctx, prop=None, probe=False):
     """QHU0-3 / QHU8 / QHU7 on Ruby, (user: "she should be kneeling but leaning back") kneeling under him facing
     away from the table, sitting back towards her heels (`UNDER_SIT`), arched back about her waist until her
@@ -70,13 +98,16 @@ def under(ctx, prop=None, probe=False):
         rg.pelvis(RG.bow(-back * 0.45))
         rg.waist(RG.bow(-back * 0.55))
         rg.neck(RG.chain(RG.turn(shake), RG.bow(-UNDER_HEAD + nod)))
-        RG.kneel(rg, UNDER_SIT, UNDER_SPREAD, -0.45)
+        _knee_up(rg, -0.45)
         E_ = rg.ends()
         bk = RG.fa._vec(rg.G, [0.0, 0.0, 1.0])            # behind her
-        for s_, sx in (("l", 1), ("r", -1)):
-            hand = RG.add(RG.add(E_["hip@"], RG.mul(bk, UNDER_HANDS[0])), [sx * UNDER_HANDS[1], 0.0, 0.0])
-            hand[1] = -0.3                                  # (y down) on the floor
-            rg.ik(s_ + "_uparm", s_ + "_foarm", hand, [sx * 1.0, 0.0, 0.6])
+        # (user) her left hand back on the floor, her right arm reaching up to him
+        hand = RG.add(RG.add(E_["hip@"], RG.mul(bk, UNDER_HANDS[0])), [UNDER_HANDS[1], 0.0, 0.0])
+        hand[1] = -0.3                                      # (y down) on the floor
+        rg.ik("l_uparm", "l_foarm", hand, [1.0, 0.0, 0.6])
+        up = RG.fa._vec(rg.G, RG.unit(list(UNDER_REACH)))
+        rg.aim("r_uparm", up)
+        rg.aim("r_foarm", up)
         RG.hang_hair(rg, 0.2)
         return rg.frame()
     deep = 7 / 15

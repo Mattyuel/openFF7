@@ -1393,6 +1393,8 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `elena_idle(ctx)` QXD0: waiting on all fours: still, a hip shake, still, a look to her right and back (IDLE_FRAMES).
 - `tifa_idle(ctx, cam_yaw)` QXE0: kneeling (Ruby's head position, pulled back: ZMJ9), waiting: turns her head to the camera
 - `extend_torso(ctx, hrc)` Her chest part's bottom band (the vertices within TORSO_BAND of its waist end, along the bone) moved
+- `bend(ctx, hrc, stand, srcs, prefix, waist, neck, replant=False)` (user: a third style) copies of `srcs` (her strokes) with the upper body turned `waist` degrees at the
+- `_bend_sign(r, side, fwd, bone)` +1 if turning `bone`'s subtree positively about `side` moves its end towards `fwd`, else -1.
 
 ## `patches/_honey_bee_data.py`
 Honey Bee Girl recruitment: the girls (used by 620_honey_bee.py).
@@ -1421,6 +1423,7 @@ Honey Bee visit scenes at higher affection (_honey_bee_gifts: 10-19 =
 - `_mods()` 
 - `unit()` 
 - `_subtree(sk, top)` 
+- `_knee_up(rg, floor_y)` (user: "a simple knee-up foot planted position") in the body's starting frame (G): her left knee down, the
 - `under(ctx, prop=None, probe=False)` QHU0-3 / QHU8 / QHU7 on Ruby, (user: "she should be kneeling but leaning back") kneeling under him facing
 - `joints(ctx, hrc, anim)` Per frame: {bone: end, bone@: start, bone#: world matrix, root} (model space, y down).
 - `mouth(ctx, hrc, stand, J)` 

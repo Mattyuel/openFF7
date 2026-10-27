@@ -89,9 +89,18 @@ RESULT_WAIT = 50
 # (the camera's side); before Tifa 0 hands on her head / 1 hands behind his own head
 STYLE_EVERY = 3                 # (user: transitions sooner; was 6)
 STYLE_LINES = [[["Cloud\n“Switching legs.”"],
-                ["Elena\n“W-what are you doing with your\n leg...? Ah... ahh...!”", "Cloud\n“Better angle.”"]],
+                ["Elena\n“W-what are you doing with your\n leg...? Ah... ahh...!”", "Cloud\n“Better angle.”"],
+                ["Elena\n“Ah-! My hair-! ...Okay. Okay, I\n like that. Don't tell anyone.”",
+                 "Tifa\n“Look at her arch. Good girl, rookie.”"]],
                [["Tifa\n“(Mmph!)”", "Elena\n“Hands back on. Noted.”"],
-                ["Elena\n“Look, no hands! Show-off.”"]]]
+                ["Elena\n“Look, no hands! Show-off.”"],
+                ["Elena\n“Is that... a sumo stance? In an\n elevator?”", "Tifa\n“(Mmh-hmm!)”"]]]
+# (user) style 2 (`684`): her bends (degrees) and Cloud's squats
+S3_ARCH, S3_HEAD_BACK = 10, 25          # Elena: upper body raised at the waist, head tilted back
+S3_LEAN, S3_HEAD_UP = 15, 25            # Tifa: leaning further forward, head tilted up
+S3_SQUAT_STANCE, S3_SQUAT_LEAN = 2.0, 40  # Cloud behind Elena: feet out (model units), leaning in to reach her head
+S3_SUMO_STANCE, S3_SUMO_LEAN = 3.8, 12   # Cloud before Tifa: a wide sumo squat
+S3_DEEP = 7 / 15                        # the strokes' deepest frame (fraction)
 CHAT = [["Elena\n“Is this in the Turks' manual?”",
          "Tifa\n“Arch your back, rookie.”",
          "Elena\n“Tseng can never, EVER find out.”",

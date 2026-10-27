@@ -26,8 +26,10 @@ def to_b(x, y, z=0):
 # blin66_6 coordinates
 TABLE_X, TABLE_Z = -130, 50     # the table top's left edge (field x) and height (the table isn't walkmesh;
                                 # fitted on the background)
-SPOT_Y = -190                   # the scene's line across the table's front-left
-ENTRY_OUT = 4                   # the girl on the table: her entry point this far out past the table's edge
+SPOT_Y = -150                   # the scene's line across the table's front-left (user, since: away from the camera;
+                                # was -190: she was off the table's corner)
+ENTRY_OUT = 8                   # the girl on the table: her entry point this far onto the table from its left edge
+                                # (user, since: right, onto the table; was 4)
 BED_GAP = 16                    # 670's edge: the girl stands this far back from the bed's foot (whitebg1),
 CLOUD_GAP = 14                  # Cloud this far behind her,
 KISS_GAP = 27                   # Elena's root this far behind his (her face at his rear: 670's head pose)

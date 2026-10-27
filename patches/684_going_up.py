@@ -28,6 +28,7 @@ import _director as DR
 import _gestures as GS
 import _going_up as GU
 import _going_up_poses as GP
+import _tickets_poses as TP
 import _wiggle as WG
 from ff7 import asm
 from ff7 import triggers as tg
@@ -142,6 +143,38 @@ def apply(ctx):
                           ModelLoader.anims(tifa_e)[0].split(".")[0].lower() + ".a")
     bare_t = ["ZVJ%d.tor" % s for s in range(4)] + ["ZVJ9.tor", "ZVJ8.tor", "ZVJ7.tor"] + t_idle   # (8 held deep, 7 her squirm)
     bare_e = own + ["ZYC%d.tor" % s for s in range(4)]
+    # (user: "another variation on all fours and head that is alternated between the other existing ones")
+    # style 2: Elena arched up a little, head tilted back (QFC0-3: her strokes bent, hips and hands kept), Cloud
+    # in a deep squat behind her leaning in, reaching for her head (QKS0-3); Tifa leaning further forward, head
+    # tilted up (QLJ0-3), Cloud in a sumo squat (QKU0-3). Cloud solved per frame onto her entry / mouth
+    # (`_tickets_poses.cloud`, as Tickets)
+    t_stand = t_anims[0].split(".")[0].lower() + ".a"
+    bare_e += GP.bend(ctx, BARE_ELENA, e_stand, ["ZYC%d" % s for s in range(4)], "QF", -GU.S3_ARCH, -GU.S3_HEAD_BACK,
+                      replant=True)
+    s3_t = GP.bend(ctx, BARE_TIFA, t_stand, ["ZVJ%d" % s for s in range(4)], "QL", GU.S3_LEAN, -GU.S3_HEAD_UP)
+    bare_t += s3_t
+
+    def _unit(a, b):
+        d = math.hypot(b[0] - a[0], b[1] - a[1])
+        return ((b[0] - a[0]) / d, (b[1] - a[1]) / d, 0.0)
+
+    def heads(hrc, spot, d, anim, apart):
+        out = []
+        for J in TP.joints(ctx, hrc, anim):
+            h = TP._field(spot, d, [(J["head@"][q] + J["head"][q]) / 2 for q in range(3)])
+            l_, r_ = TP._field(spot, d, J["l_femur@"]), TP._field(spot, d, J["r_femur@"])
+            sd = _unit(r_, l_)
+            out.append(tuple([h[q] + sg * sd[q] * apart * mv.UNIT for q in range(3)] for sg in (1, -1)))
+        return out
+    e_at, t_at = (ex, ey, Z), (tp[0], tp[1], Z)
+    for s_ in range(4):
+        ent = [TP._field(e_at, dE, p) for p in TP.entry_points(ctx, BARE_ELENA, e_stand, "QFC%d" % s_)]
+        TP.cloud(ctx, "QKS%d" % s_, TP.targets(ent, _unit((ex, ey), ck), GU.S3_DEEP), heads(BARE_ELENA, e_at, dE, "QFC%d" % s_, 1.0),
+                 ck, dE, Z, GU.S3_SQUAT_STANCE, GU.S3_SQUAT_LEAN)
+        mo = [TP._field(t_at, dT, p) for p in TP.mouths(ctx, BARE_TIFA, t_stand, "QLJ%d" % s_)]
+        TP.cloud(ctx, "QKU%d" % s_, TP.targets(mo, _unit(tp, ch), GU.S3_DEEP), heads(BARE_TIFA, t_at, dT, "QLJ%d" % s_, 1.3),
+                 ch, dC, Z, GU.S3_SUMO_STANCE, GU.S3_SUMO_LEAN)
+    bare_c += ["QKS%d.tor" % s_ for s_ in range(4)] + ["QKU%d.tor" % s_ for s_ in range(4)]
     for n in bare_c + bare_t + bare_e:
         ctx.char_file(n.split(".")[0].lower() + ".a")                    # (exists)
     bare_c.append(WG.build(ctx, hb.CLOUD_BARE_HRC, "ZNJ0", "QKW0"))     # (user) after a hold: out, hips wiggled
@@ -228,8 +261,9 @@ def apply(ctx):
                                                                         # stroke in Tifa's turn when this was off by one)
     scripts[E["cloudB"]] = {
         0: [Op(bytes([0xA1, 4])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: ch_(P, [at(ck, dE) + ch_(STYLE, [stroke(0), stroke(qk("QKC0.tor"))]),
-                   at(ch, dC) + ch_(STYLE, [stroke(4), stroke(qk("QKJ0.tor"))])]) + [hb._visi(1), asm.ret()],
+        2: ch_(P, [at(ck, dE) + ch_(STYLE, [stroke(0), stroke(qk("QKC0.tor")), stroke(qk("QKS0.tor"))]),
+                   at(ch, dC) + ch_(STYLE, [stroke(4), stroke(qk("QKJ0.tor")), stroke(qk("QKU0.tor"))])]) +
+        [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(hold_c) + [asm.ret()],
         WG.SLOT: [mv._animb(), Op(bytes([0xA2, 1 + bare_c.index("ZNJ0.tor"), 1])),
@@ -243,7 +277,8 @@ def apply(ctx):
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: at(tp, dT) + ch_(P, [idle(IDLE_T, ti(t_idle[0])),
-                                [asm.setbyte(IDLE_T, 0)] + ch_(TIER, [loop_(ti("ZVJ%d.tor" % s)) for s in range(4)])]) +
+                                [asm.setbyte(IDLE_T, 0)] + ch_(STYLE, [ch_(TIER, [loop_(ti(n_)) for n_ in ns])
+                                                                       for ns in (["ZVJ%d.tor" % s for s in range(4)],) * 2 + (s3_t,)])]) +
         [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(hold_t) + [asm.ret()],                                  # held deep
@@ -261,7 +296,8 @@ def apply(ctx):
         at((ex, ey), dE) + loop_(ei_("QEB0.tor"))
     scripts[E["elenaB"]] = {
         0: [Op(bytes([0xA1, 6])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at((ex, ey), dE) + ch_(P, [[asm.setbyte(IDLE_E, 0)] + ch_(TIER, [loop_(ei_("ZYC%d.tor" % s)) for s in range(4)]),
+        2: at((ex, ey), dE) + ch_(P, [[asm.setbyte(IDLE_E, 0)] + ch_(STYLE, [ch_(TIER, [loop_(ei_(n_ % s)) for s in range(4)])
+                                                                              for n_ in ("ZYC%d.tor", "ZYC%d.tor", "QFC%d.tor")]),
                                        idle(IDLE_E, ei_("QED0.tor"))]) + [hb._visi(1), asm.ret()],
         8: at(epos, face(*epos, *cpos)) + [hb._visi(1)] + loop_(ei_(own[0])) + [asm.ret()],
         9: crawl + [asm.ret()],
@@ -415,11 +451,12 @@ def apply(ctx):
     main += [after, rest, asm.if_word(CNT, "<", PER, tail), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),
              asm.goto_back(rest), tail, Op(bytes([0x95, SINCE[0], SINCE[1]]))]
     # (user: long silences) chatter every CHAT_EVERY reps; (user: variations) Cloud's pose every STYLE_EVERY
-    quiet, same, busy = asm.nop(), asm.nop(), asm.nop()
+    quiet, same, busy, nowrap_ = asm.nop(), asm.nop(), asm.nop(), asm.nop()
     main += [Op(bytes([0x95, CHAT[0], CHAT[1]])), asm.if_byte(CHAT, ">=", GU.CHAT_EVERY, quiet), asm.setbyte(CHAT, 0)] + \
         by_p(lambda p: line_from("chat%d" % p)) + [quiet]
     main += [Op(bytes([0x95, SC[0], SC[1]])), asm.if_byte(SC, ">=", GU.STYLE_EVERY, same), asm.setbyte(SC, 0),
-             Op(bytes([0x93, STYLE[0] << 4, STYLE[1], 1])),                   # XOR STYLE, 1 (the next rep shows it)
+             Op(bytes([0x85, STYLE[0] << 4, STYLE[1], 1])),                   # (user) the next of 3 styles (the next rep
+             asm.if_byte(STYLE, ">=", 3, nowrap_), asm.setbyte(STYLE, 0), nowrap_,  #  shows it)
              asm.if_byte(TALKING, "==", 0, same), asm.setbyte(TALKING, 1), asm.setbyte(CHAT, 0),
              req(E["talk"], style_slot), same]
     fin = asm.nop()
