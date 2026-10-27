@@ -142,6 +142,9 @@ def poses(ctx):
     # spot above; she is drawn TIFA_RAISE higher, her knees TIFA_SPREAD apart round Jessie (QNC0-3, still QNT9)
     out["tifa"] = TP.spread(ctx, BARE_TIFA, ["ZVC%d" % s for s in range(4)], "QN", TK.TIFA_SPREAD)
     out["tifa_still"] = TP.still(ctx, "QNC0", "QNT9")
+    # (user) her head wandering subtly, and pose B (arched, looking left, right arm reaching back) alternating
+    # with it by STYLE: one rep (3 strokes) an anim, the still one as long as each tier's rep
+    out["tifa_w"] = TP.wander(ctx, BARE_TIFA, out["tifa"], out["tifa_still"], TK.PERIODS, "QO")
     out.update(cloud=names, hold="QZC8.tor", st=(st[0], st[1], st[2] + TK.TIFA_RAISE), sj=sj, dj=dj, ct=ct, cj=cj,
                j_stand=j_stand)
     return out
@@ -179,7 +182,8 @@ def apply(ctx):
     bare_c = sum((PZ["cloud"][k] for k in "ABCD"), []) + [PZ["hold"]]
     head_c = PZ["cloud"]["C"][0]
     bare_c.append(WG.build(ctx, hb.CLOUD_BARE_HRC, head_c.split(".")[0], "QZW0"))   # (user) after a hold: wiggle
-    bare_t = PZ["tifa"] + [PZ["tifa_still"]]
+    tw = PZ["tifa_w"]
+    bare_t = tw["A"] + tw["B"] + tw["SA"] + tw["SB"]
     bare_j = PZ["jessie"]                                                   # QJF0-3, 8, 7, 9
     for nm in bare_c + bare_t + bare_j + [PZ["sit_t"], PZ["sit_j"]]:
         ctx.char_file(nm.split(".")[0].lower() + ".a")                      # (exists)
@@ -277,8 +281,9 @@ def apply(ctx):
     ti = lambda nm: 1 + bare_t.index(nm)
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: at(st, DC, st[2]) + ch_(P, [ch_(TIER, [loop_(ti(PZ["tifa"][s])) for s in range(4)]),
-                                         loop_(ti(PZ["tifa_still"]))]) + [hb._visi(1), asm.ret()],
+        2: at(st, DC, st[2]) + ch_(STYLE, [ch_(P, [ch_(TIER, [loop_(ti(tw[k][s])) for s in range(4)]),
+                                                   ch_(TIER, [loop_(ti(tw["S" + k][s])) for s in range(4)])])
+                                           for k in "AB"]) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()]}
     ji = lambda k: 1 + k                                                   # QJE0-3 0-3, 8 at 4, 7 at 5, 9 at 6
     scripts[E["jessB"]] = {

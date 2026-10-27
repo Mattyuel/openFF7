@@ -40,20 +40,40 @@ SEAT_IN, SEAT_OUT = 14, 18      # the intro (dressed, sitting on the edge): hips
 TOP = 47                        # set by build() from the data
 
 # edge: Tifa's sit / rock, Cloud's kneel, Aerith behind
-EDGE_TIFA = dict(tilt=-12, rock=18, back=14, head=10, hroll=24, slide=1.6, seat_s=-5)
-EDGE_CLOUD = dict(tilt=6, spread=16, look=28, nod=14, out=0.7, push=1.6)
-EDGE_AERITH = dict(spread=42, sway=6, side=2.1, sep=3.4)
+# (user: "the rocking back and forth looks unnatural. Just animate cloud's hips thrusting and i think cloud should
+# be standing rather than kneeling"; Aerith's head "too sporadic") Tifa barely moves (her hips give a little at
+# the deepest), Cloud stands on the rug, feet planted, only his hips driving (`EDGE_CLOUD`: stroke depth along his
+# forward, pelvis tilt, upper body countering); Aerith's fit is solved once and held (her sway small)
+EDGE_TIFA = dict(tilt=-12, rock=4, back=14, head=3, hroll=24, slide=0.4, seat_s=-5)
+EDGE_CLOUD = dict(stroke=1.5, deep=0.35, tilt=14, counter=0.6, stance=5.0)
+EDGE_AERITH = dict(spread=42, sway=2, side=2.1, sep=3.4)
+SMOOTH = 0.15                   # fitted per-frame parameters averaged over this fraction of the loop each way
 # ride
-RIDE = dict(hips_s=-20, lift=3.0, spread=34, rock=20, slide=1.8, lean=-6, alean=4, arock=16)
+RIDE = dict(hips_s=-20, lift=3.0, spread=34, rock=20, slide=1.8, lean=-6, alean=4, arock=16, sink=1.4)
+# (user: "tifa needs to be lowered down closer to cloud") `sink`: her entry this far below his tip (model units)
+# (user: "tifa and aerith should have an alternate position where they lean in, kissing each other") K: both bent
+# forward until their faces meet `KISS_GAP` apart (faces' front points), heads tilted `KISS_TILT` opposite ways,
+# hands on each other's shoulders; the bend re-fitted each frame (smoothed) so the kiss holds while they rock
+KISS_GAP, KISS_TILT = 0.35, 16
 # lick
 LICK_AERITH = dict(tilt=-10, rock=14, back=26, head=18, spread=40, lift=14, slide=1.2, shin_out=0.35, seat_s=-5)
 LICK_TIFA_PUSH = 16             # her hips rolling back into him (degrees)
 # share
 SHARE_SPOT = 60.0               # (field) Cloud stands this far out on the rug
 SHARE_SWAY = 10                 # the girls' hips side to side (degrees)
+# (user: "aerith moves her head left and right too much, make it a slow and subtle circular motion. Tifa's whole
+# body is moving around sporadically, keep her in one place and bob her head subtly instead"; both ways round)
+# the front girl: body fixed (fitted at the deepest), only her head nodding with him (fitted, smoothed); the back
+# girl: fixed (fitted once), her head circling `CIRCLE` degrees over `CIRCLE_REPS` strokes (her anim that long)
+CIRCLE, CIRCLE_REPS = 5, 3
+SHARE_NOD = 7                   # the front girl's head bob (degrees)
 # stack
 STACK_TIFA_S = -5               # her hips this far onto the bed
-STACK_V = 38                    # her thighs apart (each, degrees)
+STACK_V = 40                    # her thighs apart (each, degrees)
+STACK_UP = 55                   # her thighs raised from level (degrees)
+STACK_THRUST = 1.6              # Cloud's stroke (model units)
+STACK_NOD = 4                   # Aerith's head nod (degrees each way)
+HAIR_CLEAR = 5                  # Tifa's hair lying this far above the bed's top (field units)
 AERITH_TILT = (32, 12)          # Aerith's head turned aside (P 0 licking / P 1 on him)
 
 
@@ -98,6 +118,15 @@ def sitting(ctx, name, hrc, stand):
     return name + ".tor"
 
 
+def _smooth(xs):
+    """Per-frame parameter lists averaged round the loop over SMOOTH of it each way (a cosine window)."""
+    n = len(xs)
+    w = max(1, round(SMOOTH * n))
+    ks = [(j, 1 + math.cos(math.pi * j / (w + 1))) for j in range(-w, w + 1)]
+    tot = sum(c for _, c in ks)
+    return [[sum(xs[(k + j) % n][i] * c for j, c in ks) / tot for i in range(len(xs[0]))] for k in range(n)]
+
+
 # ---- edge -----------------------------------------------------------------------------------------------
 def _sit_edge(ctx, who, t, c):
     """Sitting on the edge facing the rug, leaning back, hips rolling up into him at the deepest."""
@@ -124,26 +153,29 @@ def _sit_edge(ctx, who, t, c):
 def _edge(ctx, n):
     tb = [_sit_edge(ctx, "tifa", k / n, EDGE_TIFA) for k in range(n)]
     c = EDGE_CLOUD
-    cl = []
+    cl, cx = [], None
     for k in range(n):
-        t = k / n
-        tgt = add(entry(tb[k]), [0, -0.1, -c["push"]])
-        rg = _new(ctx, "cloud", turn(180))
-        kneel(rg, c["tilt"], c["spread"], -1.6 / U)
-        nod = -c["look"] + c["nod"] * ease((t - 0.08) % 1)
-        best = None
-        for th2 in range(0, 160):
-            r2 = rg.copy()
-            r2.waist(bow(th2 / 2))
-            r2.neck(bow(nod))
-            m = face_pt(r2, out=c["out"])
-            if best is None or abs(m[1] - tgt[1]) < best[0]:
-                best = (abs(m[1] - tgt[1]), th2 / 2, m)
-        rg.waist(bow(best[1]))
-        rg.neck(bow(nod))
-        m = best[2]
-        rg.root = add(rg.root, [tgt[0] - m[0], 0.0, tgt[2] - m[2]])
-        cl.append(rg)
+        pk = ease(k / n)
+        # (model: she faces -z, he faces +z) his tip `deep` in at the deepest, `stroke` out at the start
+        target = add(entry(tb[k]), [0, 0, -(c["stroke"] * (1 - pk)) + c["deep"]])
+
+        def build(x, pk=pk):
+            drop, ds = x
+            rg, feet = _standing(ctx, "cloud", 180, stance=c["stance"])
+            rg.root = add(rg.root, [0, drop / U, 0])
+            rg.pelvis(bow(-c["tilt"] * pk))                                 # (hips forward)
+            rg.waist(bow(c["tilt"] * c["counter"] * pk))
+            rg.neck(bow(18))                                                # (looking down at her)
+            rg.root = add(rg.root, fa._vec(rg.G, [0, 0, -ds / U]))
+            fd = ds if cx is None else cx[1]
+            stand_feet(rg, {s_: add(v, fa._vec(rg.G, [0, 0, -fd / U])) for s_, v in feet.items()})
+            return rg
+        cost = lambda r: math.dist(_tip(ctx, r), target)
+        if cx is None:
+            cx, r = fit(build, cost, [0, 0], [3, 10], bounds=[(-6, 20), (-80, 80)])
+        else:
+            _, r = fit(build, cost, cx, [0, 10], bounds=[(-6, 20), (-80, 80)])
+        cl.append(r)
     for k in range(n):                                        # her legs over his shoulders, shins down his back
         ec = cl[k].ends()
         for s, sx, his in (("l", 1, "r"), ("r", -1, "l")):
@@ -194,7 +226,7 @@ def _edge(ctx, n):
         if x0 is None:
             x0, ra = fit(build, cost, [6.5, 0.0, 0.0, 15.0, 0.0, -15.0], [1.0, 6.0, 6.0, 8.0, 8.0, 10.0], bounds=B)
         else:
-            _, ra = fit(build, cost, x0, [0, 3.0, 3.0, 4.0, 4.0, 5.0], rounds=2, bounds=B)
+            ra = build(x0)                                                  # (held: her head no longer jitters)
         for s, sx in (("l", 1), ("r", -1)):                   # her hands on Tifa's breasts
             br = add(lerp(et[s + "_chest@"], et[s + "_chest"], 0.62), mul(front(tb[k], "chest", et), 1.6))
             ra.ik(s + "_uparm", s + "_foarm", add(br, [0, -0.4, 0.4]), [sx * 1.0, 0.5, 0.6])
@@ -241,14 +273,15 @@ def _ride(ctx, n):
             if best is None or abs(h - target_h) < best[0]:
                 best = (abs(h - target_h), v)
         return best[1]
-    tt = solve("tifa", 180, _tip(ctx, cl[0])[1] + 0.3, "tilt", -10, 60, spread=R["spread"], lean_=R["lean"], rock=R["rock"])
+    tt = solve("tifa", 180, _tip(ctx, cl[0])[1] + R["sink"], "tilt", -10, 60, spread=R["spread"], lean_=R["lean"],
+               rock=R["rock"])
     ta = solve("aerith", 0, face_pt(cl[0], out=0.8)[1] - 0.6, "spread", 20, 80, tilt=4, lean_=R["alean"],
                rock=R["arock"], shin_out=0.45)
     tf, ae = [], []
     for k in range(n):
         pk = ease(k / n)
         r = _astride(ctx, "tifa", k / n, 180, tt, R["spread"], R["lean"], R["rock"])
-        r.root = add(r.root, sub(add(_tip(ctx, cl[k]), [0, -0.3, 0]), entry(r)))
+        r.root = add(r.root, sub(add(_tip(ctx, cl[k]), [0, R["sink"], 0]), entry(r)))
         r.root[2] += R["slide"] / U * (pk - 0.5)
         tf.append(r)
         r = _astride(ctx, "aerith", k / n, 0, 4, ta, R["alean"], R["arock"], shin_out=0.45, phase=0.5)
@@ -265,7 +298,57 @@ def _ride(ctx, n):
             tp = add(add(lerp(et[her + "_femur@"], et[her + "_femur"], 0.12), mul(out_, 2.3)), [0, -1.4, 0])
             cl[k].ik(s + "_uparm", s + "_foarm", tp, [0.0, 1.0, 0.0])
             cl[k].aim(s + "_hand", sub(et[her + "_femur"], et[her + "_femur@"]))
-    return {"cloud": cl, "tifa": tf, "aerith": ae}
+    tk, ak = _kiss(ctx, n, cl, tt, ta)
+    return {"cloud": cl, "tifa": tf, "aerith": ae, "tifa_k": tk, "aerith_k": ak}
+
+
+_KISS = {}
+
+
+def _kiss(ctx, n, cl, tt, ta):
+    """The ride's K: Tifa and Aerith astride him as before, bent forward into a kiss."""
+    R = RIDE
+
+    def pair(k, bt, ba):
+        r = _astride(ctx, "tifa", k / n, 180, tt, R["spread"], R["lean"] + bt, R["rock"])
+        r.neck(lean(KISS_TILT))
+        r.root = add(r.root, sub(add(_tip(ctx, cl[k]), [0, R["sink"], 0]), entry(r)))
+        r.root[2] += R["slide"] / U * (ease(k / n) - 0.5)
+        a = _astride(ctx, "aerith", k / n, 0, 4, ta, R["alean"] + ba, R["arock"], shin_out=0.45, phase=0.5)
+        a.neck(lean(KISS_TILT))
+        a.root = add(a.root, sub(add(face_pt(cl[k], out=0.8), [0, -0.6, 0]), entry(a)))
+        return r, a
+
+    def gap(r, a):
+        return math.dist(face_pt(r, out=0.9), face_pt(a, out=0.9))
+    if (id(ctx), tt, ta) not in _KISS:                                     # (frame 0: how far each bends; once)
+        best = None
+        for bt in range(0, 70, 2):
+            for ba in range(0, 70, 2):
+                r, a = pair(0, bt, ba)
+                c = abs(gap(r, a) - KISS_GAP) + 0.01 * abs(bt - ba)
+                if best is None or c < best[0]:
+                    best = (c, bt, ba)
+        _KISS[(id(ctx), tt, ta)] = best[1:]
+    bt, ba = _KISS[(id(ctx), tt, ta)]
+    ds = []
+    for k in range(n):                                                      # (each frame: both a little more / less)
+        best = None
+        for d in range(-24, 25):
+            c = abs(gap(*pair(k, bt + d / 2, ba + d / 2)) - KISS_GAP)
+            if best is None or c < best[0]:
+                best = (c, d / 2)
+        ds.append([best[1]])
+    tk, ak = [], []
+    for k, (d,) in enumerate(_smooth(ds)):
+        r, a = pair(k, bt + d, ba + d)
+        er, ea = r.ends(), a.ends()
+        for s, sx, o in (("l", 1, "r"), ("r", -1, "l")):                    # hands on each other's shoulders
+            r.ik(s + "_uparm", s + "_foarm", add(ea[o + "_uparm@"], [0, 0.4, 0]), [sx * 1.0, 0.8, 0.0])
+            a.ik(s + "_uparm", s + "_foarm", add(er[o + "_uparm@"], [0, 0.4, 0]), [sx * 1.0, 0.8, 0.0])
+        tk.append(r)
+        ak.append(a)
+    return tk, ak
 
 
 # ---- lick -----------------------------------------------------------------------------------------------
@@ -278,14 +361,14 @@ def _lick(ctx, n):
             hand = [hand[0], _P(0, 0, TOP + 1.5)[1], hand[2] + 4.2]
             rg.ik(s + "_uparm", s + "_foarm", hand, [sx * 0.5, -0.2, 1.0])
             rg.aim(s + "_hand", [sx * 0.2, 0.3, 1.0])
-    tf, x0 = [], None
+    tf, x0, xs, builds = [], None, [], []
     for k in range(n):
         t = k / n
         pk = ease((t + 0.5) % 1)
         sw = math.sin(2 * math.pi * (t + 0.5))
         target = add(entry(ae[k]), [0, 0.1, -1.0])
 
-        def build(x):
+        def build(x, pk=pk, sw=sw):
             pb, drop, ds, nb = x
             rg, feet = _standing(ctx, "tifa", 180, stance=4.0)
             rg.root = add(rg.root, [0, drop / U, 0])
@@ -301,8 +384,14 @@ def _lick(ctx, n):
         B = [(30, 100), (0, 14), (-60, 60), (-60, 10)]
         if x0 is None:
             x0, r = fit(build, cost, [70, 4, 0, -30], [10, 3, 10, 10], bounds=B)
+            x = x0
         else:
-            _, r = fit(build, cost, x0, [4, 0, 0, 5], rounds=2, bounds=B)
+            x, r = fit(build, cost, x0, [4, 0, 0, 5], rounds=2, bounds=B)
+        xs.append(list(x))
+        builds.append(build)
+    # (user, page four: "tifa's head is moving sporadically, slow it down") the fitted values smoothed round the loop
+    for k, x in enumerate(_smooth(xs)):
+        r = builds[k](x)
         ea = ae[k].ends()
         for s, sx, her in (("l", 1, "r"), ("r", -1, "l")):                  # her hands on Aerith's thighs
             tp = add(lerp(ea[her + "_femur@"], ea[her + "_femur"], 0.65), [0, -1.3, 0])
@@ -352,7 +441,7 @@ def _share_cloud(ctx, t):
     return rg
 
 
-def _kneel_front(ctx, who, t, target, x0=None, sway=SHARE_SWAY):
+def _kneel_front(ctx, who, t, target, x0=None, sway=SHARE_SWAY, steps=(8, 8, 8)):
     sw = math.sin(2 * math.pi * t)
 
     def build(x):
@@ -367,7 +456,7 @@ def _kneel_front(ctx, who, t, target, x0=None, sway=SHARE_SWAY):
         return rg
     cost = lambda r: math.dist(face_pt(r, out=0.7), target)
     B = [(-20, 80), (-20, 60), (-40, 40)]
-    return fit(build, cost, x0 or [30, 10, 0], [8, 8, 8], bounds=B, rounds=4 if x0 is None else 2)
+    return fit(build, cost, x0 or [30, 10, 0], list(steps), bounds=B, rounds=4 if x0 is None else 2)
 
 
 def _share(ctx, n):
@@ -376,12 +465,11 @@ def _share(ctx, n):
     back_dir = fa._vec(cl[0].G, [0, 0, -1.0])                 # his forward: out of her mouth, towards her
     deep = add(_tip(ctx, cl[n // 2]), mul(back_dir, 0.6))
     for who in ("tifa", "aerith"):
-        x0, _ = _kneel_front(ctx, who, 0.5, deep)
+        x0, _ = _kneel_front(ctx, who, 0.5, deep, sway=0)
         fr = []
         for k in range(n):
-            pk = ease(k / n)
-            tg = add(_tip(ctx, cl[k]), mul(back_dir, 0.6 + 1.8 * (1 - pk)))
-            _, r = _kneel_front(ctx, who, k / n, tg, x0)
+            nb = x0[2] + SHARE_NOD * (1 - ease((k / n - 0.08) % 1))         # (following him out, a little late)
+            _, r = _kneel_front(ctx, who, 0, deep, [x0[0], x0[1], nb], sway=0, steps=(0, 0, 0))
             ec = cl[k].ends()
             for s, sx, his in (("l", 1, "r"), ("r", -1, "l")):                  # hands on his thighs
                 tp = add(lerp(ec[his + "_femur@"], ec[his + "_femur"], 0.45), mul(back_dir, 1.6))
@@ -390,23 +478,25 @@ def _share(ctx, n):
         out[who + "_front"] = fr
         out[who + "_x0"] = x0
         bk = []
-        for k in range(n):
-            sw = math.sin(2 * math.pi * k / n)
-            ec = cl[k].ends()
-            tgt = add(lerp(ec["hip@"], ec["chest@"], 0.55), mul(back_dir, -3.4))
+        ec0 = cl[0].ends()
+        tgt = add(lerp(ec0["hip@"], ec0["chest@"], 0.55), mul(back_dir, -3.4))
 
-            def build(x, sw=sw):
-                ds, wb, nb = x
-                rg = _new(ctx, who, turn(180))
-                rg.pelvis(chain(lean(SHARE_SWAY * sw), turn(0.5 * SHARE_SWAY * sw)))
-                rg.waist(chain(bow(wb), lean(-0.4 * SHARE_SWAY * sw)))
-                rg.neck(chain(bow(nb), lean(-25)))
-                kneel(rg, 0, 18, _P(0, 0, 1.6)[1])
-                hang_hair(rg, 0.3)
-                rg.root = add(rg.root, fa._vec(rg.G, [0, 0, -ds / U]))
-                return rg
-            cost = lambda r: math.dist(face_pt(r, out=0.9), tgt)
-            _, r = fit(build, cost, [-75, 5, 10], [8, 8, 8], bounds=[(-120, -40), (-20, 50), (-30, 40)])
+        def build(x, ph=None):
+            ds, wb, nb = x
+            rg = _new(ctx, who, turn(180))
+            rg.waist(bow(wb))
+            ca, sa = (0, 0) if ph is None else (math.cos(ph), math.sin(ph))
+            rg.neck(chain(bow(nb + CIRCLE * ca), lean(-25), turn(CIRCLE * sa)))
+            kneel(rg, 0, 18, _P(0, 0, 1.6)[1])
+            hang_hair(rg, 0.3)
+            rg.root = add(rg.root, fa._vec(rg.G, [0, 0, -ds / U]))
+            return rg
+        cost = lambda r: math.dist(face_pt(r, out=0.9), tgt)
+        xb, _ = fit(build, cost, [-75, 5, 10], [8, 8, 8], bounds=[(-120, -40), (-20, 50), (-30, 40)])
+        for k3 in range(n * CIRCLE_REPS):
+            k = k3 % n
+            ec = cl[k].ends()
+            r = build(xb, 2 * math.pi * k3 / (n * CIRCLE_REPS))
             for s, sx, his in (("l", 1, "l"), ("r", -1, "r")):                  # arms round to his front
                 tp = add(add(ec[his + "_femur@"], mul(back_dir, 1.6)), [0, -1.0, 0])
                 r.ik(s + "_uparm", s + "_foarm", tp, [sx * 1.0, 0.4, -0.2])
@@ -450,80 +540,85 @@ def _share_holds(ctx, sh, n):
 
 
 # ---- stack ----------------------------------------------------------------------------------------------
+def _hair_swing(rg):
+    """(lying on her back) the turn about her side axis that swings her hair, its shape as modelled, up over the top
+    of her head onto the bed: the least from 90 degrees on that keeps it `HAIR_CLEAR` above the bed's top."""
+    I0 = fa.euler_matrix(0, 0, 0)
+    for th in range(90, 181, 5):
+        r = rg.copy()
+        r.turn_bones(["non_1"], bow(th), frame=I0)
+        E_ = r.ends()
+        if min(-E_["non_1"][1], -E_["kami"][1]) * U >= TOP + HAIR_CLEAR:
+            return th
+    raise AssertionError("no hair swing clears the bed")
+
+
 def _stack(ctx, n):
+    # (user: "tifa's legs should be spread, aerith's head movement needs to be slower and more subtle, aerith's feet
+    # need to be less sporadic, tifa's hair is disjointed, return it to its normal position, cloud doesn't thrust")
+    # Tifa still on her back (hair as modelled), legs raised and spread in a V; Cloud fitted once at the deepest,
+    # then driving `STACK_THRUST` in and out (feet planted); Aerith fitted once, only her head nodding `STACK_NOD`
     tf = []
     for k in range(n):
-        pk = ease(k / n)
         rg = _new(ctx, "tifa", basis([1.0, 0.0, 0.0], [0.0, 0.0, 1.0]))     # on her back, head to -s
-        rg.pelvis(bow(-14 * pk))
-        rg.neck(bow(28 + 6 * ease((k / n - 0.1) % 1)))
-        hang_hair(rg, along=[0.0, 0.0, 1.0])
-        rg.root = add(rg.root, sub(_P(STACK_TIFA_S + 1.0 * pk, 0, TOP + 4.6), hips_of(rg)))
+        rg.neck(bow(28 + 3 * ease((k / n - 0.1) % 1)))
+        rg.root = add(rg.root, sub(_P(STACK_TIFA_S + 0.5, 0, TOP + 4.6), hips_of(rg)))
+        rg.turn_bones(["non_1"], bow(_hair_swing(rg)), frame=fa.euler_matrix(0, 0, 0))
         for s, sx in (("l", 1), ("r", -1)):
             E_ = rg.ends()
             rg.ik(s + "_uparm", s + "_foarm", add(E_[s + "_uparm@"], [sx * 4.0, -0.2, 3.5]), [0, -1.0, 0])
+        sp, up = math.radians(STACK_V), math.radians(STACK_UP)
+        for s, sx in (("l", 1), ("r", -1)):                                 # legs up and spread
+            rg.aim(s + "_femur", [sx * math.sin(sp), -math.sin(up) * math.cos(sp), -math.cos(up) * math.cos(sp)])
+            rg.aim(s + "_tibia", unit([sx * 0.55, 0.15, -1.0]))                 # (her feet towards -z: the rug)
+            rg.aim(s + "_foot", unit([sx * 0.3, -0.6, -1.0]))
         tf.append(rg)
 
-    def cloud_at(t, target, x0=None):
-        pk = ease(t)
+    def cloud_build(x, pk, fd):
+        lift, ds = x
+        rg, feet = _standing(ctx, "cloud", 180, stance=6.0)
+        rg.root = add(rg.root, add(fa._vec(rg.G, [0, 0, -(ds - STACK_THRUST * (1 - pk)) / U]), [0, -lift / U, 0]))
+        rg.pelvis(bow(-6 - 10 * pk))
+        rg.waist(bow(-16 + 6 * pk))
+        rg.neck(bow(30))
+        stand_feet(rg, {s: add(add(v, fa._vec(rg.G, [0, 0, -fd / U])), [0, -max(0.0, lift) / U, 0])
+                        for s, v in feet.items()})
+        if lift > 0:
+            for s in "lr":
+                rg.aim(s + "_foot", fa._vec(rg.G, unit([0, 0.8, -1.0])))
+        return rg
 
-        def build(x):
-            lift, ds = x
-            rg, feet = _standing(ctx, "cloud", 180, stance=6.0)
-            rg.root = add(rg.root, add(fa._vec(rg.G, [0, 0, -ds / U]), [0, -lift / U, 0]))
-            rg.pelvis(bow(-6 - 8 * pk))
-            rg.waist(bow(-16 + 4 * pk))
-            rg.neck(bow(30))
-            fd = ds if x0 is None else x0[1]
-            stand_feet(rg, {s: add(add(v, fa._vec(rg.G, [0, 0, -fd / U])), [0, -max(0.0, lift) / U, 0])
-                            for s, v in feet.items()})
-            if lift > 0:
-                for s in "lr":
-                    rg.aim(s + "_foot", fa._vec(rg.G, unit([0, 0.8, -1.0])))
-            return rg
-        cost = lambda r: math.dist(_tip(ctx, r), target)
-        return fit(build, cost, [0, -10] if x0 is None else list(x0), [2, 6] if x0 is None else [2, 0],
-                   bounds=[(-8, 12), (-60, 40)])
+    def cloud_fit(target):
+        return fit(lambda x: cloud_build(x, 1.0, x[1]), lambda r: math.dist(_tip(ctx, r), target), [0, -10], [2, 6],
+                   bounds=[(-8, 12), (-60, 40)])[0]
 
-    def aerith_69(t, target, x0, tilt_):
-        sw = math.sin(2 * math.pi * t)
+    def aerith_build(x, tilt_, t):
+        ds, hb_, nb, kt = x
+        rg = _new(ctx, "aerith", turn(0))
+        rg.pelvis(bow(hb_))
+        rg.waist(bow(10))
+        rg.neck(chain(lean(tilt_), bow(nb + STACK_NOD * math.sin(2 * math.pi * t))))
+        kneel(rg, kt, 36, _P(0, 0, TOP + 1.6)[1])
+        hang_hair(rg, 0.0)
+        rg.root = add(rg.root, fa._vec(rg.G, [0, 0, -ds / U]))
+        return rg
 
-        def build(x):
-            ds, hb_, nb, kt = x
-            rg = _new(ctx, "aerith", turn(0))
-            rg.pelvis(chain(bow(hb_), lean(12 * sw)))
-            rg.waist(bow(10))
-            rg.neck(chain(lean(tilt_), bow(nb)))
-            kneel(rg, kt, 36, _P(0, 0, TOP + 1.6)[1])
-            hang_hair(rg, 0.0)
-            rg.root = add(rg.root, fa._vec(rg.G, [0, 0, -ds / U]))
-            return rg
-        cost = lambda r: math.dist(face_pt(r, out=0.6), target)
+    def aerith_fit(target, tilt_):
         B = [(-90, 0), (40, 110), (-60, 40), (-30, 30)]
-        return fit(build, cost, x0 or [-40, 75, -20, -10], [8, 10, 10, 8], bounds=B, rounds=4 if x0 is None else 2)
+        return fit(lambda x: aerith_build(x, tilt_, 0.0), lambda r: math.dist(face_pt(r, out=0.6), target),
+                   [-40, 75, -20, -10], [8, 10, 10, 8], bounds=B)[0]
 
-    en0 = entry(tf[n // 2])
-    cx0, _ = cloud_at(0.5, add(en0, [0, 0, -0.3]))
-    cx1, _ = cloud_at(0.5, add(en0, [0, -2.2, -0.6]))
-    cl0, cl1, ae0, ae1, ax0, ax1 = [], [], [], [], None, None
+    en = entry(tf[0])
+    cx0 = cloud_fit(add(en, [0, 0, -0.3]))
+    cx1 = cloud_fit(add(en, [0, -2.2, -0.6]))
+    cl0 = [cloud_build(cx0, ease(k / n), cx0[1]) for k in range(n)]
+    cl1 = [cloud_build(cx1, ease(k / n), cx1[1]) for k in range(n)]
+    belly = add(add(en, mul(front(tf[0], "hip"), 0.9)), [0, 0, 2.6])
+    ax0 = aerith_fit(belly, AERITH_TILT[0])
+    ax1 = aerith_fit(add(_tip(ctx, cloud_build(cx1, 0.5, cx1[1])), [0, 0, 0.3]), AERITH_TILT[1])
+    ae0 = [aerith_build(ax0, AERITH_TILT[0], k / n) for k in range(n)]
+    ae1 = [aerith_build(ax1, AERITH_TILT[1], k / n) for k in range(n)]
     for k in range(n):
-        en = entry(tf[k])
-        _, c0 = cloud_at(k / n, add(en, [0, 0, -0.3]), cx0)
-        _, c1 = cloud_at(k / n, add(en, [0, -2.2, -0.6]), cx1)
-        cl0.append(c0)
-        cl1.append(c1)
-        belly = add(add(en, mul(front(tf[k], "hip"), 0.9)), [0, 0, 2.6])
-        ax0, a0 = aerith_69(k / n, belly, ax0, AERITH_TILT[0])
-        ax1, a1 = aerith_69(k / n, add(_tip(ctx, c1), [0, 0, 0.3]), ax1, AERITH_TILT[1])
-        ae0.append(a0)
-        ae1.append(a1)
-    for k in range(n):
-        ec = cl0[k].ends()                                                  # her legs round his waist
-        bk = fa._vec(cl0[k].G, [0, 0, 1.0])
-        for s, sx, his in (("l", 1, "r"), ("r", -1, "l")):
-            ank = add(add(lerp(ec["hip@"], ec[his + "_femur@"], 0.4), mul(bk, 3.2)), [0, -0.6, 0])
-            tf[k].ik(s + "_femur", s + "_tibia", ank, [sx * 1.0, -1.0, 0.0])
-            tf[k].aim(s + "_foot", sub(ank, tf[k].ends()[s + "_femur"]))
         et = tf[k].ends()
         for lst in (ae0, ae1):                                              # Aerith's forearms beside Tifa's hips
             for s, sx in (("l", 1), ("r", -1)):
@@ -531,11 +626,10 @@ def _stack(ctx, n):
                 tp[1] = _P(0, 0, TOP + 2.5)[1]
                 lst[k].ik(s + "_uparm", s + "_foarm", tp, [sx * 0.6, -0.6, 0.6])
                 lst[k].aim(s + "_hand", [sx * 0.1, 0.2, -1.0])
-        for lst in (cl0, cl1):                                              # his hands at her knees
+        for lst in (cl0, cl1):                                              # his hands behind her knees
             for s, sx in (("l", -1), ("r", 1)):
                 her = "r" if s == "l" else "l"
-                tp = add(add(lerp(et[her + "_femur@"], et[her + "_femur"], 0.9), [0, -1.2, 0]),
-                         mul(unit(sub(et[her + "_femur@"], et["hip@"])), 1.2))
+                tp = add(lerp(et[her + "_femur@"], et[her + "_femur"], 0.85), [0, 0.6, 0])
                 lst[k].ik(s + "_uparm", s + "_foarm", tp, fa._vec(lst[k].G, [1 if s == "l" else -1, 0.8, 0.0]))
     return {"tifa": tf, "cloud": cl0, "cloud1": cl1, "aerith": ae0, "aerith1": ae1}
 
@@ -544,6 +638,7 @@ def _stack(ctx, n):
 BUILDERS = {"edge": _edge, "ride": _ride, "lick": _lick, "share": _share, "stack": _stack}
 LETTER = {("edge", "cloud"): "E", ("edge", "tifa"): "E", ("edge", "aerith"): "E",
           ("ride", "cloud"): "R", ("ride", "tifa"): "R", ("ride", "aerith"): "R",
+          ("ride", "tifa_k"): "K", ("ride", "aerith_k"): "K",
           ("lick", "cloud"): "L", ("lick", "tifa"): "L", ("lick", "aerith"): "L",
           ("share", "cloud_t"): "F", ("share", "cloud_a"): "G",
           ("share", "tifa_front"): "F", ("share", "aerith_front"): "F",

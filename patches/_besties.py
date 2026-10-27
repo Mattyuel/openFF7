@@ -35,6 +35,7 @@ PAY_HIT = 12
 HOLD_ODDS = 52                  # the kneeling segment: a HOLD now and then, held until she taps out
 HOLD_MIN, HOLD_RANGE, LETGO = 45, 90, 30
 SWITCH_AT = (4, 7)              # two-partner segments: the "my turn" calls after these reps
+KISS_AT = (3, 6, 9)             # (user) the ride: Tifa and Aerith lean in kissing / back, after these reps
 CHAT_EVERY = 3
 RESULT_WAIT = 50
 # the climax by the run's score (hits + 2 x finale hits): at least SCORE_GREAT / SCORE_GOOD, else the okay one

@@ -129,9 +129,10 @@ def apply(ctx):
     wig = [WG.build(ctx, hb.CLOUD_BARE_HRC, PZ["share"][k][0][0].split(".")[0], nm)       # (user) after a hold
            for k, nm in (("cloud_t", "YBW0"), ("cloud_a", "YBW1"))]
     bare_c += wig
-    bare_t = sum((sp_(seg, k) for seg, k in (("edge", "tifa"), ("ride", "tifa"), ("lick", "tifa"),
+    bare_t = sum((sp_(seg, k) for seg, k in (("edge", "tifa"), ("ride", "tifa"), ("ride", "tifa_k"), ("lick", "tifa"),
                   ("share", "tifa_front"), ("share", "tifa_back"), ("stack", "tifa"))), []) + PZ["holds"]["tifa"]
-    bare_a = sum((sp_(seg, k) for seg, k in (("edge", "aerith"), ("ride", "aerith"), ("lick", "aerith"),
+    bare_a = sum((sp_(seg, k) for seg, k in (("edge", "aerith"), ("ride", "aerith"), ("ride", "aerith_k"),
+                  ("lick", "aerith"),
                   ("share", "aerith_front"), ("share", "aerith_back"), ("stack", "aerith"), ("stack", "aerith1"))), []) + \
         PZ["holds"]["aerith"]
     for nm in bare_c + bare_t + bare_a:
@@ -210,7 +211,8 @@ def apply(ctx):
                          for k, w in (("cloud_t", wig[0]), ("cloud_a", wig[1]))]) + [asm.ret()]}
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: ch_(SEG, [go("edge", "tifa", ti), go("ride", "tifa", ti), go("lick", "tifa", ti),
+        2: ch_(SEG, [go("edge", "tifa", ti), ch_(P, [go("ride", "tifa", ti), go("ride", "tifa_k", ti)]),
+                     go("lick", "tifa", ti),
                      ch_(P, [go("share", "tifa_front", ti), go("share", "tifa_back", ti)]),
                      go("stack", "tifa", ti)]) + [hb._visi(1), asm.ret()],
         3: at(S["tifa"]) + loop_(0) + [hb._visi(1), asm.ret()],
@@ -220,7 +222,8 @@ def apply(ctx):
         WG.SLOT: loop_(ti(PZ["holds"]["tifa"][2])) + [asm.ret()]}             # pulled back (his wiggle)
     scripts[E["aerB"]] = {
         0: [Op(bytes([0xA1, 6])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-        2: ch_(SEG, [go("edge", "aerith", ai), go("ride", "aerith", ai), go("lick", "aerith", ai),
+        2: ch_(SEG, [go("edge", "aerith", ai), ch_(P, [go("ride", "aerith", ai), go("ride", "aerith_k", ai)]),
+                     go("lick", "aerith", ai),
                      ch_(P, [go("share", "aerith_back", ai), go("share", "aerith_front", ai)]),
                      ch_(P, [go("stack", "aerith", ai), go("stack", "aerith1", ai)])]) + [hb._visi(1), asm.ret()],
         3: at(S["aerith"]) + loop_(0) + [hb._visi(1), asm.ret()],
@@ -372,6 +375,11 @@ def apply(ctx):
                          hb._arith(0x86, PAY, 5), Op(bytes([0x96, HITS[0], HITS[1]])), asm.goto(sw_go),
                          sw_miss, Op(b"\x54\x01"), buzz, asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0),
                          sw_go, Op(bytes([0x93, P[0] << 4, P[1], 1]))] + fast_out + restart + [hb._w(8)] + fast_in + [nos]
+        if sg["key"] == "ride":                                           # (user) P = Tifa and Aerith kissing
+            for at_rep in BS.KISS_AT:
+                nok = asm.nop()
+                main += [asm.if_byte(REPN, "==", at_rep, nok), Op(bytes([0x93, P[0] << 4, P[1], 1]))] + fast_out + \
+                    restart + [hb._w(8)] + fast_in + [nok]
         done = asm.nop()
         main += [asm.if_byte(REPN, "<", BS.REPS, done), asm.goto_back(rep), done]
         # (the ends of the miss / hold paths come back to tail: emitted here, after the segment's loop)

@@ -59,7 +59,7 @@ INTRO = [
     "Cloud\n“Squats. The foundation of everything.\n I'll spot you from behind.”",
 ]
 # (user: more variety in the intros) intro line -> [(actor, gesture)] (`_gestures.ANIMS`), played as it shows
-INTRO_GESTURES = {0: [("tifa", "think")], 1: [("cloud", "nod")], 2: [("tifa", "ready")], 3: [("cloud", "stretch")],
+INTRO_GESTURES = {0: [("tifa", "think")], 1: [("cloud", "nod")], 2: [("tifa", "hiprock")], 3: [("cloud", "stretch")],
                   4: [("tifa", "hips")], 5: [("cloud", "warmup")]}
 HOW = ("Press the button shown in time with\nthe squat. Hits build the pace; a miss\nslows it right down."
        "{NEW}HOLD: press it and keep it held while\nshe stays down. Let go the moment she\ncalls it, or she'll get mad.")

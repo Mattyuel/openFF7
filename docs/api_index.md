@@ -1145,15 +1145,18 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_standing(ctx, who, facing, stance=0.0)` 
 - `_tip(ctx, rg, E_=None)` 
 - `sitting(ctx, name, hrc, stand)` The intro: sitting on an edge (660 `_ledge`), the root moved back (SEAT_IN + SEAT_OUT) so an XYZI on the
+- `_smooth(xs)` Per-frame parameter lists averaged round the loop over SMOOTH of it each way (a cosine window).
 - `_sit_edge(ctx, who, t, c)` Sitting on the edge facing the rug, leaning back, hips rolling up into him at the deepest.
 - `_edge(ctx, n)` 
 - `_astride(ctx, who, t, facing, tilt, spread, lean_, rock, shin_out=0.05, phase=0.0)` 
 - `_ride(ctx, n)` 
+- `_kiss(ctx, n, cl, tt, ta)` The ride's K: Tifa and Aerith astride him as before, bent forward into a kiss.
 - `_lick(ctx, n)` 
 - `_share_cloud(ctx, t)` 
-- `_kneel_front(ctx, who, t, target, x0=None, sway=SHARE_SWAY)` 
+- `_kneel_front(ctx, who, t, target, x0=None, sway=SHARE_SWAY, steps=(8, 8, 8))` 
 - `_share(ctx, n)` 
 - `_share_holds(ctx, sh, n)` The front girl's tapping out (30 frames: pulling back, hips wriggling, hands pushing his thighs).
+- `_hair_swing(rg)` (lying on her back) the turn about her side axis that swings her hair, its shape as modelled, up over the top
 - `_stack(ctx, n)` 
 - `_who(key)` 
 - class `Scene` 
@@ -1340,6 +1343,7 @@ The standard female body (user): Skye's bare body from the neck down, built by
 
 - `used(gestures, actor)` The gestures `actor` plays in a film, in slot order.
 - `seated(ctx, hrc, gesture, sit, name)` A copy of `gesture` (anim name) with every frame's root, lower body and chest (`LOWER`) from `sit`'s
+- `_hiprock(ctx, hrc, name)` Standing, hands on her hips (two-bone IK to just above each hip joint, out to the side), hips rocking side to
 - `anims(ctx, gestures, actor, who, hrc=None, sit=None, prefix=None)` The anim names to append to `actor`'s model ('who' = the ANIMS table); seated copies named
 - `slots(gestures, actor, first, stand, animb)` {slot: ops}: each gesture once (ANIME1 waits in the actor's own slot), back to anim `stand`; `first` =
 - `reqs(gestures, i, entity)` REQs (no wait) of line i's gestures; entity(actor) -> entity index.
@@ -1533,6 +1537,8 @@ Shared helpers for character recruitment scenes.
 - `spot(tips, dc, floor, tip0, root0)` Cloud's field spot (x, y) for these tip targets: standing, his tip on average where they are.
 - `cloud(ctx, name, tips, hands, cspot, dc, floor, stance, lean, foot=None, nape=False, level=False)` Cloud's frames (written to name.a): his tip at tips[k] (field), standing at cspot (field, on the floor);
 - `spread(ctx, hrc, srcs, prefix, deg)` (user: Tifa over Jessie) copies of her strokes with each leg turned deg outward about her forward axis at
+- `_wander(ctx, hrc, frames, arched)` `frames` (one rep) with her head wandering and, if `arched`, pose B. Hips and legs untouched.
+- `wander(ctx, hrc, strokes, still, periods, prefix)` (pose A, pose B) lists: her strokes repeated REPEAT times (prefix + 'A'/'B' + speed) and her still frame as
 
 ## `patches/_travel.py`
 Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.

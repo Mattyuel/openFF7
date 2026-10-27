@@ -12,11 +12,15 @@ ANIMS = {
     "cloud": {"shrug": "AQCB.chi", "nod": "AJDC.aki", "shakehead": "BUAA.chi", "laugh": "BTCD.aki",
               "point": "ALGB.yos", "stretch": "HOCF.tak", "warmup": "FJCB.yos", "leanin": "CDDE.tor",
               "coy": "EGIC.yos", "impatient": "BDCC.aki", "lookaround": "AUEE.yos", "formal": "EGGD.yos"},
-    "tifa": {"hips": "AQFE.yos", "ready": "FDCF.yos", "think": "BTCC.tak", "pose": "EPDF.yos", "lean": "ARFB.kei"},
+    "tifa": {"hips": "AQFE.yos", "ready": "FDCF.yos", "think": "BTCC.tak", "pose": "EPDF.yos", "lean": "ARFB.kei",
+             "hiprock": "ZGHR.tor"},
     "jessie": {"arms": "CNJA.tor", "hips": "CNJE.tor", "point": "BXJA.yos"},
     "scarlet": {"hip": "EHBC.yos", "laugh": "FFDE.yos"},
     "elena": {"chest": "ETDC.kei", "shrug": "CGCF.aki", "hop": "AVFD.yos", "clasp": "EWBC.tak"},
 }
+# (user: "in workout intro add a hip rocking with hands on hips animation for tifa instead of the running on the
+# spot one") our own gestures, built on first use: name -> builder(ctx, hrc, name)
+HIPROCK = dict(frames=60, cycles=2, sway=0.9, roll=9, counter=1.3, hand_out=1.3, hand_up=2.3, hand_back=0.4)
 LOWER = ("hip", "chest", "l_hip", "l_femur", "l_tibia", "l_foot", "r_hip", "r_femur", "r_tibia", "r_foot")
 
 
@@ -46,12 +50,44 @@ def seated(ctx, hrc, gesture, sit, name):
     return name + ".tor"
 
 
+def _hiprock(ctx, hrc, name):
+    """Standing, hands on her hips (two-bone IK to just above each hip joint, out to the side), hips rocking side to
+    side `cycles` times over `frames` (root sway + pelvis roll, the upper body countering), feet planted."""
+    import math
+    import _besties_rig as RG
+    c = HIPROCK
+    rg0 = RG.Rig(ctx, hrc, "abcd.a").start(RG.basis(RG.LEFT, RG.UP))
+    E0 = rg0.ends()
+    feet = {s: E0[s + "_tibia"] for s in "lr"}
+    frames = []
+    for k in range(c["frames"]):
+        sw = math.sin(2 * math.pi * c["cycles"] * k / c["frames"])
+        rg = RG.Rig(ctx, hrc, "abcd.a").start(RG.basis(RG.LEFT, RG.UP))
+        rg.root = RG.add(rg.root, [c["sway"] * sw, 0.0, 0.0])
+        rg.pelvis(RG.lean(c["roll"] * sw))
+        rg.waist(RG.lean(-c["roll"] * c["counter"] * sw))
+        for s, sx in (("l", 1), ("r", -1)):
+            rg.ik(s + "_femur", s + "_tibia", feet[s], [sx * 0.2, 0.0, -1.0], keep_end=True)
+        E = rg.ends()
+        for s, sx in (("l", 1), ("r", -1)):
+            wrist = RG.add(E[s + "_femur@"], [sx * c["hand_out"], -c["hand_up"], c["hand_back"]])   # (beside her waist)
+            rg.ik(s + "_uparm", s + "_foarm", wrist, [sx * 1.0, 0.0, 0.3], keep_end=False)
+            rg.aim(s + "_hand", [-sx * 0.35, 0.6, -0.7])                    # (fingers forward over her hip)
+        frames.append(rg.frame())
+    return RG.save(ctx, name, "abcd.a", frames)
+
+
+BUILT = {"ZGHR.tor": _hiprock}
+
+
 def anims(ctx, gestures, actor, who, hrc=None, sit=None, prefix=None):
     """The anim names to append to `actor`'s model ('who' = the ANIMS table); seated copies named
-    prefix + 2 letters when `sit` is given."""
+    prefix + 2 letters when `sit` is given. Our own gestures (`BUILT`) are built on `hrc` (default AAGB, Tifa)."""
     out = []
     for k, g in enumerate(used(gestures, actor)):
         a = ANIMS[who][g]
+        if a in BUILT:
+            a = BUILT[a](ctx, hrc or "AAGB.HRC", a.split(".")[0])
         out.append(seated(ctx, hrc, a, sit, "%s%s" % (prefix, "ABCDEFGH"[k])) if sit else a)
     return out
 

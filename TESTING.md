@@ -36,6 +36,14 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Film feedback round** (683, 685, 687): Workout intro: Tifa's second gesture is hands on hips, hips
+  rocking (not jogging on the spot). Tickets: Tifa's head drifts slowly; every few reps (with Cloud's style)
+  she switches to a second pose: back arched, looking to her left, right hand reaching back to her hip.
+  Besties: edge = Cloud standing, only his hips moving, Tifa and Aerith calm; ride = Tifa sitting lower
+  on him, and after reps 3 / 6 / 9 a quick fade swaps to / from Tifa and Aerith leaning in to kiss; page
+  four = Tifa's head steady; kneel together = the girl in front stays put (head bobbing a little), the
+  one behind holds still with a slow small head circle (both ways round); finale = Tifa's legs spread
+  up in a V, her hair lying above her head on the bed, Cloud thrusting, Aerith steady.
 - **Pull-out wiggle** (684-687): after every head hold (held to her tap-out, let go early or late) Cloud
   should ease back out of her mouth, sway his hips left and right three times (head steady, feet planted) and
   ease back in before the strokes restart (about 2 s). She holds still meanwhile.

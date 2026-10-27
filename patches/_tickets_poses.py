@@ -369,3 +369,64 @@ def spread(ctx, hrc, srcs, prefix, deg):
         ctx.char_file(name.lower() + ".a", A.build())
         out.append(name + ".tor")
     return out
+
+
+# (user: "have tifa subtly move her head around during the minigame, also have a second pose for her, everything
+# the same, except her back is arched up a bit and she's looking to her left, and reaching back with her right
+# arm. She alternates between this and the original")
+ARCH = 12                       # pose B: the upper body turned this far up about the waist (hips untouched)
+LOOK = 38                       # pose B: her head turned this far to her left
+REACH = (-1.0, -1.25, -1.1)     # pose B: her right hand this far from her hip bone's start (x left, y down, z back)
+LOOK_YAW, LOOK_NOD = 7, 4       # both: the head's slow wander (degrees each way: turn, nod)
+REPEAT = 3                      # strokes an anim (a rep: 685's PERIODS), the wander one loop over them
+
+
+def _wander(ctx, hrc, frames, arched):
+    """`frames` (one rep) with her head wandering and, if `arched`, pose B. Hips and legs untouched."""
+    import _besties_rig as RG
+    from ff7 import fieldanim as fa
+    rg = RG.Rig(ctx, hrc, "abcd.a")
+    I = fa.euler_matrix(0, 0, 0)
+    out = []
+    n = len(frames)
+    for k, (rr, rp, rots) in enumerate(frames):
+        r = rg.copy() if hasattr(rg, "W") else rg.start(I).copy()
+        r.root = [rp[0], -rp[1], rp[2]]
+        r.W = [m for m, _, _ in fa.forward(r.sk, rr, r.root, rots)]
+        r.rr = rr
+        r.M = r.G = I
+        r.Mu = I
+        E0 = r.ends()
+        if arched:
+            r.waist(RG.bow(-ARCH))
+            pole = RG.sub(E0["l_uparm"], RG.lerp(E0["l_uparm@"], E0["l_foarm"], 0.5))
+            r.ik("l_uparm", "l_foarm", E0["l_foarm"], pole)                     # (left hand stays planted)
+            E = r.ends()
+            r.ik("r_uparm", "r_foarm", RG.add(E["hip@"], list(REACH)), [-1.0, -0.6, 0.4], keep_end=False)
+            r.neck(RG.turn(LOOK))
+        t = 2 * math.pi * k / n
+        r.neck(RG.turn(LOOK_YAW * math.sin(t)))
+        r.neck(RG.bow(LOOK_NOD * math.sin(2 * t + 1.0)))
+        out.append(r.frame())
+    return out
+
+
+def wander(ctx, hrc, strokes, still, periods, prefix):
+    """(pose A, pose B) lists: her strokes repeated REPEAT times (prefix + 'A'/'B' + speed) and her still frame as
+    long as each rep (prefix + 'S'/'T' + tier), each with the head's wander. Returns {"A": [...], "B": [...],
+    "SA": [...], "SB": [...]} of .tor names."""
+    import _besties_rig as RG
+    from ff7 import fieldanim as fa
+    out = {}
+    for key, arched in (("A", False), ("B", True)):
+        out[key] = []
+        for s, src in enumerate(strokes):
+            fr = fa.Anim(ctx.char_file(src.split(".")[0].lower() + ".a")).frames * REPEAT
+            out[key].append(RG.save(ctx, "%s%s%d" % (prefix, key, s), src.split(".")[0].lower() + ".a",
+                                    _wander(ctx, hrc, fr, arched)))
+        out["S" + key] = []
+        f0 = fa.Anim(ctx.char_file(still.split(".")[0].lower() + ".a")).frames[0]
+        for t, p in enumerate(periods):
+            out["S" + key].append(RG.save(ctx, "%s%s%d" % (prefix, "ST"[arched], t), still.split(".")[0].lower() + ".a",
+                                          _wander(ctx, hrc, [f0] * p, arched)))
+    return out
