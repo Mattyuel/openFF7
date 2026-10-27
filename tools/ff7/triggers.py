@@ -34,3 +34,23 @@ def set_gateway_field(section, slot, field_id):
     data = bytearray(section)
     struct.pack_into("<H", data, GATEWAYS + slot * 24 + 18, field_id)
     return bytes(data)
+
+
+def free_slot(section):
+    for i in range(12):
+        field, = struct.unpack_from("<H", section, GATEWAYS + i * 24 + 18)
+        if field == UNUSED:
+            return i
+    raise ValueError("no free gateway slot")
+
+
+def set_gateway(section, slot, p1, p2, dest, field_id, direction, template_slot=0):
+    """Return a copy of the section with gateway `slot` set: walking over the
+    line p1-p2 (x, y, z) jumps to field_id at dest (x, y, triangle).
+    The 3 trailing unknown bytes are copied from `template_slot`."""
+    data = bytearray(section)
+    o = GATEWAYS + slot * 24
+    tail = bytes(data[GATEWAYS + template_slot * 24 + 21:GATEWAYS + template_slot * 24 + 24])
+    struct.pack_into("<3h3h3hHB", data, o, *p1, *p2, *dest, field_id, direction)
+    data[o + 21:o + 24] = tail
+    return bytes(data)

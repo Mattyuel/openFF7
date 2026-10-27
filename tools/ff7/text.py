@@ -37,7 +37,9 @@ def decode(raw):
             elif c == 0xDD:
                 out.append("{WAIT %d}" % (raw[i] | raw[i + 1] << 8))
                 i += 2
-            elif c in (0xDE, 0xDF, 0xE1):
+            elif c == 0xE1:
+                out.append("{VAR}")          # the window's number (MPRA2 slot 0); no operand
+            elif c in (0xDE, 0xDF):
                 out.append("{VAR}")
                 i += 4
             elif c == 0xE2:
@@ -54,3 +56,46 @@ def decode(raw):
         else:
             out.append("{%02X}" % b)
     return "".join(out)
+
+
+_ENCODE = {}
+for _i, _c in enumerate(_CHARS):
+    _ENCODE.setdefault(_c, _i)
+_TOKENS = {v: k for k, v in NAMES.items()}
+_TOKENS.update({"{CHOICE}": 0xE0, "{NEW}": 0xE8})
+_COLOR_TOKENS = {v: k for k, v in COLORS.items()}
+
+
+def encode(text):
+    """Readable text -> FF7 bytes (ends with 0xFF). Supports the {TOKENS} that
+    decode() produces for names, choices, colours and {NEW}; newline = new line."""
+    out = bytearray()
+    i = 0
+    while i < len(text):
+        if text[i] == "{":
+            j = text.index("}", i)
+            tok = text[i:j + 1]
+            if tok in _TOKENS:
+                out.append(_TOKENS[tok])
+                if tok == "{NEW}" and text[j + 1:j + 2] == "\n":
+                    j += 1                      # 0xE8 is a new page *and* line (decode: "{NEW}\n")
+            elif tok == "{VAR}":
+                out += b"\xFE\xE1"               # the window's number, set by MPRA2
+            elif tok in _COLOR_TOKENS:
+                out += bytes([0xFE, _COLOR_TOKENS[tok]])
+            else:
+                raise ValueError("unknown text token %s" % tok)
+            i = j + 1
+            continue
+        c = text[i]
+        if c == "\n":
+            out.append(0xE7)
+        elif c == "\t":
+            out.append(0xE1)
+        elif c in _ENCODE:
+            out.append(_ENCODE[c])
+        else:
+            raise ValueError("character not in the FF7 font: %r" % c)
+        i += 1
+    out.append(0xFF)
+    return bytes(out)

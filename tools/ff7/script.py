@@ -176,6 +176,76 @@ class Script:
                 if o is old:
                     ent[k] = new
 
+    # ---- text -------------------------------------------------------
+
+    def add_string(self, raw):
+        """Append an encoded string (see text.encode); returns its text id.
+
+        The text table is at the start of `tail`: u16 count, u16 offsets[],
+        then the strings; music blocks follow and are shifted accordingly."""
+        n, = struct.unpack_from("<H", self.tail, 0)
+        offs = list(struct.unpack_from("<%dH" % n, self.tail, 2))
+        strings_end = min(self.akao_offsets) if self.akao_offsets else len(self.tail)
+        body = self.tail[2 + 2 * n:strings_end]
+        rest = self.tail[strings_end:]
+        offs = [o + 2 for o in offs] + [2 + 2 * (n + 1) + len(body)]
+        new_table = struct.pack("<H", n + 1) + struct.pack("<%dH" % (n + 1), *offs)
+        body = body + bytes(raw)
+        grow = len(new_table) + len(body) - strings_end
+        self.tail = new_table + body + rest
+        self.akao_offsets = [o + grow for o in self.akao_offsets]
+        return n
+
+    # ---- entities ---------------------------------------------------
+
+    def replace_script(self, entity, script, new_ops):
+        """Make `new_ops` (ending with RET) the code of entity's script, and of
+        every other script slot of that entity that shared the old code
+        (unused slots often point at a used script's start). The old code
+        stays in place, unreferenced. Returns the slots redirected."""
+        old = self.entry[entity][script]
+        anchor = old if old is not self._end else None
+        if anchor is not None:
+            self.insert_before(anchor, new_ops, retarget=False)
+        else:
+            self.ops.extend(new_ops)
+        slots = [k for k, e in enumerate(self.entry[entity]) if e is old]
+        for k in slots:
+            self.entry[entity][k] = new_ops[0]
+        return slots
+
+    def add_entity(self, name, scripts):
+        """Add an entity. `scripts` maps script index -> list of Ops (each must
+        end with RET); unset indices share an empty RET. Returns entity index.
+        New code goes before the end of the code area."""
+        empty = Op(b"\x00")
+        block = [empty]
+        entry = [empty] * 32
+        for idx, ops in sorted(scripts.items()):
+            entry[idx] = ops[0]
+            block.extend(ops)
+        self.ops.extend(block)
+        self.entity_names.append(name.encode("latin-1")[:8].ljust(8, b"\0"))
+        self.entry.append(entry)
+        return len(self.entity_names) - 1
+
+    # ---- music ------------------------------------------------------
+
+    def akao_block(self, index):
+        """Raw bytes of music block `index` (offsets are relative to `tail`)."""
+        start = self.akao_offsets[index]
+        later = [o for o in self.akao_offsets if o > start]
+        return self.tail[start:min(later) if later else len(self.tail)]
+
+    def akao_ids(self):
+        return [struct.unpack_from("<H", self.tail, o + 4)[0] for o in self.akao_offsets]
+
+    def add_akao(self, block):
+        """Append a music block; returns its index for the MUSIC opcode."""
+        self.akao_offsets.append(len(self.tail))
+        self.tail += bytes(block)
+        return len(self.akao_offsets) - 1
+
     # ---- assembly ---------------------------------------------------
 
     def build(self):

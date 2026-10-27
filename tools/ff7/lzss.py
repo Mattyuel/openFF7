@@ -36,11 +36,15 @@ def decompress(buf, with_header=True):
                 ring = b0 | ((b1 & 0xF0) << 4)
                 length = (b1 & 0x0F) + THRESHOLD + 1
                 # Convert ring position to an absolute output position.
-                dist = (len(out) + RING_START - ring) & (N - 1)
-                pos = len(out) - (dist or N)
-                for k in range(length):
-                    p = pos + k
-                    out.append(out[p] if p >= 0 else 0)
+                end = len(out)
+                dist = (end + RING_START - ring) & (N - 1)
+                pos = end - (dist or N)
+                if pos >= 0 and pos + length <= end:          # plain copy (most references)
+                    out += out[pos:pos + length]
+                else:                                         # before the start (zeros) or overlapping
+                    for k in range(length):
+                        p = pos + k
+                        out.append(out[p] if p >= 0 else 0)
     return bytes(out)
 
 

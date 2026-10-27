@@ -1,0 +1,14 @@
+flowchart TD
+    BAR["Tifa's shifts at 7th Heaven<br/>(she rents it from Marle)"] --> SELLER["A customer is selling the gym"]
+    SELLER --> MEETGYM["Meet him at the gym"] --> GYM(["Buy the gym"])
+    BAR -.-> MARLE(["Buy 7th Heaven from Marle<br/>(when: open)"])
+    GYM --> HBGIRL["A Honey Bee girl works out at the gym<br/>(in gym clothes, not her outfit)<br/>and recommends the gig"]
+    HBGIRL --> GIGS["Casual Honey Bee gigs<br/>(Tifa only)"]
+    GIGS -->|enough gigs| OWNER["Scene: the owner wants to sell"]
+    OWNER --> MEETINN["Meet him outside the inn"] --> INN(["Buy the Honey Bee Inn<br/>hire the other girls"])
+    GIGS --> DIRMEET["Scene at the inn: the Director,<br/>a customer looking for talent"]
+    DIRMEET --> STATION["The Director at the Sector 7 station<br/>offers work"]
+    STATION --> SHOOTS["Shoots for him<br/>(Tifa + Cloud, paid per shoot)"]
+    MATERIA["Materia Store owner mentions<br/>he wants to branch into home videos"] -.-> DEAL
+    SHOOTS -->|enough work| DEAL(["Partner with the Materia Store owner:<br/>sell the videos"])
+    DEAL --> COMPANY(["The production company<br/>hire stars, profits from sales"])

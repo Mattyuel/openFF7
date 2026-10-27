@@ -1,0 +1,67 @@
+flowchart TD
+    START([Chapter starts]) --> MON
+
+    subgraph WEEK [One week]
+        MON["Monday: Tifa's briefing<br/>sets the week's targets<br/>(main-line quests)"]
+        MON --> DAYSTART
+
+        subgraph DAY [Each day]
+            DAYSTART(["Morning"]) --> DSHIFT{"Day shift"}
+            DSHIFT --> GYM["Gym<br/>training minigames: squats, spotting,<br/>pacing, 80s spandex class"]
+            DSHIFT --> SHOOT["Shoot<br/>a parody film: story scenes,<br/>gameplay between them"]
+            GYM --> BETWEEN
+            SHOOT --> BETWEEN
+            BETWEEN["Free time<br/>recruit, hang out, gifts,<br/>collect profits, incidents"]
+            BETWEEN --> NSHIFT{"Night shift"}
+            NSHIFT --> BAR["7th Heaven bar<br/>Tifa serves: drink prompts<br/>over the customers;<br/>Cloud on security"]
+            NSHIFT --> INN["Honey Bee Inn<br/>keep customers happy:<br/>choices by personality,<br/>dance prompts between"]
+            BAR --> DAYEND(["Day ends<br/>(time moves by actions,<br/>not a clock)"])
+            INN --> DAYEND
+        end
+
+        GYM --> MSTATS[("Member stats<br/>Strength, Stamina,<br/>Technique, Morale")]
+        GYM --> REP[("Gym<br/>Reputation, Equipment,<br/>Cleanliness")]
+        GYM -->|fees, class tickets| GIL[("Gil<br/>the hard limit")]
+        SHOOT -->|pay per shoot,<br/>later video sales| GIL
+        SHOOT -.->|cost| TRUST[("Tifa's trust in Cloud 0-20")]
+        BAR -->|takings, tips| GIL
+        BAR -->|regulars| ROSTER[("Roster")]
+        INN --> GIL
+        INN -.->|cost| TRUST
+        BETWEEN --> ROSTER
+        BETWEEN --> AFF[("Affection 0-20")]
+        AFF -->|tier reached| GOAL["A member's goal scene<br/>and their story"]
+        GOAL --> MSTATS
+
+        DAYEND -->|next day| DAYSTART
+        DAYEND -->|week ends| WEEKEND["Weekend event<br/>competition, open day,<br/>rival, Corneo / Shinra beat"]
+        WEEKEND --> REVIEW["Tifa's review<br/>targets met? who's thriving?"]
+    end
+
+    MSTATS --> WEEKEND
+    REP -->|walk-ins, monthly fees| GIL
+    REP --> REVIEW
+    REVIEW --> TRUST
+    REVIEW --> RENT{"Rent / debt / wages /<br/>supplies covered?"}
+    GIL --> RENT
+    RENT -->|paid| NEXT
+    RENT -->|short| CRISIS["Corneo crisis<br/>story fork, Tifa decides"]
+    CRISIS --> TRUST
+    CRISIS --> NEXT
+
+    NEXT{"Chapter goal met?"}
+    NEXT -->|no| MON
+    NEXT -->|yes| CHAPTER["Next chapter<br/>1 The Deed, 2 The Roster,<br/>3 The Exhibition"]
+    CHAPTER --> MON
+    GIL -->|purchase price| BUY["Buy a business<br/>gym, 7th Heaven, Honey Bee Inn,<br/>production company"]
+    BUY --> ASSETS[("Owned businesses<br/>staff, supplies, profits")]
+    ASSETS -->|profits| GIL
+    ASSETS -->|wages, supplies| RENT
+
+    CHAPTER -->|after chapter 3| EXHIBIT["Gold Saucer Exhibition<br/>members' stats compete"]
+    EXHIBIT --> ENDING{"Ending<br/>gym stats x Tifa's trust"}
+    TRUST --> ENDING
+    ENDING --> E1([Co-owned, thriving])
+    ENDING --> E2([Successful, Tifa burned out])
+    ENDING --> E3([Building lost, community kept])
+    ENDING --> E4([Shinra buyout])
