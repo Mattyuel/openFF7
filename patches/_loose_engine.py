@@ -232,7 +232,13 @@ def _slots(S, ctx, mesh, cam, stations, floor, beds):
     standing with a waypoint to stroll to). Returns (slots, the cameraman's spot + DIR, the view centres)."""
     mv, hb, dt = _mods()
     left, top, right, bottom = screen_range(ctx.field(S.FIELD).section("triggers"))
-    proj = lambda p: cam.project(*p[:3])
+    _pc = {}
+
+    def proj(p):                                        # (memoised: the slot search projects the same points a lot)
+        k = tuple(p[:3])
+        if k not in _pc:
+            _pc[k] = cam.project(*k)
+        return _pc[k]
     bedset = set(beds)
     out, cams, views = [], [], []
     for p, (pos, st) in enumerate(zip(S.D.POSITIONS, stations)):

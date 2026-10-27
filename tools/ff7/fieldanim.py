@@ -19,11 +19,10 @@ class Anim:
         _, self.nframes, self.nbones = struct.unpack_from("<III", data, 0)
         self.frames = []
         o = HEADER
+        fmt = struct.Struct("<%df" % (6 + 3 * self.nbones))
         for _ in range(self.nframes):
-            root_rot = list(struct.unpack_from("<3f", data, o))
-            root_pos = list(struct.unpack_from("<3f", data, o + 12))
-            bones = [list(struct.unpack_from("<3f", data, o + 24 + 12 * i)) for i in range(self.nbones)]
-            self.frames.append((root_rot, root_pos, bones))
+            v = fmt.unpack_from(data, o)
+            self.frames.append((list(v[0:3]), list(v[3:6]), [list(v[6 + 3 * i:9 + 3 * i]) for i in range(self.nbones)]))
             o += 24 + 12 * self.nbones
 
     def build(self):
@@ -50,12 +49,23 @@ def skeleton(hrc_text):
 
 
 # ---- 3x3 matrices (row-major lists) -------------------------------------------
+# (unrolled for speed: these run hundreds of millions of times in a build. Plain left-to-right sums: sum() of
+# floats is compensated from Python 3.12, so results differ from it in the last bit, but no longer by version)
 def _mul(a, b):
-    return [[sum(a[r][k] * b[k][c] for k in range(3)) for c in range(3)] for r in range(3)]
+    (a00, a01, a02), (a10, a11, a12), (a20, a21, a22) = a
+    (b00, b01, b02), (b10, b11, b12), (b20, b21, b22) = b
+    return [[a00 * b00 + a01 * b10 + a02 * b20, a00 * b01 + a01 * b11 + a02 * b21,
+             a00 * b02 + a01 * b12 + a02 * b22],
+            [a10 * b00 + a11 * b10 + a12 * b20, a10 * b01 + a11 * b11 + a12 * b21,
+             a10 * b02 + a11 * b12 + a12 * b22],
+            [a20 * b00 + a21 * b10 + a22 * b20, a20 * b01 + a21 * b11 + a22 * b21,
+             a20 * b02 + a21 * b12 + a22 * b22]]
 
 
 def _vec(m, v):
-    return [sum(m[r][k] * v[k] for k in range(3)) for r in range(3)]
+    x, y, z = v
+    (a00, a01, a02), (a10, a11, a12), (a20, a21, a22) = m
+    return [a00 * x + a01 * y + a02 * z, a10 * x + a11 * y + a12 * z, a20 * x + a21 * y + a22 * z]
 
 
 def _t(m):
@@ -78,7 +88,12 @@ def _rz(d):
 
 
 def euler_matrix(x, y, z):
-    return _mul(_mul(_ry(y), _rx(x)), _rz(z))
+    """Ry(y) . Rx(x) . Rz(z), written out (hot in builds)."""
+    rx, ry, rz = math.radians(x), math.radians(y), math.radians(z)
+    cx, sx, cy, sy, cz, sz = math.cos(rx), math.sin(rx), math.cos(ry), math.sin(ry), math.cos(rz), math.sin(rz)
+    return [[cy * cz + sy * sx * sz, -cy * sz + sy * sx * cz, sy * cx],
+            [cx * sz, cx * cz, -sx],
+            [-sy * cz + cy * sx * sz, sy * sz + cy * sx * cz, cy * cx]]
 
 
 def matrix_euler(m):

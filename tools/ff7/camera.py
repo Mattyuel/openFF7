@@ -20,9 +20,12 @@ class Camera:
         self.zoom = struct.unpack_from("<H", data, 36)[0]
 
     def project(self, x, y, z):
-        sv = [sum(a * c for a, c in zip(axis, (x, y, z))) / 4096 + t
-              for axis, t in zip(self.axes, self.pos)]
-        return self.zoom * sv[0] / sv[2], self.zoom * sv[1] / sv[2]
+        (a0, a1, a2), (b0, b1, b2), (c0, c1, c2) = self.axes      # (unrolled: hot in builds)
+        t0, t1, t2 = self.pos
+        s0 = (a0 * x + a1 * y + a2 * z) / 4096 + t0
+        s1 = (b0 * x + b1 * y + b2 * z) / 4096 + t1
+        s2 = (c0 * x + c1 * y + c2 * z) / 4096 + t2
+        return self.zoom * s0 / s2, self.zoom * s1 / s2
 
 
 def facing_vector(direction):

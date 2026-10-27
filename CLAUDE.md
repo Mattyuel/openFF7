@@ -32,7 +32,7 @@ something new, hit a trap, or a feature's status changes.
 ## Commands
 
 ```
-python3 tools/ff7tool.py build              # -> build/openFF7/, prints changed files (~2 min first time, ~12 s after: build/cache)
+python3 tools/ff7tool.py build              # -> build/openFF7/, prints changed files and the slowest patches (~1.5 min; the first time longer: build/cache)
                                             # then installs them into the Steam game folder (OPENFF7_GAME / install_path.txt / Steam libraries) unless 'FINAL FANTASY VII-openff7' sits beside it (user); --no-install
 python3 tools/ff7tool.py build --debug      # + patches/debug/ (L1+R1 debug menu) -> build/openFF7_debug/
 python3 tools/tests/test_formats.py         # all tests (~2 min), includes test_api_index_current

@@ -182,7 +182,7 @@ Field animations (.a in char.lgp) and forward kinematics for field skeletons (.h
 - `_rx(d)` 
 - `_ry(d)` 
 - `_rz(d)` 
-- `euler_matrix(x, y, z)` 
+- `euler_matrix(x, y, z)` Ry(y) . Rx(x) . Rz(z), written out (hot in builds).
 - `matrix_euler(m)` (x, y, z) degrees with euler_matrix(x, y, z) == m (Ry Rx Rz).
 - `axis_angle(axis, d)` 
 - `forward(bones, root_rot, root_pos, rotations)` World (matrix, start, end) per bone for one frame.
