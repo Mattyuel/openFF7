@@ -534,13 +534,19 @@ def build(args):
     paths = sorted(glob.glob(os.path.join(patch_dir, "[0-9]*.py")))
     if args.debug:   # patches/debug/: test tools, never in a normal build
         paths += sorted(glob.glob(os.path.join(patch_dir, "debug", "[0-9]*.py")))
+    import time
+    took, t_start = [], time.time()
     for path in paths:
+        t0 = time.time()
         spec = importlib.util.spec_from_file_location(os.path.basename(path)[:-3], path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         print("applying", os.path.basename(path))
         mod.apply(ctx)
+        took.append((time.time() - t0, os.path.basename(path)))
+    t0 = time.time()
     touched = ctx.save()
+    took.append((time.time() - t0, "(saving fields)"))
     tmp = out + ".partial"
     if os.path.exists(tmp):
         shutil.rmtree(tmp)
@@ -555,7 +561,8 @@ def build(args):
     if os.path.exists(out):
         shutil.rmtree(out)
     os.rename(tmp, out)
-    print("built %s (%d field files touched)" % (out, len(touched)))
+    print("built %s (%d field files touched) in %.0f s; slowest steps: %s" % (
+        out, len(touched), time.time() - t_start, ", ".join("%s %.1f s" % (n, t) for t, n in sorted(took)[::-1][:6])))
     print("changed game files (copy these into the game folder):")
     for path in changed:
         full = os.path.join(out, path)

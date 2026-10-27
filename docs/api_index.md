@@ -1032,7 +1032,7 @@ The movie minigame (user's design).
 - `_mods()` 
 - `_tie(ctx, hrc)` hrc text with the 'kami' bone's hair part swapped for the short ponytail (written once).
 - `_spandex(ctx)` 
-- `_set(ctx, donor, stand, poses)` 
+- `_set(ctx, donor, stand, poses, circ)` 
 - `apply(ctx)` 
 
 ## `patches/684_going_up.py`
@@ -1317,6 +1317,19 @@ PHS usable from the start: the save points in early Midgar (and a few story
 ## `patches/_cid.py`
 (user) Cid as a friend: hang-outs (660's date places, no intimacy ending), gifts, affection (0-20,
 
+
+## `patches/_circuit_poses.py`
+(user: "the workout video scene ... needs a lot more variety") Sector 7 Workout's circuit stations (683): the poses
+
+- `_len(rg, *bones)` 
+- `_her_press(ctx, her, st, t, u)` 
+- `_his_press(ctx, him, st, t, u, hands)` 
+- `_his_stretch(ctx, him, t, u, knee_z)` 
+- `_crotch(rg, E=None)` 
+- `_her_stretch(ctx, her, t, u, push, ankle_at)` 
+- `_stretch(ctx, her, him, t, u)` (her rig, his rig) for one frame: his knees placed so that at his deepest his crotch is GAP from her
+- `_shoulder(rh)` 
+- `build(ctx, her_top, her_bare, him_c, him_b, names)` her_top / her_bare / him_c / him_b = (.hrc, stand .a); names = {"press": (her prefix, his prefix),
 
 ## `patches/_config.py`
 Shared openFF7 settings used by the patch modules.

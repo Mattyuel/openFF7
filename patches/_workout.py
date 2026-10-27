@@ -23,8 +23,34 @@ SAY = 100                       # frames a line stays up during the squats
 # HITS_UP hits in a row step the pace up a tier; a miss drops it back to the slowest
 PERIODS = tuple(round(60 * 0.9 ** k) for k in range(8))      # 60 54 49 44 39 35 32 29
 HITS_UP = 2                     # (user: 50% shorter; was 3)
-PART_A_REPS = 16                # (user: fixed length, progression by performance) part one: this many prompts
-PART_B_REPS = 20                # part two: this many prompts, then the finale
+# (user: "needs a lot more variety ... 1 thing happens that slowly builds") a circuit of stations round the gym,
+# each with its own poses, spot and twist on the prompts, her clothes coming off in stages (spandex -> top off ->
+# nothing): squats (holds), the weight bench (partner press: SPOT prompts), a stretch on the floor (every hold
+# deeper), the ring (the bent-over squats, the finisher). `part` = the pose set: A / B (`_workout_poses`), P / S
+# (`_circuit_poses`); `who` = the actors (cloud, tifa) entities; reps = prompts at the station.
+STATIONS = [
+    dict(key="squats", part="A", who=("cloudA", "tifaA"), reps=10, hold=(2, 44), spot=None, dare=4),
+    dict(key="press", part="P", who=("cloudA", "tifaC"), reps=9, hold=None, spot=(1, 64), dare=4),
+    dict(key="stretch", part="S", who=("cloudB", "tifaB"), reps=9, hold=(0, 96), spot=None, dare=None),
+    dict(key="ring", part="B", who=("cloudB", "tifaB"), reps=12, hold=(2, 44), spot=None, dare=5),
+]
+PART_A_REPS, PART_B_REPS = STATIONS[0]["reps"], STATIONS[3]["reps"]
+# the stations' spots in the gym (mkt_mens): squats SQUAT_AT; the weight bench at the back (its walkmesh bump
+# runs PRESS_FAR -> PRESS_NEAR; Cloud stands beyond the far end facing along it); the stretch on the open floor
+# STRETCH_AT (facing screen-left); the ring's canvas (walkmesh z 76) RING_AT, facing screen-left
+PRESS_FAR, PRESS_NEAR = (-140, 515), (-62, 465)
+STRETCH_AT = (0, 90)
+RING_AT, RING_Z = (230, 210), 76
+# the camera's focus (the hidden player) per station
+FOCI = [(10, 160), (-100, 470), (0, 110), (200, 200)]
+# SPOT (the bench): she stalls at the bottom; mash [OK] SPOT_NEED times within SPOT_FRAMES = a hit + SPOT_BONUS
+SPOT_NEED, SPOT_FRAMES, SPOT_BONUS = 6, 75, 3
+SPOT_LABEL = "SPOT HER! Mash {PURPLE}[OK]{WHITE}"
+# (user) Tifa's dares: at rep `dare` of a station she sets one: 0 a sprint (DARE_SPRINT reps at the top pace),
+# 1 a clean streak (DARE_CLEAN reps without a miss). Won = DARE_BONUS x (tier + 1) and her line; lost = teasing
+DARE_SPRINT, DARE_CLEAN, DARE_BONUS = 4, 5, 6
+# (user) between stations a choice of replies; each is (text, mood +, the next station's starting tier, her line)
+# and the mood pays MOOD_PAY x PAY_HIT gil a point at the end
 PAY_HIT = 10                    # gil per hit x (tier + 1)
 CHAT_EVERY = 4                  # (user: long silences) a chatter line every this many reps, when nobody's talking
 HIT_SOUND = bytes.fromhex("f20000002808" "9d01" "000000000000")   # the squat contest's squat (mkt_mens: AKAO 28 08 019d)
@@ -61,8 +87,6 @@ INTRO = [
 # (user: more variety in the intros) intro line -> [(actor, gesture)] (`_gestures.ANIMS`), played as it shows
 INTRO_GESTURES = {0: [("tifa", "hiprock")], 1: [("cloud", "nod")], 2: [("tifa", "lean")], 3: [("cloud", "stretch")],
                   4: [("tifa", "hips")], 5: [("cloud", "warmup")]}
-HOW = ("Press the button shown in time with\nthe squat. Hits build the pace; a miss\nslows it right down."
-       "{NEW}HOLD: press it and keep it held while\nshe stays down. Let go the moment she\ncalls it, or she'll get mad.")
 
 # part one (clothed): (tier reached for the first time) -> lines
 LINES_A = {
@@ -118,7 +142,6 @@ WALKOUT_A = ["Tifa\n“That's it. Find yourself another\n student.”",
              "Director\n“Tifa, wait! ...CUT! Great. Just\n great.”"]
 
 # part two (undressed)
-START_B = ["Tifa\n“Don't stop now... I've got the hang\n of it.”"]
 LINES_B = {
     1: ["Cloud\n“Keep that back straight.”", "Tifa\n“Mmm... yes, coach.”"],
     3: ["Tifa\n“Deeper... I want to feel the\n stretch.”"],
@@ -168,3 +191,124 @@ WALKOUT_B = ["Tifa\n“No. We're done. You don't listen.”",
 FINALE = ["Tifa\n“Phew... same time tomorrow, coach?”",
           "Director\n“CUT! That's a wrap! You two are\n naturals.”"]
 PAID = "Director\n“Here's your pay: {VAR} gil.\n Great work today.”"
+
+# ---- the circuit (user: variety) ---------------------------------------------------------------------------
+HOW = ("A circuit round the gym. Press the button\nshown in time; hits build the pace, a miss\nslows it right down."
+       "{NEW}HOLD: press it and keep it held while\nshe stays down. Let go the moment she\ncalls it, or she'll get mad."
+       "{NEW}SPOT: on the bench, mash {PURPLE}[OK]{WHITE} to help\nher lift. She'll dare you now and then:\nkeep up and it pays.")
+MOOD_PAY = 3
+# (station index -> after it) the move to the next station: lines before the fade, the choice, lines after it
+NEXT = {
+    0: dict(before=["Tifa\n“Phew! My legs are jelly. What's\n next, coach?”",
+                    "Cloud\n“Bench. Upper body.”"],
+            ask=("Tifa\n“...It's so hot in here. Would you mind\n if I took my top off?”",
+                 [("“Go for it. Whatever's comfortable.”", 2, 1,
+                   "Tifa\n“Thanks, coach. You're sweet.”"),
+                  ("“I was hoping you'd ask.”", 1, 2,
+                   "Tifa\n“Ha! I noticed. Eyes on my form,\n mister.”"),
+                  ("“Keep it on. Focus.”", 0, 0,
+                   "Tifa\n“...Fine. Taking it off anyway.”")]),
+            after=["(She peels the leotard down to her waist and\n lies back on the bench.)",
+                   "Cloud\n“Hands up. Push against mine.”"]),
+    1: dict(before=["Tifa\n“My arms are done. Totally done.”",
+                    "Cloud\n“Stretch it out. On the floor.”"],
+            ask=("Tifa\n“These tights are way too tight to\n stretch in...”",
+                 [("“Take them off. I'll help.”", 2, 1,
+                   "Tifa\n“Mm. Helpful AND good with his hands.”"),
+                  ("“I'll lose mine too. Fair's fair.”", 1, 2,
+                   "Tifa\n“...Now THAT'S a training device.”"),
+                  ("“They're fine. Lie down.”", 0, 0,
+                   "Tifa\n“They're coming off, Cloud.”")]),
+            after=["(Off it all comes. She lies back on the\n floor; he kneels at her feet.)",
+                   "Cloud\n“Leg up on my shoulder. Breathe out.”"]),
+    2: dict(before=["Tifa\n“Ohh... I've never been this... flexible.”",
+                    "Director\n“Love it! Final set in the ring, people!\n Give me a finish!”"],
+            ask=("Tifa\n“The ring? In front of everyone?”",
+                 [("“You've earned it. Show them.”", 2, 1,
+                   "Tifa\n“...Okay. Let's give them a show.”"),
+                  ("“Last one in does fifty push-ups.”", 1, 2,
+                   "Tifa\n“You're on!”"),
+                  ("“Ring. Now. Squats.”", 0, 0,
+                   "Tifa\n“Yes, DRILL SERGEANT.”")]),
+            after=["(Up through the ropes. The crowd that\n isn't there goes wild.)",
+                   "Cloud\n“Same as before. Hands on your knees.”"]),
+}
+START_B = []                    # (the ring opens with NEXT[2]'s lines)
+
+# the bench (top off)
+LINES_P = {
+    1: ["Cloud\n“Push. Elbows out. Good.”", "Tifa\n“You're... very close, coach.”"],
+    3: ["Tifa\n“Ah... I can feel you leaning in.”", "Cloud\n“Counterweight.”"],
+    5: ["Tifa\n“Mm... harder. Push back harder.”"],
+}
+STYLE_P = [["Cloud\n“Feet down. Press.”"],
+           ["Cloud\n“Legs up. Core.”", "Tifa\n“Upside down you look... bigger.”"]]
+CHAT_P = [
+    "Cloud\n“Breathe out on the push.”",
+    "Tifa\n“Your hands are so warm.”",
+    "Cloud\n“Lock it out at the top.”",
+    "Tifa\n“Don't drop on me, coach.”",
+    "Tifa\n“I can see right up your... shorts.”",
+    "Cloud\n“Eyes on the ceiling.”",
+]
+MISSES_P = [
+    "Tifa\n“Whoa- my arms gave out!”",
+    "Cloud\n“Reset. Slow.”",
+    "Tifa\n“Sorry! Sweaty hands!”",
+    "Tifa\n“Hah... let me get a grip.”",
+]
+SPOTS = ["Tifa\n“Ngh...! I'm stuck! Help!”",
+         "Tifa\n“Cloud... I can't... push...!”",
+         "Tifa\n“It's not moving! Spot me!”"]
+SPOT_GOOD = ["Tifa\n“Hah! Up! We did it!”",
+             "Cloud\n“Got you. Every time.”",
+             "Tifa\n“Mm... my hero.”"]
+SPOT_FAIL = ["Tifa\n“Ow! Cloud! You were supposed\n to HELP!”",
+             "Tifa\n“...And now I'm pinned. Great spotting.”"]
+
+# the stretch (both undressed)
+LINES_S = {
+    1: ["Cloud\n“Lean into it. Slowly.”", "Tifa\n“Ooh... that's a good stretch.”"],
+    3: ["Tifa\n“Cloud... I don't think this is\n a stretch anymore.”", "Cloud\n“Advanced stretch.”"],
+    5: ["Tifa\n“Deeper...! Don't you dare stop!”"],
+}
+STYLE_S = [["Cloud\n“Relax the hip. Let it open.”"]]
+CHAT_S = [
+    "Tifa\n“Mmh... I can feel it everywhere.”",
+    "Cloud\n“Don't hold your breath.”",
+    "Tifa\n“Who taught you to stretch\n like this?”",
+    "Cloud\n“...Self-taught.”",
+    "Tifa\n“My leg's going to stay up there\n forever.”",
+    "Tifa\n“Ah... ah... flexible... so flexible.”",
+]
+MISSES_S = [
+    "Tifa\n“Ow, ow- too fast!”",
+    "Cloud\n“Easy. Back off a little.”",
+    "Tifa\n“Mmh, cramp! Wait!”",
+    "Tifa\n“Slower... start slower.”",
+]
+HOLDS_S = ["Cloud\n“Deeper. Hold it there.”",
+           "Tifa\n“Ah...! Stay... stay right there...”",
+           "Cloud\n“Breathe. Don't move.”"]
+CUES_S = ["Tifa\n“Okay- okay, let go!”",
+          "Tifa\n“That's my limit! Let go!”",
+          "Tifa\n“Cloud! Leg! Let go!”"]
+GOOD_S = ["Tifa\n“Ohh... I've never been so open.”",
+          "Cloud\n“Good. Again.”",
+          "Tifa\n“You listen... I like that.”"]
+EARLY_S = ["Cloud\n“Not yet. Hold the stretch.”",
+           "Tifa\n“Sorry- slipped.”"]
+MAD_S = ["Tifa\n“My HAMSTRING, Cloud! Let go when\n I say!”",
+         "Tifa\n“When I say stop, you STOP.\n ...Last warning.”"]
+
+# the dares (station -> lines are shared): her setting it, by kind; won; lost
+DARES = [["Tifa\n“Bet you can't keep up if I go\n full speed. Four in a row!”",
+          "Tifa\n“Sprint set! Go go go!”"],
+         ["Tifa\n“Five clean ones. No mistakes.\n Loser buys dinner.”",
+          "Tifa\n“Perfect form, five times. Dare you.”"]]
+DARE_WON = ["Tifa\n“Okay, okay! You win. Show-off.”",
+            "Tifa\n“...Not bad. Dinner's on me.”",
+            "Director\n“YES! Bonus! Keep that energy!”"]
+DARE_LOST = ["Tifa\n“Ha! Too slow, coach!”",
+             "Tifa\n“Dinner's on you. Somewhere nice.”",
+             "Tifa\n“And THAT'S why I'm the athlete.”"]
