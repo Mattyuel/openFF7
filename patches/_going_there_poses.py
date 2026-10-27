@@ -24,7 +24,7 @@ SIDE_FOOT = (3.0, 1.6)              # his planted left foot: this far to his lef
 HEAD_FOOT_UP = 6.4                  # his right ankle this far above her head bone's end (user: his foot went
                                     # through her head: her hair's top is ~3.75 above it, his sole ~1.6 below the ankle)
 HEAD_FOOT_BACK = 0.35               # ...and this share of the way back along her head bone (the hair's highest point)
-SIDE_DOWN = 2.0                     # (user: "move cloud down ... toward the bottom of the screen in his forward
+SIDE_DOWN = 1.0                     # (user: "move cloud down ... toward the bottom of the screen in his forward
                                     # direction") his root this much further forward (he faces the camera), the
                                     # tip kept at her entry by the fit
 PLANK_LEGS = 0.25                   # his legs out behind, this much down (model y per unit back)
