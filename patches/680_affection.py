@@ -35,7 +35,7 @@ UNKNOWN, OF = "????", "/20"
 SKIP = {"whitebg1", "whitebg2", "blin69_2", "trap", "junmon", "subin_4",       # the movie sets (670 / 672)
         "qe", "pass", "hyou14", "xmvtes", "fallp", "m_endo", "rcktin7",       # (rcktin7: 673's Blast-off set)
         "blackbge", "shpin_22", "nivgate3", "hyou12", "blackbg3", "blackbg4",
-        "blackbg5", "blackbg6", "blackbg8", "blackbgh", "blackbg9", "blackbgc", "blackbgb"}   # 677's scene lab, 678 / 679's group sets; (user) every
+        "blackbg5", "blackbg6", "blackbg8", "blackbgh", "blackbg9", "blackbgc", "blackbgb", "blackbgd"}   # 677's scene lab, 678 / 679's group sets; (user) every
         # parody film's set (683-688: Square is a prompt there)
 MAX_TEXTS, MAX_ENTITIES = 254, 48
 

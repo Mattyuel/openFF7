@@ -42,6 +42,11 @@ Existing saves load, but they keep their own story progress; use a new game.
   further right and back along the table, the girl on top a little further from Cloud's face, the girl on
   the floor on one knee with the other foot planted, left hand behind her, right arm reaching up; in the
   vent view nobody is hidden under the table.
+- **Therapy Session** (691): the Director's film menu has "Therapy Session." after Going There: Junon's
+  doctor's office. Cloud and Tifa sit on the couch and take turns telling their secret fantasy; after each,
+  its scene on the couch (Cloud's: him over her, holding her down; Tifa's: her on top), then her finisher.
+  Check they sit on the couch's edge (not floating or sunk), the scenes lie along the couch, and the camera
+  and meter frame the couch.
 - **Going There** (690): the Director's film menu has "Going There." after Besties: Corneo's bedroom.
   Clothed intro (the contract, page nine), then the ride on the bed (Tifa astride facing Cloud's feet,
   slow), head on the floor in front of the bed (a gag at the start, the dirty-talk lesson, then the top

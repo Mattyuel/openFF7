@@ -1092,6 +1092,13 @@ The movie minigame (user's design).
 - `_mods()` 
 - `apply(ctx)` 
 
+## `patches/691_therapy.py`
+(user) Therapy Session (data `_therapy.py`), in the Director's film menu after Going There: set FIELD (a debug room
+
+- `_mods()` 
+- `_layout(ctx, mv, mesh, K)` {position: (girl spot, girl dir, his spot, his dir)} on the couch: 670's relative layout in mds7_w3 (both
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1568,6 +1575,10 @@ Shared helpers for character recruitment scenes.
 
 ## `patches/_stage_show.py`
 (user) The Gold Saucer stage show (674): the troupe, famous from the videos, performs a live erotic
+
+
+## `patches/_therapy.py`
+(user) Therapy Session: a Director's film (691_therapy). "Tifa and Cloud take turns revealing their deepest,
 
 
 ## `patches/_tickets.py`
