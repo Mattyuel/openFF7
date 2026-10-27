@@ -42,6 +42,12 @@ Existing saves load, but they keep their own story progress; use a new game.
   further right and back along the table, the girl on top a little further from Cloud's face, the girl on
   the floor on one knee with the other foot planted, left hand behind her, right arm reaching up; in the
   vent view nobody is hidden under the table.
+- **Gym sessions** (693): Tifa now stands in the Wall Market gym; "Run a session." opens the session menu.
+  Squats with Wedge (a button prompt per squat; three misses in a row and he quits), plank with Biggs (the
+  meter is his hips drifting: [OK] lifts them, [CANCEL] lowers them, 30 s; either end and he collapses),
+  run with Jessie (press [OK] on each "Step!"; in time she speeds up from a walk to a sprint). Check the
+  member stands on the open floor by the ring, the meter shows during the plank, the run's speeds look
+  right, and the fee is paid.
 - **7th Heaven bar shift** (692): Marle stands in 7th Heaven (right of the door area); "Work a shift." takes
   you to the bar. Customers sit on three stools and order: beer {OK}, wine {CANCEL}, spirit {SWITCH} (Square),
   cocktail {MENU} (Triangle). One drink at a time; "Tifa is busy making ..." shows at the top while she

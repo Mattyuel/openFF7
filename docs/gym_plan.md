@@ -392,6 +392,13 @@ parade's (timed button prompts).
 **Day: the gym.** The training minigames (section 6: squats, spotting,
 pacing) and the 80s spandex class (6.1).
 
+- **Built (693, untested in-game):** Tifa in the gym runs a session with the first members: squats with
+  Wedge (prompt game), plank with Biggs (hold his hips steady on the meter: the spotting idea), run with
+  Jessie (step on the beat: pacing). Each pays a fee by score. Not yet: member stats, the records board,
+  the spandex class's rhythm game.
+- **Night: the 7th Heaven bar (692, untested in-game):** drink triage (beer / wine / spirit / cocktail with
+  make times, one at a time, 'Tifa is busy making ...'), rowdy customers Cloud walks out. Started from Marle.
+
 **Day: a shoot (user): parodies with storylines.** The shoots change from
 one position after another into films.
 

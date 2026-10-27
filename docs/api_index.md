@@ -1108,6 +1108,16 @@ The movie minigame (user's design).
 - `_marle(ctx)` Marle in the real 7th Heaven: "Work a shift." -> the set.
 - `apply(ctx)` 
 
+## `patches/693_gym.py`
+(user) The gym's training activities (data `_gym.py`): Tifa in the Wall Market gym (mkt_mens, added at `TIFA_AT`)
+
+- `_mods()` 
+- `_squat(ctx, hrc, n, name)` A bodyweight squat over n frames (frame 0 standing, n/2 at the bottom): hips down and back, the torso leaning
+- `_plank(ctx, hrc, names)` Three 8-frame trembling planks (sag, straight, pike): the body pitched forward (solved: hands on the floor, arms
+- `_tifa(ctx)` Tifa in the real gym: "Run a session." -> the set.
+- `apply(ctx)` 
+- `_bucket(var, blocks)` sag below 4, straight 4-6, pike above 6 (the meter's 11 steps).
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1444,6 +1454,10 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `extend_torso(ctx, hrc)` Her chest part's bottom band (the vertices within TORSO_BAND of its waist end, along the bone) moved
 - `bend(ctx, hrc, stand, srcs, prefix, waist, neck, replant=False)` (user: a third style) copies of `srcs` (her strokes) with the upper body turned `waist` degrees at the
 - `_bend_sign(r, side, fwd, bone)` +1 if turning `bone`'s subtree positively about `side` moves its end towards `fwd`, else -1.
+
+## `patches/_gym.py`
+(user) The gym's training activities (693_gym; plan docs/gym_plan.md sections 5-6): Tifa in the Wall Market gym
+
 
 ## `patches/_hb_shift.py`
 (user) The Honey Bee Inn shift (689_hb_shift): Tifa works a night at the inn, Cloud is security. Three customers
