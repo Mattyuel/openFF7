@@ -12,7 +12,8 @@ SQUAT_AT = (-35, 185)           # Tifa's spot for the squats (open floor between
 FACING = (-1, 0)                # she faces screen-left (side-on to the camera); Cloud behind her
 INTRO_TIFA = (-55, 165)         # the intro: she has just come in...
 INTRO_CLOUD = (-20, 125)         # ...and Cloud is by the floor
-CAMERA_AT = (-80, 230)          # the Director, filming from the left
+CAMERA_GAP, CAMERA_LIFT = 14, 22    # (user: up and left, away from them) the Director placed by `_director.spot`:
+                                    # this many px left of them on screen, his feet this many px higher
 MUSIC = 35                      # AKAO 10 index: COSTA (the movie's music; to choose)
 PROMPT_Y = 40                   # the prompt window's top
 LINE_Y = 168                    # the talk window during the squats (lower half)

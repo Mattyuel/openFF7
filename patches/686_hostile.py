@@ -26,6 +26,7 @@ import importlib
 import math
 import struct
 
+import _director as DR
 import _gestures as GS
 import _hostile as HT
 import _hostile_poses as HP
@@ -41,6 +42,10 @@ BARE_SCARLET, BARE_ELENA = "ZSCA.HRC", "ZELA.HRC"
 DOG = "C"                           # 670's dog position (the girl on the table: on her knees, chest down)
 D0 = 0x40                           # (blin66_6) everyone faces +x: the table
 WALK_STEP = 2.6
+WALK_FAST = 3.0                     # (user: Cloud's intro walk way too slow) steps of 3 x WALK_STEP: the 684 fast walk
+                                    # (2x) at this set's 1.5x scale, the walk anim at speed 2 (strides match)
+TABLE_TILES = (160,)                # blin66_6: the table's draw id (it covered everyone at its front-left corner)
+BG_STATES = ((1, 0), (2, 0))        # blin66_6's init: the chairs (param 1) and desk (2) states on (user: tiles missing)
 
 TIER, STREAK, KEY, PR, P, SEEN, RND, KP, HOLD, HELD, SINCE, NEXTSW, MOVING = ((5, a) for a in range(100, 113))
 CNT, PAY, REPS, PER, GIL, CX, CY = ((6, a) for a in range(114, 128, 2))
@@ -143,11 +148,21 @@ def _poses(ctx):
 
 def apply(ctx):
     PZ = _poses(ctx)
+    # (user) the Director to the right of the action (the front view; the overhead set maps the same spot)
+    ctx.field(HT.BASE_A)
+    fa_ = FieldFile(ctx._orig_raw[HT.BASE_A])
+    h = 93 * HP.SCALE / 512
+    keep = [(x, y, z + dz) for p in (0, 1) for key in ("cloud", "table", "under")
+            for (x, y, z) in [PZ[p][key]] for dz in (0, h)]
+    sx, sy, sz, _ = DR.spot(fa_, keep, side=1, height=h)
+    cx, cy = PZ[1]["cloud"][:2]
+    PZ["director"] = ((sx, sy, sz), DR.facing(sx, sy, cx, cy))
     texts = []
     for field, base, b in ((HT.FIELD_A, HT.BASE_A, False), (HT.FIELD_B, HT.BASE_B, True)):
         texts.append(_build(ctx, field, base, b, PZ))
-    print("  686: Hostile Takeover on %s / %s (P 1 %s, P 0 %s; texts %s, scripts %s bytes)" % (HT.FIELD_A, HT.FIELD_B,
-          {k: v for k, v in PZ[1].items() if k != "names"}, {k: v for k, v in PZ[0].items() if k != "names"},
+    print("  686: Hostile Takeover on %s / %s (P 1 %s, P 0 %s; Director %s; props %s; texts %s, scripts %s bytes)" % (
+          HT.FIELD_A, HT.FIELD_B, {k: v for k, v in PZ[1].items() if k != "names"},
+          {k: v for k, v in PZ[0].items() if k != "names"}, PZ["director"], PZ["prop"],
           [t for t, _ in texts], [s for _, s in texts]))
 
 
@@ -160,6 +175,8 @@ def _build(ctx, field, base, overhead, PZ):
     for slot in range(12):
         trig = tg.set_gateway_field(trig, slot, tg.UNUSED)
     f.set_section("triggers", trig)
+    if not overhead:                                     # (user: the table covered Scarlet and Cloud) its tiles behind
+        dt.tiles_behind(f, lambda i: i in TABLE_TILES, 4090, 4094)
     sec = Script.parse(f.sections[0])
     dt._clear_texts(sec)
     from ff7.walkmesh import Walkmesh
@@ -218,17 +235,18 @@ def _build(ctx, field, base, overhead, PZ):
         ModelLoader.only_anims(ModelLoader.with_hrc(cl0, hb.CLOUD_BARE_HRC, "hostile_cloudb.char"), c_anims[:1] + bare_c),
         ModelLoader.only_anims(ModelLoader.with_hrc(scar_e, BARE_SCARLET, "hostile_scarb.char"), s_anims[:1] + bare_s),
         ModelLoader.only_anims(ModelLoader.with_hrc(elen_e, BARE_ELENA, "hostile_elenb.char"), e_anims[:1] + bare_e))]
+    dm, dfilm, dstill = DR.add(ctx, loader, HP.SCALE)
     assert all(len(ModelLoader.anims(m)) <= 47 for m in loader.models)
     names = ["produce", "cloud", "cloudA", "scarA", "elenA", "cloudB", "scarB", "elenB", "k_sw", "k_ca", "k_ok",
-             "k_mn", "prompt", "talk", "hush"]
+             "k_mn", "prompt", "talk", "hush", "drctr"]
     sec.entity_names = [nm.encode("latin-1").ljust(8, b"\0") for nm in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {nm: i for i, nm in enumerate(names)}
 
     def walk(start, stop, walk_anim, stand_anim, d_end):
-        """(Cloud, user: twice the old pace) XYZI stepped 2 x WALK_STEP a frame, the walk anim at double speed."""
+        """(Cloud, user: faster) XYZI stepped WALK_FAST x WALK_STEP a frame, the walk anim at double speed."""
         (sx_, sy_), (tx, ty) = xf(*start)[:2], xf(*stop)[:2]
-        n = max(1, round(math.dist((sx_, sy_), (tx, ty)) / (2 * WALK_STEP)))
+        n = max(1, round(math.dist((sx_, sy_), (tx, ty)) / (WALK_FAST * WALK_STEP)))
         stx, sty = round((tx - sx_) / n), round((ty - sy_) / n)
         top, done = hb._w(1), asm.nop()
         z = xf(0, 0, 0)[2]
@@ -245,18 +263,26 @@ def _build(ctx, field, base, overhead, PZ):
     fx, fy = HT.FOCUS
     scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0]))] + at((fx, fy), 0) + [hb._visi(0)] +
                            hide() + [asm.ret(), asm.ret()]}
+    (dx, dy, dz), ddir = PZ["director"]
+    gx, gy, gz = xf(dx, dy, dz)
+    scripts[E["drctr"]] = DR.entity(dm, (gx, gy, gz, tri(gx, gy)), dd(ddir), dfilm, dstill, xyzi, mv._animb)
     I = HT.INTRO
     scripts[E["cloudA"]] = {
         0: [Op(bytes([0xA1, 1]))] + at(I["cloud_from"], face(*I["cloud_from"], *I["cloud"])) + [hb._visi(0)] + hide() +
         loop_(0) + [asm.ret(), asm.ret()],
         8: [hb._visi(1)] + walk(I["cloud_from"], I["cloud"], 1, 0, face(*I["cloud"], *I["scarlet"])) + [asm.ret()],
         4: [hb._visi(0), asm.ret()]}
+    def shown_unless_resumed():
+        """VISI 01, or 00 when the shoot resumes after a camera switch (user: the intro's Scarlet and Elena came
+        back at their intro spots)."""
+        resumed, done = asm.nop(), asm.nop()
+        return [asm.if_byte(RESUME, "!=", 1, resumed), hb._visi(1), asm.goto(done), resumed, hb._visi(0), done]
     scripts[E["scarA"]] = {
-        0: [Op(bytes([0xA1, 2]))] + at(I["scarlet"], face(*I["scarlet"], *I["elena"])) + [hb._visi(1)] + hide() +
+        0: [Op(bytes([0xA1, 2]))] + at(I["scarlet"], face(*I["scarlet"], *I["elena"])) + shown_unless_resumed() + hide() +
         loop_(0) + [asm.ret(), asm.ret()],
         4: [hb._visi(0), asm.ret()]}
     scripts[E["elenA"]] = {
-        0: [Op(bytes([0xA1, 3]))] + at(I["elena"], face(*I["elena"], *I["scarlet"])) + [hb._visi(1)] + hide() +
+        0: [Op(bytes([0xA1, 3]))] + at(I["elena"], face(*I["elena"], *I["scarlet"])) + shown_unless_resumed() + hide() +
         loop_(0) + [asm.ret(), asm.ret()],
         4: [hb._visi(0), asm.ret()]}
     for ent, actor in (("cloudA", "cloud"), ("scarA", "scarlet"), ("elenA", "elena")):
@@ -382,7 +408,7 @@ def _build(ctx, field, base, overhead, PZ):
         elif action == "scene":                                            # the position
             main += fade_out + [hb._req(E[a], 4) for a in ("cloudA", "scarA", "elenA")] + \
                 [asm.setbyte(P, 1), asm.setbyte(TIER, 0), asm.setbyte(STYLE, 0)] + \
-                [hb._req(E[a], 2) for a in ("cloudB", "scarB", "elenB")] + [hb._w(20)] + fade_in
+                [hb._req(E[a], 2) for a in ("cloudB", "scarB", "elenB")] + [req(E["drctr"], 2), hb._w(20)] + fade_in
     main += say(HT.HOW)
     main += [asm.setbyte(STREAK, 0), asm.setbyte(SEEN, 0x11), asm.setword(PAY, 0), asm.setword(REPS, 0),
              asm.setbyte(SINCE, 0), asm.setbyte(NEXTSW, HT.SWITCH_MIN), asm.setbyte(HELD, 0),
@@ -391,7 +417,7 @@ def _build(ctx, field, base, overhead, PZ):
     # (user: both angles) arrived from the other set: the shoot's state back, everyone placed, on from the next rep
     main += [resume_] + [asm.setbyte(v, s) for v, s in SAVED] + [asm.setword(v, s) for v, s in SAVED_W] + \
         [asm.setbyte(RESUME, 0), asm.setbyte(HELD, 0), asm.setbyte(TALKING, 0), asm.setbyte(CHAT, 0), asm.setbyte(AC, 0)] + \
-        [hb._req(E[a], 2) for a in ("cloudB", "scarB", "elenB")] + [hb._w(20)] + fade_in + \
+        [hb._req(E[a], 2) for a in ("cloudB", "scarB", "elenB")] + [req(E["drctr"], 2), hb._w(20)] + fade_in + \
         [Op(bytes([0xF2, 0, 0, 0, 0x10, HT.MUSIC]) + bytes(8)), go_]
     n = len(HT.PERIODS)
     rep, wait, judge, hit, miss, rest, tail, holdw, done_h, sw_rep, normal, after = (asm.nop() for _ in range(12))
@@ -519,7 +545,8 @@ def _build(ctx, field, base, overhead, PZ):
     main += [asm.setbyte(RESUME, 0), asm.bitoff((1, 213), 2), hb._uc(0), hb._menu(0), asm.mapjump(ctx.maplist.index(mv.WALL), rx, ry, rt, rdir),
              stop, asm.goto_back(stop)]
     black = Op(bytes.fromhex("6b00000000000104" "00"))
-    scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
+    bg_on = [] if overhead else [Op(bytes([0xE0, 0, prm, st])) for prm, st in BG_STATES]
+    scripts[0] = {0: [black] + bg_on + [asm.ret()] + main + [asm.ret()]}
     dt._blank(sec, scripts)
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()

@@ -23,8 +23,10 @@ FACE_T, FACE_OUT = 0.35, 1.0        # his face: this far up his head bone, this 
 STANCE = 3.2                        # his feet this far out (she lies between them)
 FACE_IN = 0.4                       # (user: "buried") his face this far into her, past her entry point
 HANDS_OUT = 3.4                     # style 1: his hands flat on the table this far either side
-UNDER_PROP = 35                     # her (on her back): upper body propped up this far (686 solves it per girl)
-UNDER_HEAD = 30                     # her head tipped forward (face up at him)
+UNDER_PROP = 35                     # her torso this far up from lying flat (686 solves it per girl)
+UNDER_HEAD = 20                     # her head tipped back (face up at him)
+UNDER_SIT, UNDER_SPREAD = 82, 22    # (user: kneeling, leaning back) her thighs forward of straight down / apart
+UNDER_HANDS = (2.4, 1.8)            # her hands on the floor this far behind her hips / either side
 UNDER_BOB, UNDER_NOD = 7, 10        # her bob: the upper body's pitch / her head's nod each way (degrees)
 MOUTH_T, MOUTH_OUT = 0.3, 0.9       # her mouth: up her head bone, out towards her face
 SHAKE_DEG, SHAKE_N, TRY_FRAMES = 24, 8, 90
@@ -52,38 +54,31 @@ def _subtree(sk, top):
 
 
 def under(ctx, prop=None, probe=False):
-    """QHU0-3 / QHU8 / QHU7 on Ruby (user's sketch: reclining under him): on her back (620 `_on_back`: knees up and
-    apart), her upper body propped up `prop` degrees about her waist, her head tipped forward to face up at
-    him; bobbing (the prop and her head's nod) with each stroke, highest at 7/15. Returns the names."""
-    from ff7 import fieldanim as fa
+    """QHU0-3 / QHU8 / QHU7 on Ruby, (user: "she should be kneeling but leaning back") kneeling under him facing
+    away from the table, sitting back towards her heels (`UNDER_SIT`), arched back about her waist until her
+    torso is `prop` degrees up from lying flat, hands planted on the floor behind her, her face up at him (686
+    bisects `prop` so her mouth is at his tip: more upright = higher); bobbing (the arch and her head's nod) with
+    each stroke, highest at 7/15; QHU7 her head shaking (tapping out). Returns the names. (Was on her back,
+    propped up: 620 `_on_back`.)"""
+    import _besties_rig as RG
     mv, sp, CP = _mods()
-    hb = __import__("importlib").import_module("620_honey_bee")
     prop = UNDER_PROP if prop is None else prop
-    if not getattr(ctx, "_hostile_back", None):
-        hb._on_back(ctx, name="QHUB.tor")
-        ctx._hostile_back = True
-    sk = fa.skeleton(ctx.char_file(mv.RUBY_HRC).decode("latin-1"))
-    I = [b[0] for b in sk].index
-    rr, rp, rots = fa.Anim(ctx.char_file("qhub.a")).frames[0]
-    root = [rp[0], -rp[1], rp[2]]
-    W0 = [m for m, _, _ in fa.forward(sk, rr, root, rots)]
-    x = [1.0, 0.0, 0.0]
-    upper, head = _subtree(sk, "chest"), _subtree(sk, "head")
-
-    def head_y(sg):
-        R = fa.axis_angle(x, sg * 20)
-        W = [fa._mul(R, m) if i in upper else m for i, m in enumerate(W0)]
-        return fa.forward(sk, rr, root, fa.local_rotations(sk, rr, W))[I("head")][2][1]
-    sg = 1 if head_y(1) < head_y(-1) else -1                                # (y down: smaller = higher)
 
     def frame(pitch, nod, shake=0.0):
-        R = fa.axis_angle(x, sg * pitch)
-        W = [fa._mul(R, m) if i in upper else m for i, m in enumerate(W0)]
-        Rh = fa.axis_angle(x, sg * (UNDER_HEAD + nod))                       # her chin down: face up to him
-        if shake:
-            Rh = fa._mul(fa.axis_angle([0.0, 1.0, 0.0], shake), Rh)
-        W = [fa._mul(Rh, m) if i in head else m for i, m in enumerate(W)]
-        return (rr, [root[0], -root[1], root[2]], fa.local_rotations(sk, rr, W))
+        rg = RG.Rig(ctx, mv.RUBY_HRC, mv.RUBY_STAND).start(RG.turn(0))
+        back = 90 - pitch                                   # degrees back from upright
+        rg.pelvis(RG.bow(-back * 0.45))
+        rg.waist(RG.bow(-back * 0.55))
+        rg.neck(RG.chain(RG.turn(shake), RG.bow(-UNDER_HEAD + nod)))
+        RG.kneel(rg, UNDER_SIT, UNDER_SPREAD, -0.45)
+        E_ = rg.ends()
+        bk = RG.fa._vec(rg.G, [0.0, 0.0, 1.0])            # behind her
+        for s_, sx in (("l", 1), ("r", -1)):
+            hand = RG.add(RG.add(E_["hip@"], RG.mul(bk, UNDER_HANDS[0])), [sx * UNDER_HANDS[1], 0.0, 0.0])
+            hand[1] = -0.3                                  # (y down) on the floor
+            rg.ik(s_ + "_uparm", s_ + "_foarm", hand, [sx * 1.0, 0.0, 0.6])
+        RG.hang_hair(rg, 0.2)
+        return rg.frame()
     deep = 7 / 15
     wave = lambda u: math.cos(2 * math.pi * (u - deep))                     # 1 at the deepest
     names = []

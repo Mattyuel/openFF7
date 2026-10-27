@@ -23,6 +23,7 @@ import math
 import struct
 
 import _female_body as fb
+import _director as DR
 import _gestures as GS
 import _workout as WO
 import _workout_poses as WP
@@ -215,8 +216,12 @@ def _set(ctx, donor, stand, poses):
         if who == "t":
             scripts[E[ent]][6] = ch(IX, [canm(1 + k, bottom(t), bottom(t) + max(2, WO.PERIODS[t] // 7))
                                          for k, (st, t) in enumerate(combos)]) + [asm.ret()]
-    mx, my = WO.CAMERA_AT
-    scripts[E["camera"]] = {0: [Op(bytes([0xA1, 5])), xyzi(mx, my, 0, tri(mx, my)), d_(face(mx, my, sx, sy)),
+    # (user: "move him up and left away from Tifa and Cloud") screen-left of them, further back, clear of both
+    keep = [(sx, sy, 0), (sx, sy, 80)] + [(*behind(pt, st, t), z) for pt in ("A", "B") for st in range(WP.STYLES[pt])
+                                           for t in (0, n - 1) for z in (0, 95)]
+    mx, my, _, mt = DR.spot(f, keep, side=-1, gap=WO.CAMERA_GAP, lift=WO.CAMERA_LIFT)
+    print("  683: the Director at", (mx, my))
+    scripts[E["camera"]] = {0: [Op(bytes([0xA1, 5])), xyzi(mx, my, 0, mt), d_(face(mx, my, sx, sy)),
                                 hb._visi(1)] + hide() + loop_(still) + [asm.ret(), asm.ret()],
                             2: loop_(film) + [asm.ret()]}
     # the buttons: one small entity each (8 ops a frame): a press = up -> down; PR = its number; HELD bit k

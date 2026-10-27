@@ -23,6 +23,7 @@ import importlib
 import math
 import struct
 
+import _director as DR
 import _besties as BS
 import _besties_poses as BP
 from ff7 import asm
@@ -142,6 +143,8 @@ def apply(ctx):
     assert all(len(ModelLoader.anims(m)) <= 47 for m in loader.models)
     names = ["produce", "cloud", "cloudA", "tifaA", "aerA", "cloudB", "tifaB", "aerB", "k_sw", "k_ca", "k_ok", "k_mn",
              "prompt", "talk", "hush"]
+    dm, dfilm, dstill = DR.add(ctx, loader)                             # (user) the Director, beside the action
+    names.append("drctr")
     sec.entity_names = [nm.encode("latin-1").ljust(8, b"\0") for nm in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {nm: i for i, nm in enumerate(names)}
@@ -299,7 +302,8 @@ def apply(ctx):
         elif action == "bare":
             main += fade_out + [hb._req(E[a], 4) for a in ("cloudA", "tifaA", "aerA")] + \
                 [hb._req(E[a], 3) for a in actors] + [hb._w(10)] + fade_in
-    main += say(BS.HOW) + [asm.setword(PAY, 0), asm.setword(HITS, 0), asm.setbyte(HELD, 0), asm.setbyte(ANGER, 0)]
+    main += say(BS.HOW) + [req(E["drctr"], 2), asm.setword(PAY, 0), asm.setword(HITS, 0), asm.setbyte(HELD, 0),
+                          asm.setbyte(ANGER, 0)]
     # the segments
     n = len(BS.PERIODS)
     for s, sg in enumerate(BS.SEGMENTS):
@@ -429,6 +433,9 @@ def apply(ctx):
              stop, asm.goto_back(stop)]
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
+    scripts[E["drctr"]], dspot = DR.place(f, scripts, [E[a] for a in ("cloudA", "tifaA", "aerA", "cloudB", "tifaB", "aerB")], dm, dfilm, dstill, hb._xyzi,
+                                          mv._animb)
+    print("  687: the Director at", dspot)
     dt._blank(sec, scripts)
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()

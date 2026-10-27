@@ -1302,6 +1302,16 @@ Dates with the Honey Bee girls (docs/dates_plan.md): data.
 (user) The revelation: once a date girl is at affection 20 and has made a video with Cloud
 
 
+## `patches/_director.py`
+(user: "Add the director to the right of this scene (also to any other scenes he's missing from without him
+
+- `add(ctx, loader, scale=None)` His model appended to `loader` (the movie's donor, rescaled to the set; `scale` = an entry scale to force,
+- `spot(f, keep, side=1, gap=10, height=95, lift=0, fit=None)` A floor point for him (None if there's none), `side` 1 = screen-right of the action (-1 left): his screen box (feet to `height`
+- `entity(model, at, d, film, still, xyzi, animb)` His entity: init standing still at `at` (x, y, z, triangle) facing DIR d; 2 filming; 3 still. animb = a
+- `facing(x, y, tx, ty)` DIR facing from (x, y) to (tx, ty).
+- `keep_from(scripts, ents, height=95)` The field points `ents`' scripts (entity indices in `scripts` {entity: {slot: ops}}) are placed at by
+- `place(f, scripts, ents, model, film, still, xyzi, animb, side=1, **kw)` His entity's scripts, placed `side` of every XYZI the actor entities `ents` use (`spot`), facing the
+
 ## `patches/_female_body.py`
 The standard female body (user): Skye's bare body from the neck down, built by
 
@@ -1383,7 +1393,7 @@ Honey Bee visit scenes at higher affection (_honey_bee_gifts: 10-19 =
 - `_mods()` 
 - `unit()` 
 - `_subtree(sk, top)` 
-- `under(ctx, prop=None, probe=False)` QHU0-3 / QHU8 / QHU7 on Ruby (user's sketch: reclining under him): on her back (620 `_on_back`: knees up and
+- `under(ctx, prop=None, probe=False)` QHU0-3 / QHU8 / QHU7 on Ruby, (user: "she should be kneeling but leaning back") kneeling under him facing
 - `joints(ctx, hrc, anim)` Per frame: {bone: end, bone@: start, bone#: world matrix, root} (model space, y down).
 - `mouth(ctx, hrc, stand, J)` 
 - `_bow(ctx)` (him, face-point function, the bowing pose's dict).

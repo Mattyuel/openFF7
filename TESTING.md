@@ -49,6 +49,14 @@ Existing saves load, but they keep their own story progress; use a new game.
   her). Check: nobody passes through anybody, the hips' rocking reads well
   (not too much), the bed / rug items no longer draw over anyone, and the
   stack's "my turn" switch (Cloud between Tifa and Aerith's mouth).
+- **Hostile Takeover, fixes** (686): the front view's chairs and desk should be
+  back (tiles were missing), the table no longer drawn over Scarlet or Cloud,
+  Cloud's walk in faster, Elena (or Scarlet) kneeling under him leaning back
+  rather than lying, and after a camera switch the intro's Scarlet / Elena
+  should not reappear. The Director stands at the table's near right corner.
+- **The Director** in every parody film (683-687): he should stand to one side
+  of the action without covering anyone (Workout: further up and left than
+  before), still in the intro, filming once the scene starts.
 - **Hostile Takeover** (686): the Director's film menu, fourth choice. The
   board meeting in Shinra's 66F boardroom, then the position at the table's
   front-left corner (everyone drawn 1.5x bigger in this room). Every 5 reps

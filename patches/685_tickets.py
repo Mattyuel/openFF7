@@ -23,6 +23,7 @@ import importlib
 import math
 import struct
 
+import _director as DR
 import _female_body as fb
 import _gestures as GS
 import _tickets as TK
@@ -196,6 +197,8 @@ def apply(ctx):
     # entities
     names = ["produce", "cloud", "cloudA", "tifaA", "jessA", "cloudB", "tifaB", "jessB", "elec", "light",
              "turi1", "turi2", "doors", "k_sw", "k_ca", "k_ok", "k_mn", "prompt", "talk", "hush"]
+    dm, dfilm, dstill = DR.add(ctx, loader)                             # (user) the Director, beside the action
+    names.append("drctr")
     sec.entity_names = [nm.encode("latin-1").ljust(8, b"\0") for nm in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {nm: i for i, nm in enumerate(names)}
@@ -375,7 +378,7 @@ def apply(ctx):
         elif action == "scene":                                            # the position
             main += fade_out + [hb._req(E[a], 4) for a in ("tifaA", "jessA")] + \
                 [asm.setbyte(P, 0), asm.setbyte(TIER, 0), asm.setbyte(STYLE, 0)] + \
-                [hb._req(E[a], 2) for a in ("cloudB", "tifaB", "jessB")] + [hb._w(20)] + fade_in
+                [hb._req(E[a], 2) for a in ("cloudB", "tifaB", "jessB")] + [req(E["drctr"], 2), hb._w(20)] + fade_in
     main += say(TK.HOW)
     main += [asm.setbyte(STREAK, 0), asm.setbyte(SEEN, 0x11), asm.setword(PAY, 0), asm.setword(REPS, 0),
              asm.setbyte(SINCE, 0), asm.setbyte(NEXTSW, TK.SWITCH_MIN), asm.setbyte(HELD, 0),
@@ -497,6 +500,9 @@ def apply(ctx):
              stop, asm.goto_back(stop)]
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
+    scripts[E["drctr"]], dspot = DR.place(f, scripts, [E[a] for a in ("cloudA", "tifaA", "jessA", "cloudB", "tifaB", "jessB")], dm, dfilm, dstill, hb._xyzi,
+                                          mv._animb)
+    print("  685: the Director at", dspot)
     dt._blank(sec, scripts)
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()
