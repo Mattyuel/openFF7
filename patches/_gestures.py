@@ -14,7 +14,8 @@ ANIMS = {
               "coy": "EGIC.yos", "impatient": "BDCC.aki", "lookaround": "AUEE.yos", "formal": "EGGD.yos"},
     "tifa": {"hips": "AQFE.yos", "ready": "FDCF.yos", "think": "BTCC.tak", "pose": "EPDF.yos", "lean": "ARFB.kei",
              "hiprock": "ZGHR.tor"},
-    "jessie": {"arms": "CNJA.tor", "hips": "CNJE.tor", "point": "BXJA.yos"},
+    "jessie": {"arms": "CNJA.tor", "hips": "CNJE.tor", "point": "BXJA.yos",
+               "lookl": "ZGJL.tor", "lookr": "ZGJR.tor", "nod": "ZGJN.tor"},
     "scarlet": {"hip": "EHBC.yos", "laugh": "FFDE.yos"},
     "elena": {"chest": "ETDC.kei", "shrug": "CGCF.aki", "hop": "AVFD.yos", "clasp": "EWBC.tak"},
 }
@@ -77,7 +78,36 @@ def _hiprock(ctx, hrc, name):
     return RG.save(ctx, name, "abcd.a", frames)
 
 
-BUILT = {"ZGHR.tor": _hiprock}
+# (user: "Jessie's seated animation is really bad ... just add a new animation where she turns her head rather than
+# her arms. this is a poor quality model") seated head moves: her sitting frame held, only the head turning
+# (degrees to her left, + = left; nod degrees down), eased out and back over `frames`, held at the turn
+LOOK = {"ZGJL": dict(yaw=35, nod=0), "ZGJR": dict(yaw=-35, nod=0), "ZGJN": dict(yaw=10, nod=14)}
+LOOK_FRAMES, LOOK_HOLD = 60, 0.4       # frames; share of them held at the turn
+
+
+def _look(ctx, hrc, name, sit=None):
+    import math
+    import _besties_rig as RG
+    assert sit, "a head look is a seated gesture"
+    c = LOOK[name]
+    frames = []
+    for k in range(LOOK_FRAMES):
+        t = k / (LOOK_FRAMES - 1)
+        rise = (1 - LOOK_HOLD) / 2
+        u = min(1.0, t / rise, (1 - t) / rise)
+        w = u * u * (3 - 2 * u)                                             # (smoothstep in, held, out)
+        if c["nod"]:
+            w2 = math.sin(math.pi * min(1.0, 2 * t)) if t < 0.5 else 0.0      # one nod in the first half
+        rg = RG.Rig(ctx, hrc, sit).start(RG.basis(RG.LEFT, RG.UP))
+        R = RG.turn(c["yaw"] * w)
+        if c["nod"]:
+            R = RG.chain(R, RG.bow(c["nod"] * w2))
+        rg.neck(R)
+        frames.append(rg.frame())
+    return RG.save(ctx, name, sit.split(".")[0].lower() + ".a", frames)
+
+
+BUILT = {"ZGHR.tor": _hiprock, "ZGJL.tor": _look, "ZGJR.tor": _look, "ZGJN.tor": _look}
 
 
 def anims(ctx, gestures, actor, who, hrc=None, sit=None, prefix=None):
@@ -87,7 +117,8 @@ def anims(ctx, gestures, actor, who, hrc=None, sit=None, prefix=None):
     for k, g in enumerate(used(gestures, actor)):
         a = ANIMS[who][g]
         if a in BUILT:
-            a = BUILT[a](ctx, hrc or "AAGB.HRC", a.split(".")[0])
+            a = (BUILT[a](ctx, hrc, a.split(".")[0], sit=sit) if BUILT[a] is _look else
+                 BUILT[a](ctx, hrc or "AAGB.HRC", a.split(".")[0]))
         out.append(seated(ctx, hrc, a, sit, "%s%s" % (prefix, "ABCDEFGH"[k])) if sit else a)
     return out
 

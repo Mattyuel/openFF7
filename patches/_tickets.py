@@ -86,10 +86,11 @@ INTRO_LINES = [
 ]
 # (user: more variety in the intros) intro line -> [(actor, gesture)] (`_gestures.ANIMS`; the girls' seated
 # copies; "cloudB" = Cloud in his alt model, after "bare")
-INTRO_GESTURES = {1: [("jessie", "arms")], 2: [("tifa", "lean")], 3: [("cloud", "point")], 4: [("jessie", "hips")],
-                  5: [("tifa", "hips")], 6: [("jessie", "point")], 7: [("cloud", "formal")], 8: [("tifa", "think")],
-                  11: [("jessie", "arms")], 12: [("tifa", "lean")], 13: [("jessie", "point")], 14: [("tifa", "think")],
-                  15: [("jessie", "hips"), ("cloudB", "coy")], 16: [("tifa", "hips")], 19: [("cloudB", "shakehead")]}
+# (user: Jessie's seated arm gestures looked bad on her model) she only turns / nods her head
+INTRO_GESTURES = {1: [("jessie", "lookl")], 2: [("tifa", "lean")], 3: [("cloud", "point")], 4: [("jessie", "nod")],
+                  5: [("tifa", "hips")], 6: [("jessie", "lookr")], 7: [("cloud", "formal")], 8: [("tifa", "think")],
+                  11: [("jessie", "lookl")], 12: [("tifa", "lean")], 13: [("jessie", "lookr")], 14: [("tifa", "think")],
+                  15: [("jessie", "nod"), ("cloudB", "coy")], 16: [("tifa", "hips")], 19: [("cloudB", "shakehead")]}
 HOW = ("Press the button shown in time. HOLD:\nkeep it held to the end. When they\ncall My turn!, press {PURPLE}[MENU]{WHITE} in time."
        "{NEW}With Jessie, a HOLD lasts until she taps\nout: let go the moment she does, or\nshe'll get mad.")
 

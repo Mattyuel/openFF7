@@ -20,7 +20,6 @@ BASE = "snmayor"                # Gast's house
 BED = ((132, 532), (214, 572), (149, 716), (67, 675))    # the bed's walkable top: foot A B, head C D
 BED_Z = 47
 CARPET = (-20, 610)             # the rug left of the bed: where the kneeling segment happens
-STAIRS_FOOT = (-60, 520)        # the intro: they come in from the stairs' foot
 ARRIVE = (-20, 600)
 MUSIC = 49                      # AKAO 10 index: DATE (the Gold Saucer date's theme: sweet)
 PROMPT_Y = 30
@@ -46,11 +45,11 @@ KEYS = [(0x80, "{PURPLE}[SWITCH]{WHITE}"), (0x40, "{PURPLE}[CANCEL]{WHITE}"), (0
 SWITCH_KEY = (0x10, "{PURPLE}[MENU]{WHITE}")
 HOLD_LABEL = "HOLD "
 
-# the intro: (line, action) actions: walk_in (both from the stairs), gesture_t / gesture_a <anim> (a dress anim
+# the intro: (line, action) actions: gesture_t / gesture_a <anim> (a dress anim
 # once), sit (all three on the bed's edge, Cloud between them), bare (fade: undressed, standing). (user: the
 # roleplay is scripted: the Director's script, not their idea; play on the cheating more)
 INTRO = [
-    ("(Snow taps at the windows of the old house at the edge of Icicle\n Inn. Down the stairs come two familiar dresses.)", "walk_in"),
+    ("(Snow taps at the windows of the old house at the edge of Icicle\n Inn. Two familiar dresses stand face to face,\n deep in conversation.)", None),
     ("Aerith\n“Ta-da! Wall Market's finest, back by\n popular demand.”", ("gesture_a", "DADD")),
     ("Tifa\n“I can't believe we kept them. Do they\n still... look okay?”", ("gesture_t", "APGC")),
     ("Cloud\n“...You both look incredible.”", None),

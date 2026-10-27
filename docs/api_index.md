@@ -1416,6 +1416,7 @@ The standard female body (user): Skye's bare body from the neck down, built by
 - `used(gestures, actor)` The gestures `actor` plays in a film, in slot order.
 - `seated(ctx, hrc, gesture, sit, name)` A copy of `gesture` (anim name) with every frame's root, lower body and chest (`LOWER`) from `sit`'s
 - `_hiprock(ctx, hrc, name)` Standing, hands on her hips (two-bone IK to just above each hip joint, out to the side), hips rocking side to
+- `_look(ctx, hrc, name, sit=None)` 
 - `anims(ctx, gestures, actor, who, hrc=None, sit=None, prefix=None)` The anim names to append to `actor`'s model ('who' = the ANIMS table); seated copies named
 - `slots(gestures, actor, first, stand, animb)` {slot: ops}: each gesture once (ANIME1 waits in the actor's own slot), back to anim `stand`; `first` =
 - `reqs(gestures, i, entity)` REQs (no wait) of line i's gestures; entity(actor) -> entity index.

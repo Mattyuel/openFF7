@@ -183,14 +183,17 @@ def apply(ctx):
     scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0])), xyzi(fx, fy, 0, tri(fx, fy)), d_(0),
                                hb._visi(0)] + hide() + [asm.ret(), asm.ret()]}
     S = PL["stand"]
-    sx_, sy_ = BS.STAIRS_FOOT
-    # the intro actors: 8 walk in, 3 sit, 10 / 11 gestures (once, back to the stand), 4 hidden
+    # the intro actors: 3 sit, 10 / 11 gestures (once, back to the stand), 4 hidden
     scripts[E["cloudA"]] = {0: [Op(bytes([0xA1, 1]))] + at(S["cloud"]) + [hb._visi(1)] + hide() + loop_(0) + [asm.ret(), asm.ret()],
                             3: at(PL["sit"]["cloud"]) + loop_(2) + [asm.ret()],
                             4: [hb._visi(0), asm.ret()]}
+    # (user: "the girls shouldn't spawn in but would start already in the scene and not in the same spot ... face to
+    # face standing and talking") each on her own standing spot from the start, turned to the other
     for ent, model, who, k in (("tifaA", 2, "tifa", "t"), ("aerA", 3, "aerith", "a")):
-        sc = {0: [Op(bytes([0xA1, model])), xyzi(sx_, sy_, 0, tri(sx_, sy_)), hb._visi(0)] + hide() + loop_(0) + [asm.ret(), asm.ret()],
-              8: [hb._visi(1)] + walk(BS.STAIRS_FOOT, S[who][0][:2], 1, 0, S[who][1]) + [asm.ret()],
+        me, other = S[who][0], S["aerith" if who == "tifa" else "tifa"][0]
+        sc = {0: [Op(bytes([0xA1, model])), xyzi(me[0], me[1], me[2], tri(me[0], me[1])),
+                  d_(dt._dir_to(other[0] - me[0], other[1] - me[1])), hb._visi(1)] + hide() + loop_(0) +
+             [asm.ret(), asm.ret()],
               3: at(PL["sit"][who]) + loop_(2) + [asm.ret()],
               4: [hb._visi(0), asm.ret()]}
         for j, g_ in enumerate(GESTURES[k]):
@@ -305,9 +308,7 @@ def apply(ctx):
     main = [hb._uc(1), hb._menu(1), hb._w(20)] + fade_in + [Op(bytes([0xF2, 0, 0, 0, 0x10, BS.MUSIC]) + bytes(8))]
     for line, action in BS.INTRO:
         main += say(line)
-        if action == "walk_in":
-            main += [req(E["tifaA"], 8), hb._w(24), hb._req(E["aerA"], 8), hb._w(10)]
-        elif isinstance(action, tuple):
+        if isinstance(action, tuple):
             who = "tifaA" if action[0] == "gesture_t" else "aerA"
             k = "t" if who == "tifaA" else "a"
             j = [g_.split(".")[0] for g_ in GESTURES[k]].index(action[1])

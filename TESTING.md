@@ -44,6 +44,7 @@ Existing saves load, but they keep their own story progress; use a new game.
   vent view nobody is hidden under the table.
 - **Intro walks** (684-687): at the end of a walk Cloud now turns the short way round (he spun the long way).
   Hostile Takeover: he walks in from further right at a normal pace with his legs moving (he slid before).
+  Tickets: Jessie (seated, intro) now only turns / nods her head, no arm moves.
   Tickets: he stops further from the girls. Sector 7 Workout: two more squat styles (overhead squats in part
   one, a split squat in part two) in the rotation.
 - **Gym sessions** (693): Tifa now stands in the Wall Market gym; "Run a session." opens the session menu.
@@ -107,8 +108,8 @@ Existing saves load, but they keep their own story progress; use a new game.
   should ease back out of her mouth, sway his hips left and right three times (head steady, feet planted) and
   ease back in before the strokes restart (about 2 s). She holds still meanwhile.
 - **Besties** (687): the Director's film menu, fifth choice. The old house
-  in Icicle Inn: Tifa and Aerith come down the stairs in their Wall Market
-  dresses, gesture, all three sit on the bed and read the Director's script
+  in Icicle Inn: Tifa and Aerith already stand in the room face to face in their
+  Wall Market dresses, talking (no walk in), gesture, all three sit on the bed and read the Director's script
   ("The Best Friend's Boyfriend"), undressed; then five positions of the same
   length, every one across the bed's left edge and out over the rug so the
   three are side by side on screen: Tifa on the edge with Cloud kneeling to
