@@ -42,6 +42,10 @@ Existing saves load, but they keep their own story progress; use a new game.
   further right and back along the table, the girl on top a little further from Cloud's face, the girl on
   the floor on one knee with the other foot planted, left hand behind her, right arm reaching up; in the
   vent view nobody is hidden under the table.
+- **Intro walks** (684-687): at the end of a walk Cloud now turns the short way round (he spun the long way).
+  Hostile Takeover: he walks in from further right at a normal pace with his legs moving (he slid before).
+  Tickets: he stops further from the girls. Sector 7 Workout: two more squat styles (overhead squats in part
+  one, a split squat in part two) in the rotation.
 - **Gym sessions** (693): Tifa now stands in the Wall Market gym; "Run a session." opens the session menu.
   Squats with Wedge (a button prompt per squat; three misses in a row and he quits), plank with Biggs (the
   meter is his hips drifting: [OK] lifts them, [CANCEL] lowers them, 30 s; either end and he collapses),

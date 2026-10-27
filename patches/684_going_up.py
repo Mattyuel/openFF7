@@ -222,7 +222,7 @@ def apply(ctx):
              Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], Z, tri(*start))),
              Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done] + \
             at((sx + n * stx, sy + n * sty), face(sx, sy, tx, ty)) + loop_(stand_anim) + \
-            [Op(bytes([0xB4, 0, d_end % 256, 0, 8, 2])), Op(b"\xDE")]       # (user: no snapping) where the last step
+            [Op(bytes([0xB4, 0, d_end % 256, 2, 8, 2])), Op(b"\xDE")]       # (user: no snapping) where the last step
                                                                           # lands, then a turn on the spot
     scripts = {}
     fx, fy = GU.FOCUS

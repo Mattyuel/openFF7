@@ -22,8 +22,10 @@ CLOUD_HRC, CLOUD_STAND = "aaaa.hrc", "acfe.a"
 HIP_BELOW = 0.3                     # at the bottom he sinks this much further than her drop scaled to his height
 HAND_OUT, HAND_UP = 0.35, 0.9       # his hands: this far outside her hip joints, this far up (on her waist)
 CLOUD_STANCE = 1.1                  # his feet this far further out to each side (his knees go round her)
-STYLES = {"A": 2, "B": 3}           # (user: variations) styles per part
-LETTERS = {("A", 0): "A", ("B", 0): "B", ("A", 1): "C", ("B", 1): "D", ("B", 2): "E"}
+STYLES = {"A": 3, "B": 4}           # (user: variations; since: "needs more variety") styles per part
+LETTERS = {("A", 0): "A", ("B", 0): "B", ("A", 1): "C", ("B", 1): "D", ("B", 2): "E", ("A", 2): "F", ("B", 3): "G"}
+OVERHEAD = (172, 0, 0.98)           # A2: her arms straight up overhead (each a little out)
+SPLIT = 2.8                         # B3: split stance, her left foot this far forward, the right back
 SUMO_STANCE = 1.7                   # A1: her feet this far further out
 COCK_LEG = (2.4, 5.2, 1.4)          # B1: his left ankle moved (out, up, forward): knee up and out beside her hip
 TOE_LEAN = 84                       # B2: her lean (degrees) folded over, hands hanging to her toes
@@ -70,6 +72,14 @@ def her_pose(part, tier, u, style=0):
         arm = (6, lean, 1.0)
         return dict(drop=(1.2 + 0.4 * f) * s, shift=(0, -0.5 * s + rock), lean=(lean, 0, 0), head=(-lean * 0.6, 0, 0),
                     leg_l=(0.7, 0, 0), leg_r=(0.7, 0, 0), arm_l=arm, arm_r=arm)
+    if part == "A" and style == 2:                                      # overhead squat, arms straight up
+        lean = 6 + 8 * s
+        return dict(drop=(3.6 + 0.6 * f) * s, shift=(0, -0.4 * s + rock), lean=(lean, 0, 0), head=(-lean * 0.3, 0, 0),
+                    leg_l=(0.8, 0, 0), leg_r=(0.8, 0, 0), arm_l=OVERHEAD, arm_r=OVERHEAD)
+    if part == "B" and style == 3:                                      # split squat, hands on her knees
+        lean = 34 + 18 * f + 10 * s
+        return dict(drop=(3.0 + 0.5 * f) * s, shift=(0, -0.6 * s + rock), lean=(lean, 0, 0), head=(-lean * 0.7, 0, 0),
+                    leg_l=(0.4, 0, SPLIT), leg_r=(0.4, 0, -SPLIT), arm_l="knee", arm_r="knee")
     if part == "A":
         lean = 12 + (16 + 10 * f) * s
         return dict(drop=(3.4 + 0.6 * f) * s, shift=(0, -0.7 * s + rock), lean=(lean, 0, 0), head=(-lean * 0.6, 0, 0),

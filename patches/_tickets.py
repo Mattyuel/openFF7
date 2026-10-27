@@ -20,7 +20,8 @@ JESSIE_NECK_X = -71             # her neck joint here: her head hangs over the e
 SIT_X = -92                     # the intro: both sitting here (their hips over the bench), facing the aisle
 ARRIVE = (-30, -150)            # (670's MAPJUMP; the init moves the hidden player to FOCUS)
 FOCUS = (-48, -215)             # the hidden player (the camera follows it)
-CLOUD_FROM, CLOUD_TO = (0, 150), (-38, -232)    # the inspector walks down the aisle to them
+CLOUD_FROM, CLOUD_TO = (0, 150), (-12, -232)    # the inspector walks down the aisle to them (user: stopped too
+                                                # close: was x -38, the girls' knees reach ~-70)
 MUSIC = 45                      # AKAO 10 index: RHYTHM (the Turks' Theme, as Going up)
 PROMPT_Y = 30
 LINE_Y = 168

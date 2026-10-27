@@ -99,7 +99,8 @@ MISSES_A = [
 ]
 
 STYLE_A = [["Cloud\n“Back to a normal stance.\n Hands forward.”"],
-           ["Cloud\n“Wide stance. Hands behind your\n head. Sumo squats.”", "Tifa\n“Ooh, I feel that in a\n whole new place.”"]]
+           ["Cloud\n“Wide stance. Hands behind your\n head. Sumo squats.”", "Tifa\n“Ooh, I feel that in a\n whole new place.”"],
+           ["Cloud\n“Arms straight up. Reach for the\n ceiling and sit down.”", "Tifa\n“Overhead squats? Show-off.\n ...Okay, these are hard.”"]]
 HOLDS_A = ["Cloud\n“Pause at the bottom. Hold it there.”",
            "Cloud\n“Stay down. I've got you.”",
            "Cloud\n“Hold... don't come up yet.”"]
@@ -147,7 +148,8 @@ MISSES_B = [
 ]
 STYLE_B = [["Cloud\n“Back to it. Hands on your knees.”"],
            ["Tifa\n“Cloud... what are you doing with\n your leg?”", "Cloud\n“Better angle.”"],
-           ["Cloud\n“Now fold all the way over. Touch\n your toes.”", "Tifa\n“Like this...? Oh. OH.”"]]
+           ["Cloud\n“Now fold all the way over. Touch\n your toes.”", "Tifa\n“Like this...? Oh. OH.”"],
+           ["Cloud\n“Split stance. One foot forward,\n hands on your knee.”", "Tifa\n“Lunges? Now? You're a\n sadist, coach. ...Don't stop.”"]]
 HOLDS_B = ["Cloud\n“Stay down. Right there.”",
            "Tifa\n“Ah... hold me there...”",
            "Cloud\n“Don't move.”"]

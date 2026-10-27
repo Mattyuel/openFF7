@@ -44,8 +44,9 @@ BARE_SCARLET, BARE_ELENA = "ZSCA.HRC", "ZELA.HRC"
 DOG = "C"                           # 670's dog position (the girl on the table: on her knees, chest down)
 D0 = 0x40                           # (blin66_6) everyone faces +x: the table
 WALK_STEP = 2.6
-WALK_FAST = 3.0                     # (user: Cloud's intro walk way too slow) steps of 3 x WALK_STEP: the 684 fast walk
-                                    # (2x) at this set's 1.5x scale, the walk anim at speed 2 (strides match)
+WALK_FAST = 1.5                     # (user: Cloud's intro walk way too slow; since: he slid without animating, 15 frames
+                                    # at 3x) steps of 1.5 x WALK_STEP: a walk at this set's 1.5x scale, walk anim speed 1,
+                                    # from further back (`_hostile.INTRO` cloud_from)
 TABLE_TILES = (160,)                # blin66_6: the table's draw id (it covered everyone at its front-left corner)
 TABLE_TILES_B = (160, 208)          # blin66_5 (overhead): the table's draw ids over the actors (128 = the grating)
 BG_STATES = ((1, 0), (2, 0))        # blin66_6's init: the chairs (param 1) and desk (2) states on (user: tiles missing)
@@ -261,13 +262,14 @@ def _build(ctx, field, base, overhead, PZ):
         z = xf(0, 0, 0)[2]
         return [Op(bytes([0xB3, 0, dt._dir_to(tx - sx_, ty - sy_)])), asm.setword(CX, sx_ & 0xFFFF),
                 asm.setword(CY, sy_ & 0xFFFF), asm.setbyte(WN, 0),
-                mv._animb(), Op(bytes([0xA2, walk_anim, 2])), Op(bytes([0xAE, walk_anim, 2])),
+                mv._animb(), Op(bytes([0xA2, walk_anim, 1])), Op(bytes([0xAE, walk_anim, 1])),
                 top, hb._arith(0x86, CX, stx & 0xFFFF), hb._arith(0x86, CY, sty & 0xFFFF),
                 Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", CX[1], CY[1], z, tri(sx_, sy_))),
                 Op(bytes([0x95, WN[0], WN[1]])), asm.if_byte(WN, "<", n, done), asm.goto_back(top), done] + \
-            [xyzi(sx_ + n * stx, sy_ + n * sty, z, tri(sx_ + n * stx, sy_ + n * sty)),          # (where the last step lands)
+            [xyzi(tx, ty, z, tri(tx, ty)),                                  # (on the spot: the steps' rounding drifts)
              Op(bytes([0xB3, 0, dt._dir_to(tx - sx_, ty - sy_)]))] + loop_(stand_anim) + \
-            [Op(bytes([0xB4, 0, dd(d_end), 0, 8, 2])), Op(b"\xDE")]        # (user: no snapping) a turn on the spot
+            [Op(bytes([0xB4, 0, dd(d_end), 2, 8, 2])), Op(b"\xDE")]        # (user: no snapping) a turn on the spot,
+                                                                    # the short way round (rotation 2; 0 = clockwise always)
     scripts = {}
     fx, fy = HT.FOCUS
     scripts[E["cloud"]] = {0: [Op(bytes([0xA1, 0])), Op(bytes([0xA0, 0]))] + at((fx, fy), 0) + [hb._visi(0)] +
