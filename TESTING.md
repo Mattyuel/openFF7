@@ -45,7 +45,7 @@ Existing saves load, but they keep their own story progress; use a new game.
 - **Intro walks** (684-687): at the end of a walk Cloud now turns the short way round (he spun the long way).
   Hostile Takeover: he walks in from further right at a normal pace with his legs moving (he slid before).
   Tickets: Jessie (seated, intro) now only turns / nods her head, no arm moves.
-  Going There, mount part, the side-on variation: Cloud half a step further down the bed, his foot resting on
+  Going There, mount part, the side-on variation: Cloud half a step further down the screen (forward), his foot resting on
   top of Tifa's head (not through it); no line mentions the special scenes.
   Sector 7 Workout (circuit, work in progress): squats -> bench (top off) -> floor stretch -> ring; each
   station shows one Cloud and one Tifa (the bench / stretch / ring showed two of one before).

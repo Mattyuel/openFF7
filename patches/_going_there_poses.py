@@ -24,8 +24,9 @@ SIDE_FOOT = (3.0, 1.6)              # his planted left foot: this far to his lef
 HEAD_FOOT_UP = 6.4                  # his right ankle this far above her head bone's end (user: his foot went
                                     # through her head: her hair's top is ~3.75 above it, his sole ~1.6 below the ankle)
 HEAD_FOOT_BACK = 0.35               # ...and this share of the way back along her head bone (the hair's highest point)
-SIDE_DOWN = 2.0                     # (user: "move cloud down the bed half a step") his root this much further
-                                    # from her head along the bed, the tip kept at her entry by the fit
+SIDE_DOWN = 2.0                     # (user: "move cloud down ... toward the bottom of the screen in his forward
+                                    # direction") his root this much further forward (he faces the camera), the
+                                    # tip kept at her entry by the fit
 PLANK_LEGS = 0.25                   # his legs out behind, this much down (model y per unit back)
 PLANK_HANDS = (0.9, 1.0)            # hands: this far either side of his shoulders and ahead of them
 DIRS = {"side": 0x00, "plank": 0x40}    # his DIR (she faces 0xC0: -x); side faces the camera (-y)
@@ -80,12 +81,10 @@ def build(ctx, hb, spot, gdir, frames_per):
         else:
             x0, st, bd = [0, 0, 0, 10, 0], [1.0, 1.0, 1.0, 5, 8], [(-8, 8), (-8, 8), (-8, 8), (-10, 50), (-40, 40)]
         x, deep = RG.fit(base_rig, cost, x0, st, rounds=5, bounds=bd)
-        if mount == "side":                                     # half a step down the bed, still in her
-            away = RG.unit([entry[0] - head[0], 0.0, entry[2] - head[2]])
-            want = RG.add(deep.root, RG.mul(away, SIDE_DOWN))
-            cost2 = lambda rg: cost(rg) * 6 + math.dist(rg.root, want)
-            x, deep = RG.fit(base_rig, cost2, x, st, rounds=5, bounds=bd)
         errs[mount] = cost(deep)
+        if mount == "side":                                     # (user) half a step forward, down the screen:
+            x = [x[0], x[1], x[2] - SIDE_DOWN] + list(x[3:])     # moved as he is (model -z: his facing)
+            deep = base_rig(x)
         tip, bs = _tip(ctx, hb, deep)
         md = RG.unit(RG.sub(tip, bs))
         E = deep.ends()
