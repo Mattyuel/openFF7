@@ -23,6 +23,7 @@ import importlib
 import math
 import struct
 
+import _danger as DG
 import _director as DR
 import _besties as BS
 import _besties_poses as BP
@@ -47,6 +48,7 @@ SEG, TIER, STREAK, KEY, PR, RND, KP, HOLD, HELD, P, REPN, TALKING, LN, CHAT, HC,
 CNT, PER, PAY, HITS, GIL, SCORE, CX, CY = ((6, a) for a in range(120, 136, 2))
 PRV = [(5, 136 + k) for k in range(4)]
 WN = (5, 140)
+METER, SIDE, DEC = (5, 141), (5, 142), (5, 143)     # (user) the danger meter (`_danger`)
 
 
 def _mods():
@@ -150,6 +152,8 @@ def apply(ctx):
              "prompt", "talk", "hush"]
     dm, dfilm, dstill = DR.add(ctx, loader)                             # (user) the Director, beside the action
     names.append("drctr")
+    meter = DG.build(ctx, f, loader, "P", tuple(BS.ARRIVE) + (0,))          # (user) the danger meter
+    names += ["gauge", "cursor"]
     sec.entity_names = [nm.encode("latin-1").ljust(8, b"\0") for nm in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {nm: i for i, nm in enumerate(names)}
@@ -315,6 +319,11 @@ def apply(ctx):
                 [hb._req(E[a], 3) for a in actors] + [hb._w(10)] + fade_in
     main += say(BS.HOW) + [req(E["drctr"], 2), asm.setword(PAY, 0), asm.setword(HITS, 0), asm.setbyte(HELD, 0),
                           asm.setbyte(ANGER, 0)]
+    MG_ = (E["gauge"], E["cursor"])
+    main += DG.start(METER, MG_)
+    pay = asm.nop()
+    red, red_ops = DG.cut(say, MG_, pay, fade_out + [hb._req(E[a], 4, wait=False) for a in actors] + [hb._w(20)])
+    dmiss = lambda: DG.miss(METER, SIDE, RND, E["cursor"], red)
     # the segments
     n = len(BS.PERIODS)
     for s, sg in enumerate(BS.SEGMENTS):
@@ -347,7 +356,7 @@ def apply(ctx):
                  asm.if_word(CNT, "<", PER, miss), asm.goto_back(wait),
                  judge, Op(b"\x54\x01"), asm.if_byte(PR, "==", KP, miss), asm.if_byte(HOLD, "==", 0, holdf)]
         after, rest = asm.nop(), asm.nop()
-        main += [hit, Op(BS.HIT_SOUND), Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, TIER),
+        main += [hit] + DG.hit(METER, E["cursor"]) + [Op(BS.HIT_SOUND), Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, TIER),
                  Op(bytes([0x96, PAY[0], PAY[1]])), Op(bytes([0x95, STREAK[0], STREAK[1]])),
                  asm.if_byte(TIER, "<", n - 1, after), asm.if_byte(STREAK, ">=", BS.HITS_UP, after),
                  Op(bytes([0x95, TIER[0], TIER[1]])), asm.setbyte(STREAK, 0)] + restart
@@ -373,7 +382,7 @@ def apply(ctx):
                          asm.if_word(CNT, "<", PER, sw_miss), asm.goto_back(sw_wait),
                          sw_judge, asm.if_byte(PR, "==", 4, sw_miss), Op(b"\x54\x01"), Op(BS.HIT_SOUND),
                          hb._arith(0x86, PAY, 5), Op(bytes([0x96, HITS[0], HITS[1]])), asm.goto(sw_go),
-                         sw_miss, Op(b"\x54\x01"), buzz, asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0),
+                         sw_miss, Op(b"\x54\x01"), buzz] + dmiss() + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0),
                          sw_go, Op(bytes([0x93, P[0] << 4, P[1], 1]))] + fast_out + restart + [hb._w(8)] + fast_in + [nos]
         if sg["key"] == "ride":                                           # (user) P = Tifa and Aerith kissing
             for at_rep in BS.KISS_AT:
@@ -386,7 +395,7 @@ def apply(ctx):
         segment_end = asm.nop()
         main += [asm.goto(segment_end)]
         slow, mtail, mdone = asm.nop(), asm.nop(), asm.nop()
-        main += [miss, Op(b"\x54\x01"), buzz] + line_from("miss", 4) + [asm.setbyte(CHAT, 0),
+        main += [miss, Op(b"\x54\x01"), buzz] + dmiss() + line_from("miss", 4) + [asm.setbyte(CHAT, 0),
                  asm.if_byte(TIER, "!=", 0, slow), asm.setbyte(TIER, 0)] + restart + [slow, asm.setbyte(STREAK, 0),
                  mtail, asm.if_word(CNT, "<", PER, mdone), hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])),
                  asm.goto_back(mtail), mdone, asm.goto_back(tail)]
@@ -407,9 +416,9 @@ def apply(ctx):
             main += [good, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 0xEA, 1, 0x40])), hb._arith(0x86, PAY, TIER),
                      hb._arith(0x86, PAY, TIER), Op(bytes([0x96, HITS[0], HITS[1]]))] + prompt_line("good") + wiggle + \
                 restart + result + [asm.goto_back(hit)]
-            main += [early, Op(b"\x54\x01"), buzz] + prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + \
+            main += [early, Op(b"\x54\x01"), buzz] + dmiss() + prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + \
                 wiggle + restart + result + [asm.goto_back(tail)]
-            main += [late, Op(b"\x54\x01"), buzz] + ch_(P, [prompt_line("mad", 0), prompt_line("mad", 1)]) + \
+            main += [late, Op(b"\x54\x01"), buzz] + dmiss() + ch_(P, [prompt_line("mad", 0), prompt_line("mad", 1)]) + \
                 [Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + \
                 restart + result + [asm.goto_back(tail)]
         else:
@@ -430,6 +439,7 @@ def apply(ctx):
     fdone = asm.nop()
     main[-1] = asm.if_byte(REPN, "<", BS.FINISH, fdone)
     main += [asm.goto_back(frep), fdone]
+    main += DG.finale(say, METER, PR, 3, CNT, DEC, MG_, PAY, hb._arith)    # (user) the finisher
     # the score: hits + 2 x finale hits -> the climax
     main += [asm.setword(SCORE, HITS), hb._arith(0x86, SCORE, FH), hb._arith(0x86, SCORE, FH)]
     great, good_, okay, cend = (asm.nop() for _ in range(4))
@@ -439,7 +449,8 @@ def apply(ctx):
     main += fade_out + [hb._req(E[a], 4, wait=False) for a in actors] + [hb._w(20)]
     for x in BS.AFTER:
         main += say(x)
-    main += [asm.setword(GIL, PAY), hb._arith(0x8A, GIL, BS.PAY_HIT),
+    main += [asm.goto(pay)] + red_ops
+    main += [pay, asm.setword(GIL, PAY), hb._arith(0x8A, GIL, BS.PAY_HIT),
              Op(bytes([0x39, GIL[0] << 4]) + struct.pack("<I", GIL[1])), Op(bytes([0xF1, 0, 0x68, 1, 0x40]))]
     paid = say(BS.PAID)
     paid.insert(1, Op(bytes([0x42, GIL[0], 0, 0]) + struct.pack("<H", GIL[1])))
@@ -450,6 +461,8 @@ def apply(ctx):
              stop, asm.goto_back(stop)]
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
+    sc_ = DG.scripts(meter, METER, xyzi)
+    scripts[E["gauge"]], scripts[E["cursor"]] = sc_["gauge"], sc_["cursor"]
     scripts[E["drctr"]], dspot = DR.place(f, scripts, [E[a] for a in ("cloudA", "tifaA", "aerA", "cloudB", "tifaB", "aerB")], dm, dfilm, dstill, hb._xyzi,
                                           mv._animb)
     print("  687: the Director at", dspot)

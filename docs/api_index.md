@@ -1297,6 +1297,22 @@ Shared openFF7 settings used by the patch modules.
   - `frame(P)` 
 - `build(ctx)` Every move as XZ<letter>0 on Ruby. Returns [(letter, frames, loop)].
 
+## `patches/_danger.py`
+(user: "i would like the danger zone meter put back in but used in conjunction with the new prompt system. have
+
+- `_mods()` 
+- `build(ctx, f, loader, tag, focus)` The gauge and cursor models appended to `loader` (sprite names QG<tag>A / QC<tag>A), placed for a view
+- `scripts(D, meter, xyzi)` {"gauge": {slot: ops}, "cursor": {...}}: 0 init (model, hidden, facing); 2 shown (the cursor at METER's
+- `_req(e, slot)` 
+- `start(meter, ents)` The meter at the centre and shown. ents = (gauge entity, cursor entity).
+- `hide(ents)` 
+- `hit(meter, cursor)` A hit: METER HIT_IN towards the centre.
+- `miss(meter, side, rnd, cursor, red)` A miss / mistake: METER MISS_OUT away from the centre (at the centre: a random side, kept in `side`),
+- `finisher(meter, pr, ok, cnt, dec, cursor, frames=FINISH_FRAMES)` (ops, win label, lose label): the timed mash; `pr` = the press variable (set to `ok` by an [OK] press,
+- `fanfare()` 
+- `finale(say, meter, pr, ok, cnt, dec, ents, pay, arith, frames=FINISH_FRAMES, call=FINISH_CALL, win_lines=(), bonus=FINISH_BONUS)` The whole finisher for a film's director: the call, the mash, the fanfare + bonus or the fizzle, the meter
+- `cut(say, ents, pay, then=())` (label, ops): the red: the Director calls it, the meter hidden, `then` (ops), on to the film's pay.
+
 ## `patches/_dates_data.py`
 Dates with the Honey Bee girls (docs/dates_plan.md): data.
 

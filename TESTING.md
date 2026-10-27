@@ -36,6 +36,11 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Danger meter + finisher** (683-687): a bar near the top of the view with a yellow cursor from the
+  first prompt on: each miss / mistake pushes it two steps out from the centre, each hit one step back in;
+  reaching either red end = the Director's "CUT!" and the shoot ends (paid what was earned). After the
+  last rep: "FINISHER!": mash [OK] for 5 s to push the cursor into the right red (it slips back if you
+  stop) for the fanfare and a bonus. Check the bar is on screen in every film (and in both boardroom views).
 - **Film feedback round** (683, 685, 687): Workout intro: Tifa's second gesture is hands on hips, hips
   rocking (not jogging on the spot). Tickets: Tifa's head drifts slowly; every few reps (with Cloud's style)
   she switches to a second pose: back arched, looking to her left, right hand reaching back to her hip.

@@ -23,6 +23,7 @@ import math
 import struct
 
 import _female_body as fb
+import _danger as DG
 import _director as DR
 import _gestures as GS
 import _workout as WO
@@ -109,6 +110,7 @@ PRV = [(5, 124 + k) for k in range(3)]
 # SC reps since it changed; ANGER her strikes; HC / CUE the hold's frame count / her call's frame; IX = STYLE x
 # tiers + TIER (the actors' anim and spot); CL the prompt window's line
 HELD, HOLD, STYLE, SC, ANGER, HC, CUE, IX, CL = ((5, a) for a in range(128, 137))
+METER, SIDE, DEC = (5, 137), (5, 138), (5, 139)     # (user) the danger meter (`_danger`)
 
 
 def _set(ctx, donor, stand, poses):
@@ -168,11 +170,12 @@ def _set(ctx, donor, stand, poses):
     film = cam_anims.index(mv.CAMERA_FILM)
     loader.models[cm] = ModelLoader.only_anims(loader.models[cm], cam_anims + [mv.CAMERA_STILL])
     still = len(cam_anims)
-    assert len(loader.models) == 6
+    meter = DG.build(ctx, f, loader, "L", tuple(WO.FOCUS) + (0,))           # (user) the danger meter
+    assert len(loader.models) == 8
     assert all(len(ModelLoader.anims(m)) <= 47 for m in loader.models)
     # entities
     names = ["produce", "cloud", "cloudA", "tifaA", "cloudB", "tifaB", "camera", "k_sw", "k_ca", "k_ok",
-             "prompt", "talk", "hush"]
+             "prompt", "talk", "hush", "gauge", "cursor"]
     sec.entity_names = [n.encode("latin-1").ljust(8, b"\0") for n in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {n: i for i, n in enumerate(names)}
@@ -316,7 +319,11 @@ def _set(ctx, donor, stand, poses):
          asm.setbyte(SC, 0), asm.setbyte(ANGER, 0), asm.setbyte(IX, 0),
          asm.setword(HITS, 0), asm.setword(PAY, 0), asm.setword(REPS, 0)] + \
         [hb._req(E[a], 3, wait=False) for a in actors("A")] + [hb._req(E["camera"], 2, wait=False), hb._w(20)] + fade_in
-    walkout = asm.nop()
+    MG_ = (E["gauge"], E["cursor"])
+    main += DG.start(METER, MG_)
+    walkout, pay = asm.nop(), asm.nop()
+    red, red_ops = DG.cut(say, MG_, pay)
+    dmiss = lambda: DG.miss(METER, SIDE, RND, E["cursor"], red)
 
     def frames(var, limit):
         """Wait while var < limit, a frame each (IFs only jump forward: the loop is JMPB)."""
@@ -343,7 +350,7 @@ def _set(ctx, donor, stand, poses):
                 asm.if_byte(PR, "==", 0, judge), asm.if_word(CNT, "<", PER, miss), asm.goto_back(wait)]
         ops += [judge, Op(b"\x54\x01"), asm.if_byte(PR, "==", KP, miss), asm.if_byte(HOLD, "==", 0, hold)]
         # a hit: pay, streak, maybe a tier up (and its lines the first time)
-        ops += [hit, Op(WO.HIT_SOUND), Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, TIER),
+        ops += [hit] + DG.hit(METER, E["cursor"]) + [Op(WO.HIT_SOUND), Op(bytes([0x96, HITS[0], HITS[1]])), hb._arith(0x86, PAY, TIER),
                 Op(bytes([0x96, PAY[0], PAY[1]])),
                 Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(TIER, "<", n - 1, after),
                 asm.if_byte(STREAK, ">=", WO.HITS_UP, after), Op(bytes([0x95, TIER[0], TIER[1]])), asm.setbyte(STREAK, 0)] + \
@@ -378,7 +385,7 @@ def _set(ctx, donor, stand, poses):
         # part's check above (a backward jump: JMPB)
         slow, mtail, mdone = asm.nop(), asm.nop(), asm.nop()
         drop = [asm.if_byte(TIER, "!=", 0, slow), asm.setbyte(TIER, 0)] + restart + [slow, asm.setbyte(STREAK, 0)]
-        ops += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + line_from("miss" + part) + \
+        ops += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + dmiss() + line_from("miss" + part) + \
             [asm.setbyte(CHAT, 0)] + drop + \
             [mtail, asm.if_word(CNT, "<", PER, mdone),
              hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(mtail), mdone, asm.goto_back(tail)]
@@ -401,12 +408,12 @@ def _set(ctx, donor, stand, poses):
             ops += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
         ops += prompt_line("good" + part) + restart + result() + [asm.goto_back(hit)]
         # too soon: a miss
-        ops += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + prompt_line("early" + part) + \
+        ops += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + dmiss() + prompt_line("early" + part) + \
             [asm.setbyte(TIER, 0)] + restart + [asm.setbyte(STREAK, 0)] + result() + [asm.goto_back(tail)]
         # too late: she's mad
         ops += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x95, ANGER[0], ANGER[1]])),
                 asm.if_byte(ANGER, ">=", WO.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
-            prompt_line("mad" + part, ANGER) + [asm.setbyte(TIER, 0)] + restart + [asm.setbyte(STREAK, 0)]
+            dmiss() + prompt_line("mad" + part, ANGER) + [asm.setbyte(TIER, 0)] + restart + [asm.setbyte(STREAK, 0)]
         zero, paid_ = asm.nop(), asm.nop()
         ops += [asm.if_word(PAY, "<", WO.MAD_PENALTY, zero), hb._arith(0x88, PAY, WO.MAD_PENALTY), asm.goto(paid_),
                 zero, asm.setword(PAY, 0), paid_] + result() + [asm.goto_back(tail)]
@@ -421,13 +428,14 @@ def _set(ctx, donor, stand, poses):
     for t in WO.START_B:
         main += say(t)
     ops_b, out_b = part_loop("B")
-    pay = asm.nop()
-    main += ops_b + [out_b, Op(b"\x54\x01"), Op(b"\x54\x02"), hb._w(30)]
+    main += ops_b + [out_b, Op(b"\x54\x01"), Op(b"\x54\x02")] + \
+        DG.finale(say, METER, PR, 3, CNT, DEC, MG_, PAY, hb._arith) + [hb._w(30)]   # (user) the finisher
     for t in WO.FINALE:
         main += say(t)
     main += [asm.goto(pay)]
+    main += red_ops
     # (user) she walked out: she's gone, the Director's line, an affection point lost; paid what was earned
-    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + mv.lose_affection("tifa") + \
+    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + DG.hide(MG_) + mv.lose_affection("tifa") + \
         ch(PART, [sum((say(t) for t in WO.WALKOUT_A[:1]), []) + fade_out + [hb._req(E["tifaA"], 4, wait=False), hb._w(10)] +
                   fade_in + sum((say(t) for t in WO.WALKOUT_A[1:]), []),
                   sum((say(t) for t in WO.WALKOUT_B[:1]), []) + fade_out + [hb._req(E["tifaB"], 4, wait=False), hb._w(10)] +
@@ -445,6 +453,8 @@ def _set(ctx, donor, stand, poses):
              stop, asm.goto_back(stop)]
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
+    sc_ = DG.scripts(meter, METER, xyzi)
+    scripts[E["gauge"]], scripts[E["cursor"]] = sc_["gauge"], sc_["cursor"]
     dt._blank(sec, scripts)
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()

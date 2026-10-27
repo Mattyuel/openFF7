@@ -26,6 +26,7 @@ import importlib
 import math
 import struct
 
+import _danger as DG
 import _director as DR
 import _gestures as GS
 import _hostile as HT
@@ -54,10 +55,11 @@ PRV = [(5, 130 + k) for k in range(4)]
 WN = (5, 134)                        # a walk's frame count
 TALKING, LN, CHAT, STYLE, SC, ANGER, HC, CUE, CL = ((5, a) for a in range(135, 144))
 AC = (5, 144)                        # reps since the camera switched
+METER, SIDE, DEC = (5, 146), (5, 147), (5, 148)     # (user) the danger meter (`_danger`)
 # the state carried across the camera switch (bank 2: nibble 3 bytes, 4 words)
 RESUME = (3, 142)
 SAVED = [(TIER, (3, 143)), (P, (3, 144)), (STYLE, (3, 145)), (ANGER, (3, 146)), (SEEN, (3, 147)), (SINCE, (3, 148)),
-         (NEXTSW, (3, 149)), (SC, (3, 154)), (STREAK, (3, 155))]
+         (NEXTSW, (3, 149)), (SC, (3, 154)), (STREAK, (3, 155)), (METER, (3, 156))]
 SAVED_W = [(PAY, (4, 150)), (REPS, (4, 152))]
 
 
@@ -240,9 +242,10 @@ def _build(ctx, field, base, overhead, PZ):
         ModelLoader.only_anims(ModelLoader.with_hrc(scar_e, BARE_SCARLET, "hostile_scarb.char"), s_anims[:1] + bare_s),
         ModelLoader.only_anims(ModelLoader.with_hrc(elen_e, BARE_ELENA, "hostile_elenb.char"), e_anims[:1] + bare_e))]
     dm, dfilm, dstill = DR.add(ctx, loader, HP.SCALE)
+    meter = DG.build(ctx, f, loader, "O" if overhead else "N", xf(*HT.FOCUS, 0))     # (user) the danger meter
     assert all(len(ModelLoader.anims(m)) <= 47 for m in loader.models)
     names = ["produce", "cloud", "cloudA", "scarA", "elenA", "cloudB", "scarB", "elenB", "k_sw", "k_ca", "k_ok",
-             "k_mn", "prompt", "talk", "hush", "drctr"]
+             "k_mn", "prompt", "talk", "hush", "drctr", "gauge", "cursor"]
     sec.entity_names = [nm.encode("latin-1").ljust(8, b"\0") for nm in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {nm: i for i, nm in enumerate(names)}
@@ -416,6 +419,11 @@ def _build(ctx, field, base, overhead, PZ):
                 [asm.setbyte(P, 1), asm.setbyte(TIER, 0), asm.setbyte(STYLE, 0)] + \
                 [hb._req(E[a], 2) for a in ("cloudB", "scarB", "elenB")] + [req(E["drctr"], 2), hb._w(20)] + fade_in
     main += say(HT.HOW)
+    MG_ = (E["gauge"], E["cursor"])
+    main += DG.start(METER, MG_)
+    pay = asm.nop()
+    red, red_ops = DG.cut(say, MG_, pay)
+    dmiss = lambda: DG.miss(METER, SIDE, RND, E["cursor"], red)
     main += [asm.setbyte(STREAK, 0), asm.setbyte(SEEN, 0x11), asm.setword(PAY, 0), asm.setword(REPS, 0),
              asm.setbyte(SINCE, 0), asm.setbyte(NEXTSW, HT.SWITCH_MIN), asm.setbyte(HELD, 0),
              asm.setbyte(TALKING, 0), asm.setbyte(CHAT, 0), asm.setbyte(SC, 0), asm.setbyte(ANGER, 0),
@@ -423,7 +431,8 @@ def _build(ctx, field, base, overhead, PZ):
     # (user: both angles) arrived from the other set: the shoot's state back, everyone placed, on from the next rep
     main += [resume_] + [asm.setbyte(v, s) for v, s in SAVED] + [asm.setword(v, s) for v, s in SAVED_W] + \
         [asm.setbyte(RESUME, 0), asm.setbyte(HELD, 0), asm.setbyte(TALKING, 0), asm.setbyte(CHAT, 0), asm.setbyte(AC, 0)] + \
-        [hb._req(E[a], 2) for a in ("cloudB", "scarB", "elenB")] + [req(E["drctr"], 2), hb._w(20)] + fade_in + \
+        [hb._req(E[a], 2) for a in ("cloudB", "scarB", "elenB")] + [req(E["drctr"], 2)] + \
+        [req(e, 2) for e in MG_] + [hb._w(20)] + fade_in + \
         [Op(bytes([0xF2, 0, 0, 0, 0x10, HT.MUSIC]) + bytes(8)), go_]
     n = len(HT.PERIODS)
     rep, wait, judge, hit, miss, rest, tail, holdw, done_h, sw_rep, normal, after = (asm.nop() for _ in range(12))
@@ -450,7 +459,7 @@ def _build(ctx, field, base, overhead, PZ):
              done_h, Op(b"\x54\x01")]
     # a hit: pay (a HOLD twice), streak, maybe a tier up (its lines the first time with this partner)
     once = asm.nop()
-    main += [hit, Op(HT.HIT_SOUND), Op(bytes([0x96, REPS[0], REPS[1]])), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])),
+    main += [hit] + DG.hit(METER, E["cursor"]) + [Op(HT.HIT_SOUND), Op(bytes([0x96, REPS[0], REPS[1]])), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])),
              asm.if_byte(HOLD, "==", 1, once), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])), once,
              Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(TIER, "<", n - 1, after),
              asm.if_byte(STREAK, ">=", HT.HITS_UP, after), Op(bytes([0x95, TIER[0], TIER[1]])), asm.setbyte(STREAK, 0)]
@@ -485,7 +494,7 @@ def _build(ctx, field, base, overhead, PZ):
         [asm.mapjump(ctx.maplist.index(other), ox, oy, otri, 0), halt, asm.goto_back(halt), stay, asm.goto_back(rep)]
     # a miss: the buzz, a line, back to the slowest pace, the rep's rest, then on
     slow, mtail, mdone = asm.nop(), asm.nop(), asm.nop()
-    main += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
+    main += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + dmiss() + [
              asm.setbyte(CHAT, 0)] + by_p(lambda p: line_from("miss%d" % p)) + [slow,
              asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), mtail, asm.if_word(CNT, "<", PER, mdone),
              hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(mtail), mdone, asm.goto_back(tail)]
@@ -497,7 +506,7 @@ def _build(ctx, field, base, overhead, PZ):
          asm.if_word(CNT, "<", PER, sw_miss), asm.goto_back(sw_wait),
          sw_judge, asm.if_byte(PR, "==", 4, sw_miss), Op(b"\x54\x01"), hb._arith(0x86, PAY, HT.SWITCH_BONUS),
          asm.goto(sw_go),
-         sw_miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0),
+         sw_miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + dmiss() + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0),
          sw_go, Op(bytes([0x93, P[0] << 4, P[1], 1])),                               # XOR P, 1
          asm.setbyte(SINCE, 0), Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], HT.SWITCH_RANGE])),
          asm.setbyte(NEXTSW, RND), Op(bytes([0x85, NEXTSW[0] << 4, NEXTSW[1], HT.SWITCH_MIN])),      # PLUS
@@ -522,23 +531,24 @@ def _build(ctx, field, base, overhead, PZ):
     for _ in range(HT.HOLD_BONUS):
         main += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
     main += prompt_line("good") + wiggle + restart + result + [asm.goto_back(hit)]
-    main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + \
+    main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + dmiss() + \
         prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + result + \
         [asm.goto_back(tail)]
     zero, paid_ = asm.nop(), asm.nop()
     main += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
              Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.if_byte(ANGER, ">=", HT.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
-        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + \
+        dmiss() + prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + \
         [asm.if_word(PAY, "<", HT.MAD_PENALTY, zero), hb._arith(0x88, PAY, HT.MAD_PENALTY), asm.goto(paid_),
          zero, asm.setword(PAY, 0), paid_] + result + [asm.goto_back(tail)]
     # the end: the board approves
-    pay = asm.nop()
-    main += [fin, Op(b"\x54\x01"), Op(b"\x54\x02"), hb._w(30)]
+    main += [fin, Op(b"\x54\x01"), Op(b"\x54\x02")] + \
+        DG.finale(say, METER, PR, 3, CNT, DEC, MG_, PAY, hb._arith) + [hb._w(30)]   # (user) the finisher
     for t in HT.FINALE:
         main += say(t)
     main += [asm.goto(pay)]
     # (user) the intern quit and stormed out: an affection point lost; paid what was earned
-    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + mv.lose_affection("elena") + say(HT.WALKOUT[0]) + \
+    main += red_ops
+    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + DG.hide(MG_) + mv.lose_affection("elena") + say(HT.WALKOUT[0]) + \
         fade_out + [req(E["elenB"], 4), asm.setbyte(STYLE, 0)] + \
         [req(E[a], 2) for a in ("cloudB", "scarB")] + [hb._w(10)] + fade_in
     for t in HT.WALKOUT[1:]:
@@ -555,6 +565,8 @@ def _build(ctx, field, base, overhead, PZ):
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     bg_on = [] if overhead else [Op(bytes([0xE0, 0, prm, st])) for prm, st in BG_STATES]
     scripts[0] = {0: [black] + bg_on + [asm.ret()] + main + [asm.ret()]}
+    sc_ = DG.scripts(meter, METER, xyzi)
+    scripts[E["gauge"]], scripts[E["cursor"]] = sc_["gauge"], sc_["cursor"]
     dt._blank(sec, scripts)
     f.set_section("models", loader.build())
     f.sections[0] = sec.build()

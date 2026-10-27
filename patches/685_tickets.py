@@ -23,6 +23,7 @@ import importlib
 import math
 import struct
 
+import _danger as DG
 import _director as DR
 import _female_body as fb
 import _gestures as GS
@@ -46,6 +47,7 @@ CNT, PAY, REPS, PER, GIL, CX, CY = ((6, a) for a in range(114, 128, 2))
 PRV = [(5, 130 + k) for k in range(4)]
 WN = (5, 134)                        # a walk's frame count
 TALKING, LN, CHAT, STYLE, SC, ANGER, HC, CUE, CL = ((5, a) for a in range(135, 144))
+METER, SIDE, DEC = (5, 146), (5, 147), (5, 148)     # (user) the danger meter (`_danger`)
 
 
 def _mods():
@@ -206,6 +208,8 @@ def apply(ctx):
              "turi1", "turi2", "doors", "k_sw", "k_ca", "k_ok", "k_mn", "prompt", "talk", "hush"]
     dm, dfilm, dstill = DR.add(ctx, loader)                             # (user) the Director, beside the action
     names.append("drctr")
+    meter = DG.build(ctx, f, loader, "M", tuple(TK.FOCUS) + (Z,))           # (user) the danger meter
+    names += ["gauge", "cursor"]
     sec.entity_names = [nm.encode("latin-1").ljust(8, b"\0") for nm in names]
     sec.entry = [[sec._end] * 32 for _ in names]
     E = {nm: i for i, nm in enumerate(names)}
@@ -391,6 +395,11 @@ def apply(ctx):
                 [asm.setbyte(P, 0), asm.setbyte(TIER, 0), asm.setbyte(STYLE, 0)] + \
                 [hb._req(E[a], 2) for a in ("cloudB", "tifaB", "jessB")] + [req(E["drctr"], 2), hb._w(20)] + fade_in
     main += say(TK.HOW)
+    MG_ = (E["gauge"], E["cursor"])
+    main += DG.start(METER, MG_)
+    pay = asm.nop()
+    red, red_ops = DG.cut(say, MG_, pay)
+    dmiss = lambda: DG.miss(METER, SIDE, RND, E["cursor"], red)
     main += [asm.setbyte(STREAK, 0), asm.setbyte(SEEN, 0x11), asm.setword(PAY, 0), asm.setword(REPS, 0),
              asm.setbyte(SINCE, 0), asm.setbyte(NEXTSW, TK.SWITCH_MIN), asm.setbyte(HELD, 0),
              asm.setbyte(TALKING, 0), asm.setbyte(CHAT, 0), asm.setbyte(SC, 0), asm.setbyte(ANGER, 0)]
@@ -419,7 +428,7 @@ def apply(ctx):
              done_h, Op(b"\x54\x01")]
     # a hit: pay (a HOLD twice), streak, maybe a tier up (its lines the first time with this partner)
     once = asm.nop()
-    main += [hit, Op(TK.HIT_SOUND), Op(bytes([0x96, REPS[0], REPS[1]])), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])),
+    main += [hit] + DG.hit(METER, E["cursor"]) + [Op(TK.HIT_SOUND), Op(bytes([0x96, REPS[0], REPS[1]])), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])),
              asm.if_byte(HOLD, "==", 1, once), hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]])), once,
              Op(bytes([0x95, STREAK[0], STREAK[1]])), asm.if_byte(TIER, "<", n - 1, after),
              asm.if_byte(STREAK, ">=", TK.HITS_UP, after), Op(bytes([0x95, TIER[0], TIER[1]])), asm.setbyte(STREAK, 0)]
@@ -444,7 +453,7 @@ def apply(ctx):
     main += [asm.if_word(REPS, "<", TK.TOTAL_REPS, fin), asm.goto_back(rep)]
     # a miss: the buzz, a line, back to the slowest pace, the rep's rest, then on
     slow, mtail, mdone = asm.nop(), asm.nop(), asm.nop()
-    main += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
+    main += [miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + dmiss() + [
              asm.setbyte(CHAT, 0)] + by_p(lambda p: line_from("miss%d" % p)) + [slow,
              asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0), mtail, asm.if_word(CNT, "<", PER, mdone),
              hb._w(1), Op(bytes([0x96, CNT[0], CNT[1]])), asm.goto_back(mtail), mdone, asm.goto_back(tail)]
@@ -456,7 +465,7 @@ def apply(ctx):
          asm.if_word(CNT, "<", PER, sw_miss), asm.goto_back(sw_wait),
          sw_judge, asm.if_byte(PR, "==", 4, sw_miss), Op(b"\x54\x01"), hb._arith(0x86, PAY, TK.SWITCH_BONUS),
          asm.goto(sw_go),
-         sw_miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0),
+         sw_miss, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40]))] + dmiss() + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0),
          sw_go, Op(bytes([0x93, P[0] << 4, P[1], 1])),                               # XOR P, 1
          asm.setbyte(SINCE, 0), Op(bytes([0x99, RND[0], RND[1]])), Op(bytes([0x8D, RND[0] << 4, RND[1], TK.SWITCH_RANGE])),
          asm.setbyte(NEXTSW, RND), Op(bytes([0x85, NEXTSW[0] << 4, NEXTSW[1], TK.SWITCH_MIN])),      # PLUS
@@ -481,23 +490,24 @@ def apply(ctx):
     for _ in range(TK.HOLD_BONUS):
         main += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
     main += prompt_line("good") + wiggle + restart + result + [asm.goto_back(hit)]
-    main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + \
+    main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + dmiss() + \
         prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + result + \
         [asm.goto_back(tail)]
     zero, paid_ = asm.nop(), asm.nop()
     main += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
              Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.if_byte(ANGER, ">=", TK.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
-        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + \
+        dmiss() + prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + \
         [asm.if_word(PAY, "<", TK.MAD_PENALTY, zero), hb._arith(0x88, PAY, TK.MAD_PENALTY), asm.goto(paid_),
          zero, asm.setword(PAY, 0), paid_] + result + [asm.goto_back(tail)]
     # the end: the train pulls in
-    pay = asm.nop()
-    main += [fin, Op(b"\x54\x01"), Op(b"\x54\x02"), hb._w(30)]
+    main += [fin, Op(b"\x54\x01"), Op(b"\x54\x02")] + \
+        DG.finale(say, METER, PR, 3, CNT, DEC, MG_, PAY, hb._arith) + [hb._w(30)]   # (user) the finisher
     for t in TK.FINALE:
         main += say(t)
     main += [asm.goto(pay)]
     # (user) Jessie walked off down the carriage (she has no affection to lose); paid what was earned
-    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + say(TK.WALKOUT[0]) + \
+    main += red_ops
+    main += [walkout, Op(b"\x54\x01"), Op(b"\x54\x02")] + DG.hide(MG_) + say(TK.WALKOUT[0]) + \
         fade_out + [req(E["jessB"], 4), asm.setbyte(P, 0), asm.setbyte(STYLE, 0)] + \
         [req(E[a], 2) for a in ("cloudB", "tifaB")] + [hb._w(10)] + fade_in
     for t in TK.WALKOUT[1:]:
@@ -513,6 +523,8 @@ def apply(ctx):
              stop, asm.goto_back(stop)]
     black = Op(bytes.fromhex("6b00000000000104" "00"))
     scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
+    sc_ = DG.scripts(meter, METER, xyzi)
+    scripts[E["gauge"]], scripts[E["cursor"]] = sc_["gauge"], sc_["cursor"]
     scripts[E["drctr"]], dspot = DR.place(f, scripts, [E[a] for a in ("cloudA", "tifaA", "jessA", "cloudB", "tifaB", "jessB")], dm, dfilm, dstill, hb._xyzi,
                                           mv._animb)
     print("  685: the Director at", dspot)
