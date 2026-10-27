@@ -19,6 +19,7 @@ something new, hit a trap, or a feature's status changes.
 | Midgar / rest-of-world pinning plans | `docs/midgar_plan.md`, `docs/world_plan.md` |
 | Dates with the girls (gondola / space capsule): plan, decisions, FMV facts | `docs/dates_plan.md` |
 | **New direction: the Gym** (no combat, Tifa's gym, minigames, relationships; gil as the hard limit; owned businesses: 7th Heaven, gym, Honey Bee Inn, production company; unlock chain: Tifa's 7th Heaven shifts -> gym seller -> Honey Bee gigs -> the Director (the cameraman, renamed) -> Materia Store video deal; 7th Heaven bought from Marle; audit of what stays / goes; flowcharts) | `docs/gym_plan.md`, `docs/gym_loop.mmd`, `docs/gym_unlocks.mmd` |
+| The Director's parody films (683-688): what exists, shared modules, state, how to fold them into the gym plan | `docs/films_record.md` |
 | Fields, locations, exits, battles, world map | `docs/inventory/` |
 | .exe findings | `docs/exe_notes.md`, `docs/research_menu.md`, `docs/research_battle.md` |
 | One-off story scenes outside Midgar (applied / open) | `docs/research_story_scenes.md` |
@@ -59,7 +60,7 @@ delete `build/cache` (~350 MB) any time.
 
 ## Workflow rules
 
-- Branch `claude/zen-bohr-fl1xp8`; commit + push when a change is done. No PRs unless asked.
+- Branch: the session's designated branch (now `claude/dazzling-bohr-32xekl`; was `claude/zen-bohr-fl1xp8`); commit + push when a change is done. No PRs unless asked.
 - The user can't run anything here; they build and play on their PC. Say what
   is verified offline vs. untested in-game. Don't claim a fix works in-game.
 - Patches are applied in file-name order; later patches see earlier edits
