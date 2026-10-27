@@ -1104,7 +1104,8 @@ The movie minigame (user's design).
 
 - `_mods()` 
 - `_sway(ctx, hrc, stand, name)` A drunk swaying on his feet: the body leaning side to side once a cycle about his feet, the upper body and
-- `_walkable(mesh, a, b)` 
+- `_walkable(mesh, a, b)` The straight line a -> b stays on the floor (no stool / counter tops: z within 3 of 0).
+- `_walk(hb, animb, path, wx, wy, n_, walk, stand, to, step)` Ops walking an entity along `path` ((x, y, z, tri) points) by stepped XYZI on temp words wx / wy (counter
 - `_marle(ctx)` Marle in the real 7th Heaven: "Work a shift." -> the set.
 - `apply(ctx)` 
 

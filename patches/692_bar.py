@@ -11,7 +11,7 @@ a drink's button = Tifa makes it for the waiting customer with the least patienc
 buzz): seat state 2, window 3 "Tifa is busy making a cocktail..." while she shakes (her CXHC with the original
 scene's sounds) for its make frames, presses meanwhile buzz; then she serves (CXIB), the customer is paid for
 (price + `QUICK_TIP` if served before he turned urgent), drinks a while and leaves. [PAGEDOWN] (R1) = Cloud walks
-over and escorts the first rowdy customer out of the door (MOVE; the director waits for it, so no drinks are
+over and escorts the first rowdy customer out of the door (stepped XYZI walks; the director waits, so no drinks are
 made meanwhile: "Cloud is escorting a rowdy customer out..."). `SHIFT_FRAMES` of orders, then last orders, the
 night's takings (GOLDU), back beside Marle. Seat states ST: 0 empty, 1 waiting, 2 being made / escorted,
 3 served, 4 escorted out, 5 sent away. Checked on offline renders only (stools, Tifa, Cloud's paths), untested
@@ -43,10 +43,12 @@ NSERVED, NMISS, GO = (5, 126), (5, 127), (5, 128)
 PAT = [(6, 140 + 2 * s) for s in range(3)]
 CNTS = [(6, 146 + 2 * s) for s in range(3)]
 T, GIL, BEST, MK = (6, 152), (6, 154), (6, 156), (6, 158)
+CW = ((6, 160), (6, 162), (5, 129))     # Cloud's walk (x, y words, step counter)
+UW = ((6, 164), (6, 166), (5, 130))     # the escorted patron's walk (one at a time)
 CUSTOMERS = [("mds7pb_1", 4), ("mds7pb_1", 5), ("mds7pb_1", 3),          # Avalanche's regulars (avaman / avafat /
              ("blackbg2", 9), ("rcktin2", 5), ("jail2", 6)]              # avawoman), a sailor, a mechanic, a punk
 KEEP = ("COUNTER", "LIGHT", "TV")       # background entities whose scripts stay
-SIT = "CXDC.tor"                        # (Cloud sitting at the counter, mds7pb_1)
+SIT, SIT_LAST = "CXDC.tor", 14          # (Cloud stepping up onto a stool and sitting, mds7pb_1: 15 frames)
 MAKE, SERVE = "CXHC.tor", "CXIB.tor"    # (Tifa: shaking a drink, then serving it: the original scene)
 SHAKE_SOUND, SERVE_SOUND, CRASH_SOUND = 0xBB, 0xB9, 0x76
 SWAY = dict(frames=60, lean=7, counter=1.6, head=12)
@@ -77,11 +79,30 @@ def _sway(ctx, hrc, stand, name):
 
 
 def _walkable(mesh, a, b):
+    """The straight line a -> b stays on the floor (no stool / counter tops: z within 3 of 0)."""
     for k in range(41):
         x, y = a[0] + (b[0] - a[0]) * k / 40, a[1] + (b[1] - a[1]) * k / 40
-        if mesh.find(round(x), round(y)) is None:
+        t = mesh.find(round(x), round(y))
+        if t is None or abs(mesh.tris[t][0][2]) > 3:
             return False
     return True
+
+
+def _walk(hb, animb, path, wx, wy, n_, walk, stand, to, step):
+    """Ops walking an entity along `path` ((x, y, z, tri) points) by stepped XYZI on temp words wx / wy (counter
+    byte n_): walk anim `walk` looping, facing each leg, landing exactly on each point; then anim `stand`."""
+    ops = [animb(), Op(bytes([0xA2, walk, 1])), Op(bytes([0xAE, walk, 1]))]
+    for a, b in zip(path, path[1:]):
+        n = max(1, round(math.hypot(b[0] - a[0], b[1] - a[1]) / step))
+        dx, dy = round((b[0] - a[0]) / n), round((b[1] - a[1]) / n)
+        top, done = hb._w(1), asm.nop()
+        ops += [Op(bytes([0xB3, 0, to(a, b) % 256])), asm.setword(wx, a[0] & 0xFFFF), asm.setword(wy, a[1] & 0xFFFF),
+                asm.setbyte(n_, 0), top,
+                hb._arith(0x86, wx, dx & 0xFFFF), hb._arith(0x86, wy, dy & 0xFFFF),
+                Op(bytes([0xA5, 0x66, 0x00]) + struct.pack("<HHhH", wx[1], wy[1], 0, a[3])),
+                Op(bytes([0x95, n_[0], n_[1]])), asm.if_byte(n_, "<", n, done), asm.goto_back(top), done,
+                hb._xyzi(*b[:4])]
+    return ops + [animb(), Op(bytes([0xA2, stand, 1])), Op(bytes([0xAE, stand, 1]))]
 
 
 def _marle(ctx):
@@ -130,24 +151,21 @@ def apply(ctx):
         """(x, y, z, tri): on the floor; the stools aren't walkmesh: the nearest floor triangle, z 0 (the floor's)."""
         t = mesh.find(x, y)
         return (x, y, round(mesh.height(t, x, y)), t) if t is not None else (x, y, 0, mv._nearest_tri(mesh, x, y))
-    seats = [spot(*s) for s in BR.SEATS]
-    aside = [spot(BR.ASIDE, s[1]) for s in BR.SEATS]
-    beside = [spot(BR.ASIDE + 40, s[1]) for s in BR.SEATS]
-    post, door, tifa_at = spot(*BR.CLOUD_POST), spot(*BR.DOOR), spot(*BR.TIFA_AT)
-    # (the tables block the middle: every walk goes round by the aisle in front of the stools and the bottom row)
-    via_in, via_out, via_back = spot(*BR.VIA_IN), spot(*BR.VIA_OUT), spot(*BR.VIA_BACK)
-    path_in = [lambda s: via_in, lambda s: beside[s]]
-    along = lambda s: (door[0], via_out[1])
-    path_cust = [lambda s: (aside[s][0], via_out[1]), along, lambda s: door]
-    path_out = [lambda s: (beside[s][0], via_out[1]), along, lambda s: door, lambda s: via_back, lambda s: post]
+    seats = [spot(*s) for s in BR.SEATS]                                # (window placement: the stools)
+    stand = [spot(BR.STAND_X, s[1]) for s in BR.SEATS]                  # a patron sits from / stands up here
+    beside = [spot(BR.STAND_X, s[1] + BR.BESIDE) for s in BR.SEATS]     # Cloud, up the aisle beside him
+    post, door, tifa_at, aisle = spot(*BR.CLOUD_POST), spot(*BR.DOOR), spot(*BR.TIFA_AT), spot(*BR.AISLE)
+    # (user: Cloud got stuck walking along the bar into a corner: MOVE follows the walkmesh's pieces) the walks
+    # step XYZI along waypoints: Cloud post -> the aisle -> beside the patron; then both -> the aisle -> the door;
+    # Cloud back to his post. Every leg is all floor (asserted)
+    path_in = lambda s: [post, aisle, beside[s]]
+    path_cust = lambda s: [stand[s], aisle, door]
+    path_out = lambda s: [beside[s], aisle, door, post]
     for s in range(3):
-        for start, path in ((post, path_in), (aside[s], path_cust), (beside[s], path_out)):
-            a = start
-            for step in path:
-                b = step(s)
+        for path in (path_in(s), path_cust(s), path_out(s)):
+            for a, b in zip(path, path[1:]):
                 assert _walkable(mesh, a, b), (s, a, b)
-                a = b
-    player = spot(*BR.VIEW_AT)
+    player = spot(*BR.ARRIVE)
     # models: 0 the hidden player, 1 the pinball machine, 2 Tifa, 3 Cloud (security), 4.. the customers
     loader = ModelLoader(f.section("models"))
     names_m = [ModelLoader.name(m) for m in loader.models]
@@ -178,7 +196,7 @@ def apply(ctx):
 
     # each customer's window just right of his head, stacked top to bottom at least WIN_GAP apart, below the
     # status window
-    heads = [cam.project(p[0], p[1], BR.HEAD_Z) for p in seats]
+    heads = [cam.project(p[0], p[1], BR.HEAD_Z) for p in seats]     # (the windows over the stools)
     order_ = sorted(range(3), key=lambda k: heads[k][1])
     wy = {}
     y_ = BR.WIN_TOP - BR.WIN_GAP
@@ -217,10 +235,11 @@ def apply(ctx):
     # Cloud: 2+s escorts seat s's rowdy customer out (the customer by CUR)
     sec_s = {0: [Op(bytes([0xA1, 3]))] + at(post, BR.CLOUD_DIR) + [hb._visi(1)] + hide() + loop_(0) +
              [asm.ret(), asm.ret()]}
+    walk = lambda path, w: _walk(hb, mv._animb, path, *w, 1, 0, to, BR.WALK_STEP)
     for s in range(3):
         ce = [E["c%d%s" % (s, "ab"[c])] for c in range(2)]
-        sec_s[2 + s] = [hb._move(*p(s)[:2]) for p in path_in] + [d_(to(beside[s], aside[s])), hb._w(10)] + \
-            ch_(CUR[s], [[req(e, 5)] for e in ce]) + [hb._w(12)] + [hb._move(*p(s)[:2]) for p in path_out] + \
+        sec_s[2 + s] = walk(path_in(s), CW) + [d_(to(beside[s], stand[s])), hb._w(10)] + \
+            ch_(CUR[s], [[req(e, 5)] for e in ce]) + [hb._w(8)] + walk(path_out(s), CW) + \
             [d_(BR.CLOUD_DIR), asm.ret()]
     scripts[E["sec"]] = sec_s
     for s in range(3):
@@ -228,11 +247,13 @@ def apply(ctx):
             m = 4 + 2 * s + c
             scripts[E["c%d%s" % (s, "ab"[c])]] = {
                 0: [Op(bytes([0xA1, m])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
-                2: at(seats[s], BR.SEAT_DIR) + loop_(2) + [hb._visi(1), asm.ret()],
-                3: at(aside[s], to(aside[s], post)) + loop_(3) + [hb._visi(1), asm.ret()],
+                # (user: patrons stepped and snapped back: CXDC is the step up onto the stool, as the game seats
+                # Cloud: from the aisle facing the counter, once, then held sitting)
+                2: at(stand[s], BR.SEAT_DIR) + [hb._visi(1), mv._animb(), Op(bytes([0xBC, 2, 0, SIT_LAST, 1])),
+                                                asm.ret()],
+                3: at(stand[s], to(stand[s], post)) + loop_(3) + [hb._visi(1), asm.ret()],
                 4: [hb._visi(0), asm.ret()],
-                5: [mv._animb(), Op(bytes([0xA2, 0, 1]))] + [hb._move(*p(s)[:2]) for p in path_cust] +
-                [hb._visi(0), asm.ret()]}
+                5: walk(path_cust(s), UW) + [hb._visi(0), asm.ret()]}
     # the windows: winS slot 2+k drink k, 6+k drink k urgent, 10 / 11 rowdy (drunk / angry); status 2+k busy, 6 escort
     texts = {}
     for k, (name, _, _, label, _, _) in enumerate(BR.DRINKS):

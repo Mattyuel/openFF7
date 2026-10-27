@@ -11,7 +11,8 @@ with. Data only."""
 
 FIELD = "blackbgi"              # a debug room only startmap leads to, replaced by a copy of the bar
 BASE = "mds7pb_1"
-ARRIVE = (40, -40)              # the shift set's (hidden) player spot; also where Marle's jump lands
+ARRIVE = (-110, -150)           # (user: the camera stayed on Cloud) where Marle's jump lands = the set's hidden
+                                # player (the camera follows it; the jump's spot wins over the init's XYZI)
 MUSIC = 41                      # AKAO 10 index: the bar's own MUSIC 00 (music block id 42)
 SHIFT_FRAMES = 3600             # two minutes of orders, then last orders
 LEAD_IN = 60                    # frames before the first customer sits down
@@ -35,22 +36,24 @@ TRASH_COST = 100                # gil: a rowdy customer left alone breaks things
 GAP = (30, 90)                  # frames between a customer leaving and the next sitting down (base, range)
 DRINK_TIME = 45                 # frames a served customer sits with his drink before leaving
 
-# spots (mds7pb_1, checked on offline renders): the three stools used (sitting in Cloud's CXDC), Tifa behind the
-# counter, Cloud's post, the door
-SEATS = [(-178, -102), (-178, -174), (-178, -246)]
+# spots (mds7pb_1): (user: patrons "spawning under the bar and taking a step then respawning") the stools are the
+# walkmesh squares at x -143, top z 50 (y -76 / -146 / -217 / -287); a patron sits as the game's own scene seats
+# Cloud: standing in the aisle at x STAND_X (-95) facing the counter (SEAT_DIR), then CXDC once (a step up onto the
+# stool, sat) and held. Tifa behind the counter, Cloud's post, the door = the exit line on the right wall
+# (gateway x 278-287, y -46..45)
+SEATS = [(-143, -76), (-143, -146), (-143, -217)]
+STAND_X = -95                                   # where a patron stands to sit / stands up (rowdy) at his stool
 SEAT_DIR = 0xC0
 TIFA_AT, TIFA_DIR = (-270, -170), 0x40          # behind the counter, facing the stools
 MAKE_DIR = 0xC0                                 # (turned to the shelf while making, as the original scene)
 CLOUD_POST, CLOUD_DIR = (40, -60), 0xC0
-DOOR = (240, -300)
-VIA_IN = (-80, -60)                             # (Cloud's way round the tables to the stools)
-VIA_OUT = (0, -318)                             # (the bottom row to the door: only its y is used)
-VIA_BACK = (200, -60)                           # (back up the right-hand aisle to his post)
-ASIDE = -120                                    # x in front of a stool where Cloud takes a customer by the arm
-# Marle's spot in the real 7th Heaven
+DOOR = (240, 0)
+AISLE = (-95, -30)                              # the top of the aisle in front of the stools (walks go through it)
+BESIDE = 28                                     # Cloud stops this far up the aisle from the patron he walks out
+WALK_STEP = 4.0                                 # (field units a frame: the walks step XYZI, no MOVE: MOVE got stuck
+                                                # on the walkmesh's separate pieces, user)
 MARLE_AT, MARLE_DIR = (120, -40), 0xC0
-VIEW_AT = (-140, -170)                          # the shift's hidden player: the camera centred on the stools
-HEAD_Z = 55                                     # a seated customer's head above the floor (window placement)
+HEAD_Z = 90                                     # a seated customer's head above the floor (window placement)
 WIN_RIGHT, WIN_TOP, WIN_GAP = 22, 40, 28        # order windows: right of the head; from y 40, 28 px apart
 
 INTRO = [
