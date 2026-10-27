@@ -498,8 +498,29 @@ def apply(ctx):
     scripts[0] = {0: [black, asm.ret()] + main + [asm.ret()]}
     sc_ = DG.scripts(meter, METER, xyzi)
     scripts[E["gauge"]], scripts[E["cursor"]] = sc_["gauge"], sc_["cursor"]
-    scripts[E["drctr"]], dspot = DR.place(f, scripts, [E[a] for a in ("cloudA", "tifaA", "elenaA", "cloudB", "tifaB", "elenaB")], dm, dfilm, dstill, hb._xyzi,
-                                          mv._animb)
+    # (user: "in elevator, put the director in the upper right, and have him only appear after the fade
+    # transition") the car's floor point furthest up-right on screen inside DIR_BOX (screen x range, feet above y;
+    # right of it is the walkway outside the glass): behind the action, so drawn behind it; hidden until the fade
+    # into the scene REQs his slot 2
+    best = None
+    for t_, tr in enumerate(mesh.tris):
+        for a_, b_ in ((1 / 3, 1 / 3), (0.6, 0.2), (0.2, 0.6), (0.2, 0.2)):
+            px = tr[0][0] * a_ + tr[1][0] * b_ + tr[2][0] * (1 - a_ - b_)
+            py = tr[0][1] * a_ + tr[1][1] * b_ + tr[2][1] * (1 - a_ - b_)
+            if mesh.find(round(px), round(py)) is None:
+                continue
+            sx_, sy_ = cam.project(px, py, Z)
+            if GU.DIR_BOX[0] <= sx_ <= GU.DIR_BOX[1] and sy_ <= GU.DIR_BOX[2]:
+                score = sx_ - sy_ * 2
+                if best is None or score > best[0]:
+                    best = (score, (round(px), round(py)))
+    assert best, "no spot for the Director"
+    dx_, dy_ = best[1]
+    acx = (ck[0] + ex + tp[0]) / 3
+    acy = (ck[1] + ey + tp[1]) / 3
+    scripts[E["drctr"]] = DR.entity(dm, (dx_, dy_, Z, tri(dx_, dy_)), DR.facing(dx_, dy_, acx, acy), dfilm, dstill,
+                                    hb._xyzi, mv._animb, hidden=True)
+    dspot = (dx_, dy_, Z)
     print("  684: the Director at", dspot)
     dt._blank(sec, scripts)
     f.set_section("models", loader.build())

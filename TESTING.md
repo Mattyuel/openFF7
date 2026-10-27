@@ -36,6 +36,9 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Fixes** (684, 688): Going up: the Director only appears after the fade into the scene, standing at the
+  back right of the car. The Basics: in sixty-nine Tifa's legs are wider and she sits a little further
+  down Cloud.
 - **The Basics** (688): the Director's film menu now starts with "The Basics (start here).": the inn
   (the movie's room). Clothed intro, then head on the floor in front of the beds, all fours on the right
   bed, sixty-nine on the middle bed, each with its talk, prompts and beats: a demonstrated hold (she taps

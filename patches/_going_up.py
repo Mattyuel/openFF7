@@ -21,6 +21,8 @@ CAM_NUDGE = 4                   # (user) Cloud this much nearer the camera in Ti
 INTRO = {"cloud": (-55, 15), "tifa": (60, 70), "elena_from": (100, -180), "elena": (55, -10), "panel": (0, 60)}
 CONSOLE = (0, 105)              # the car's control console (back left): Cloud faces it at the panel spot
 # (no Director model: the car is tight; he films from outside, his lines are text)
+DIR_BOX = (45, 115, 116)        # (user) the Director upper right, on the car's floor: screen x in [45, 115], feet above y 116 (right of it is
+                                # the walkway outside the glass, where he first landed)
 MUSIC = 45                      # AKAO 10 index: RHYTHM, the Turks' Theme
 PROMPT_Y = 30
 LINE_Y = 168

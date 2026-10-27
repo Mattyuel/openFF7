@@ -34,6 +34,10 @@ SEGS = ("head", "dog", "69")
 TIFA_DONOR = ("bwhlin", 3)              # AAGB, stand ABCD
 BARE_TIFA = "ZTFA.HRC"
 TASTE_FRAMES = 48
+# (user: "sixtynine in tutorial needs position tweaking. tifa's legs spread more and she should be a little further
+# down cloud") her 69 anims copied with each thigh turned SIX_SPREAD out (QXI0-3, QXI9) and her spot moved SIX_DOWN
+# field units along Cloud's body from his head towards his hips
+SIX_SPREAD, SIX_DOWN = 16, 8
 TASTE = dict(tilt=8, spread=20, out=0.35, yaw=6, nod=5)     # kneeling; the face's point out; the head's wander
 
 
@@ -82,7 +86,17 @@ def apply(ctx):
     pos = [p["name"] for p in mv.POSITIONS]
     idx = [pos.index(k) for k in SEGS]
     letter = [chr(ord("A") + i) for i in idx]                               # (670's anim letters by position)
-    P = [places[i] for i in idx]
+    P = [dict(places[i]) for i in idx]
+    Jc = TP.joints(ctx, "zcla.hrc", "ZNI0")[0]                             # (69: down his body, head -> hips)
+    hd, hp = (TP._field(P[2]["cloud"][:3], P[2]["cdir"], Jc[b]) for b in ("head@", "hip@"))
+    v = (hp[0] - hd[0], hp[1] - hd[1])
+    nv = math.hypot(*v)
+    g = P[2]["girl"]
+    gx, gy = round(g[0] + v[0] / nv * SIX_DOWN), round(g[1] + v[1] / nv * SIX_DOWN)
+    from ff7.walkmesh import Walkmesh
+    mesh_ = Walkmesh(ctx.field(TU.BASE).section("walkmesh"))
+    gt = max((t for t in range(len(mesh_.tris)) if mesh_.contains(t, gx, gy)), key=lambda t: mesh_.height(t, gx, gy))
+    P[2]["girl"] = (gx, gy, g[2], gt)
     # the set
     ctx.field(TU.FIELD)
     ctx.field(TU.BASE)
@@ -96,8 +110,9 @@ def apply(ctx):
     # anims
     stroke_c = [["ZN%s%d.tor" % (L, s) for s in range(4)] for L in letter]
     stroke_t = [["ZV%s%d.tor" % (L, s) for s in range(4)] for L in letter]
+    stroke_t[2] = TP.spread(ctx, BARE_TIFA, ["ZVI%d" % s for s in range(4)], "QX", SIX_SPREAD)
     pause_c = ["ZNJ9.tor", TP.still(ctx, "ZNC0", "QXC9"), "ZNI9.tor"]
-    pause_t = ["ZVJ9.tor", TP.still(ctx, "ZVC0", "QXV9"), "ZVI9.tor"]
+    pause_t = ["ZVJ9.tor", TP.still(ctx, "ZVC0", "QXV9")] + TP.spread(ctx, BARE_TIFA, ["ZVI9"], "QX", SIX_SPREAD)
     assert letter == ["J", "C", "I"], letter
     taste_c, taste_t, gap = _taste(ctx, hb, P[1]["girl"], P[1]["gdir"], P[1]["cloud"], P[1]["cdir"])
     wig = WG.build(ctx, hb.CLOUD_BARE_HRC, "ZNJ0", "QXW0")

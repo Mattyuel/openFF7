@@ -65,14 +65,16 @@ def spot(f, keep, side=1, gap=10, height=95, lift=0, fit=None):
     return best[1] if best else None
 
 
-def entity(model, at, d, film, still, xyzi, animb):
-    """His entity: init standing still at `at` (x, y, z, triangle) facing DIR d; 2 filming; 3 still. animb = a
-    function making an ANIMB op (670 `_animb`)."""
+def entity(model, at, d, film, still, xyzi, animb, hidden=False):
+    """His entity: init standing still at `at` (x, y, z, triangle) facing DIR d; 2 filming (and shown); 3 still.
+    animb = a function making an ANIMB op (670 `_animb`). `hidden`: not shown until slot 2 (user: in the
+    elevator he appears only after the fade into the scene)."""
     loop_ = lambda i: [animb(), Op(bytes([0xA2, i, 1])), Op(bytes([0xAE, i, 1]))]
     x, y, z, t = at
-    return {0: [Op(bytes([0xA1, model])), xyzi(x, y, z, t), Op(bytes([0xB3, 0, d % 256])), Op(b"\xA4\x01"),
+    return {0: [Op(bytes([0xA1, model])), xyzi(x, y, z, t), Op(bytes([0xB3, 0, d % 256])),
+                Op(b"\xA4\x00" if hidden else b"\xA4\x01"),
                 Op(b"\x7E\x01"), Op(b"\xC7\x01")] + loop_(still) + [asm.ret(), asm.ret()],
-            2: loop_(film) + [asm.ret()],
+            2: [Op(b"\xA4\x01")] + loop_(film) + [asm.ret()],
             3: loop_(still) + [asm.ret()]}
 
 
@@ -98,7 +100,7 @@ def keep_from(scripts, ents, height=95):
     return out
 
 
-def place(f, scripts, ents, model, film, still, xyzi, animb, side=1, **kw):
+def place(f, scripts, ents, model, film, still, xyzi, animb, side=1, hidden=False, **kw):
     """His entity's scripts, placed `side` of every XYZI the actor entities `ents` use (`spot`), facing the
     middle of them. Returns (scripts, (x, y, z))."""
     keep = keep_from(scripts, ents, kw.pop("height", 95))
@@ -111,5 +113,5 @@ def place(f, scripts, ents, model, film, still, xyzi, animb, side=1, **kw):
     x, y, z, t = at
     cx = sum(p[0] for p in keep) / len(keep)
     cy = sum(p[1] for p in keep) / len(keep)
-    return entity(model, (x, y, z, t), facing(x, y, cx, cy), film, still, xyzi, animb), (x, y, z)
+    return entity(model, (x, y, z, t), facing(x, y, cx, cy), film, still, xyzi, animb, hidden), (x, y, z)
 
