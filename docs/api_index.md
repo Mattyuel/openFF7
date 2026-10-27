@@ -1099,6 +1099,15 @@ The movie minigame (user's design).
 - `_layout(ctx, mv, mesh, K)` {position: (girl spot, girl dir, his spot, his dir)} on the couch: 670's relative layout in mds7_w3 (both
 - `apply(ctx)` 
 
+## `patches/692_bar.py`
+(user) The 7th Heaven bar shift (data `_bar.py`): Tifa serves, Cloud is security. Marle, in the real 7th Heaven
+
+- `_mods()` 
+- `_sway(ctx, hrc, stand, name)` A drunk swaying on his feet: the body leaning side to side once a cycle about his feet, the upper body and
+- `_walkable(mesh, a, b)` 
+- `_marle(ctx)` Marle in the real 7th Heaven: "Work a shift." -> the set.
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1129,6 +1138,10 @@ PHS usable from the start: the save points in early Midgar (and a few story
 - `_pages(line, pages)` 
 - `apply_dates(dates)` Append the hints to `_dates_data.DATES` (once: marks the dict).
 - `apply_movie(girls)` Append the aftermath hints to `_movie_girls.GIRLS` (once).
+
+## `patches/_bar.py`
+(user) The 7th Heaven bar shift (692_bar): Tifa serves, Cloud is security. "A service prompt minigame, where
+
 
 ## `patches/_bare_cid.py`
 (user) Bare Cid for Blast-off (673): his field model ABDA.HRC (jacket and shirt kept) without his

@@ -42,6 +42,13 @@ Existing saves load, but they keep their own story progress; use a new game.
   further right and back along the table, the girl on top a little further from Cloud's face, the girl on
   the floor on one knee with the other foot planted, left hand behind her, right arm reaching up; in the
   vent view nobody is hidden under the table.
+- **7th Heaven bar shift** (692): Marle stands in 7th Heaven (right of the door area); "Work a shift." takes
+  you to the bar. Customers sit on three stools and order: beer {OK}, wine {CANCEL}, spirit {SWITCH} (Square),
+  cocktail {MENU} (Triangle). One drink at a time; "Tifa is busy making ..." shows at the top while she
+  works and other presses buzz. Orders turn "!!" before the customer gives up. Drunk / angry customers:
+  R1 sends Cloud to walk them out (no drinks while he does). Two minutes, then the takings. Check the order
+  windows sit beside the right customers, the customers sit on the stools, Cloud's walk-out route doesn't
+  get stuck, and that R1 is really the right button.
 - **Therapy Session** (691): the Director's film menu has "Therapy Session." after Going There: Junon's
   doctor's office. Cloud and Tifa sit on the couch and take turns telling their secret fantasy; after each,
   its scene on the couch (Cloud's: him over her, holding her down; Tifa's: her on top), then her finisher.
