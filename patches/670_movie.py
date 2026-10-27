@@ -3080,11 +3080,20 @@ def _wall_market(ctx, focus):
         bx_, by_ = BS_.ARRIVE
         bt_ = Walkmesh(ctx.field(BS_.BASE).section("walkmesh")).find(bx_, by_)
         assert bt_ is not None
+        # (user) and before them all, The Basics (688): the tutorial, in the inn
+        import _tutorial as TU_
+        ux_, uy_ = TU_.ARRIVE
+        ut_ = Walkmesh(ctx.field(TU_.BASE).section("walkmesh")).find(ux_, uy_)
+        assert ut_ is not None
         ask_w, first_w = hb._ask(sec, "Director\n“I've got films lined up. Which one\n are we shooting?”",
-                                 ["Sector 7 Workout.", "Going up.", "Tickets, please!", "Hostile Takeover.",
-                                  "Besties.", "Talk about other work."])
-        film2_, film3_, film4_, film5_, other_w = asm.nop(), asm.nop(), asm.nop(), asm.nop(), asm.nop()
-        ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, film2_)] + \
+                                 ["The Basics (start here).", "Sector 7 Workout.", "Going up.", "Tickets, please!",
+                                  "Hostile Takeover.", "Besties.", "Talk about other work."])
+        film1_, film2_, film3_, film4_, film5_, other_w = (asm.nop() for _ in range(6))
+        ops += [pitch] + ask_w + [asm.if_byte(CHOICE, "==", first_w, film1_)] + \
+            hb._say(sec, "Director\n“Orientation! Everybody starts\n somewhere. To the inn!”") + \
+            [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(TU_.FIELD), ux_, uy_, ut_, 0), asm.ret(), film1_]
+        first_w += 1
+        ops += [asm.if_byte(CHOICE, "==", first_w, film2_)] + \
             hb._say(sec, "Director\n“That's what I like to hear! To the gym!”") + \
             [Op(hb.FADE_OUT), Op(b"\x6C"), asm.mapjump(ctx.maplist.index(WO_.FIELD), wx_, wy_, wt_, 0), asm.ret(), film2_,
              asm.if_byte(CHOICE, "==", first_w + 1, film3_)] + \

@@ -36,6 +36,12 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **The Basics** (688): the Director's film menu now starts with "The Basics (start here).": the inn
+  (the movie's room). Clothed intro, then head on the floor in front of the beds, all fours on the right
+  bed, sixty-nine on the middle bed, each with its talk, prompts and beats: a demonstrated hold (she taps
+  out, he pulls out and wiggles), Cloud kneeling behind her for a taste, the 'there' joke, coughing and
+  laughing in 69. The danger meter moves with each position's view; the finisher lasts 10 s. Check the
+  camera centres on each position and the Director stands clear on the cameraman's spot.
 - **Danger meter + finisher** (683-687): a bar near the top of the view with a yellow cursor from the
   first prompt on: each miss / mistake pushes it two steps out from the centre, each hit one step back in;
   reaching either red end = the Director's "CUT!" and the shoot ends (paid what was earned). After the

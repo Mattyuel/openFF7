@@ -1067,6 +1067,13 @@ The movie minigame (user's design).
 - `_intro_places()` The intro's spots: sitting on the bed's left edge (Cloud in the middle), standing on the rug before it.
 - `apply(ctx)` 
 
+## `patches/688_tutorial.py`
+(user) The Basics: the tutorial film (data `_tutorial.py`), first in the Director's film menu. In the Sector 7
+
+- `_mods()` 
+- `_taste(ctx, hb, girl, gdir, cloud, cdir)` (user: "the director can suggest cloud taste tifa, which will involve cloud putting his head there and
+- `apply(ctx)` 
+
 ## `patches/900_phs.py`
 PHS usable from the start: the save points in early Midgar (and a few story
 
@@ -1302,7 +1309,8 @@ Shared openFF7 settings used by the patch modules.
 
 - `_mods()` 
 - `build(ctx, f, loader, tag, focus)` The gauge and cursor models appended to `loader` (sprite names QG<tag>A / QC<tag>A), placed for a view
-- `scripts(D, meter, xyzi)` {"gauge": {slot: ops}, "cursor": {...}}: 0 init (model, hidden, facing); 2 shown (the cursor at METER's
+- `_place(ctx, f, loader, focus)` The gauge / cursor spots and facing for a view centred on `focus`.
+- `scripts(D, meter, xyzi, view=None)` {"gauge": {slot: ops}, "cursor": {...}}: 0 init (model, hidden); 2 shown (the cursor at METER's spot: REQ
 - `_req(e, slot)` 
 - `start(meter, ents)` The meter at the centre and shown. ents = (gauge entity, cursor entity).
 - `hide(ents)` 
@@ -1569,6 +1577,10 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 - `add_line(ctx, field, name, p1, p2, on_cross, init_extra=())` Add a LINE entity across p1-p2 ((x, y, z) each); `on_cross` ops (ending
 - `add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=())` Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk
 - `reuse_npc(ctx, field, entity, donor, pos, direction, talk, init_extra=(), main=None)` An NPC in a field already at 16 models: it takes over entity `entity`
+
+## `patches/_tutorial.py`
+(user) The Basics: the first film in the Director's menu (688_tutorial), before Sector 7 Workout. In the
+
 
 ## `patches/_wiggle.py`
 (user: "after head holds add a moment where cloud stops pulls out and wiggles his hips left and right a few

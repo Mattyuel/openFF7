@@ -28,7 +28,13 @@ def _mods():
 
 def build(ctx, f, loader, tag, focus):
     """The gauge and cursor models appended to `loader` (sprite names QG<tag>A / QC<tag>A), placed for a view
-    centred on `focus` (x, y, z: where the film's hidden player stands). Returns a dict for `scripts`."""
+    centred on `focus` (x, y, z: where the film's hidden player stands; or a list of them: then `gauge` /
+    `cursor` / `dir` are lists, one per focus, for `scripts(..., view=)`). Returns a dict for `scripts`."""
+    if isinstance(focus, list):
+        out = [build(ctx, f, loader, tag, fc) if i == 0 else _place(ctx, f, loader, fc) for i, fc in enumerate(focus)]
+        return dict(model=out[0]["model"], gauge=[o["gauge"] for o in out], cursor=[o["cursor"] for o in out],
+                    dir=[o["dir"] for o in out])
+    D = _place(ctx, f, loader, focus)
     mv, _ = _mods()
     mm = mv.mm
     cam = Camera(f.sections[1])
@@ -45,8 +51,19 @@ def build(ctx, f, loader, tag, focus):
         sp = mv._sprites(ctx, mv.GAUGE_PX / 2 * k, mv.CURSOR_PX / 2 * k)
     finally:
         mv.SPRITES = old
-    gm = len(loader.models)
+    D["model"] = len(loader.models)
     loader.models += [ModelLoader.with_scale(sp[h], scale) for h in names]
+    print("  danger meter %s: gauge %s, cursor %s .. %s, dir %d" % (tag, D["gauge"][:3], D["cursor"][0][:3],
+                                                                    D["cursor"][-1][:3], D["dir"]))
+    return D
+
+
+def _place(ctx, f, loader, focus):
+    """The gauge / cursor spots and facing for a view centred on `focus`."""
+    mv, _ = _mods()
+    cam = Camera(f.sections[1])
+    mesh = Walkmesh(f.section("walkmesh"))
+    near = min(mv._view_depth(cam, v) for t in mesh.tris for v in t) * 0.8
     left, top, right, bottom = screen_range(f.section("triggers"))
     sx, sy = cam.project(*focus[:3])
     sx = min(max(sx, left + 160), right - 160)
@@ -65,21 +82,26 @@ def build(ctx, f, loader, tag, focus):
         p1 = cam.project(gauge[0] + 50 * math.cos(a), gauge[1] + 50 * math.sin(a), gauge[2])
         dx, dy = p1[0] - p0[0], p1[1] - p0[1]
         return abs(dy) / (abs(dx) + 1e-9) + (0 if dx > 0 else 100)
-    d = min(range(256), key=tilt)
-    print("  danger meter %s: gauge %s, cursor %s .. %s, dir %d" % (tag, gauge[:3], cursor[0][:3], cursor[-1][:3], d))
-    return dict(model=gm, gauge=gauge, cursor=cursor, dir=d)
+    return dict(gauge=gauge, cursor=cursor, dir=min(range(256), key=tilt))
 
 
-def scripts(D, meter, xyzi):
-    """{"gauge": {slot: ops}, "cursor": {...}}: 0 init (model, hidden, facing); 2 shown (the cursor at METER's
-    spot: REQ it again whenever METER changes); 4 hidden. `xyzi`(x, y, z, tri) -> op."""
+def scripts(D, meter, xyzi, view=None):
+    """{"gauge": {slot: ops}, "cursor": {...}}: 0 init (model, hidden); 2 shown (the cursor at METER's spot: REQ
+    it again whenever METER changes); 4 hidden. `xyzi`(x, y, z, tri) -> op. With several views (`build` with a
+    list), `view` = the temp var choosing one."""
     mv, hb = _mods()
-    d_ = Op(bytes([0xB3, 0, D["dir"]]))
-    g = {0: [Op(bytes([0xA1, D["model"]])), hb._visi(0), d_, asm.ret(), asm.ret()],
-         2: [xyzi(*D["gauge"]), hb._visi(1), asm.ret()],
+    d_ = lambda d: Op(bytes([0xB3, 0, d]))
+    if view is None:
+        g2 = [xyzi(*D["gauge"]), d_(D["dir"])]
+        c2 = [d_(D["dir"])] + mv._chain(meter, [[xyzi(*p)] for p in D["cursor"]])
+    else:
+        g2 = mv._chain(view, [[xyzi(*g), d_(d)] for g, d in zip(D["gauge"], D["dir"])])
+        c2 = mv._chain(view, [[d_(d)] + mv._chain(meter, [[xyzi(*p)] for p in cs]) for cs, d in zip(D["cursor"], D["dir"])])
+    g = {0: [Op(bytes([0xA1, D["model"]])), hb._visi(0), asm.ret(), asm.ret()],
+         2: g2 + [hb._visi(1), asm.ret()],
          4: [hb._visi(0), asm.ret()]}
-    c = {0: [Op(bytes([0xA1, D["model"] + 1])), hb._visi(0), d_, asm.ret(), asm.ret()],
-         2: mv._chain(meter, [[xyzi(*p)] for p in D["cursor"]]) + [hb._visi(1), asm.ret()],
+    c = {0: [Op(bytes([0xA1, D["model"] + 1])), hb._visi(0), asm.ret(), asm.ret()],
+         2: c2 + [hb._visi(1), asm.ret()],
          4: [hb._visi(0), asm.ret()]}
     return {"gauge": g, "cursor": c}
 
