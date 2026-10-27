@@ -27,6 +27,7 @@ import _director as DR
 import _gestures as GS
 import _going_up as GU
 import _going_up_poses as GP
+import _wiggle as WG
 from ff7 import asm
 from ff7 import triggers as tg
 from ff7.camera import Camera, facing_screen
@@ -141,6 +142,7 @@ def apply(ctx):
     bare_e = own + ["ZYC%d.tor" % s for s in range(4)]
     for n in bare_c + bare_t + bare_e:
         ctx.char_file(n.split(".")[0].lower() + ".a")                    # (exists)
+    bare_c.append(WG.build(ctx, hb.CLOUD_BARE_HRC, "ZNJ0", "QKW0"))     # (user) after a hold: out, hips wiggled
     hold_c, hold_t, try_t = 1 + bare_c.index("ZNJ8.tor"), 1 + bare_t.index("ZVJ8.tor"), 1 + bare_t.index("ZVJ7.tor")
     ei = loader.add_from(elena_l, ELENA_DONOR[1])
     elena_m = loader.models.pop(ei)
@@ -225,7 +227,9 @@ def apply(ctx):
         2: ch_(P, [at(ck, dE) + ch_(STYLE, [stroke(0), stroke(qk("QKC0.tor"))]),
                    at(ch, dC) + ch_(STYLE, [stroke(4), stroke(qk("QKJ0.tor"))])]) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
-        5: loop_(hold_c) + [asm.ret()]}
+        5: loop_(hold_c) + [asm.ret()],
+        WG.SLOT: [mv._animb(), Op(bytes([0xA2, 1 + bare_c.index("ZNJ0.tor"), 1])),
+                  Op(bytes([0xA3, 1 + bare_c.index("QKW0.tor"), 1])), asm.ret()]}       # (once, waits)
     ti = lambda n: 1 + bare_t.index(n)
 
     def idle(flag, i):
@@ -239,7 +243,8 @@ def apply(ctx):
         [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(hold_t) + [asm.ret()],                                  # held deep
-        6: loop_(try_t) + [asm.ret()]}                                   # tapping out: her squirm
+        6: loop_(try_t) + [asm.ret()],                                   # tapping out: her squirm
+        WG.SLOT: loop_(ti("ZVJ9.tor")) + [asm.ret()]}                   # pulled back (his wiggle)
     ei_ = lambda n: 1 + bare_e.index(n)
     n_crawl = max(1, round(math.dist(epos, (ex, ey)) / (WALK_STEP * 0.5)))
     stx, sty = round((ex - epos[0]) / n_crawl), round((ey - epos[1]) / n_crawl)
@@ -435,6 +440,7 @@ def apply(ctx):
     early, cue, good, late, calm, hw, lw = (asm.nop() for _ in range(7))
     result = [asm.setbyte(HC, 0)] + frames(HC, GU.RESULT_WAIT) + [Op(b"\x54\x01")]
     restart = [req(E[a], 2) for a in ("cloudB", "tifaB")]
+    wiggle = [req(E["tifaB"], WG.SLOT), hb._req(E["cloudB"], WG.SLOT)]  # (user) he pulls out, wiggles his hips
     walkout = asm.nop()
     main += [head_hold, Op(b"\x54\x01"), req(E["cloudB"], 5), req(E["tifaB"], 5)] + prompt_line("hold") + \
         [Op(bytes([0x99, CUE[0], CUE[1]])), Op(bytes([0x8D, CUE[0] << 4, CUE[1], GU.HOLD_RANGE])),
@@ -447,13 +453,14 @@ def apply(ctx):
     main += [good, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 0xEA, 1, 0x40]))]           # (the materia chime)
     for _ in range(GU.HOLD_BONUS):
         main += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
-    main += prompt_line("good") + restart + result + [asm.goto_back(hit)]
+    main += prompt_line("good") + wiggle + restart + result + [asm.goto_back(hit)]
     main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + \
-        prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + result + [asm.goto_back(tail)]
+        prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + result + \
+        [asm.goto_back(tail)]
     zero, paid_ = asm.nop(), asm.nop()
     main += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
              Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.if_byte(ANGER, ">=", GU.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
-        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + \
+        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + \
         [asm.if_word(PAY, "<", GU.MAD_PENALTY, zero), hb._arith(0x88, PAY, GU.MAD_PENALTY), asm.goto(paid_),
          zero, asm.setword(PAY, 0), paid_] + result + [asm.goto_back(tail)]
     # the end: the car moves at last

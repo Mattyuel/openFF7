@@ -26,6 +26,7 @@ import struct
 import _director as DR
 import _besties as BS
 import _besties_poses as BP
+import _wiggle as WG
 from ff7 import asm
 from ff7 import triggers as tg
 from ff7.field import FieldFile
@@ -125,6 +126,9 @@ def apply(ctx):
     bare_c = sum((sp_(seg, k) for seg, k in (("edge", "cloud"), ("ride", "cloud"), ("lick", "cloud"),
                   ("share", "cloud_t"), ("share", "cloud_a"), ("stack", "cloud"), ("stack", "cloud1"))), []) + \
         [PZ["holds"]["cloud_tifa"], PZ["holds"]["cloud_aerith"]]
+    wig = [WG.build(ctx, hb.CLOUD_BARE_HRC, PZ["share"][k][0][0].split(".")[0], nm)       # (user) after a hold
+           for k, nm in (("cloud_t", "YBW0"), ("cloud_a", "YBW1"))]
+    bare_c += wig
     bare_t = sum((sp_(seg, k) for seg, k in (("edge", "tifa"), ("ride", "tifa"), ("lick", "tifa"),
                   ("share", "tifa_front"), ("share", "tifa_back"), ("stack", "tifa"))), []) + PZ["holds"]["tifa"]
     bare_a = sum((sp_(seg, k) for seg, k in (("edge", "aerith"), ("ride", "aerith"), ("lick", "aerith"),
@@ -201,7 +205,9 @@ def apply(ctx):
                      ch_(P, [go("stack", "cloud", ci), go("stack", "cloud1", ci)])]) + [hb._visi(1), asm.ret()],
         3: at(S["cloud"]) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
-        5: ch_(P, [loop_(ci(PZ["holds"]["cloud_tifa"])), loop_(ci(PZ["holds"]["cloud_aerith"]))]) + [asm.ret()]}
+        5: ch_(P, [loop_(ci(PZ["holds"]["cloud_tifa"])), loop_(ci(PZ["holds"]["cloud_aerith"]))]) + [asm.ret()],
+        WG.SLOT: ch_(P, [[mv._animb(), Op(bytes([0xA2, ci(PZ["share"][k][0][0]), 1])), Op(bytes([0xA3, ci(w), 1]))]
+                         for k, w in (("cloud_t", wig[0]), ("cloud_a", wig[1]))]) + [asm.ret()]}
     scripts[E["tifaB"]] = {
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: ch_(SEG, [go("edge", "tifa", ti), go("ride", "tifa", ti), go("lick", "tifa", ti),
@@ -210,7 +216,8 @@ def apply(ctx):
         3: at(S["tifa"]) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(ti(PZ["holds"]["tifa"][0])) + [asm.ret()],                # held deep
-        6: loop_(ti(PZ["holds"]["tifa"][1])) + [asm.ret()]}                # tapping out
+        6: loop_(ti(PZ["holds"]["tifa"][1])) + [asm.ret()],
+        WG.SLOT: loop_(ti(PZ["holds"]["tifa"][2])) + [asm.ret()]}             # pulled back (his wiggle)
     scripts[E["aerB"]] = {
         0: [Op(bytes([0xA1, 6])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
         2: ch_(SEG, [go("edge", "aerith", ai), go("ride", "aerith", ai), go("lick", "aerith", ai),
@@ -219,7 +226,8 @@ def apply(ctx):
         3: at(S["aerith"]) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(ai(PZ["holds"]["aerith"][0])) + [asm.ret()],
-        6: loop_(ai(PZ["holds"]["aerith"][1])) + [asm.ret()]}
+        6: loop_(ai(PZ["holds"]["aerith"][1])) + [asm.ret()],
+        WG.SLOT: loop_(ai(PZ["holds"]["aerith"][2])) + [asm.ret()]}             # pulled back (his wiggle)
     # the buttons: a press = up -> down (PR = its number), HELD bit k while held
     for k, (mask, _) in enumerate(BS.KEYS + [BS.SWITCH_KEY]):
         top, up, held = hb._w(1), asm.nop(), asm.nop()
@@ -378,6 +386,7 @@ def apply(ctx):
         if sg["key"] == "share":
             early, cue, good, late, hw, lw, calm = (asm.nop() for _ in range(7))
             her = lambda slot_: ch_(P, [[req(E["tifaB"], slot_)], [req(E["aerB"], slot_)]])
+            wiggle = her(WG.SLOT) + [hb._req(E["cloudB"], WG.SLOT)]         # (user) he pulls out, wiggles his hips
             result = [asm.setbyte(HC, 0)] + frames(HC, BS.RESULT_WAIT) + [Op(b"\x54\x01")]
             main += [req(E["cloudB"], 5)] + her(5) + prompt_line("hold") + \
                 [Op(bytes([0x99, CUE[0], CUE[1]])), Op(bytes([0x8D, CUE[0] << 4, CUE[1], BS.HOLD_RANGE])),
@@ -388,13 +397,13 @@ def apply(ctx):
                 [asm.setbyte(HC, 0), lw, hb._w(1), asm.if_byte(HELD, "bit_on", KEY, good), Op(bytes([0x95, HC[0], HC[1]])),
                  asm.if_byte(HC, "<", BS.LETGO, late), asm.goto_back(lw)]
             main += [good, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 0xEA, 1, 0x40])), hb._arith(0x86, PAY, TIER),
-                     hb._arith(0x86, PAY, TIER), Op(bytes([0x96, HITS[0], HITS[1]]))] + prompt_line("good") + restart + \
-                result + [asm.goto_back(hit)]
+                     hb._arith(0x86, PAY, TIER), Op(bytes([0x96, HITS[0], HITS[1]]))] + prompt_line("good") + wiggle + \
+                restart + result + [asm.goto_back(hit)]
             main += [early, Op(b"\x54\x01"), buzz] + prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + \
-                restart + result + [asm.goto_back(tail)]
+                wiggle + restart + result + [asm.goto_back(tail)]
             main += [late, Op(b"\x54\x01"), buzz] + ch_(P, [prompt_line("mad", 0), prompt_line("mad", 1)]) + \
-                [Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + \
-                result + [asm.goto_back(tail)]
+                [Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + \
+                restart + result + [asm.goto_back(tail)]
         else:
             main += [asm.goto_back(hit)]
         main += [segment_end]

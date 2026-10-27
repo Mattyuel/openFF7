@@ -30,6 +30,7 @@ import _director as DR
 import _gestures as GS
 import _hostile as HT
 import _hostile_poses as HP
+import _wiggle as WG
 from ff7 import asm
 from ff7 import triggers as tg
 from ff7.field import FieldFile
@@ -222,6 +223,9 @@ def _build(ctx, field, base, overhead, PZ):
     # her dog strokes (on the table), then her strokes underneath (0-3, 8 held, 7 tapping out)
     p1, p0 = PZ[1]["names"], PZ[0]["names"]
     bare_c = p1[0] + p1[1] + p0[0] + p0[1] + [p1["hold"], p0["hold"]]
+    wig = [WG.build(ctx, hb.CLOUD_BARE_HRC, pp[0][0].split(".")[0], "QHW%d" % k)   # (user) after her hold: the
+           for k, pp in enumerate((p0, p1))]                                         #  wiggle, from each P's stroke
+    bare_c += wig
     bare_s = ["ZQ%s%d.tor" % (DOG, sp) for sp in range(4)] + PZ["under"]["s"]
     bare_e = ["ZY%s%d.tor" % (DOG, sp) for sp in range(4)] + PZ["under"]["e"]
     for nm in bare_c + bare_s + bare_e:
@@ -298,7 +302,9 @@ def _build(ctx, field, base, overhead, PZ):
         2: ch_(P, [at(S0["cloud"], D0) + ch_(STYLE, [stroke(ci(p0[0][0])), stroke(ci(p0[1][0]))]),
                    at(S1["cloud"], D0) + ch_(STYLE, [stroke(ci(p1[0][0])), stroke(ci(p1[1][0]))])]) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
-        5: ch_(P, [loop_(ci(p0["hold"])), loop_(ci(p1["hold"]))]) + [asm.ret()]}
+        5: ch_(P, [loop_(ci(p0["hold"])), loop_(ci(p1["hold"]))]) + [asm.ret()],
+        WG.SLOT: [mv._animb()] + ch_(P, [[Op(bytes([0xA2, ci(pp[0][0]), 1])), Op(bytes([0xA3, ci(wig[k]), 1]))]
+                                         for k, pp in enumerate((p0, p1))]) + [asm.ret()]}
     us, ue = PZ["under"]["s"], PZ["under"]["e"]
     scripts[E["scarB"]] = {                                                  # P 1 on the table, P 0 underneath
         0: [Op(bytes([0xA1, 5])), hb._visi(0)] + hide() + [asm.ret(), asm.ret()],
@@ -502,6 +508,7 @@ def _build(ctx, field, base, overhead, PZ):
     early, cue, good, late, calm, hw, lw = (asm.nop() for _ in range(7))
     result = [asm.setbyte(HC, 0)] + frames(HC, HT.RESULT_WAIT) + [Op(b"\x54\x01")]
     restart = [req(E[a], 2) for a in ("cloudB", "scarB", "elenB")]
+    wiggle = [hb._req(E["cloudB"], WG.SLOT)]                            # (user) he pulls out, wiggles his hips
     walkout = asm.nop()
     main += [head_hold, Op(b"\x54\x01"), req(E["cloudB"], 5), req(E["elenB"], 5)] + prompt_line("hold") + \
         [Op(bytes([0x99, CUE[0], CUE[1]])), Op(bytes([0x8D, CUE[0] << 4, CUE[1], HT.HOLD_RANGE])),
@@ -514,13 +521,14 @@ def _build(ctx, field, base, overhead, PZ):
     main += [good, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 0xEA, 1, 0x40]))]           # (the materia chime)
     for _ in range(HT.HOLD_BONUS):
         main += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
-    main += prompt_line("good") + restart + result + [asm.goto_back(hit)]
+    main += prompt_line("good") + wiggle + restart + result + [asm.goto_back(hit)]
     main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + \
-        prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + result + [asm.goto_back(tail)]
+        prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + result + \
+        [asm.goto_back(tail)]
     zero, paid_ = asm.nop(), asm.nop()
     main += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
              Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.if_byte(ANGER, ">=", HT.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
-        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + \
+        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + \
         [asm.if_word(PAY, "<", HT.MAD_PENALTY, zero), hb._arith(0x88, PAY, HT.MAD_PENALTY), asm.goto(paid_),
          zero, asm.setword(PAY, 0), paid_] + result + [asm.goto_back(tail)]
     # the end: the board approves

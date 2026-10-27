@@ -1548,6 +1548,11 @@ Helpers for travel menus, attendant NPCs, touchable bosses and trigger lines.
 - `add_npc(ctx, field, name, model, pos, direction, talk, init_extra=(), main=())` Add an NPC entity with `model` at pos (x, y, z, tri); `talk` is its talk
 - `reuse_npc(ctx, field, entity, donor, pos, direction, talk, init_extra=(), main=None)` An NPC in a field already at 16 models: it takes over entity `entity`
 
+## `patches/_wiggle.py`
+(user: "after head holds add a moment where cloud stops pulls out and wiggles his hips left and right a few
+
+- `build(ctx, hrc, src, name)` `name`.a from frame 0 of `src` (an anim on `hrc`): out, CYCLES sways, back in. Returns name + '.tor'.
+
 ## `patches/_workout.py`
 (user) Sector 7 Workout: the first parody film (683_workout). Tifa comes to the gym for the first time,
 

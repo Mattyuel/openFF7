@@ -36,6 +36,9 @@ Existing saves load, but they keep their own story progress; use a new game.
 
 ## 3. What to check (current build)
 
+- **Pull-out wiggle** (684-687): after every head hold (held to her tap-out, let go early or late) Cloud
+  should ease back out of her mouth, sway his hips left and right three times (head steady, feet planted) and
+  ease back in before the strokes restart (about 2 s). She holds still meanwhile.
 - **Besties** (687): the Director's film menu, fifth choice. The old house
   in Icicle Inn: Tifa and Aerith come down the stairs in their Wall Market
   dresses, gesture, all three sit on the bed and read the Director's script

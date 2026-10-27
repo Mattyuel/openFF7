@@ -28,6 +28,7 @@ import _female_body as fb
 import _gestures as GS
 import _tickets as TK
 import _tickets_poses as TP
+import _wiggle as WG
 from ff7 import asm
 from ff7 import triggers as tg
 from ff7.field import FieldFile
@@ -176,6 +177,8 @@ def apply(ctx):
     assert (ModelLoader.hrc(tifa_e), ModelLoader.hrc(jess_e)) == ("AAGB.HRC", "AXDC.HRC")
     c_anims, t_anims, j_anims = ModelLoader.anims(cl0), ModelLoader.anims(tifa_e), ModelLoader.anims(jess_e)
     bare_c = sum((PZ["cloud"][k] for k in "ABCD"), []) + [PZ["hold"]]
+    head_c = PZ["cloud"]["C"][0]
+    bare_c.append(WG.build(ctx, hb.CLOUD_BARE_HRC, head_c.split(".")[0], "QZW0"))   # (user) after a hold: wiggle
     bare_t = PZ["tifa"] + [PZ["tifa_still"]]
     bare_j = PZ["jessie"]                                                   # QJF0-3, 8, 7, 9
     for nm in bare_c + bare_t + bare_j + [PZ["sit_t"], PZ["sit_j"]]:
@@ -268,6 +271,8 @@ def apply(ctx):
         3: at(TK.CLOUD_TO, DC) + loop_(0) + [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(1 + bare_c.index(PZ["hold"])) + [asm.ret()],
+        WG.SLOT: [mv._animb(), Op(bytes([0xA2, 1 + bare_c.index(head_c), 1])),
+                  Op(bytes([0xA3, 1 + bare_c.index("QZW0.tor"), 1])), asm.ret()],          # (once, waits)
         **GS.slots(G, "cloudB", 1 + len(bare_c), 0, mv._animb())}
     ti = lambda nm: 1 + bare_t.index(nm)
     scripts[E["tifaB"]] = {
@@ -282,7 +287,8 @@ def apply(ctx):
         [hb._visi(1), asm.ret()],
         4: [hb._visi(0), asm.ret()],
         5: loop_(ji(4)) + [asm.ret()],                                     # held deep
-        6: loop_(ji(5)) + [asm.ret()]}                                     # tapping out: her squirm
+        6: loop_(ji(5)) + [asm.ret()],                                     # tapping out: her squirm
+        WG.SLOT: loop_(ji(6)) + [asm.ret()]}                               # still (his wiggle)
     # the buttons: one small entity each; a press = up -> down (PR = its number), HELD bit k while held
     for k, (mask, _) in enumerate(TK.KEYS + [TK.SWITCH_KEY]):
         top, up, held = hb._w(1), asm.nop(), asm.nop()
@@ -456,6 +462,7 @@ def apply(ctx):
     early, cue, good, late, calm, hw, lw = (asm.nop() for _ in range(7))
     result = [asm.setbyte(HC, 0)] + frames(HC, TK.RESULT_WAIT) + [Op(b"\x54\x01")]
     restart = [req(E[a], 2) for a in ("cloudB", "jessB")]
+    wiggle = [req(E["jessB"], WG.SLOT), hb._req(E["cloudB"], WG.SLOT)]  # (user) he pulls out, wiggles his hips
     walkout = asm.nop()
     main += [head_hold, Op(b"\x54\x01"), req(E["cloudB"], 5), req(E["jessB"], 5)] + prompt_line("hold") + \
         [Op(bytes([0x99, CUE[0], CUE[1]])), Op(bytes([0x8D, CUE[0] << 4, CUE[1], TK.HOLD_RANGE])),
@@ -468,13 +475,14 @@ def apply(ctx):
     main += [good, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 0xEA, 1, 0x40]))]           # (the materia chime)
     for _ in range(TK.HOLD_BONUS):
         main += [hb._arith(0x86, PAY, TIER), Op(bytes([0x96, PAY[0], PAY[1]]))]
-    main += prompt_line("good") + restart + result + [asm.goto_back(hit)]
+    main += prompt_line("good") + wiggle + restart + result + [asm.goto_back(hit)]
     main += [early, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]]))] + \
-        prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + result + [asm.goto_back(tail)]
+        prompt_line("early") + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + result + \
+        [asm.goto_back(tail)]
     zero, paid_ = asm.nop(), asm.nop()
     main += [late, Op(b"\x54\x01"), Op(bytes([0xF1, 0, 3, 0, 0x40])), Op(bytes([0x96, REPS[0], REPS[1]])),
              Op(bytes([0x95, ANGER[0], ANGER[1]])), asm.if_byte(ANGER, ">=", TK.MAD_LIMIT, calm), asm.goto(walkout), calm] + \
-        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + restart + \
+        prompt_line("mad", ANGER) + [asm.setbyte(TIER, 0), asm.setbyte(STREAK, 0)] + wiggle + restart + \
         [asm.if_word(PAY, "<", TK.MAD_PENALTY, zero), hb._arith(0x88, PAY, TK.MAD_PENALTY), asm.goto(paid_),
          zero, asm.setword(PAY, 0), paid_] + result + [asm.goto_back(tail)]
     # the end: the train pulls in
